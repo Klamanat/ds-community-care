@@ -181,6 +181,9 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
   .bday-banner-card:hover{transform:translateY(-2px);box-shadow:0 10px 36px rgba(99,102,241,0.2);}
   .emp-feed{grid-template-columns:repeat(3,1fr);}
   .emp-item:hover{transform:translateY(-5px);box-shadow:0 14px 40px rgba(236,72,153,0.18),0 4px 14px rgba(167,139,250,0.1);}
+  /* Activity card text size on desktop */
+  .m-name{font-size:18px;}
+  .m-ev{font-size:13px;padding:5px 12px;}
   /* Spotlight: natural height on PC */
   .emp-card-spotlight img{width:100%;height:auto;display:block;}
   /* Modal photo: cap height */
@@ -262,12 +265,12 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
   .ci-sub{font-size:11px;}
 
   /* ── Months grid: 2 col ── */
-  .months-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
-  .m-card{border-radius:20px;padding:14px 10px 11px;}
-  .m-icon{font-size:22px;}
-  .m-num{font-size:17px !important;}
-  .m-name{font-size:9px;margin-bottom:6px;letter-spacing:0.4px;}
-  .m-ev{font-size:8.5px;padding:3px 7px;margin-bottom:3px;}
+  .months-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .m-card{border-radius:16px;padding:12px 8px 10px;overflow:hidden;}
+  .m-icon{display:none;}
+  .m-num{display:none;}
+  .m-name{font-size:12px;margin-bottom:5px;letter-spacing:0.2px;}
+  .m-ev{font-size:8px;padding:3px 6px;white-space:normal;word-break:break-word;}
 
   /* ── Star grid: 2 col ── */
   .star-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
@@ -308,7 +311,10 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
 @media(max-width:379px){
   .c-card{height:78px;}
   .c-emo{font-size:20px;}
-  .months-grid{grid-template-columns:repeat(2,1fr);}
+  .months-grid{grid-template-columns:repeat(2,1fr);gap:6px;}
+  .m-card{padding:10px 6px 8px;border-radius:14px;}
+  .m-name{font-size:10px;}
+  .m-ev{font-size:7px;padding:2px 5px;}
   .tool-row{grid-template-columns:repeat(2,1fr);gap:8px;}
   .sec{padding:14px 12px 0;}
   .star-page,.notif-page,.settings-page,.idea-page{padding:14px 12px;}
@@ -393,7 +399,7 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
   box-shadow:0 2px 10px rgba(236,72,153,0.07);
 }
 /* ── Board grid layout ── */
-.emp-feed{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.emp-feed{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:stretch;}
 /* Kudos card */
 .emp-item{
   border-radius:20px;
@@ -413,23 +419,39 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
 }
 /* Quote / message area */
 .emp-card-msg{
-  flex:1;padding:4px 12px 10px;
-  font-size:11.5px;font-weight:700;color:#6B21A8;line-height:1.6;
+  flex:1;padding:8px 12px 10px;
+  font-size:11.5px;font-weight:700;color:inherit;line-height:1.6;
+  position:relative;
 }
 .emp-card-quote{
-  font-size:26px;color:rgba(236,72,153,0.22);
-  line-height:0.85;margin-bottom:2px;
+  font-size:30px;color:rgba(236,72,153,0.28);
+  line-height:0.8;margin-bottom:3px;
   font-family:Georgia,serif;font-weight:900;
 }
 /* ── Spotlight poster section ── */
-.emp-card-spotlight{position:relative;overflow:hidden;}
-.emp-card-spotlight img{width:100%;height:auto;display:block;transition:transform 0.4s ease;will-change:transform;}
+.emp-card-spotlight{position:relative;overflow:hidden;flex:1;}
+.emp-card-spotlight img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;transition:transform 0.4s ease;will-change:transform;position:relative;z-index:1;}
 .emp-item:hover .emp-card-spotlight img{transform:scale(1.05);}
 /* Beam from above */
 .emp-card-spotlight::before{
   content:'';position:absolute;inset:0;
   background:radial-gradient(ellipse 85% 50% at 50% -8%,rgba(255,240,140,0.58) 0%,rgba(255,190,60,0.22) 40%,transparent 62%);
   z-index:2;pointer-events:none;
+}
+/* Stats overlay top-right on photo */
+.emp-card-stats{
+  position:absolute;top:8px;right:8px;z-index:10;
+  display:flex;flex-direction:column;align-items:flex-end;gap:4px;
+  pointer-events:none;
+}
+.emp-stat-pill{
+  background:rgba(0,0,0,0.45);backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.3);
+  border-radius:20px;padding:3px 8px;
+  font-size:10px;font-weight:800;color:white;
+  display:inline-flex;align-items:center;gap:3px;
+  text-shadow:0 1px 3px rgba(0,0,0,0.5);
+  white-space:nowrap;
 }
 /* Name overlay at bottom of photo */
 .emp-spotlight-name{
@@ -441,9 +463,10 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
 /* Footer: sender + reactions */
 .emp-card-footer{
   display:flex;align-items:center;gap:5px;
-  padding:6px 11px;
-  background:rgba(255,255,255,0.35);
-  border-top:1px solid rgba(236,72,153,0.08);
+  padding:7px 11px;
+  background:rgba(255,255,255,0.25);
+  backdrop-filter:blur(6px);
+  border-top:1px solid rgba(255,255,255,0.3);
 }
 /* Shared avatar/name/tag/stat */
 .emp-av{border-radius:50%;overflow:hidden;flex-shrink:0;border:2.5px solid white;box-shadow:0 2px 8px rgba(236,72,153,0.2);}
@@ -513,33 +536,31 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
   box-shadow:0 2px 8px rgba(99,102,241,0.15);
 }
 .m-top-bar{display:none;}
-.m-body{padding:0;position:relative;z-index:1;}
+.m-body{padding:0;position:relative;z-index:1;overflow:hidden;width:100%;text-align:left;}
 .m-head{
   display:flex;align-items:center;justify-content:center;
   gap:6px;margin-bottom:8px;
   position:relative;top:auto;left:auto;right:auto;padding:0;
 }
-.m-icon{font-size:28px;line-height:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.35));}
-.m-num{
-  font-size:22px !important;font-weight:900;line-height:1;
-  color:#fff !important;
-  text-shadow:0 2px 6px rgba(0,0,0,0.45),0 1px 2px rgba(0,0,0,0.3);
-}
+.m-icon{display:none;}
+.m-num{display:none;}
 .m-name{
-  font-size:10px;font-weight:900;
+  font-size:clamp(9px,2.5vw,16px);font-weight:900;
   color:#fff;
-  text-shadow:0 1px 4px rgba(0,0,0,0.4);
-  margin-bottom:8px;letter-spacing:0.8px;text-transform:uppercase;
+  text-shadow:0 2px 8px rgba(0,0,0,0.4);
+  margin-bottom:6px;letter-spacing:0.3px;text-transform:uppercase;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 /* Event tags — frosted glass pills */
 .m-ev{
   background:rgba(0,0,0,0.18);backdrop-filter:blur(8px);
   border:1px solid rgba(255,255,255,0.3);
-  border-radius:12px;padding:4px 8px;font-size:9px;font-weight:700;
+  border-radius:12px;padding:3px 8px;font-size:clamp(7px,1.8vw,9px);font-weight:700;
   color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);
-  display:inline-flex;align-items:center;gap:4px;
-  margin-bottom:4px;line-height:1.3;
-  white-space:nowrap;
+  display:inline-block;
+  margin-bottom:3px;line-height:1.4;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  max-width:100%;
 }
 .m-ev:last-child{margin-bottom:0;}
 .ev-d{display:none;}
@@ -1343,10 +1364,10 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
       </div>
     </div>
 
-    <!-- บริการให้คำปรึกษา -->
+    <!-- Consult Service -->
     <div class="sec fade-in">
       <div class="sec-hdr">
-        <span class="sec-title">💙 บริการให้คำปรึกษา</span>
+        <span class="sec-title">💙 Consult Service</span>
       </div>
       <div class="consult-col">
         <div class="consult-card mental ripple-host" onclick="addRipple(event,this);bounce(this);openModal('modal-mental')">
@@ -1368,10 +1389,10 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
       </div>
     </div>
 
-    <!-- เครื่องมือองค์กร -->
+    <!-- Other -->
     <div class="sec fade-in">
       <div class="sec-hdr">
-        <span class="sec-title">🏢 เครื่องมือองค์กร</span>
+        <span class="sec-title">🏢 Other</span>
       </div>
       <div class="tool-row">
         <div class="tool-card org ripple-host" onclick="addRipple(event,this);bounce(this);openModal('modal-org')">
@@ -1400,7 +1421,7 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
     <!-- Empathy Feed -->
     <div class="sec fade-in">
       <div class="sec-hdr">
-        <span class="sec-title" style="font-size:18px;font-weight:900;background:linear-gradient(135deg,#EC4899,#A855F7,#6366F1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.3px;">🌸 Community Empathy Board</span>
+        <span class="sec-title">🌸 Community Empathy Board</span>
         <span class="sec-more" onclick="openModal('modal-emp')">+ ส่งคำชื่นชม</span>
       </div>
       <div class="empathy-box">
@@ -1408,76 +1429,46 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
         <div class="emp-feed">
           <!-- Kudos Card 1: เก่งมาก — rose/pink -->
           <div class="emp-item" id="emp-post-0" onclick="openEmpDetail(0)" style="background:#FFF0F7;">
-            <div class="emp-card-hdr" style="background:linear-gradient(135deg,#FBCFE8,#F9A8D4);">
-              <span class="emp-tag">เก่งมาก ⭐</span>
-              <span style="font-size:9px;color:#BE185D;font-weight:700;opacity:0.85;">2 ชม.</span>
-            </div>
             <!-- Spotlight photo -->
             <div class="emp-card-spotlight" style="background:linear-gradient(170deg,#FF8DC7,#EC4899,#BE185D);">
-              <img src="S__36175876.jpg" style="width:100%;height:auto;display:block;position:relative;z-index:1;">
+              <img src="S__36175876.jpg" style="width:100%;height:auto;display:block;position:relative;z-index:1;pointer-events:none;">
+              <div class="emp-card-stats">
+                <div class="emp-stat-pill">❤️ 12 · 👏 5</div>
+                <div class="emp-stat-pill">💬 3</div>
+              </div>
               <div class="emp-spotlight-name">
                 <div style="font-size:12px;font-weight:900;color:white;text-shadow:0 1px 8px rgba(0,0,0,0.5);">Nok S.</div>
                 <div style="font-size:9px;color:rgba(255,255,255,0.88);font-weight:600;margin-top:1px;">Data Scientist</div>
               </div>
             </div>
-            <div class="emp-card-msg">
-              <div class="emp-card-quote">"</div>
-              ขอบใจมากเลย! พี่น๊อกช่วยงานได้เยอะมากเลยค่ะ 🙌
-            </div>
-            <div class="emp-card-footer">
-              <div class="emp-sender-av"><img src="https://i.pravatar.cc/40?img=8" alt="Somsak"></div>
-              <span style="font-size:10px;color:#C084C0;font-weight:600;flex:1;">Somsak P.</span>
-              <span class="emp-stat">❤️ 12</span>
-              <span class="emp-stat">💬 3</span>
-            </div>
           </div>
           <!-- Kudos Card 2: ขอบคุณ — violet -->
           <div class="emp-item" id="emp-post-1" onclick="openEmpDetail(1)" style="background:#F3F0FF;">
-            <div class="emp-card-hdr" style="background:linear-gradient(135deg,#DDD6FE,#C4B5FD);">
-              <span class="emp-tag">ขอบคุณ 🙏</span>
-              <span style="font-size:9px;color:#6D28D9;font-weight:700;opacity:0.85;">เมื่อวาน</span>
-            </div>
             <!-- Spotlight photo -->
             <div class="emp-card-spotlight" style="background:linear-gradient(170deg,#C4B5FD,#7C3AED,#4C1D95);">
-              <img src="S__36175877.jpg" style="width:100%;height:auto;display:block;position:relative;z-index:1;">
-              <div class="emp-spotlight-name">
-                <div style="font-size:12px;font-weight:900;color:white;text-shadow:0 1px 8px rgba(0,0,0,0.5);">Jun P.</div>
-                <div style="font-size:9px;color:rgba(255,255,255,0.88);font-weight:600;margin-top:1px;">ML Engineer</div>
+              <img src="1.jpg" style="width:100%;height:auto;display:block;position:relative;z-index:1;">
+              <div class="emp-card-stats">
+                <div class="emp-stat-pill">🩷 8</div>
+                <div class="emp-stat-pill">💬 2</div>
               </div>
-            </div>
-            <div class="emp-card-msg" style="color:#5B21B6;">
-              <div class="emp-card-quote" style="color:rgba(139,92,246,0.25);">"</div>
-              ขอบคุณจุนมากเลยนะคะ 🙏 ช่วยเหลือทีมเสมอเลย
-            </div>
-            <div class="emp-card-footer">
-              <div class="emp-sender-av"><img src="https://i.pravatar.cc/40?img=47" alt="Nok"></div>
-              <span style="font-size:10px;color:#A78BFA;font-weight:600;flex:1;">Nok S.</span>
-              <span class="emp-stat">🩷 8</span>
-              <span class="emp-stat">💬 2</span>
+              <div class="emp-spotlight-name">
+                <div style="font-size:12px;font-weight:900;color:white;text-shadow:0 1px 8px rgba(0,0,0,0.5);">NAMSOM</div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.88);font-weight:600;margin-top:1px;">People Engagement</div>
+              </div>
             </div>
           </div>
           <!-- Kudos Card 3: สู้ๆ -->
           <div class="emp-item" id="emp-post-2" onclick="openEmpDetail(2)" style="background:#FFF0FA;">
-            <div class="emp-card-hdr" style="background:linear-gradient(135deg,#FBCFE8,#F472B6);">
-              <span class="emp-tag">สู้ๆ 💪</span>
-              <span style="font-size:9px;color:#9D174D;font-weight:700;opacity:0.85;">3 วันก่อน</span>
-            </div>
             <div class="emp-card-spotlight" style="background:linear-gradient(170deg,#F472B6,#C026D3,#6D28D9);">
-              <img src="S__36175879.jpg" style="width:100%;height:auto;display:block;position:relative;z-index:1;">
-              <div class="emp-spotlight-name">
-                <div style="font-size:12px;font-weight:900;color:white;text-shadow:0 1px 8px rgba(0,0,0,0.5);">ทีม DS 🏆</div>
-                <div style="font-size:9px;color:rgba(255,255,255,0.88);font-weight:600;margin-top:1px;">DS Dept.</div>
+              <img src="2.jpg" style="width:100%;height:auto;display:block;position:relative;z-index:1;">
+              <div class="emp-card-stats">
+                <div class="emp-stat-pill">❤️ 20 · 🌟 6</div>
+                <div class="emp-stat-pill">💬 5</div>
               </div>
-            </div>
-            <div class="emp-card-msg">
-              <div class="emp-card-quote">"</div>
-              ทีม DS เก่งมากๆ ประทับใจทุกคนเลยค่ะ 💪 ขอบคุณทุกคนนะคะ
-            </div>
-            <div class="emp-card-footer">
-              <div class="emp-sender-av"><img src="https://i.pravatar.cc/40?img=48" alt="Pam"></div>
-              <span style="font-size:10px;color:#C084C0;font-weight:600;flex:1;">Pam W.</span>
-              <span class="emp-stat">❤️ 20</span>
-              <span class="emp-stat">💬 5</span>
+              <div class="emp-spotlight-name">
+                <div style="font-size:12px;font-weight:900;color:white;text-shadow:0 1px 8px rgba(0,0,0,0.5);">WUT</div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.88);font-weight:600;margin-top:1px;">Governance</div>
+              </div>
             </div>
           </div>
         </div>
@@ -1487,14 +1478,14 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
     <!-- ปฏิทิน -->
     <div class="sec fade-in">
       <div class="sec-hdr">
-        <span class="sec-title">📅 ตารางกิจกรรม 12 เดือน</span>
+        <span class="sec-title">📅 Activities</span>
         <span class="sec-more" onclick="bounce(this)" style="background:linear-gradient(135deg,#EEF2FF,#F5F3FF);color:var(--indigo);">ทั้งหมด</span>
       </div>
       <div class="months-grid" id="months-grid">
         <div class="m-card ripple-host" data-month="1" onclick="addRipple(event,this);openMonthModal(1)" style="background:linear-gradient(160deg,#BFDBFE,#60A5FA);">
           <div class="m-body">
             <div class="m-head"><span class="m-icon">🎆</span><span class="m-num">01</span></div>
-            <div class="m-name">มกราคม</div>
+            <div class="m-name">January</div>
             <div class="m-ev">🎉 New Year</div>
             <div class="m-ev">📚 ปฐมนิเทศ</div>
           </div>
@@ -1502,7 +1493,7 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
         <div class="m-card ripple-host" data-month="2" onclick="addRipple(event,this);openMonthModal(2)" style="background:linear-gradient(160deg,#FBCFE8,#F472B6);">
           <div class="m-body">
             <div class="m-head"><span class="m-icon">💕</span><span class="m-num">02</span></div>
-            <div class="m-name">กุมภาพันธ์</div>
+            <div class="m-name">February</div>
             <div class="m-ev">💝 Valentine's</div>
             <div class="m-ev">🏥 Health Check</div>
           </div>
@@ -1510,7 +1501,7 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
         <div class="m-card m-current ripple-host" data-month="3" onclick="addRipple(event,this);openMonthModal(3)" style="background:linear-gradient(160deg,#C7D2FE,#818CF8);">
           <div class="m-body">
             <div class="m-head"><span class="m-icon">🌸</span><span class="m-num">03</span></div>
-            <div class="m-name">มีนาคม</div>
+            <div class="m-name">March</div>
             <div class="m-ev">🏛️ Town Hall</div>
             <div class="m-ev">📚 Workshop</div>
           </div>
@@ -1518,7 +1509,7 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
         <div class="m-card ripple-host" data-month="4" onclick="addRipple(event,this);openMonthModal(4)" style="background:linear-gradient(160deg,#BAE6FD,#38BDF8);">
           <div class="m-body">
             <div class="m-head"><span class="m-icon">🎊</span><span class="m-num">04</span></div>
-            <div class="m-name">เมษายน</div>
+            <div class="m-name">April</div>
             <div class="m-ev">💧 สงกรานต์</div>
             <div class="m-ev">🎂 Birthday</div>
           </div>
@@ -1526,7 +1517,7 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
         <div class="m-card ripple-host" data-month="5" onclick="addRipple(event,this);openMonthModal(5)" style="background:linear-gradient(160deg,#FEF08A,#FBBF24);">
           <div class="m-body">
             <div class="m-head"><span class="m-icon">☀️</span><span class="m-num">05</span></div>
-            <div class="m-name">พฤษภาคม</div>
+            <div class="m-name">May</div>
             <div class="m-ev">💼 Labor Day</div>
             <div class="m-ev">🧘 Yoga</div>
           </div>
@@ -1534,7 +1525,7 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
         <div class="m-card ripple-host" data-month="6" onclick="addRipple(event,this);openMonthModal(6)" style="background:linear-gradient(160deg,#A7F3D0,#34D399);">
           <div class="m-body">
             <div class="m-head"><span class="m-icon">🏕️</span><span class="m-num">06</span></div>
-            <div class="m-name">มิถุนายน</div>
+            <div class="m-name">June</div>
             <div class="m-ev">🏕️ Outing</div>
             <div class="m-ev">👑 Leadership</div>
           </div>
@@ -1542,7 +1533,7 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
         <div class="m-card ripple-host" data-month="7" onclick="addRipple(event,this);openMonthModal(7)" style="background:linear-gradient(160deg,#6EE7B7,#10B981);">
           <div class="m-body">
             <div class="m-head"><span class="m-icon">🌿</span><span class="m-num">07</span></div>
-            <div class="m-name">กรกฎาคม</div>
+            <div class="m-name">July</div>
             <div class="m-ev">🤝 Volunteer</div>
             <div class="m-ev">🎂 Birthday</div>
           </div>
@@ -1550,7 +1541,7 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
         <div class="m-card ripple-host" data-month="8" onclick="addRipple(event,this);openMonthModal(8)" style="background:linear-gradient(160deg,#DDD6FE,#A78BFA);">
           <div class="m-body">
             <div class="m-head"><span class="m-icon">💐</span><span class="m-num">08</span></div>
-            <div class="m-name">สิงหาคม</div>
+            <div class="m-name">August</div>
             <div class="m-ev">👩 วันแม่</div>
             <div class="m-ev">💻 Digital</div>
           </div>
@@ -1558,7 +1549,7 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
         <div class="m-card ripple-host" data-month="9" onclick="addRipple(event,this);openMonthModal(9)" style="background:linear-gradient(160deg,#C7D2FE,#6366F1);">
           <div class="m-body">
             <div class="m-head"><span class="m-icon">⚡</span><span class="m-num">09</span></div>
-            <div class="m-name">กันยายน</div>
+            <div class="m-name">September</div>
             <div class="m-ev">🚀 Hackathon</div>
             <div class="m-ev">💊 Health Week</div>
           </div>
@@ -1566,7 +1557,7 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
         <div class="m-card ripple-host" data-month="10" onclick="addRipple(event,this);openMonthModal(10)" style="background:linear-gradient(160deg,#FED7AA,#F97316);">
           <div class="m-body">
             <div class="m-head"><span class="m-icon">🎃</span><span class="m-num">10</span></div>
-            <div class="m-name">ตุลาคม</div>
+            <div class="m-name">October</div>
             <div class="m-ev">🎃 Halloween</div>
             <div class="m-ev">🏮 ลอยกระทง</div>
           </div>
@@ -1574,7 +1565,7 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
         <div class="m-card ripple-host" data-month="11" onclick="addRipple(event,this);openMonthModal(11)" style="background:linear-gradient(160deg,#FDE68A,#F59E0B);">
           <div class="m-body">
             <div class="m-head"><span class="m-icon">🍂</span><span class="m-num">11</span></div>
-            <div class="m-name">พฤศจิกายน</div>
+            <div class="m-name">November</div>
             <div class="m-ev">❤️ วันพ่อ</div>
             <div class="m-ev">📋 Year-End</div>
           </div>
@@ -1582,7 +1573,7 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
         <div class="m-card ripple-host" data-month="12" onclick="addRipple(event,this);openMonthModal(12)" style="background:linear-gradient(160deg,#FECACA,#F87171);">
           <div class="m-body">
             <div class="m-head"><span class="m-icon">🎄</span><span class="m-num">12</span></div>
-            <div class="m-name">ธันวาคม</div>
+            <div class="m-name">December</div>
             <div class="m-ev">🎄 Christmas</div>
             <div class="m-ev">🎆 New Year</div>
           </div>
@@ -1598,7 +1589,7 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
       <div class="star-header fade-in">
         <div style="font-size:48px;margin-bottom:8px;">⭐</div>
         <div class="star-title">Star Gang</div>
-        <div class="star-sub">พนักงานดาวเด่นประจำเดือน มีนาคม 2026 🏆</div>
+        <div class="star-sub">พนักงานดาวเด่นประจำเดือน March 2026 🏆</div>
       </div>
       <!-- Join Team Banner -->
       <div style="margin:0 0 16px;">
@@ -2107,7 +2098,7 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
 
       <!-- ── BOARD VIEW ── -->
       <div id="bday-board-view">
-        <div style="font-size:12px;font-weight:800;color:var(--mid);margin-bottom:10px;" id="board-month-label">🎂 พนักงานเดือน มกราคม</div>
+        <div style="font-size:12px;font-weight:800;color:var(--mid);margin-bottom:10px;" id="board-month-label">🎂 พนักงานเดือน January</div>
 
         <!-- Employee photo grid -->
         <div id="emp-photo-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;"></div>
@@ -2718,66 +2709,85 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
     </div>
   </div>
 
-  <!-- Empathy Board -->
+  <!-- Empathy Board — Send Form -->
   <div class="modal-overlay" id="modal-emp" onclick="closeModalOutside(event,this)">
-    <div class="modal-sheet">
-      <div class="modal-handle"></div>
+    <div class="modal-sheet" style="max-height:92vh;display:flex;flex-direction:column;">
+      <div class="modal-handle" style="flex-shrink:0;"></div>
 
-      <!-- Hero header (cute kawaii) -->
-      <div style="background:linear-gradient(135deg,#FDF2F8 0%,#F5F0FF 50%,#FDE8F5 100%);padding:28px 24px 24px;text-align:center;border-bottom:1.5px solid rgba(236,72,153,0.12);position:relative;overflow:hidden;border-radius:28px 28px 0 0;">
-        <!-- Decorative bubbles -->
-        <div style="position:absolute;top:-30px;left:-20px;width:110px;height:110px;border-radius:50%;background:rgba(236,72,153,0.07);pointer-events:none;"></div>
-        <div style="position:absolute;bottom:-20px;right:-15px;width:80px;height:80px;border-radius:50%;background:rgba(167,139,250,0.1);pointer-events:none;"></div>
-        <!-- Floating hearts -->
-        <div style="position:absolute;top:14px;left:18px;font-size:14px;opacity:0.5;animation:floatY 3s ease-in-out infinite;">🌸</div>
-        <div style="position:absolute;top:10px;right:22px;font-size:12px;opacity:0.45;animation:floatY 2.5s ease-in-out infinite 0.6s;">💕</div>
-        <div style="position:absolute;bottom:16px;right:18px;font-size:11px;opacity:0.4;animation:floatY 3.5s ease-in-out infinite 1.2s;">✨</div>
-        <!-- Icon -->
-        <div style="width:80px;height:80px;background:linear-gradient(135deg,#FBCFE8,#EC4899,#C026D3);border-radius:28px;display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 14px;box-shadow:0 10px 32px rgba(236,72,153,0.32),0 2px 8px rgba(0,0,0,0.08);position:relative;z-index:1;">💝</div>
-        <div style="font-size:20px;font-weight:900;background:linear-gradient(135deg,#BE185D,#7C3AED);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;position:relative;z-index:1;">Community Empathy Board 🌸</div>
-        <div style="font-size:13px;color:#B45FC7;line-height:1.6;font-weight:600;position:relative;z-index:1;">ส่งความรู้สึกดีๆ ให้เพื่อนร่วมงาน<br>สร้างพลังงานบวกให้ทีมด้วยกัน 💕</div>
-      </div>
-
-      <!-- Steps -->
-      <div style="padding:20px 20px 0;">
-        <div style="font-size:11px;font-weight:800;color:#C084C0;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">✨ วิธีส่ง Empathy</div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <div style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#FDF2F8,#FFF5FB);border:1px solid rgba(236,72,153,0.12);border-radius:18px;padding:12px 14px;">
-            <div style="width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg,#FBCFE8,#EC4899);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 4px 12px rgba(236,72,153,0.22);">👥</div>
-            <div>
-              <div style="font-size:13px;font-weight:800;color:#7C2D8C;">เลือกเพื่อนร่วมงาน</div>
-              <div style="font-size:11px;color:#C084C0;margin-top:2px;font-weight:600;">ที่ต้องการชื่นชมหรือให้กำลังใจ 💪</div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#F5F0FF,#EDE9FE);border:1px solid rgba(139,92,246,0.12);border-radius:18px;padding:12px 14px;">
-            <div style="width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg,#DDD6FE,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 4px 12px rgba(124,58,237,0.22);">✍️</div>
-            <div>
-              <div style="font-size:13px;font-weight:800;color:#7C2D8C;">เลือก Emoji + พิมพ์ข้อความ</div>
-              <div style="font-size:11px;color:#C084C0;margin-top:2px;font-weight:600;">แสดงความรู้สึกจากใจจริง 🥰</div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#F0FDF4,#DCFCE7);border:1px solid rgba(16,185,129,0.12);border-radius:18px;padding:12px 14px;">
-            <div style="width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg,#A7F3D0,#10B981);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 4px 12px rgba(16,185,129,0.22);">🚀</div>
-            <div>
-              <div style="font-size:13px;font-weight:800;color:#7C2D8C;">กด "ส่ง" เพื่อมอบความดีๆ</div>
-              <div style="font-size:11px;color:#C084C0;margin-top:2px;font-weight:600;">เพื่อนจะได้รับแจ้งเตือนทันที 🔔</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bonus badge -->
-        <div style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:1.5px solid #FCD34D;border-radius:18px;padding:12px 16px;margin-top:14px;box-shadow:0 2px 10px rgba(245,158,11,0.12);">
-          <span style="font-size:22px;">🌟</span>
-          <div>
-            <div style="font-size:12px;font-weight:800;color:#92400E;">การส่ง Empathy 1 ครั้ง = <strong>+10 LINE pts</strong></div>
-            <div style="font-size:10px;color:#B45309;margin-top:2px;font-weight:600;">สะสมพอยท์ได้เลยนะคะ 🎁</div>
-          </div>
+      <!-- Header -->
+      <div style="flex-shrink:0;background:linear-gradient(135deg,#FDF2F8,#F5F0FF);padding:14px 20px 12px;border-bottom:1.5px solid rgba(236,72,153,0.12);display:flex;align-items:center;gap:10px;">
+        <div id="emp-back-btn" onclick="renderEmpPersonGrid()" style="display:none;width:30px;height:30px;border-radius:50%;background:rgba(236,72,153,0.1);cursor:pointer;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">←</div>
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:16px;font-weight:900;background:linear-gradient(135deg,#BE185D,#7C3AED);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;" id="emp-modal-title">ส่งคำชื่นชม 💝</div>
         </div>
       </div>
 
-      <div style="padding:16px 20px 28px;">
-        <button class="modal-close-btn" onclick="closeModal('modal-emp')" style="background:linear-gradient(135deg,#EC4899,#A855F7);box-shadow:0 6px 20px rgba(236,72,153,0.35);">ส่งความรู้สึกดีๆ 💝</button>
+      <!-- View 1: Person grid -->
+      <div id="emp-view-grid" style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px;">
+        <input id="emp-search" oninput="filterEmpGrid(this.value)" placeholder="🔍 ค้นหาชื่อหรือตำแหน่ง..." style="width:100%;border:1.5px solid rgba(236,72,153,0.2);border-radius:12px;padding:9px 14px;font-family:'Sarabun',sans-serif;font-size:13px;color:#6B21A8;background:#FFF5FB;outline:none;box-sizing:border-box;">
+        <div style="font-size:11px;font-weight:800;color:#C084C0;letter-spacing:1px;text-transform:uppercase;">👥 เลือกคนที่จะชื่นชม</div>
+        <div id="emp-person-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"></div>
       </div>
+
+      <!-- View 2a: Existing kudos — comment -->
+      <div id="emp-view-comment" style="display:none;flex:1;overflow-y:auto;flex-direction:column;">
+        <!-- Spotlight image -->
+        <div id="emp-vc-spotlight" class="emp-card-spotlight" style="flex-shrink:0;height:auto;"></div>
+        <!-- Existing comments -->
+        <div id="emp-vc-comments" style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;background:linear-gradient(160deg,#FFF9FD,#F8F5FF);flex:1;"></div>
+      </div>
+
+      <!-- View 2b: New kudos — message input -->
+      <div id="emp-view-new" style="display:none;flex:1;overflow-y:auto;padding:16px 20px;flex-direction:column;gap:12px;">
+        <div id="emp-vn-spotlight" class="emp-card-spotlight" style="border-radius:16px;height:auto;flex-shrink:0;"></div>
+        <div style="font-size:11px;font-weight:800;color:#C084C0;letter-spacing:1px;text-transform:uppercase;">✍️ ข้อความชื่นชม</div>
+        <textarea id="emp-send-msg" placeholder="พิมพ์ข้อความชื่นชมจากใจ... 💕" rows="3" style="width:100%;border:1.5px solid rgba(236,72,153,0.2);border-radius:14px;padding:12px 14px;font-family:'Sarabun',sans-serif;font-size:13px;color:#6B21A8;background:#FFF5FB;resize:none;outline:none;box-sizing:border-box;line-height:1.6;"></textarea>
+        <div style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:1px solid #FCD34D;border-radius:12px;padding:10px 14px;">
+          <span style="font-size:16px;">🌟</span>
+          <div style="font-size:11px;font-weight:700;color:#92400E;">ส่ง Empathy 1 ครั้ง = <strong>+10 LINE pts</strong></div>
+        </div>
+      </div>
+
+      <!-- View 3: Add new person -->
+      <div id="emp-view-add" style="display:none;flex:1;overflow-y:auto;padding:20px;flex-direction:column;gap:14px;">
+
+        <!-- Employee ID search -->
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#C084C0;margin-bottom:6px;">🔍 ค้นหาจากรหัสพนักงาน</div>
+          <input id="emp-add-id" oninput="filterEmpDir(this.value)" placeholder="พิมพ์รหัสหรือชื่อพนักงาน..." autocomplete="off"
+            style="width:100%;border:1.5px solid rgba(236,72,153,0.25);border-radius:12px;padding:10px 14px;font-family:'Sarabun',sans-serif;font-size:13px;color:#6B21A8;background:#FFF5FB;outline:none;box-sizing:border-box;">
+          <div id="emp-dir-dropdown" style="display:none;margin-top:4px;border:1.5px solid rgba(236,72,153,0.2);border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 8px 24px rgba(236,72,153,0.12);max-height:180px;overflow-y:auto;"></div>
+        </div>
+
+        <!-- Selected employee card -->
+        <div id="emp-add-selected" style="display:none;background:linear-gradient(135deg,#FFF0FB,#F5F0FF);border:1.5px solid rgba(236,72,153,0.2);border-radius:16px;padding:14px;display:none;flex-direction:row;gap:12px;align-items:center;">
+          <div style="position:relative;flex-shrink:0;">
+            <div id="emp-add-avatar" onclick="empPickPhoto()" style="width:72px;height:72px;border-radius:50%;overflow:hidden;border:2.5px solid rgba(236,72,153,0.3);cursor:pointer;background:linear-gradient(135deg,#FBCFE8,#EC4899);display:flex;align-items:center;justify-content:center;">
+              <div id="emp-add-avatar-placeholder" style="font-size:26px;font-weight:900;color:white;text-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>
+              <img id="emp-add-avatar-preview" src="" style="display:none;width:100%;height:100%;object-fit:cover;object-position:top center;">
+            </div>
+            <div onclick="empPickPhoto()" style="position:absolute;bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:#EC4899;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;border:2px solid white;">📷</div>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div id="emp-add-name-display" style="font-size:14px;font-weight:900;color:#7C2D8C;margin-bottom:2px;"></div>
+            <div id="emp-add-id-display" style="font-size:10px;font-weight:700;color:#EC4899;margin-bottom:2px;"></div>
+            <div id="emp-add-role-display" style="font-size:11px;color:#C084C0;font-weight:600;"></div>
+          </div>
+          <div onclick="empClearSelected()" style="flex-shrink:0;font-size:11px;color:#C084C0;cursor:pointer;padding:4px 8px;border:1px solid rgba(236,72,153,0.2);border-radius:8px;">เปลี่ยน</div>
+        </div>
+
+        <input type="file" id="emp-add-img" accept="image/*" style="display:none;" onchange="empPreviewPhoto(this)">
+        <input type="hidden" id="emp-add-name">
+        <input type="hidden" id="emp-add-role">
+
+        <div style="display:flex;gap:8px;margin-top:auto;">
+          <button onclick="renderEmpPersonGrid()" style="flex:1;background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.25);border-radius:12px;padding:11px;font-size:13px;font-weight:700;color:#BE185D;cursor:pointer;">ยกเลิก</button>
+          <button onclick="empAddNewPerson()" style="flex:2;background:linear-gradient(135deg,#EC4899,#7C3AED);color:#fff;border:none;border-radius:12px;padding:11px;font-size:13px;font-weight:900;cursor:pointer;">เพิ่มและชื่นชม ✨</button>
+        </div>
+      </div>
+
+      <!-- Bottom bar (context-sensitive) -->
+      <div id="emp-bottom-bar" style="display:none;flex-shrink:0;border-top:1px solid rgba(236,72,153,0.1);background:white;"></div>
     </div>
   </div>
 
@@ -2786,45 +2796,28 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
     <div class="modal-sheet" style="display:flex;flex-direction:column;max-height:92vh;">
       <div class="modal-handle" style="flex-shrink:0;"></div>
 
-      <!-- Scrollable area: image + message + comments -->
+      <!-- Scrollable area -->
       <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;">
 
-        <!-- Spotlight hero (full width, color set by JS) -->
-        <div id="emp-detail-banner" style="position:relative;overflow:hidden;background:linear-gradient(170deg,#FF8DC7,#EC4899,#BE185D);flex-shrink:0;">
-          <!-- Photo (natural height) -->
+        <!-- Spotlight (same pattern as card) -->
+        <div id="emp-detail-banner" class="emp-card-spotlight" style="background:linear-gradient(170deg,#FF8DC7,#EC4899,#BE185D);flex-shrink:0;height:auto;">
           <div id="emp-detail-av" style="position:relative;z-index:1;width:100%;"></div>
-          <!-- Beam overlay -->
-          <div style="position:absolute;inset:0;background:radial-gradient(ellipse 85% 52% at 50% -8%,rgba(255,240,140,0.58) 0%,rgba(255,190,60,0.2) 38%,transparent 60%);z-index:2;pointer-events:none;"></div>
-          <!-- Name + tag overlay at bottom -->
-          <div style="position:absolute;bottom:0;left:0;right:0;padding:50px 16px 14px;background:linear-gradient(transparent,rgba(40,0,28,0.68));z-index:3;text-align:center;">
-            <div id="emp-detail-name" style="font-size:20px;font-weight:900;color:white;text-shadow:0 2px 10px rgba(0,0,0,0.45);"></div>
-            <div id="emp-detail-role" style="font-size:12px;color:rgba(255,255,255,0.9);font-weight:600;margin-top:3px;"></div>
-            <div style="margin-top:8px;">
-              <span id="emp-detail-tag" style="display:inline-flex;align-items:center;background:rgba(255,255,255,0.22);backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,0.4);border-radius:20px;padding:3px 12px;font-size:10px;font-weight:800;color:white;letter-spacing:0.3px;"></span>
-            </div>
+          <!-- Stats pills -->
+          <div class="emp-card-stats">
+            <div class="emp-stat-pill" id="emp-detail-react-pill">❤️ 0</div>
+            <div class="emp-stat-pill" id="emp-detail-cm-pill">💬 0</div>
+          </div>
+          <!-- Name overlay -->
+          <div class="emp-spotlight-name">
+            <div id="emp-detail-name" style="font-size:16px;font-weight:900;color:white;text-shadow:0 2px 10px rgba(0,0,0,0.45);"></div>
+            <div id="emp-detail-role" style="font-size:11px;color:rgba(255,255,255,0.9);font-weight:600;margin-top:2px;"></div>
           </div>
           <!-- Close button -->
-          <span onclick="closeModal('modal-emp-detail')" style="position:absolute;top:10px;right:14px;z-index:5;font-size:14px;color:white;cursor:pointer;background:rgba(0,0,0,0.28);backdrop-filter:blur(6px);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;border:1px solid rgba(255,255,255,0.25);">✕</span>
-        </div>
-
-        <!-- Sender row -->
-        <div id="emp-detail-sender-row" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;background:linear-gradient(135deg,#FDF2F8,#F5F0FF);border-bottom:1px solid rgba(236,72,153,0.1);flex-shrink:0;"></div>
-
-        <!-- Message -->
-        <div style="padding:14px 18px;background:linear-gradient(135deg,#FDF2F8,#F5F0FF);flex-shrink:0;">
-          <div style="font-size:22px;color:rgba(236,72,153,0.25);line-height:0.8;font-family:Georgia,serif;font-weight:900;margin-bottom:4px;">"</div>
-          <div id="emp-detail-msg" style="font-size:13px;color:#6B21A8;line-height:1.7;font-weight:700;"></div>
-          <div id="emp-detail-en" style="font-size:11px;color:#C084C0;margin-top:5px;font-style:italic;font-weight:600;"></div>
-        </div>
-
-        <!-- Stats row -->
-        <div style="display:flex;align-items:center;gap:8px;padding:7px 18px;border-top:1px solid rgba(236,72,153,0.08);background:rgba(255,255,255,0.5);flex-shrink:0;">
-          <span id="emp-detail-react" style="font-size:12px;color:#C084C0;font-weight:700;flex:1;"></span>
-          <span id="emp-detail-cm-count" style="font-size:12px;color:#C084C0;font-weight:700;"></span>
+          <span onclick="closeModal('modal-emp-detail')" style="position:absolute;top:10px;right:10px;z-index:10;font-size:13px;color:white;cursor:pointer;background:rgba(0,0,0,0.35);backdrop-filter:blur(6px);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;border:1px solid rgba(255,255,255,0.25);">✕</span>
         </div>
 
         <!-- Action bar -->
-        <div style="display:flex;border-top:1.5px solid rgba(236,72,153,0.09);border-bottom:1.5px solid rgba(236,72,153,0.09);flex-shrink:0;">
+        <div style="display:flex;border-bottom:1.5px solid rgba(236,72,153,0.09);flex-shrink:0;">
           <div id="emp-detail-like-btn" class="emp-act-btn" onclick="fbLikeModal(this)">❤️ ถูกใจ</div>
           <div style="width:1px;background:rgba(236,72,153,0.09);"></div>
           <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px;font-size:12px;font-weight:700;color:#C084C0;">💬 ความคิดเห็น</div>
@@ -2836,7 +2829,6 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
 
       <!-- Comment input -->
       <div class="cm-reply-bar" style="flex-shrink:0;">
-        <div style="width:30px;height:30px;border-radius:10px;overflow:hidden;flex-shrink:0;border:2px solid white;box-shadow:0 2px 6px rgba(236,72,153,0.15);"><img src="https://i.pravatar.cc/40?img=5" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
         <input id="emp-cm-input" type="text" placeholder="เขียนความคิดเห็น..." style="flex:1;border:1.5px solid rgba(236,72,153,0.18);border-radius:20px;padding:8px 14px;font-size:12px;outline:none;background:#FFF5FB;color:#6B21A8;font-family:inherit;" onkeydown="if(event.key==='Enter')sendEmpComment()">
         <button onclick="sendEmpComment()" style="background:linear-gradient(135deg,#EC4899,#A855F7);border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:800;color:white;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(236,72,153,0.3);">ส่ง 💝</button>
       </div>
@@ -3235,7 +3227,7 @@ function bounce(el) {
 }
 
 // ── Birthday Board Data (12 months) ──
-const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const senderAvatars = [
   {av:'😊',bg:'linear-gradient(135deg,#C7D2FE,#818CF8)',name:'Anya R.'},
   {av:'🦁',bg:'linear-gradient(135deg,#BBF7D0,#4ADE80)',name:'Pam W.'},
@@ -3706,6 +3698,387 @@ function openModal(id, title, sub, body) {
     renderSendMonth();
     document.getElementById('sb-reveal').style.display = 'none';
   }
+  if (id === 'modal-emp') renderEmpPersonGrid();
+}
+
+// ── Empathy Send Form ──
+var _empSelectedPerson = null;
+var _empSelectedTag = null;
+var _empTeam = [
+  {name:'Nok S.',  role:'Data Scientist',    img:'S__36175876.jpg', grad:'linear-gradient(135deg,#FBCFE8,#EC4899)'},
+  {name:'NAMSOM',  role:'People Engagement', img:'S__36175877.jpg', grad:'linear-gradient(135deg,#DDD6FE,#7C3AED)'},
+  {name:'WUT',     role:'Governance',        img:'S__36175879.jpg', grad:'linear-gradient(135deg,#FBCFE8,#F472B6)'},
+];
+function empShowGrid() {
+  _empSelectedPerson = null;
+  document.getElementById('emp-view-grid').style.cssText = 'flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px;';
+  document.getElementById('emp-view-comment').style.display = 'none';
+  document.getElementById('emp-view-new').style.display = 'none';
+  document.getElementById('emp-view-add').style.display = 'none';
+  document.getElementById('emp-bottom-bar').style.display = 'none';
+  document.getElementById('emp-back-btn').style.display = 'none';
+  document.getElementById('emp-modal-title').textContent = 'ส่งคำชื่นชม 💝';
+}
+function _buildPersonCard(m, i) {
+  var praised = empPosts.map(function(p){ return p.recName; });
+  var hasPraise = praised.indexOf(m.name) !== -1;
+  var initials = m.name.trim().split(/\s+/).slice(0,2).map(function(w){ return w.charAt(0).toUpperCase(); }).join('');
+  var av = m.img
+    ? '<img src="'+m.img+'" style="width:100%;height:auto;display:block;object-fit:cover;object-position:top center;">'
+    : '<div style="width:100%;aspect-ratio:3/4;min-height:80px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:white;text-shadow:0 2px 8px rgba(0,0,0,0.3);background:'+m.grad+';">'+initials+'</div>';
+  var statsHtml = '';
+  if (hasPraise) {
+    var post = empPosts.find(function(p){ return p.recName === m.name; });
+    if (post) {
+      var cmCount = post.comments ? post.comments.length : 0;
+      statsHtml = '<div style="position:absolute;top:5px;right:5px;z-index:10;display:flex;flex-direction:column;align-items:flex-end;gap:3px;pointer-events:none;">'
+        +'<div style="background:rgba(0,0,0,0.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.3);border-radius:20px;padding:2px 6px;font-size:8px;font-weight:800;color:white;white-space:nowrap;">'+post.react+'</div>'
+        +'<div style="background:rgba(0,0,0,0.45);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.3);border-radius:20px;padding:2px 6px;font-size:8px;font-weight:800;color:white;white-space:nowrap;">💬 '+cmCount+'</div>'
+        +'</div>';
+    }
+  }
+  return '<div class="emp-person-card" data-idx="'+i+'" onclick="selectEmpPerson(this,\''+m.name.replace(/'/g,"\\'")+'\''+')" style="border-radius:16px;overflow:hidden;cursor:pointer;border:2.5px solid rgba(236,72,153,0.15);transition:all 0.2s;background:#fff;position:relative;">'
+    +'<div style="overflow:hidden;background:'+m.grad+';position:relative;">'+av+statsHtml+'</div>'
+    +'<div style="padding:6px 6px 8px;text-align:center;">'
+    +'<div style="font-size:11px;font-weight:900;color:#7C2D8C;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+m.name+'</div>'
+    +'<div style="font-size:9px;color:#C084C0;font-weight:600;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+m.role+'</div>'
+    +'</div></div>';
+}
+var _addPersonCard = '<div onclick="empShowAddPerson()" style="border-radius:16px;overflow:hidden;cursor:pointer;border:2px dashed rgba(236,72,153,0.3);transition:all 0.2s;background:linear-gradient(135deg,#FFF5FB,#F5F0FF);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:110px;gap:4px;">'
+  +'<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#EC4899,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:20px;color:white;">+</div>'
+  +'<div style="font-size:10px;font-weight:800;color:#BE185D;text-align:center;padding:0 6px;">เพิ่มคนใหม่</div>'
+  +'</div>';
+function renderEmpPersonGrid() {
+  empShowGrid();
+  var grid = document.getElementById('emp-person-grid');
+  grid.innerHTML = _empTeam.map(function(m, i){ return _buildPersonCard(m, i); }).join('') + _addPersonCard;
+  var searchEl = document.getElementById('emp-search');
+  if (searchEl) searchEl.value = '';
+}
+function filterEmpGrid(q) {
+  var kw = q.trim().toLowerCase();
+  var grid = document.getElementById('emp-person-grid');
+  if (!kw) {
+    grid.innerHTML = _empTeam.map(function(m, i){ return _buildPersonCard(m, i); }).join('') + _addPersonCard;
+    return;
+  }
+  var filtered = _empTeam.filter(function(m){
+    return m.name.toLowerCase().indexOf(kw) !== -1 || m.role.toLowerCase().indexOf(kw) !== -1;
+  });
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#C084C0;font-size:12px;padding:20px;">ไม่พบชื่อที่ค้นหา 🔍</div>'
+      +'<div style="grid-column:1/-1;">'+_addPersonCard+'</div>';
+  } else {
+    grid.innerHTML = filtered.map(function(m){ return _buildPersonCard(m, _empTeam.indexOf(m)); }).join('') + _addPersonCard;
+  }
+}
+// ── Employee Directory ──
+var _empDirectory = [
+  {id:'DS001', name:'Nok S.',     role:'Data Scientist',       dept:'DS Team',   img:'S__36175876.jpg'},
+  {id:'DS002', name:'NAMSOM',     role:'People Engagement',    dept:'DS Team',   img:'S__36175877.jpg'},
+  {id:'DS003', name:'WUT',        role:'Governance',           dept:'DS Team',   img:'S__36175879.jpg'},
+  {id:'DS004', name:'ปราณี ขยัน', role:'Data Analyst',         dept:'DS Team',   img:''},
+  {id:'DS005', name:'วิชัย รัก',  role:'ML Engineer',          dept:'DS Team',   img:''},
+  {id:'HR001', name:'มาลี สุขดี', role:'HR Business Partner',  dept:'HR',        img:''},
+  {id:'HR002', name:'สุภา ใจดี',  role:'Talent Management',    dept:'HR',        img:''},
+  {id:'IT001', name:'ธนพล เทค',   role:'Software Engineer',    dept:'IT',        img:''},
+  {id:'IT002', name:'กานต์ โค้ด', role:'DevOps Engineer',      dept:'IT',        img:''},
+  {id:'FN001', name:'อรทัย ตัง',  role:'Financial Analyst',    dept:'Finance',   img:''},
+  {id:'MK001', name:'ชนม์ มาร์ค', role:'Marketing Specialist', dept:'Marketing', img:''},
+];
+
+var _empAddImgData = '';
+var _empSelectedDir = null;
+
+function filterEmpDir(q) {
+  var kw = q.trim().toLowerCase();
+  var dd = document.getElementById('emp-dir-dropdown');
+  if (!kw) { dd.style.display = 'none'; return; }
+  var hits = _empDirectory.filter(function(e){
+    return e.id.toLowerCase().indexOf(kw) !== -1 || e.name.toLowerCase().indexOf(kw) !== -1;
+  });
+  if (!hits.length) {
+    dd.innerHTML = '<div style="padding:12px 16px;font-size:12px;color:#C084C0;">ไม่พบพนักงาน 🔍</div>';
+    dd.style.display = 'block';
+    return;
+  }
+  dd.innerHTML = hits.map(function(e){
+    var alreadyIn = _empTeam.some(function(m){ return m.name === e.name; });
+    var badge = alreadyIn ? '<span style="font-size:9px;background:#FDE68A;color:#92400E;border-radius:6px;padding:1px 5px;font-weight:700;margin-left:4px;">มีแล้ว</span>' : '';
+    var initials = e.name.trim().split(/\s+/).slice(0,2).map(function(w){ return w.charAt(0).toUpperCase(); }).join('');
+    var av = e.img
+      ? '<img src="'+e.img+'" style="width:36px;height:36px;border-radius:50%;object-fit:cover;object-position:top center;flex-shrink:0;">'
+      : '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FBCFE8,#EC4899);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:white;flex-shrink:0;">'+initials+'</div>';
+    return '<div onclick="empSelectFromDir(\''+e.id+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid rgba(236,72,153,0.08);transition:background 0.15s;" onmouseover="this.style.background=\'#FFF0FB\'" onmouseout="this.style.background=\'\';">'
+      +av
+      +'<div style="flex:1;min-width:0;">'
+      +'<div style="font-size:12px;font-weight:800;color:#7C2D8C;">'+e.name+badge+'</div>'
+      +'<div style="font-size:10px;color:#C084C0;font-weight:600;">'+e.id+' · '+e.role+' · '+e.dept+'</div>'
+      +'</div></div>';
+  }).join('');
+  dd.style.display = 'block';
+}
+
+function empSelectFromDir(id) {
+  var e = _empDirectory.find(function(x){ return x.id === id; });
+  if (!e) return;
+  _empSelectedDir = e;
+  _empAddImgData = '';
+
+  // hide search, show selected card
+  document.getElementById('emp-dir-dropdown').style.display = 'none';
+  document.getElementById('emp-add-id').value = e.id + ' — ' + e.name;
+  document.getElementById('emp-add-name').value = e.name;
+  document.getElementById('emp-add-role').value = e.role + ' · ' + e.dept;
+
+  // fill card display
+  document.getElementById('emp-add-name-display').textContent = e.name;
+  document.getElementById('emp-add-id-display').textContent = e.id + ' · ' + e.dept;
+  document.getElementById('emp-add-role-display').textContent = e.role;
+
+  // avatar
+  var initials = e.name.trim().split(/\s+/).slice(0,2).map(function(w){ return w.charAt(0).toUpperCase(); }).join('');
+  var placeholder = document.getElementById('emp-add-avatar-placeholder');
+  var preview = document.getElementById('emp-add-avatar-preview');
+  if (e.img) {
+    preview.src = e.img;
+    preview.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    preview.style.display = 'none';
+    placeholder.textContent = initials;
+    placeholder.style.display = 'flex';
+  }
+
+  document.getElementById('emp-add-selected').style.cssText = 'display:flex;background:linear-gradient(135deg,#FFF0FB,#F5F0FF);border:1.5px solid rgba(236,72,153,0.25);border-radius:16px;padding:14px;flex-direction:row;gap:12px;align-items:center;';
+}
+
+function empClearSelected() {
+  _empSelectedDir = null;
+  _empAddImgData = '';
+  document.getElementById('emp-add-id').value = '';
+  document.getElementById('emp-add-name').value = '';
+  document.getElementById('emp-add-role').value = '';
+  document.getElementById('emp-add-selected').style.display = 'none';
+  document.getElementById('emp-add-avatar-preview').style.display = 'none';
+  document.getElementById('emp-add-avatar-placeholder').textContent = '';
+  document.getElementById('emp-add-id').focus();
+}
+
+function empPickPhoto() {
+  document.getElementById('emp-add-img').click();
+}
+
+function empPreviewPhoto(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _empAddImgData = e.target.result;
+    var preview = document.getElementById('emp-add-avatar-preview');
+    var placeholder = document.getElementById('emp-add-avatar-placeholder');
+    preview.src = _empAddImgData;
+    preview.style.display = 'block';
+    placeholder.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function empShowAddPerson() {
+  _empSelectedDir = null;
+  _empAddImgData = '';
+  document.getElementById('emp-view-grid').style.display = 'none';
+  document.getElementById('emp-view-add').style.cssText = 'display:flex;flex:1;overflow-y:auto;padding:20px;flex-direction:column;gap:14px;';
+  document.getElementById('emp-back-btn').style.cssText = 'display:flex;width:30px;height:30px;border-radius:50%;background:rgba(236,72,153,0.1);cursor:pointer;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;';
+  document.getElementById('emp-modal-title').textContent = 'เพิ่มคนใหม่';
+  document.getElementById('emp-add-id').value = '';
+  document.getElementById('emp-add-name').value = '';
+  document.getElementById('emp-add-role').value = '';
+  document.getElementById('emp-add-img').value = '';
+  document.getElementById('emp-dir-dropdown').style.display = 'none';
+  document.getElementById('emp-add-selected').style.display = 'none';
+  document.getElementById('emp-add-avatar-preview').style.display = 'none';
+  document.getElementById('emp-add-avatar-placeholder').textContent = '';
+}
+
+function empAddNewPerson() {
+  var name = document.getElementById('emp-add-name').value.trim();
+  var role = document.getElementById('emp-add-role').value.trim();
+  if (!name) {
+    document.getElementById('emp-add-id').style.borderColor = '#EC4899';
+    document.getElementById('emp-add-id').focus();
+    return;
+  }
+  var grads = ['linear-gradient(135deg,#FBCFE8,#EC4899)','linear-gradient(135deg,#DDD6FE,#7C3AED)','linear-gradient(135deg,#BAE6FD,#38BDF8)','linear-gradient(135deg,#A7F3D0,#34D399)','linear-gradient(135deg,#FDE68A,#F59E0B)'];
+  var imgSrc = _empAddImgData || (_empSelectedDir && _empSelectedDir.img) || '';
+  var newMember = {name: name, role: role || 'DS Team', img: imgSrc, grad: grads[_empTeam.length % grads.length]};
+  _empTeam.push(newMember);
+  renderEmpPersonGrid();
+  var card = document.querySelector('.emp-person-card[data-idx="'+(_empTeam.length-1)+'"]');
+  if (card) selectEmpPerson(card, name);
+}
+function _buildCmHtml(post) {
+  var html = '';
+  if (post.msg) {
+    html += '<div style="background:linear-gradient(135deg,#FFF0FB,#F5F0FF);border:1px solid rgba(236,72,153,0.15);border-radius:14px;padding:10px 14px;">'
+      +'<div style="font-size:10px;font-weight:800;color:#BE185D;margin-bottom:4px;">💌 คำชื่นชม</div>'
+      +'<div style="font-size:12px;color:#6B21A8;line-height:1.6;">'+post.msg+'</div>'
+      +'</div>';
+  }
+  if (post.comments && post.comments.length) {
+    post.comments.forEach(function(c){
+      // support both object {name,text,time} and plain string
+      var senderName = (c && c.name) ? c.name : 'คุณ';
+      var txt = (c && c.text) ? c.text : c;
+      var time = (c && c.time) ? c.time : '';
+      html += '<div style="background:#fff;border:1px solid rgba(236,72,153,0.12);border-radius:12px;padding:8px 12px;">'
+        +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">'
+        +'<div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#FBCFE8,#EC4899);display:flex;align-items:center;justify-content:center;font-size:10px;color:white;font-weight:800;flex-shrink:0;">'+senderName.charAt(0)+'</div>'
+        +'<span style="font-size:11px;font-weight:800;color:#BE185D;">'+senderName+'</span>'
+        +(time ? '<span style="font-size:10px;color:#C084C0;margin-left:auto;">'+time+'</span>' : '')
+        +'</div>'
+        +'<div style="font-size:12px;color:#4C1D95;line-height:1.6;">'+txt+'</div>'
+        +'</div>';
+    });
+  }
+  if (!html) html = '<div style="text-align:center;color:#C084C0;font-size:12px;padding:16px;">ยังไม่มีความคิดเห็น 💭</div>';
+  return html;
+}
+function selectEmpPerson(el, name) {
+  _empSelectedPerson = name;
+  var member = _empTeam.find(function(m){ return m.name === name; });
+  if (!member) return;
+  var post = empPosts.find(function(p){ return p.recName === name; });
+
+  // Show back button + update title
+  var backBtn = document.getElementById('emp-back-btn');
+  backBtn.style.cssText = 'display:flex;width:30px;height:30px;border-radius:50%;background:rgba(236,72,153,0.1);cursor:pointer;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;';
+  document.getElementById('emp-modal-title').textContent = member.name;
+
+  // Hide grid
+  document.getElementById('emp-view-grid').style.display = 'none';
+
+  // Spotlight HTML
+  var _initials2 = member.name.trim().split(/\s+/).slice(0,2).map(function(w){ return w.charAt(0).toUpperCase(); }).join('');
+  var photoHtml = member.img
+    ? '<img src="'+member.img+'" style="width:100%;height:auto;display:block;position:relative;z-index:1;object-fit:cover;object-position:top center;">'
+    : '<div style="width:100%;height:180px;display:flex;align-items:center;justify-content:center;font-size:64px;font-weight:900;color:white;text-shadow:0 4px 16px rgba(0,0,0,0.3);background:'+member.grad+';">'+_initials2+'</div>';
+  var cmCount = (post && post.comments) ? post.comments.length : 0;
+  var reactStr = (post && post.react) ? post.react : '❤️ 0';
+  var spotlightHtml =
+    '<div style="background:'+member.grad+';position:relative;overflow:hidden;">'
+    +photoHtml
+    +'<div class="emp-card-stats"><div class="emp-stat-pill">'+reactStr+'</div><div class="emp-stat-pill">💬 '+cmCount+'</div></div>'
+    +'<div class="emp-spotlight-name"><div style="font-size:14px;font-weight:900;color:white;text-shadow:0 1px 8px rgba(0,0,0,0.5);">'+member.name+'</div><div style="font-size:10px;color:rgba(255,255,255,0.88);font-weight:600;margin-top:2px;">'+member.role+'</div></div>'
+    +'</div>';
+
+  var chooseOtherBtn = '<button onclick="renderEmpPersonGrid()" style="background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.25);border-radius:12px;padding:8px;font-size:12px;font-weight:700;color:#BE185D;cursor:pointer;width:100%;">👥 เลือกคนอื่น</button>';
+
+  if (post) {
+    // View 2a: existing kudos — show comments
+    document.getElementById('emp-vc-spotlight').innerHTML = spotlightHtml;
+    document.getElementById('emp-vc-comments').innerHTML = _buildCmHtml(post);
+
+    document.getElementById('emp-view-comment').style.cssText = 'display:flex;flex:1;overflow-y:auto;flex-direction:column;';
+
+    var bar = document.getElementById('emp-bottom-bar');
+    bar.innerHTML =
+      '<div style="padding:10px 16px;display:flex;flex-direction:column;gap:8px;">'
+      +'<div style="display:flex;gap:8px;align-items:flex-end;">'
+      +'<textarea id="emp-cm-quick" placeholder="เพิ่มความคิดเห็น... 💬" rows="2" style="flex:1;border:1.5px solid rgba(236,72,153,0.25);border-radius:12px;padding:10px 12px;font-family:\'Sarabun\',sans-serif;font-size:13px;color:#6B21A8;background:#FFF5FB;resize:none;outline:none;box-sizing:border-box;line-height:1.6;"></textarea>'
+      +'<button onclick="empSubmitComment()" style="background:linear-gradient(135deg,#EC4899,#7C3AED);color:#fff;border:none;border-radius:12px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;flex-shrink:0;">ส่ง 💝</button>'
+      +'</div>'
+      +chooseOtherBtn
+      +'</div>';
+    bar.style.cssText = 'display:block;flex-shrink:0;border-top:1px solid rgba(236,72,153,0.1);background:white;';
+  } else {
+    // View 2b: new kudos
+    document.getElementById('emp-vn-spotlight').innerHTML = spotlightHtml;
+    document.getElementById('emp-send-msg').value = '';
+
+    document.getElementById('emp-view-new').style.cssText = 'display:flex;flex:1;overflow-y:auto;padding:16px 20px;flex-direction:column;gap:12px;';
+
+    var bar2 = document.getElementById('emp-bottom-bar');
+    bar2.innerHTML =
+      '<div style="padding:10px 16px;display:flex;flex-direction:column;gap:8px;">'
+      +'<button onclick="submitEmpathy()" style="background:linear-gradient(135deg,#EC4899,#7C3AED);color:#fff;border:none;border-radius:14px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;width:100%;">ส่งคำชื่นชม 💝</button>'
+      +chooseOtherBtn
+      +'</div>';
+    bar2.style.cssText = 'display:block;flex-shrink:0;border-top:1px solid rgba(236,72,153,0.1);background:white;';
+  }
+}
+function empSubmitComment() {
+  var input = document.getElementById('emp-cm-quick');
+  if (!input) return;
+  var txt = input.value.trim();
+  if (!txt) return;
+  var post = empPosts.find(function(p){ return p.recName === _empSelectedPerson; });
+  if (!post) return;
+  if (!post.comments) post.comments = [];
+  post.comments.push({name:'คุณ', text:txt, time:'เมื่อกี้'});
+
+  document.getElementById('emp-vc-comments').innerHTML = _buildCmHtml(post);
+
+  // Update stats pills in spotlight
+  var pills = document.querySelectorAll('#emp-vc-spotlight .emp-stat-pill');
+  if (pills[1]) pills[1].textContent = '💬 ' + post.comments.length;
+
+  // Update board card stats pill
+  var idx = empPosts.indexOf(post);
+  var boardCard = document.getElementById('emp-post-' + idx);
+  if (boardCard) {
+    var bPills = boardCard.querySelectorAll('.emp-stat-pill');
+    if (bPills[1]) bPills[1].textContent = '💬 ' + post.comments.length;
+  }
+
+  input.value = '';
+}
+function selectEmpTag(el, tag) {
+  _empSelectedTag = tag;
+  document.querySelectorAll('.emp-tag-btn').forEach(function(b){ b.style.boxShadow=''; b.style.transform=''; b.style.borderWidth='2px'; });
+  el.style.boxShadow='0 4px 16px rgba(236,72,153,0.3)'; el.style.transform='scale(1.05)'; el.style.borderWidth='2.5px';
+}
+function submitEmpathy() {
+  var msg = document.getElementById('emp-send-msg').value.trim();
+  if (!_empSelectedPerson) { alert('กรุณาเลือกคนที่จะชื่นชมก่อนนะคะ 💕'); return; }
+  if (!msg) { alert('กรุณาพิมพ์ข้อความด้วยนะคะ ✍️'); return; }
+
+  var member = _empTeam.find(function(m){ return m.name === _empSelectedPerson; }) || {name:_empSelectedPerson, role:'DS Team', img:'', grad:'linear-gradient(135deg,#FBCFE8,#EC4899)'};
+  var grads = ['linear-gradient(135deg,#FBCFE8,#F9A8D4)','linear-gradient(135deg,#DDD6FE,#C4B5FD)','linear-gradient(135deg,#BAE6FD,#38BDF8)','linear-gradient(135deg,#A7F3D0,#34D399)','linear-gradient(135deg,#FDE68A,#F59E0B)'];
+  var hdrGrad = grads[empPosts.length % grads.length];
+  var idx = empPosts.length;
+
+  // เพิ่มใน data
+  empPosts.push({
+    recImg: member.img, recName: member.name, recRole: member.role,
+    sndImg: '', sndName: 'คุณ',
+    msg: msg, en: '',
+    tag: '💌 ชื่นชม', time: 'เมื่อกี้', react: '❤️ 0',
+    comments: []
+  });
+
+  // สร้าง card ใหม่ใน board
+  var card = document.createElement('div');
+  card.className = 'emp-item';
+  card.id = 'emp-post-' + idx;
+  card.onclick = function(){ openEmpDetail(idx); };
+  card.style.background = '#FFF5FB';
+  var _initials3 = member.name.trim().split(/\s+/).slice(0,2).map(function(w){ return w.charAt(0).toUpperCase(); }).join('');
+  var photoHtml = member.img
+    ? '<img src="'+member.img+'" style="width:100%;height:auto;display:block;position:relative;z-index:1;object-fit:cover;object-position:top center;">'
+    : '<div style="width:100%;height:140px;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:900;color:white;text-shadow:0 4px 16px rgba(0,0,0,0.3);background:'+member.grad+';">'+_initials3+'</div>';
+  card.innerHTML =
+    '<div class="emp-card-spotlight" style="background:'+member.grad+';">'
+    +photoHtml
+    +'<div class="emp-card-stats"><div class="emp-stat-pill">❤️ 0</div><div class="emp-stat-pill">💬 0</div></div>'
+    +'<div class="emp-spotlight-name">'
+    +'<div style="font-size:12px;font-weight:900;color:white;text-shadow:0 1px 8px rgba(0,0,0,0.5);">'+member.name+'</div>'
+    +'<div style="font-size:9px;color:rgba(255,255,255,0.88);font-weight:600;margin-top:1px;">'+member.role+'</div>'
+    +'</div></div>'
+    ;
+
+  document.querySelector('.emp-feed').prepend(card);
+  closeModal('modal-emp');
 }
 function closeModal(id) {
   var el = document.getElementById(id);
@@ -3878,7 +4251,7 @@ function renderHomeBdayBanner() {
     return;
   }
 
-  sub.textContent = `มีนาคม • ${emps.length} คนเกิดเดือนนี้ 🎉`;
+  sub.textContent = `March • ${emps.length} คนเกิดเดือนนี้ 🎉`;
 
   const maxShow = 4;
   const shown = emps.slice(0, maxShow);
@@ -4210,13 +4583,13 @@ var empPosts = [
     msg:'ขอบใจมากเลย! พี่น๊อกช่วยงานได้เยอะมากเลยค่ะ 🙌', en:'(Well Done!) 👏',
     tag:'เก่งมาก ⭐', time:'2 ชม. ที่แล้ว', react:'❤️ 12 · 👏 5',
     comments:[
-      {img:'https://i.pravatar.cc/40?img=44', name:'Jun P.', text:'เห็นด้วยมากค่ะ พี่น๊อกเก่งมาก 👏', time:'1 ชม. ที่แล้ว'},
+      {img:'https://i.pravatar.cc/40?img=44', name:'NAMSOM', text:'เห็นด้วยมากค่ะ พี่น๊อกเก่งมาก 👏', time:'1 ชม. ที่แล้ว'},
       {img:'https://i.pravatar.cc/40?img=48', name:'Pam W.', text:'ขอบคุณที่ชื่นชมพี่น๊อกนะคะ 🙏', time:'45 นาที'},
       {img:'https://i.pravatar.cc/40?img=12', name:'Ton K.', text:'เก่งจริงๆ ครับ!', time:'20 นาที'}
     ]
   },
   {
-    recImg:'S__36175877.jpg', recName:'Jun P.', recRole:'ML Engineer · DS Team',
+    recImg:'1.jpg', recName:'NAMSOM', recRole:'People Engagement · DS Team',
     sndImg:'https://i.pravatar.cc/40?img=47', sndName:'Nok S.',
     msg:'ขอบคุณจุนมากเลยนะคะ 🙏 ช่วยเหลือทีมเสมอเลย', en:'(Thanks Jun!)',
     tag:'ขอบคุณ 🙏', time:'เมื่อวาน', react:'🩷 8',
@@ -4226,7 +4599,7 @@ var empPosts = [
     ]
   },
   {
-    recImg:'S__36175879.jpg', recName:'ทีม DS 🏆', recRole:'Data Science Department',
+    recImg:'2.jpg', recName:'WUT', recRole:'Data Science Department',
     sndImg:'https://i.pravatar.cc/40?img=48', sndName:'Pam W.',
     msg:'ทีม DS เก่งมากๆ ประทับใจทุกคนเลยค่ะ 💪 ขอบคุณทุกคนนะคะ', en:'(Amazing Team!)',
     tag:'สู้ๆ 💪', time:'3 วันก่อน', react:'❤️ 20 · 🌟 6',
@@ -4234,7 +4607,7 @@ var empPosts = [
       {img:'https://i.pravatar.cc/40?img=8', name:'Somsak P.', text:'ขอบคุณ Pam มากเลยค่ะ 😊', time:'3 วันก่อน'},
       {img:'https://i.pravatar.cc/40?img=47', name:'Nok S.', text:'ทีมเราเก่งด้วยกันทุกคนค่ะ 💪', time:'3 วันก่อน'},
       {img:'https://i.pravatar.cc/40?img=12', name:'Ton K.', text:'สู้ๆ ครับทุกคน!', time:'2 วันก่อน'},
-      {img:'https://i.pravatar.cc/40?img=44', name:'Jun P.', text:'ประทับใจทีมมากเลยค่ะ 🌸', time:'2 วันก่อน'},
+      {img:'https://i.pravatar.cc/40?img=44', name:'NAMSOM', text:'ประทับใจทีมมากเลยค่ะ 🌸', time:'2 วันก่อน'},
       {img:'https://i.pravatar.cc/40?img=20', name:'Kai M.', text:'ขอบคุณ Pam ที่ชื่นชมทีมนะคะ ❤️', time:'1 วันก่อน'}
     ]
   }
@@ -4254,15 +4627,8 @@ function openEmpDetail(idx) {
   document.getElementById('emp-detail-av').innerHTML = '<img src="'+p.recImg+'" style="width:100%;height:auto;display:block;">';
   document.getElementById('emp-detail-name').textContent = p.recName;
   document.getElementById('emp-detail-role').textContent = p.recRole;
-  document.getElementById('emp-detail-tag').textContent = p.tag;
-  document.getElementById('emp-detail-react').textContent = p.react;
-  document.getElementById('emp-detail-cm-count').textContent = '💬 ' + p.comments.length;
-  document.getElementById('emp-detail-sender-row').innerHTML =
-    '<div style="width:22px;height:22px;border-radius:8px;overflow:hidden;flex-shrink:0;border:2px solid white;box-shadow:0 1px 4px rgba(236,72,153,0.18);">' +
-    '<img src="'+p.sndImg+'" style="width:100%;height:100%;object-fit:cover;display:block;"></div>' +
-    '<span style="font-size:10px;color:#B45FC7;font-weight:700;">💌 จาก '+p.sndName+' · '+p.time+'</span>';
-  document.getElementById('emp-detail-msg').textContent = p.msg;
-  document.getElementById('emp-detail-en').textContent = p.en;
+  document.getElementById('emp-detail-react-pill').textContent = p.react;
+  document.getElementById('emp-detail-cm-pill').textContent = '💬 ' + p.comments.length;
   var likeBtn = document.getElementById('emp-detail-like-btn');
   likeBtn.classList.remove('liked'); likeBtn.style.color = '';
   // render comments
@@ -4302,7 +4668,7 @@ function sendEmpComment() {
   input.value = '';
   list.scrollTop = list.scrollHeight;
   empPosts[_empCurrentPost].comments.push({av:'😊',grad:'linear-gradient(135deg,#C7D2FE,#818CF8)',name:'คุณ',text:text,time:'เมื่อกี้'});
-  document.getElementById('emp-detail-cm-count').textContent = '💬 ' + empPosts[_empCurrentPost].comments.length;
+  document.getElementById('emp-detail-cm-pill').textContent = '💬 ' + empPosts[_empCurrentPost].comments.length;
 }
 function openMonthModal(monthNum) {
   var monthColors = {
@@ -4320,18 +4686,18 @@ function openMonthModal(monthNum) {
     12: {grad:'linear-gradient(135deg,#FFE4E6,#EF4444)',    icon:'🎄', light:'#FFE4E6', dark:'#9F1239'}
   };
   var monthData = {
-    1:  {title:'มกราคม 🎆',    sub:['🎉 New Year Party','🌟 ปฐมนิเทศใหม่'],            body:'ยินดีต้อนรับปีใหม่! กิจกรรมเฉลิมฉลองและต้อนรับสมาชิกใหม่ขององค์กร พร้อมงาน Kick-Off เป้าหมายปีใหม่ร่วมกัน'},
-    2:  {title:'กุมภาพันธ์ 💕', sub:['💝 Valentine\'s Day','🏥 Health Check'],          body:'เดือนแห่งความรัก จัดกิจกรรมส่งความสุขให้กัน พร้อมตรวจสุขภาพประจำปีสำหรับพนักงานทุกคน'},
-    3:  {title:'มีนาคม 🌸',    sub:['🏛️ Town Hall','🛠️ Skill Workshop'],              body:'ประชุม Town Hall รับฟังนโยบายและทิศทางองค์กร พร้อม Workshop พัฒนาทักษะที่จำเป็นสำหรับทีม DS'},
-    4:  {title:'เมษายน 🎊',    sub:['💧 สงกรานต์','🎂 Birthday Month'],               body:'สุขสันต์วันสงกรานต์! ฉลองปีใหม่ไทยและวันเกิดพนักงานประจำเดือนเมษายน'},
-    5:  {title:'พฤษภาคม ☀️',  sub:['💼 Labor Day','🧘 Yoga Session'],                 body:'วันแรงงานสากล ฉลองพร้อมกิจกรรม Yoga เพื่อสุขภาพ และ Team Lunch สำหรับทีมงาน'},
-    6:  {title:'มิถุนายน 🏕️',  sub:['🚌 Company Outing','🎤 Leadership Talk'],        body:'ทริปสัมพันธ์ทีมงานนอกสถานที่ พร้อม Leadership Talk จากผู้บริหาร และ Team Building Activities'},
-    7:  {title:'กรกฎาคม 🌿',   sub:['🤝 Volunteer Day','🎂 Birthday Month'],          body:'กิจกรรมจิตอาสาสร้างสังคมที่ดี และฉลองวันเกิดพนักงานเดือนกรกฎาคมพร้อมกัน'},
-    8:  {title:'สิงหาคม 💐',   sub:['👩 วันแม่','💻 Digital Skills'],                 body:'ร่วมแสดงความรักแด่คุณแม่ พร้อมอบรม Digital Skills สำหรับยุคใหม่ และ AI Tools สำหรับงาน DS'},
-    9:  {title:'กันยายน ⚡',   sub:['🚀 Hackathon','💊 Health Week'],                  body:'แข่งขัน Hackathon ภายในองค์กร ปลดปล่อยความคิดสร้างสรรค์ และสัปดาห์สุขภาพจิตดีร่วมกัน'},
-    10: {title:'ตุลาคม 🎃',    sub:['🎃 Halloween Party','🏮 ลอยกระทง'],             body:'ปาร์ตี้ฮาโลวีนสุดหลอน แต่งชุดแฟนซีมาสนุกด้วยกัน และลอยกระทงตามประเพณีไทย'},
-    11: {title:'พฤศจิกายน 🍂', sub:['❤️ วันพ่อ','📊 Year-End Prep'],                 body:'ร่วมแสดงความกตัญญูแด่คุณพ่อ และเตรียมความพร้อมสำหรับงานปิดปีขององค์กร'},
-    12: {title:'ธันวาคม 🎄',   sub:['🎄 Christmas','🥳 New Year Party'],              body:'เฉลิมฉลองคริสต์มาสและปีใหม่ พร้อมงานปาร์ตี้ส่งท้ายปีสุดยิ่งใหญ่ขององค์กร DS'}
+    1:  {title:'January 🎆',    sub:['🎉 New Year Party','🌟 ปฐมนิเทศใหม่'],            body:'ยินดีต้อนรับปีใหม่! กิจกรรมเฉลิมฉลองและต้อนรับสมาชิกใหม่ขององค์กร พร้อมงาน Kick-Off เป้าหมายปีใหม่ร่วมกัน'},
+    2:  {title:'February 💕', sub:['💝 Valentine\'s Day','🏥 Health Check'],          body:'เดือนแห่งความรัก จัดกิจกรรมส่งความสุขให้กัน พร้อมตรวจสุขภาพประจำปีสำหรับพนักงานทุกคน'},
+    3:  {title:'March 🌸',    sub:['🏛️ Town Hall','🛠️ Skill Workshop'],              body:'ประชุม Town Hall รับฟังนโยบายและทิศทางองค์กร พร้อม Workshop พัฒนาทักษะที่จำเป็นสำหรับทีม DS'},
+    4:  {title:'April 🎊',    sub:['💧 สงกรานต์','🎂 Birthday Month'],               body:'สุขสันต์วันสงกรานต์! ฉลองปีใหม่ไทยและวันเกิดพนักงานประจำเดือนApril'},
+    5:  {title:'May ☀️',  sub:['💼 Labor Day','🧘 Yoga Session'],                 body:'วันแรงงานสากล ฉลองพร้อมกิจกรรม Yoga เพื่อสุขภาพ และ Team Lunch สำหรับทีมงาน'},
+    6:  {title:'June 🏕️',  sub:['🚌 Company Outing','🎤 Leadership Talk'],        body:'ทริปสัมพันธ์ทีมงานนอกสถานที่ พร้อม Leadership Talk จากผู้บริหาร และ Team Building Activities'},
+    7:  {title:'July 🌿',   sub:['🤝 Volunteer Day','🎂 Birthday Month'],          body:'กิจกรรมจิตอาสาสร้างสังคมที่ดี และฉลองวันเกิดพนักงานเดือนJulyพร้อมกัน'},
+    8:  {title:'August 💐',   sub:['👩 วันแม่','💻 Digital Skills'],                 body:'ร่วมแสดงความรักแด่คุณแม่ พร้อมอบรม Digital Skills สำหรับยุคใหม่ และ AI Tools สำหรับงาน DS'},
+    9:  {title:'September ⚡',   sub:['🚀 Hackathon','💊 Health Week'],                  body:'แข่งขัน Hackathon ภายในองค์กร ปลดปล่อยความคิดสร้างสรรค์ และสัปดาห์สุขภาพจิตดีร่วมกัน'},
+    10: {title:'October 🎃',    sub:['🎃 Halloween Party','🏮 ลอยกระทง'],             body:'ปาร์ตี้ฮาโลวีนสุดหลอน แต่งชุดแฟนซีมาสนุกด้วยกัน และลอยกระทงตามประเพณีไทย'},
+    11: {title:'November 🍂', sub:['❤️ วันพ่อ','📊 Year-End Prep'],                 body:'ร่วมแสดงความกตัญญูแด่คุณพ่อ และเตรียมความพร้อมสำหรับงานปิดปีขององค์กร'},
+    12: {title:'December 🎄',   sub:['🎄 Christmas','🥳 New Year Party'],              body:'เฉลิมฉลองคริสต์มาสและปีใหม่ พร้อมงานปาร์ตี้ส่งท้ายปีสุดยิ่งใหญ่ขององค์กร DS'}
   };
   var d = monthData[monthNum];
   var c = monthColors[monthNum];
