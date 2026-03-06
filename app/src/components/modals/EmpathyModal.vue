@@ -1,132 +1,182 @@
 <template>
   <BaseModal modal-id="modal-emp">
-    <div class="modal-handle" style="flex-shrink:0;"></div>
+    <div class="modal-handle flex-shrink-0"></div>
 
     <!-- Header -->
-    <div style="flex-shrink:0;background:linear-gradient(135deg,#FDF2F8,#F5F0FF);padding:14px 20px 12px;border-bottom:1.5px solid rgba(236,72,153,0.12);display:flex;align-items:center;gap:10px;">
-      <div v-if="view !== 'grid'" @click="goBack" style="display:flex;width:30px;height:30px;border-radius:50%;background:rgba(236,72,153,0.1);cursor:pointer;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">←</div>
-      <div style="flex:1;text-align:center;">
-        <div style="font-size:16px;font-weight:900;background:linear-gradient(135deg,#BE185D,#7C3AED);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">{{ headerTitle }}</div>
+    <div class="flex-shrink-0 bg-[linear-gradient(135deg,#FDF2F8,#F5F0FF)] px-5 py-3.5 border-b border-pink/[0.12] flex items-center gap-2.5">
+      <div
+        v-if="view !== 'grid'"
+        @click="goBack"
+        class="flex w-[30px] h-[30px] rounded-full bg-pink/10 cursor-pointer items-center justify-center text-[14px] flex-shrink-0"
+      >←</div>
+      <div class="flex-1 text-center">
+        <div class="text-[16px] font-black bg-[linear-gradient(135deg,#BE185D,#7C3AED)] bg-clip-text text-transparent">{{ headerTitle }}</div>
       </div>
     </div>
 
     <!-- Grid view -->
-    <div v-if="view === 'grid'" style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px;">
-      <input v-model="searchQ" placeholder="🔍 ค้นหาชื่อหรือตำแหน่ง..." style="width:100%;border:1.5px solid rgba(236,72,153,0.2);border-radius:12px;padding:9px 14px;font-family:'Sarabun',sans-serif;font-size:13px;color:#6B21A8;background:#FFF5FB;outline:none;box-sizing:border-box;" />
-      <div style="font-size:11px;font-weight:800;color:#C084C0;letter-spacing:1px;text-transform:uppercase;">👥 เลือกคนที่จะชื่นชม</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+    <div v-if="view === 'grid'" class="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-2.5">
+      <input
+        v-model="searchQ"
+        placeholder="🔍 ค้นหาชื่อหรือตำแหน่ง..."
+        class="w-full border-[1.5px] border-pink/20 rounded-xl px-3.5 py-[9px] text-[13px] text-[#6B21A8] bg-[#FFF5FB] outline-none"
+      />
+      <div class="text-[11px] font-extrabold text-[#C084C0] tracking-[1px] uppercase">👥 เลือกคนที่จะชื่นชม</div>
+      <div class="grid grid-cols-3 gap-2.5">
         <div
           v-for="(m, i) in filteredTeam"
           :key="m.id || m.name"
-          style="border-radius:16px;overflow:hidden;cursor:pointer;border:2.5px solid rgba(236,72,153,0.15);transition:all 0.2s;background:#fff;position:relative;"
+          class="rounded-2xl overflow-hidden cursor-pointer border-[2.5px] border-pink/15 transition-all duration-200 bg-white relative"
           @click="selectPerson(m)"
         >
-          <div :style="{ background: m.grad, overflow:'hidden', position:'relative' }">
-            <img v-if="m.img" :src="m.img" style="width:100%;height:auto;display:block;object-fit:cover;object-position:top center;" @error="e => e.target.style.display='none'" />
-            <div v-else style="width:100%;aspect-ratio:3/4;min-height:80px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:white;">{{ initials(m.name) }}</div>
+          <div :style="{ background: m.grad }" class="overflow-hidden relative">
+            <img v-if="m.img" :src="m.img" class="w-full block object-cover object-top" @error="e => e.target.style.display='none'" />
+            <div v-else class="w-full aspect-[3/4] min-h-[80px] flex items-center justify-center text-[28px] font-black text-white">{{ initials(m.name) }}</div>
           </div>
-          <div style="padding:6px 6px 8px;text-align:center;">
-            <div style="font-size:11px;font-weight:900;color:#7C2D8C;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ m.name }}</div>
-            <div style="font-size:9px;color:#C084C0;font-weight:600;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ m.role }}</div>
+          <div class="px-1.5 pt-1.5 pb-2 text-center">
+            <div class="text-[11px] font-black text-[#7C2D8C] overflow-hidden text-ellipsis whitespace-nowrap">{{ m.name }}</div>
+            <div class="text-[9px] text-[#C084C0] font-semibold mt-px overflow-hidden text-ellipsis whitespace-nowrap">{{ m.role }}</div>
           </div>
         </div>
         <!-- Add person card -->
         <div
-          style="border-radius:16px;overflow:hidden;cursor:pointer;border:2px dashed rgba(236,72,153,0.3);background:linear-gradient(135deg,#FFF5FB,#F5F0FF);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:110px;gap:4px;"
+          class="rounded-2xl overflow-hidden cursor-pointer border-2 border-dashed border-pink/30 bg-[linear-gradient(135deg,#FFF5FB,#F5F0FF)] flex flex-col items-center justify-center min-h-[110px] gap-1"
           @click="view = 'add'"
         >
-          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#EC4899,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:20px;color:white;">+</div>
-          <div style="font-size:10px;font-weight:800;color:#BE185D;text-align:center;padding:0 6px;">เพิ่มคนใหม่</div>
+          <div class="w-9 h-9 rounded-full bg-[linear-gradient(135deg,#EC4899,#7C3AED)] flex items-center justify-center text-[20px] text-white">+</div>
+          <div class="text-[10px] font-extrabold text-[#BE185D] text-center px-1.5">เพิ่มคนใหม่</div>
         </div>
       </div>
     </div>
 
     <!-- Comment view (existing kudos) -->
     <template v-else-if="view === 'comment' && selectedMember">
-      <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;">
-        <div class="emp-card-spotlight" style="flex-shrink:0;height:auto;">
-          <img v-if="selectedMember.img" :src="selectedMember.img" style="width:100%;display:block;object-fit:cover;object-position:top center;" />
-          <div v-else :style="{ width:'100%',height:'180px',background:selectedMember.grad,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'64px' }">{{ initials(selectedMember.name) }}</div>
+      <div class="flex-1 overflow-y-auto flex flex-col">
+        <div class="emp-card-spotlight flex-shrink-0 h-auto">
+          <img v-if="selectedMember.img" :src="selectedMember.img" class="w-full block object-cover object-top" />
+          <div v-else :style="{ background: selectedMember.grad }" class="w-full h-[180px] flex items-center justify-center text-[64px]">{{ initials(selectedMember.name) }}</div>
           <div class="emp-spotlight-name">
-            <div style="font-size:14px;font-weight:900;color:white;text-shadow:0 1px 8px rgba(0,0,0,0.5);">{{ selectedMember.name }}</div>
-            <div style="font-size:10px;color:rgba(255,255,255,0.88);font-weight:600;margin-top:2px;">{{ selectedMember.role }}</div>
+            <div class="text-[14px] font-black text-white" style="text-shadow:0 1px 8px rgba(0,0,0,0.5);">{{ selectedMember.name }}</div>
+            <div class="text-[10px] text-white/88 font-semibold mt-0.5">{{ selectedMember.role }}</div>
           </div>
         </div>
-        <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;background:linear-gradient(160deg,#FFF9FD,#F8F5FF);flex:1;">
-          <div style="font-size:11px;font-weight:800;color:#C084C0;letter-spacing:1px;margin-bottom:4px;">💌 คำชื่นชม</div>
-          <div v-if="existingPost" style="background:linear-gradient(135deg,#FFF0FB,#F5F0FF);border:1px solid rgba(236,72,153,0.15);border-radius:14px;padding:10px 14px;font-size:12px;color:#6B21A8;line-height:1.6;">{{ existingPost.msg }}</div>
-          <div v-for="c in existingPost?.comments" :key="c.id" style="background:white;border:1px solid rgba(236,72,153,0.12);border-radius:12px;padding:8px 12px;">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-              <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#FBCFE8,#EC4899);display:flex;align-items:center;justify-content:center;font-size:10px;color:white;font-weight:800;flex-shrink:0;">{{ c.name?.[0] }}</div>
-              <span style="font-size:11px;font-weight:800;color:#BE185D;">{{ c.name }}</span>
-              <span style="font-size:10px;color:#C084C0;margin-left:auto;">{{ c.time }}</span>
+        <div class="px-4 py-3 flex flex-col gap-2 bg-[linear-gradient(160deg,#FFF9FD,#F8F5FF)] flex-1">
+          <div class="text-[11px] font-extrabold text-[#C084C0] tracking-[1px] mb-1">💌 คำชื่นชม</div>
+          <div v-if="existingPost" class="bg-[linear-gradient(135deg,#FFF0FB,#F5F0FF)] border border-pink/15 rounded-[14px] px-3.5 py-2.5 text-[12px] text-[#6B21A8] leading-relaxed">{{ existingPost.msg }}</div>
+          <div v-for="c in existingPost?.comments" :key="c.id" class="bg-white border border-pink/[0.12] rounded-xl px-3 py-2">
+            <div class="flex items-center gap-1.5 mb-1">
+              <div class="w-[22px] h-[22px] rounded-full bg-[linear-gradient(135deg,#FBCFE8,#EC4899)] flex items-center justify-center text-[10px] text-white font-extrabold flex-shrink-0">{{ c.name?.[0] }}</div>
+              <span class="text-[11px] font-extrabold text-[#BE185D]">{{ c.name }}</span>
+              <span class="text-[10px] text-[#C084C0] ml-auto">{{ c.time }}</span>
             </div>
-            <div style="font-size:12px;color:#4C1D95;line-height:1.6;">{{ c.text }}</div>
+            <div class="text-[12px] text-[#4C1D95] leading-relaxed">{{ c.text }}</div>
           </div>
-          <div v-if="!existingPost?.comments?.length && !existingPost" style="text-align:center;color:#C084C0;font-size:12px;padding:16px;">ยังไม่มีความคิดเห็น 💭</div>
+          <div v-if="!existingPost?.comments?.length && !existingPost" class="text-center text-[#C084C0] text-[12px] py-4">ยังไม่มีความคิดเห็น 💭</div>
         </div>
       </div>
       <!-- Comment input -->
-      <div style="flex-shrink:0;border-top:1px solid rgba(236,72,153,0.1);background:white;padding:10px 16px;display:flex;flex-direction:column;gap:8px;">
-        <div style="display:flex;gap:8px;align-items:flex-end;">
-          <textarea v-model="commentText" placeholder="เพิ่มความคิดเห็น... 💬" rows="2" style="flex:1;border:1.5px solid rgba(236,72,153,0.25);border-radius:12px;padding:10px 12px;font-family:'Sarabun',sans-serif;font-size:13px;color:#6B21A8;background:#FFF5FB;resize:none;outline:none;box-sizing:border-box;line-height:1.6;"></textarea>
-          <button @click="submitComment" style="background:linear-gradient(135deg,#EC4899,#7C3AED);color:#fff;border:none;border-radius:12px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;flex-shrink:0;">ส่ง 💝</button>
+      <div class="flex-shrink-0 border-t border-pink/10 bg-white px-4 py-2.5 flex flex-col gap-2">
+        <div class="flex gap-2 items-end">
+          <textarea
+            v-model="commentText"
+            placeholder="เพิ่มความคิดเห็น... 💬"
+            rows="2"
+            class="flex-1 border-[1.5px] border-pink/25 rounded-xl px-3 py-2.5 text-[13px] text-[#6B21A8] bg-[#FFF5FB] resize-none outline-none leading-relaxed"
+          ></textarea>
+          <button
+            @click="submitComment"
+            class="bg-[linear-gradient(135deg,#EC4899,#7C3AED)] text-white border-none rounded-xl px-4 py-2.5 text-[13px] font-extrabold cursor-pointer flex-shrink-0"
+          >ส่ง 💝</button>
         </div>
-        <button @click="view = 'grid'" style="background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.25);border-radius:12px;padding:8px;font-size:12px;font-weight:700;color:#BE185D;cursor:pointer;width:100%;">👥 เลือกคนอื่น</button>
+        <button
+          @click="view = 'grid'"
+          class="bg-pink/[0.08] border border-pink/25 rounded-xl py-2 text-[12px] font-bold text-[#BE185D] cursor-pointer w-full"
+        >👥 เลือกคนอื่น</button>
       </div>
     </template>
 
     <!-- New kudos view -->
     <template v-else-if="view === 'new' && selectedMember">
-      <div style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
-        <div class="emp-card-spotlight" style="border-radius:16px;height:auto;flex-shrink:0;overflow:hidden;">
-          <img v-if="selectedMember.img" :src="selectedMember.img" style="width:100%;display:block;object-fit:cover;object-position:top center;" />
-          <div v-else :style="{ width:'100%',height:'160px',background:selectedMember.grad,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'48px' }">{{ initials(selectedMember.name) }}</div>
+      <div class="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
+        <div class="emp-card-spotlight rounded-2xl h-auto flex-shrink-0 overflow-hidden">
+          <img v-if="selectedMember.img" :src="selectedMember.img" class="w-full block object-cover object-top" />
+          <div v-else :style="{ background: selectedMember.grad }" class="w-full h-[160px] flex items-center justify-center text-[48px]">{{ initials(selectedMember.name) }}</div>
           <div class="emp-spotlight-name">
-            <div style="font-size:14px;font-weight:900;color:white;">{{ selectedMember.name }}</div>
+            <div class="text-[14px] font-black text-white">{{ selectedMember.name }}</div>
           </div>
         </div>
 
         <div>
-          <div style="font-size:11px;font-weight:800;color:#C084C0;letter-spacing:1px;margin-bottom:8px;">🏷️ แท็ก</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button v-for="tag in tags" :key="tag" class="wish-chip" :class="{ active: selectedTag === tag }" @click="selectedTag = tag">{{ tag }}</button>
+          <div class="text-[11px] font-extrabold text-[#C084C0] tracking-[1px] mb-2">🏷️ แท็ก</div>
+          <div class="flex gap-2 flex-wrap">
+            <button
+              v-for="tag in tags"
+              :key="tag"
+              class="wish-chip"
+              :class="{ selected: selectedTag === tag }"
+              @click="selectedTag = tag"
+            >{{ tag }}</button>
           </div>
         </div>
 
         <div>
-          <div style="font-size:11px;font-weight:800;color:#C084C0;letter-spacing:1px;margin-bottom:8px;">✍️ ข้อความชื่นชม</div>
-          <textarea v-model="kudosMsg" placeholder="พิมพ์ข้อความชื่นชมจากใจ... 💕" rows="3" maxlength="500" style="width:100%;border:1.5px solid rgba(236,72,153,0.2);border-radius:14px;padding:12px 14px;font-family:'Sarabun',sans-serif;font-size:13px;color:#6B21A8;background:#FFF5FB;resize:none;outline:none;box-sizing:border-box;line-height:1.6;"></textarea>
+          <div class="text-[11px] font-extrabold text-[#C084C0] tracking-[1px] mb-2">✍️ ข้อความชื่นชม</div>
+          <textarea
+            v-model="kudosMsg"
+            placeholder="พิมพ์ข้อความชื่นชมจากใจ... 💕"
+            rows="3"
+            maxlength="500"
+            class="w-full border-[1.5px] border-pink/20 rounded-[14px] px-3.5 py-3 text-[13px] text-[#6B21A8] bg-[#FFF5FB] resize-none outline-none leading-relaxed"
+          ></textarea>
         </div>
 
-        <div style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:1px solid #FCD34D;border-radius:12px;padding:10px 14px;">
-          <span style="font-size:16px;">🌟</span>
-          <div style="font-size:11px;font-weight:700;color:#92400E;">ส่ง Empathy 1 ครั้ง = <strong>+10 LINE pts</strong></div>
+        <div class="flex items-center gap-2 bg-[linear-gradient(135deg,#FFFBEB,#FEF3C7)] border border-[#FCD34D] rounded-xl px-3.5 py-2.5">
+          <span class="text-[16px]">🌟</span>
+          <div class="text-[11px] font-bold text-[#92400E]">ส่ง Empathy 1 ครั้ง = <strong>+10 LINE pts</strong></div>
         </div>
       </div>
 
-      <div style="flex-shrink:0;border-top:1px solid rgba(236,72,153,0.1);background:white;padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
-        <button @click="submitKudos" class="modal-close-btn" style="background:linear-gradient(135deg,#EC4899,#7C3AED);margin:0;">ส่งคำชื่นชม 💝</button>
-        <button @click="view = 'grid'" style="background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.25);border-radius:12px;padding:8px;font-size:12px;font-weight:700;color:#BE185D;cursor:pointer;width:100%;">👥 เลือกคนอื่น</button>
+      <div class="flex-shrink-0 border-t border-pink/10 bg-white px-4 py-3 flex flex-col gap-2">
+        <button @click="submitKudos" class="modal-close-btn" style="background:linear-gradient(135deg,#EC4899,#7C3AED);">ส่งคำชื่นชม 💝</button>
+        <button
+          @click="view = 'grid'"
+          class="bg-pink/[0.08] border border-pink/25 rounded-xl py-2 text-[12px] font-bold text-[#BE185D] cursor-pointer w-full"
+        >👥 เลือกคนอื่น</button>
       </div>
     </template>
 
     <!-- Add person view -->
     <template v-else-if="view === 'add'">
-      <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;">
-        <input v-model="dirSearch" @input="filterDir" placeholder="พิมพ์รหัสหรือชื่อพนักงาน..." style="width:100%;border:1.5px solid rgba(236,72,153,0.25);border-radius:12px;padding:10px 14px;font-family:'Sarabun',sans-serif;font-size:13px;color:#6B21A8;background:#FFF5FB;outline:none;box-sizing:border-box;" />
-        <div v-if="dirResults.length" style="border:1.5px solid rgba(236,72,153,0.2);border-radius:12px;overflow:hidden;background:white;box-shadow:0 8px 24px rgba(236,72,153,0.12);">
-          <div v-for="e in dirResults" :key="e.id" @click="pickFromDir(e)" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid rgba(236,72,153,0.08);" @mouseover="$event.target.closest('div').style.background='#FFF0FB'" @mouseout="$event.target.closest('div').style.background=''">
-            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FBCFE8,#EC4899);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:white;flex-shrink:0;">{{ e.name?.[0] }}</div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:12px;font-weight:800;color:#7C2D8C;">{{ e.name }}</div>
-              <div style="font-size:10px;color:#C084C0;font-weight:600;">{{ e.id }} · {{ e.role }}</div>
+      <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-3.5">
+        <input
+          v-model="dirSearch"
+          @input="filterDir"
+          placeholder="พิมพ์รหัสหรือชื่อพนักงาน..."
+          class="w-full border-[1.5px] border-pink/25 rounded-xl px-3.5 py-2.5 text-[13px] text-[#6B21A8] bg-[#FFF5FB] outline-none"
+        />
+        <div v-if="dirResults.length" class="border-[1.5px] border-pink/20 rounded-xl overflow-hidden bg-white shadow-[0_8px_24px_rgba(236,72,153,0.12)]">
+          <div
+            v-for="e in dirResults"
+            :key="e.id"
+            @click="pickFromDir(e)"
+            class="flex items-center gap-2.5 px-3.5 py-2.5 cursor-pointer border-b border-pink/[0.08] last:border-0 hover:bg-[#FFF0FB] transition-colors duration-150"
+          >
+            <div class="w-9 h-9 rounded-full bg-[linear-gradient(135deg,#FBCFE8,#EC4899)] flex items-center justify-center text-[13px] font-black text-white flex-shrink-0">{{ e.name?.[0] }}</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-[12px] font-extrabold text-[#7C2D8C]">{{ e.name }}</div>
+              <div class="text-[10px] text-[#C084C0] font-semibold">{{ e.id }} · {{ e.role }}</div>
             </div>
           </div>
         </div>
-        <div style="display:flex;gap:8px;margin-top:auto;">
-          <button @click="view = 'grid'" style="flex:1;background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.25);border-radius:12px;padding:11px;font-size:13px;font-weight:700;color:#BE185D;cursor:pointer;">ยกเลิก</button>
-          <button @click="addAndPraise" style="flex:2;background:linear-gradient(135deg,#EC4899,#7C3AED);color:#fff;border:none;border-radius:12px;padding:11px;font-size:13px;font-weight:900;cursor:pointer;">เพิ่มและชื่นชม ✨</button>
+        <div class="flex gap-2 mt-auto">
+          <button
+            @click="view = 'grid'"
+            class="flex-1 bg-pink/[0.08] border border-pink/25 rounded-xl py-[11px] text-[13px] font-bold text-[#BE185D] cursor-pointer"
+          >ยกเลิก</button>
+          <button
+            @click="addAndPraise"
+            class="flex-[2] bg-[linear-gradient(135deg,#EC4899,#7C3AED)] text-white border-none rounded-xl py-[11px] text-[13px] font-black cursor-pointer"
+          >เพิ่มและชื่นชม ✨</button>
         </div>
       </div>
     </template>

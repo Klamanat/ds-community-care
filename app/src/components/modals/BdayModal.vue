@@ -1,49 +1,58 @@
 <template>
   <BaseModal modal-id="modal-bday">
-    <!-- Festive header -->
-    <div style="position:relative;overflow:hidden;flex-shrink:0;border-radius:24px 24px 0 0;background:linear-gradient(160deg,#FF6BC8 0%,#A855F7 45%,#3B82F6 100%);">
-      <div class="modal-handle" style="background:rgba(255,255,255,0.45);margin:14px auto 0;position:relative;z-index:5;"></div>
-      <div style="padding:16px 20px 20px;text-align:center;position:relative;z-index:1;">
-        <div style="font-size:48px;margin-bottom:6px;">🎂</div>
-        <div style="font-size:20px;font-weight:900;color:white;">Birthday Celebration</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:4px;">กดที่รูปเพื่ออวยพร ❤️</div>
+    <!-- Header -->
+    <div class="bg-[linear-gradient(160deg,#FF6BC8,#A855F7,#3B82F6)] px-5 pt-5 pb-4 rounded-t-2xl flex-shrink-0">
+      <div class="modal-handle" style="background:rgba(255,255,255,0.4);"></div>
+      <div class="text-center">
+        <div class="text-[36px] mb-1">🎂</div>
+        <div class="text-[20px] font-black text-white">Birthday Board</div>
+        <div class="text-[11px] text-white/85 mt-1">อวยพรเพื่อนร่วมงานวันเกิด 🎉</div>
       </div>
-
-      <!-- Tab -->
-      <div style="display:flex;gap:8px;padding:0 20px 16px;position:relative;z-index:1;">
-        <button class="bday-tab" :class="{ active: tab === 'board' }" @click="tab = 'board'">🎊 Birthday Board</button>
-        <button class="bday-tab" :class="{ active: tab === 'send' }" @click="tab = 'send'">💌 ส่งคำอวยพร</button>
+      <div class="flex gap-2 justify-center mt-3">
+        <button
+          v-for="t in ['board','send']"
+          :key="t"
+          class="px-5 py-1.5 rounded-full text-[12px] font-bold border transition-all duration-150"
+          :class="activeTab === t
+            ? 'bg-white text-[#7C3AED]'
+            : 'bg-white/20 text-white border-white/30'"
+          @click="activeTab = t; selectedPerson = null"
+        >{{ t === 'board' ? '🎊 Birthday Board' : '💌 ส่งคำอวยพร' }}</button>
       </div>
     </div>
 
-    <div class="modal-body-scroll" style="padding:16px 20px;">
-      <!-- Month tabs -->
-      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none;">
-        <button
-          v-for="m in monthBtns"
-          :key="m.idx"
-          class="month-tab"
-          :class="{ active: currentMonth === m.idx }"
-          @click="currentMonth = m.idx"
-          style="flex-shrink:0;"
-        >{{ m.label }}</button>
-      </div>
-
-      <!-- Employee photos grid -->
-      <div v-if="tab === 'board'">
-        <div v-if="!currentEmps.length" style="text-align:center;padding:32px;color:var(--light);">ไม่มีพนักงานเกิดเดือนนี้ค่ะ 🙁</div>
-        <div v-else style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+    <div class="modal-body-scroll">
+      <!-- Board tab -->
+      <div v-if="activeTab === 'board'" class="p-4">
+        <div class="flex gap-1.5 overflow-x-auto pb-3 scrollbar-hide">
+          <button
+            v-for="m in monthBtns"
+            :key="m.idx"
+            class="flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold
+                   border cursor-pointer transition-all duration-150 whitespace-nowrap"
+            :class="selectedMonth === m.idx
+              ? 'bg-pink text-white border-pink'
+              : 'border-app-border text-app-mid bg-white'"
+            @click="selectedMonth = m.idx"
+          >{{ m.label }}</button>
+        </div>
+        <div v-if="currentEmps.length === 0" class="text-center py-6 text-app-light text-[13px]">
+          ไม่มีพนักงานเกิดเดือนนี้ค่ะ 🙁
+        </div>
+        <div v-else class="grid grid-cols-3 gap-3">
           <div
             v-for="emp in currentEmps"
             :key="emp.key"
-            class="emp-photo-card"
-            @click="openPersonDetail(emp)"
+            class="rounded-xl p-2.5 text-center cursor-pointer border border-app-border bg-white hover:border-pink/40 transition-all duration-150"
+            @click="selectedPerson = emp; activeTab = 'send'"
           >
-            <div class="photo-circle-wrap" style="pointer-events:none;">
-              <img v-if="emp.photo" :src="emp.photo" style="width:100%;height:100%;object-fit:cover;" />
-              <div v-else class="photo-circle-fallback" :style="{ background: bday.getFallbackBg(emp.fallbackIdx) }">
-                {{ bday.getFallbackEmoji(emp.fallbackIdx) }}
-              </div>
+            <div class="w-16 h-16 rounded-full mx-auto mb-2 overflow-hidden">
+              <img v-if="emp.photo" :src="emp.photo" class="w-full h-full object-cover" />
+              <div
+                v-else
+                class="w-full h-full flex items-center justify-center text-[28px]"
+                :style="{ background: bday.getFallbackBg(emp.fallbackIdx) }"
+              >{{ bday.getFallbackEmoji(emp.fallbackIdx) }}</div>
             </div>
             <div class="epc-name">{{ emp.name }}</div>
             <div class="epc-date">🎂 {{ emp.date }}</div>
@@ -52,37 +61,82 @@
         </div>
       </div>
 
-      <!-- Selected person detail -->
-      <div v-if="selectedEmp">
-        <button @click="selectedEmp = null" style="background:rgba(168,85,247,0.1);border:1.5px solid rgba(168,85,247,0.2);border-radius:12px;padding:7px 14px;font-size:12px;font-weight:700;color:var(--mid);cursor:pointer;margin-bottom:12px;">← กลับ</button>
-
-        <div class="bday-banner">
-          <div class="bb-confetti">🎉🎊🎈</div>
-          <div class="bb-name">{{ selectedEmp.name }}</div>
-          <div class="bb-role">{{ selectedEmp.role }}</div>
-          <div class="bb-wish-count">❤️ {{ selectedEmp.wishes.length }} คำอวยพร</div>
-        </div>
-
-        <!-- Wishes -->
-        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
-          <div v-for="(w, i) in selectedEmp.wishes" :key="i" class="wish-item" :class="{ 'wi-new': i === 0 }">
-            <div class="wi-header">
-              <div class="wi-av" :style="{ background: bday.getSenderAvatar(w.avIdx).bg }">{{ bday.getSenderAvatar(w.avIdx).av }}</div>
-              <div class="wi-name">{{ w.from }}</div>
-              <div class="wi-time">{{ w.time }}</div>
+      <!-- Send tab -->
+      <div v-if="activeTab === 'send'" class="p-4">
+        <!-- Select person -->
+        <div v-if="!selectedPerson" class="mb-4">
+          <div class="text-[12px] font-bold text-app-dark mb-2">เลือกพนักงาน</div>
+          <div class="grid grid-cols-3 gap-2">
+            <div
+              v-for="emp in allBdayEmps"
+              :key="emp.key"
+              class="rounded-xl p-2 text-center cursor-pointer border-2 transition-all duration-150"
+              :class="selectedPerson?.key === emp.key ? 'border-pink bg-pink/5' : 'border-app-border'"
+              @click="selectedPerson = emp"
+            >
+              <div
+                class="w-12 h-12 rounded-full mx-auto mb-1 flex items-center justify-center text-[22px]"
+                :style="{ background: bday.getFallbackBg(emp.fallbackIdx) }"
+              >{{ bday.getFallbackEmoji(emp.fallbackIdx) }}</div>
+              <div class="text-[10px] font-bold text-app-dark truncate">{{ emp.name }}</div>
             </div>
-            <div style="font-size:12px;color:var(--mid);line-height:1.5;margin-top:4px;">{{ w.msg }}</div>
           </div>
         </div>
 
-        <!-- Send wish form -->
-        <div style="border-top:1px solid var(--border);padding-top:14px;">
-          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
-            <button v-for="chip in wishChips" :key="chip" class="wish-chip" :class="{ active: wishMsg === chip }" @click="wishMsg = chip">{{ chip }}</button>
+        <template v-if="selectedPerson">
+          <!-- Person banner -->
+          <div class="flex items-center gap-3 p-3 bg-[linear-gradient(135deg,#FFF0FB,#FCE7F3)]
+                      rounded-xl border border-pink/20 mb-4">
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center text-[24px] flex-shrink-0"
+              :style="{ background: bday.getFallbackBg(selectedPerson.fallbackIdx) }"
+            >{{ bday.getFallbackEmoji(selectedPerson.fallbackIdx) }}</div>
+            <div class="flex-1">
+              <div class="text-[14px] font-black text-app-dark">{{ selectedPerson.name }}</div>
+              <div class="text-[11px] text-app-light">🎂 {{ selectedPerson.date }}</div>
+            </div>
+            <button class="text-[20px] text-app-light cursor-pointer" @click="selectedPerson = null">✕</button>
           </div>
-          <textarea v-model="wishMsg" placeholder="หรือพิมพ์เอง..." rows="2" maxlength="500" style="width:100%;border:1.5px solid rgba(168,85,247,0.2);border-radius:12px;padding:10px;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--dark);background:var(--bg);resize:none;outline:none;box-sizing:border-box;margin-bottom:8px;"></textarea>
-          <button class="modal-close-btn" style="background:linear-gradient(135deg,#A855F7,#7C3AED);" @click="sendWish">ส่งคำอวยพร 🎊</button>
-        </div>
+
+          <div class="flex flex-wrap gap-1.5 mb-3">
+            <button
+              v-for="chip in wishChips"
+              :key="chip"
+              class="wish-chip"
+              :class="{ selected: selectedChip === chip }"
+              @click="selectedChip = chip; wishMsg = chip"
+            >{{ chip }}</button>
+          </div>
+
+          <textarea
+            v-model="wishMsg"
+            placeholder="หรือพิมพ์ข้อความเอง..."
+            rows="3"
+            maxlength="500"
+            class="w-full rounded-xl border-[1.5px] border-app-border p-3
+                   text-[13px] text-app-dark bg-app-bg resize-none outline-none mb-3"
+          ></textarea>
+
+          <button
+            class="modal-close-btn mb-2"
+            style="background:linear-gradient(135deg,#EC4899,#BE185D);"
+            @click="sendWish"
+          >ส่งคำอวยพร 💌</button>
+
+          <div v-if="selectedPerson.wishes.length" class="mt-3">
+            <div class="text-[11px] font-bold text-app-mid mb-2">❤️ คำอวยพรล่าสุด</div>
+            <div v-for="(w, i) in selectedPerson.wishes.slice(0,3)" :key="i" class="wi-row">
+              <div class="wi-av" :style="{ background: bday.getSenderAvatar(w.avIdx).bg }">
+                {{ bday.getSenderAvatar(w.avIdx).av }}
+              </div>
+              <div class="wi-body">
+                <div class="wi-name">{{ w.from }}</div>
+                <div class="wi-msg">{{ w.msg }}</div>
+                <div class="wi-time">{{ w.time }}</div>
+              </div>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
   </BaseModal>
@@ -96,30 +150,30 @@ import { useUiStore } from '../../stores/ui.js'
 
 const bday = useBirthdayStore()
 const ui = useUiStore()
-const tab = ref('board')
-const currentMonth = ref(new Date().getMonth())
-const selectedEmp = ref(null)
-const wishMsg = ref('')
 
-const wishChips = ['สุขสันต์วันเกิดนะคะ 🎂','ขอให้มีความสุขมากๆ 🌟','Happy Birthday! 🎉','ขอให้โชคดี 🍀']
+const activeTab = ref('board')
+const selectedMonth = ref(new Date().getMonth() + 1)
+const selectedPerson = ref(null)
+const wishMsg = ref('')
+const selectedChip = ref(null)
+
+const wishChips = ['สุขสันต์วันเกิดนะคะ 🎂','ขอให้มีความสุขมากๆ 🌟','Happy Birthday! 🎉','ขอให้โชคดีตลอดปี 🍀']
 
 const monthBtns = [
-  {idx:0,label:'ม.ค.'},{idx:1,label:'ก.พ.'},{idx:2,label:'มี.ค. 🎉'},
-  {idx:3,label:'เม.ย.'},{idx:4,label:'พ.ค.'},{idx:5,label:'มิ.ย.'},
-  {idx:6,label:'ก.ค.'},{idx:7,label:'ส.ค.'},{idx:8,label:'ก.ย.'},
-  {idx:9,label:'ต.ค.'},{idx:10,label:'พ.ย.'},{idx:11,label:'ธ.ค.'},
+  {idx:1,label:'ม.ค.'},{idx:2,label:'ก.พ.'},{idx:3,label:'มี.ค.'},
+  {idx:4,label:'เม.ย.'},{idx:5,label:'พ.ค.'},{idx:6,label:'มิ.ย.'},
+  {idx:7,label:'ก.ค.'},{idx:8,label:'ส.ค.'},{idx:9,label:'ก.ย.'},
+  {idx:10,label:'ต.ค.'},{idx:11,label:'พ.ย.'},{idx:12,label:'ธ.ค.'},
 ]
 
-const currentEmps = computed(() => bday.allEmployees[currentMonth.value] || [])
-
-function openPersonDetail(emp) {
-  selectedEmp.value = emp
-  wishMsg.value = ''
-}
+const currentEmps = computed(() => bday.allEmployees[selectedMonth.value - 1] || [])
+const allBdayEmps = computed(() => Object.values(bday.allEmployees).flat())
 
 function sendWish() {
-  if (!wishMsg.value.trim() || !selectedEmp.value) return
-  bday.sendWish(selectedEmp.value.key, wishMsg.value.trim(), ui.currentUser.name, 0)
+  if (!wishMsg.value.trim() || !selectedPerson.value) return
+  bday.sendWish(selectedPerson.value.key, wishMsg.value.trim(), ui.currentUser.name, 0)
+  ui.showToast('ส่งคำอวยพรแล้ว 🎉')
   wishMsg.value = ''
+  selectedChip.value = null
 }
 </script>

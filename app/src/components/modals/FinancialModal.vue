@@ -1,23 +1,25 @@
 <template>
   <BaseModal modal-id="modal-financial">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,#FEF3C7 0%,#F59E0B 50%,#D97706 100%);padding:20px 20px 18px;position:relative;overflow:hidden;border-radius:28px 28px 0 0;flex-shrink:0;">
-      <div class="modal-handle" style="background:rgba(255,255,255,0.45);margin-bottom:12px;"></div>
-      <div style="text-align:center;position:relative;z-index:1;">
-        <div style="font-size:38px;margin-bottom:4px;">💰</div>
-        <div style="font-size:20px;font-weight:800;color:white;text-shadow:0 2px 6px rgba(0,0,0,0.2);">Financial Consultation</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.9);margin-top:3px;">ปรึกษาผู้เชี่ยวชาญด้านการเงิน ✨</div>
+    <div class="px-5 pt-5 pb-4 rounded-t-2xl flex-shrink-0 relative overflow-hidden"
+         style="background:linear-gradient(135deg,#FEF3C7 0%,#F59E0B 50%,#D97706 100%);">
+      <div class="modal-handle"></div>
+      <div class="text-center relative z-10">
+        <div class="text-[38px] mb-1">💰</div>
+        <div class="text-[20px] font-extrabold text-white" style="text-shadow:0 2px 6px rgba(0,0,0,0.2);">Financial Consultation</div>
+        <div class="text-[11px] text-white/90 mt-1">ปรึกษาผู้เชี่ยวชาญด้านการเงิน ✨</div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,0.2);border-radius:30px;padding:8px 18px;margin-top:12px;border:1px solid rgba(255,255,255,0.35);">
-        <span style="font-size:13px;">🔒</span>
-        <span style="font-size:11px;font-weight:700;color:white;">Anonymous 100% · 5 เคส/ปี · Follow up 3 ครั้ง</span>
+      <div class="flex items-center justify-center gap-2 bg-white/20 rounded-full px-4 py-2 mt-3
+                  border border-white/35">
+        <span class="text-[13px]">🔒</span>
+        <span class="text-[11px] font-bold text-white">Anonymous 100% · 5 เคส/ปี · Follow up 3 ครั้ง</span>
       </div>
     </div>
 
-    <div v-if="!sent" class="modal-body-scroll" style="padding:16px;">
-      <div style="font-size:12px;font-weight:800;color:var(--mid);margin-bottom:12px;text-align:center;letter-spacing:0.5px;">📋 เลือกหัวข้อที่ต้องการปรึกษา</div>
+    <div v-if="!sent" class="modal-body-scroll p-4">
+      <div class="text-[12px] font-extrabold text-app-mid mb-3 text-center tracking-wide">📋 เลือกหัวข้อที่ต้องการปรึกษา</div>
 
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+      <div class="flex flex-col gap-2.5 mb-4">
         <div
           v-for="t in topics"
           :key="t.id"
@@ -35,22 +37,42 @@
       </div>
 
       <div v-if="selectedTopic">
-        <textarea v-model="finMsg" placeholder="อธิบายสถานการณ์คร่าวๆ ได้เลยค่ะ... ตัวตนของคุณจะถูกปกปิด 🔒" maxlength="500" style="width:100%;min-height:80px;border-radius:14px;border:1.5px solid var(--border);padding:12px;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--dark);background:var(--bg);resize:none;outline:none;line-height:1.6;box-sizing:border-box;margin-bottom:12px;"></textarea>
-        <button class="modal-close-btn" style="background:linear-gradient(135deg,#F59E0B,#D97706);" @click="sendRequest">ส่งคำขอปรึกษา 🔒</button>
-        <button @click="selectedTopic = null" style="width:100%;padding:10px;background:none;border:none;color:var(--light);font-size:12px;font-family:'Sarabun',sans-serif;cursor:pointer;margin-top:4px;">← เลือกหัวข้อใหม่</button>
+        <textarea
+          v-model="finMsg"
+          placeholder="อธิบายสถานการณ์คร่าวๆ ได้เลยค่ะ... ตัวตนของคุณจะถูกปกปิด 🔒"
+          maxlength="500"
+          class="w-full min-h-[80px] rounded-xl border-[1.5px] border-app-border p-3
+                 text-[13px] text-app-dark bg-app-bg resize-none outline-none leading-relaxed mb-3"
+        ></textarea>
+        <button
+          class="modal-close-btn mb-1"
+          style="background:linear-gradient(135deg,#F59E0B,#D97706);"
+          @click="sendRequest"
+        >ส่งคำขอปรึกษา 🔒</button>
+        <button
+          class="w-full py-2.5 bg-transparent border-none text-app-light text-[12px] cursor-pointer"
+          @click="selectedTopic = null"
+        >← เลือกหัวข้อใหม่</button>
       </div>
 
-      <div style="background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:1.5px solid #FCD34D;border-radius:14px;padding:12px;text-align:center;margin-top:8px;">
-        <div style="font-size:11px;color:#92400E;font-weight:700;line-height:1.7;">🔐 ข้อมูลของคุณถูกเก็บเป็นความลับ<br>มีเพียง Admin และที่ปรึกษาที่ได้รับมอบหมายเท่านั้นที่เห็น</div>
+      <div class="bg-[linear-gradient(135deg,#FFFBEB,#FEF3C7)] border-[1.5px] border-[#FCD34D]
+                  rounded-xl p-3 text-center mt-2">
+        <div class="text-[11px] text-[#92400E] font-bold leading-relaxed">
+          🔐 ข้อมูลของคุณถูกเก็บเป็นความลับ<br>มีเพียง Admin และที่ปรึกษาที่ได้รับมอบหมายเท่านั้นที่เห็น
+        </div>
       </div>
     </div>
 
-    <!-- Success state -->
-    <div v-else style="text-align:center;padding:32px 20px;">
-      <div style="font-size:60px;margin-bottom:14px;animation:prizePopIn 0.6s cubic-bezier(0.34,1.56,0.64,1);">📩</div>
-      <div style="font-size:17px;font-weight:900;color:var(--dark);margin-bottom:8px;">ส่งคำขอสำเร็จแล้วค่ะ!</div>
-      <div style="font-size:13px;color:var(--light);line-height:1.7;margin-bottom:20px;">ที่ปรึกษาจะติดต่อกลับภายใน 10 วันทำการ</div>
-      <button class="modal-close-btn" style="background:linear-gradient(135deg,#F59E0B,#D97706);" @click="reset">กลับหน้าหลัก 💛</button>
+    <!-- Success -->
+    <div v-else class="text-center p-8">
+      <div class="text-[60px] mb-4" style="animation:prizePopIn 0.6s cubic-bezier(0.34,1.56,0.64,1);">📩</div>
+      <div class="text-[17px] font-black text-app-dark mb-2">ส่งคำขอสำเร็จแล้วค่ะ!</div>
+      <div class="text-[13px] text-app-light leading-relaxed mb-5">ที่ปรึกษาจะติดต่อกลับภายใน 10 วันทำการ</div>
+      <button
+        class="modal-close-btn"
+        style="background:linear-gradient(135deg,#F59E0B,#D97706);"
+        @click="reset"
+      >กลับหน้าหลัก 💛</button>
     </div>
   </BaseModal>
 </template>
