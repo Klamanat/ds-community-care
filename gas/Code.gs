@@ -9,6 +9,8 @@ function doGet(e) {
     var handlers = {
       // Employees
       getEmployees:       function() { return getEmployees(e.parameter); },
+      addTeamMember:      function() { return addTeamMember(e.parameter); },
+      joinStarGang:       function() { return joinStarGang(e.parameter); },
 
       // Birthdays
       getBirthdays:       function() { return getBirthdays(e.parameter); },

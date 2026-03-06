@@ -1,59 +1,63 @@
 <template>
-  <div class="tab-page flex flex-col gap-5">
+  <div class="tab-page">
 
-    <!-- Birthday Banner -->
-    <BdayBanner
-      :label="bdayLabel"
-      :sub="bdaySub"
-      :placeholders="bdayPlaceholders"
-    />
-
-    <!-- Carousel shortcuts -->
-    <div class="grid grid-cols-4 gap-2">
-      <div
-        class="c-card ripple-host bg-[linear-gradient(135deg,#FF6CAB,#FF3CAC,#784BA0)]"
-        @click="router.push('/bday')"
-      >
-        <div class="c-emo">🎂</div>
-        <div class="c-lbl">Birthday</div>
+    <!-- Section 1: กิจกรรมและข่าวสาร -->
+    <div class="sec fade-in">
+      <div class="sec-hdr">
+        <span class="sec-title">🎊 กิจกรรมและข่าวสาร</span>
+        <span class="sec-more" @click="router.push('/bday')">ดูทั้งหมด</span>
       </div>
-      <div
-        class="c-card ripple-host bg-[linear-gradient(135deg,#FF6B00,#FF3CAC,#A855F7,#3B82F6)]"
-        @click="router.push('/culture')"
-      >
-        <div class="c-emo">🔥</div>
-        <div class="c-lbl">FIRE Culture</div>
-      </div>
-      <div
-        class="c-card ripple-host bg-[linear-gradient(135deg,#FFD6DC,#FF8FA3,#FF4D6D)]"
-        @click="ui.showToast('Training — เร็วๆนี้ 🚀')"
-      >
-        <div class="c-emo">📚</div>
-        <div class="c-lbl">Training</div>
-      </div>
-      <div
-        class="c-card ripple-host bg-[linear-gradient(135deg,#06C755,#00A040)]"
-        @click="ui.showToast('DS Reward — เร็วๆนี้ 🚀')"
-      >
-        <div class="c-emo">⭐</div>
-        <div class="c-lbl">DS Reward</div>
+      <BdayBanner
+        :label="bdayLabel"
+        :sub="bdaySub"
+        :placeholders="bdayPlaceholders"
+      />
+      <div class="grid grid-cols-4 gap-2 mt-3">
+        <div
+          class="c-card ripple-host bg-[linear-gradient(135deg,#FF6CAB,#FF3CAC,#784BA0)]"
+          @click="router.push('/bday')"
+        >
+          <div class="c-emo">🎂</div>
+          <div class="c-lbl">Birthday</div>
+        </div>
+        <div
+          class="c-card ripple-host bg-[linear-gradient(135deg,#FF6B00,#FF3CAC,#A855F7,#3B82F6)]"
+          @click="router.push('/culture')"
+        >
+          <div class="c-emo">🔥</div>
+          <div class="c-lbl">FIRE Culture</div>
+        </div>
+        <div
+          class="c-card ripple-host bg-[linear-gradient(135deg,#FFD6DC,#FF8FA3,#FF4D6D)]"
+          @click="ui.showToast('Training — เร็วๆนี้ 🚀')"
+        >
+          <div class="c-emo">📚</div>
+          <div class="c-lbl">Training</div>
+        </div>
+        <div
+          class="c-card ripple-host bg-[linear-gradient(135deg,#06C755,#00A040)]"
+          @click="ui.showToast('DS Reward — เร็วๆนี้ 🚀')"
+        >
+          <div class="c-emo">⭐</div>
+          <div class="c-lbl">DS Reward</div>
+        </div>
       </div>
     </div>
 
-    <!-- Consult cards -->
-    <div>
+    <!-- Section 2: บริการปรึกษา -->
+    <div class="sec">
       <div class="sec-hdr">
-        <div class="sec-title">🤝 บริการปรึกษา</div>
+        <span class="sec-title">🤝 บริการปรึกษา</span>
       </div>
       <ConsultCards />
     </div>
 
-    <!-- Tool cards -->
-    <div>
+    <!-- Section 3: เครื่องมือ -->
+    <div class="sec">
       <div class="sec-hdr">
-        <div class="sec-title">🛠 เครื่องมือ</div>
+        <span class="sec-title">🛠 เครื่องมือ</span>
       </div>
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-4">
         <div class="tool-card org ripple-host flex-col items-start" @click="ui.openModal('modal-org')">
           <div class="ti">🏆</div>
           <div class="tt">Star Gang</div>
@@ -86,22 +90,23 @@
       </div>
     </div>
 
-    <!-- Months Grid -->
-    <div>
+    <!-- Section 4: Empathy Board -->
+    <div class="sec">
       <div class="sec-hdr">
-        <div class="sec-title">📅 กิจกรรมรายเดือน</div>
-      </div>
-      <MonthsGrid @month-click="() => router.push('/bday')" />
-    </div>
-
-    <!-- Empathy Board -->
-    <div>
-      <div class="sec-hdr">
-        <div class="sec-title">💝 Empathy Board</div>
+        <span class="sec-title">💝 Empathy Board</span>
         <span class="sec-more" @click="ui.openModal('modal-emp')">ส่งคำชื่นชม</span>
       </div>
       <EmpathyBoard />
     </div>
+
+    <!-- Section 5: กิจกรรมรายเดือน -->
+    <div class="sec">
+      <div class="sec-hdr">
+        <span class="sec-title">📅 กิจกรรมรายเดือน</span>
+      </div>
+      <MonthsGrid @month-click="(idx) => ui.openMonthModal(idx)" />
+    </div>
+
   </div>
 </template>
 

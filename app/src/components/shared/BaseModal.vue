@@ -7,7 +7,7 @@
     >
       <div
         class="modal-sheet"
-        :class="{ open: ui.activeModal === modalId }"
+        :class="[{ open: ui.activeModal === modalId }, sheetClass]"
         @click.stop
       >
         <slot />
@@ -19,6 +19,9 @@
 <script setup>
 import { useUiStore } from '../../stores/ui.js'
 
-defineProps({ modalId: { type: String, required: true } })
+defineProps({
+  modalId:    { type: String, required: true },
+  sheetClass: { type: String, default: '' },
+})
 const ui = useUiStore()
 </script>

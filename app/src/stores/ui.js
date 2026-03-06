@@ -3,6 +3,7 @@ import { ref } from 'vue'
 
 export const useUiStore = defineStore('ui', () => {
   const activeModal = ref(null)
+  const selectedMonthIdx = ref(1)
   const notifBadge = ref(3)
   const currentUser = ref({
     name: 'Anya R.',
@@ -16,6 +17,11 @@ export const useUiStore = defineStore('ui', () => {
   function openModal(id) {
     activeModal.value = id
     document.body.classList.add('modal-open')
+  }
+
+  function openMonthModal(idx) {
+    selectedMonthIdx.value = idx
+    openModal('modal-month')
   }
 
   function closeModal() {
@@ -35,5 +41,5 @@ export const useUiStore = defineStore('ui', () => {
     notifBadge.value = 0
   }
 
-  return { activeModal, notifBadge, currentUser, toast, openModal, closeModal, showToast, clearNotifBadge }
+  return { activeModal, selectedMonthIdx, notifBadge, currentUser, toast, openModal, openMonthModal, closeModal, showToast, clearNotifBadge }
 })

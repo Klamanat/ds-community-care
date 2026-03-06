@@ -92,13 +92,14 @@ export const useEmpathyStore = defineStore('empathy', () => {
   }
 
   async function toggleLike(postId) {
+    const ui = useUiStore()
     const post = posts.value.find(p => p.id === postId)
     if (!post) return
     const wasLiked = post._liked
     post._liked = !wasLiked
     post.likeCount = (post.likeCount || 0) + (post._liked ? 1 : -1)
     try {
-      await svc.toggleLike(postId, post._liked)
+      await svc.toggleLike(postId, ui.currentUser.id || 'anonymous')
     } catch {
       post._liked = wasLiked
       post.likeCount = (post.likeCount || 0) + (wasLiked ? 1 : -1)

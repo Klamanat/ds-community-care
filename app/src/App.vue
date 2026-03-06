@@ -4,13 +4,11 @@
     <div class="body-area">
       <AppSidebar />
       <main class="content-area">
-        <div class="router-view-wrapper">
-          <RouterView v-slot="{ Component }">
-            <Transition name="fade" mode="out-in">
-              <component :is="Component" :key="$route.path" />
-            </Transition>
-          </RouterView>
-        </div>
+        <RouterView v-slot="{ Component }">
+          <Transition name="fade" mode="out-in">
+            <component :is="Component" :key="$route.path" />
+          </Transition>
+        </RouterView>
       </main>
     </div>
     <AppBottomNav />
@@ -23,6 +21,7 @@
     <MentalModal />
     <OrgModal />
     <ProfileModal />
+    <MonthModal />
 
     <!-- Toast -->
     <div class="toast" :class="{ hidden: !ui.toast.visible }">{{ ui.toast.msg }}</div>
@@ -41,6 +40,7 @@ import FinancialModal from './components/modals/FinancialModal.vue'
 import MentalModal from './components/modals/MentalModal.vue'
 import OrgModal from './components/modals/OrgModal.vue'
 import ProfileModal from './components/modals/ProfileModal.vue'
+import MonthModal from './components/modals/MonthModal.vue'
 import { useUiStore } from './stores/ui.js'
 
 const ui = useUiStore()

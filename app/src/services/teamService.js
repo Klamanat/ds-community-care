@@ -1,7 +1,12 @@
 import { gasGet } from './api.js'
 
 export async function fetchTeam() {
-  const r = await gasGet('getEmployees', { filter: 'inTeam' })
+  const r = await gasGet('getEmployees', { inTeam: 'true' })
+  return r.data
+}
+
+export async function fetchStarGang() {
+  const r = await gasGet('getEmployees', { inStarGang: 'true' })
   return r.data
 }
 

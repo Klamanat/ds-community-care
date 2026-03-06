@@ -23,6 +23,7 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
 import EmpathyCard from './EmpathyCard.vue'
 import SkeletonCard from '../shared/SkeletonCard.vue'
 import { useEmpathyStore } from '../../stores/empathy.js'
@@ -30,6 +31,8 @@ import { useUiStore } from '../../stores/ui.js'
 
 const empathy = useEmpathyStore()
 const ui = useUiStore()
+
+onMounted(() => empathy.loadPosts())
 
 function openDetail(idx) {
   ui._empDetailIdx = idx

@@ -51,6 +51,16 @@ export const useTeamStore = defineStore('team', () => {
     }
   }
 
+  async function loadStarGang() {
+    try {
+      const data = await svc.fetchStarGang()
+      if (data && data.length) {
+        sgMembers.value = data
+        joinCount.value = data.length
+      }
+    } catch { /* keep seed */ }
+  }
+
   async function loadDirectory() {
     try {
       const data = await svc.fetchDirectory()
@@ -90,5 +100,5 @@ export const useTeamStore = defineStore('team', () => {
     }
   }
 
-  return { empTeam, empDirectory, sgMembers, joinCount, isLoading, getSgFallback, getGrad, loadTeam, loadDirectory, addToTeam, joinStarGang }
+  return { empTeam, empDirectory, sgMembers, joinCount, isLoading, getSgFallback, getGrad, loadTeam, loadStarGang, loadDirectory, addToTeam, joinStarGang }
 })

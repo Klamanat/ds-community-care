@@ -57,7 +57,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useTeamStore } from '../stores/team.js'
 import { useUiStore } from '../stores/ui.js'
 import { useRipple } from '../composables/useRipple.js'
@@ -69,6 +69,8 @@ const { handleRippleClick } = useRipple()
 useFadeIn()
 
 const joined = ref(false)
+
+onMounted(() => team.loadStarGang())
 const starPlayers = [
   { emoji:'🦁', name:'Somsak P.', role:'HR Manager',   pts:580, grad:'linear-gradient(135deg,#FDE68A,#F59E0B)' },
   { emoji:'🌸', name:'Nok S.',    role:'Team Lead',     pts:510, grad:'linear-gradient(135deg,#FBCFE8,#EC4899)' },

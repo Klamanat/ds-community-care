@@ -23,7 +23,7 @@ export async function addComment(postId, text, authorName) {
   return r.data
 }
 
-export async function toggleLike(postId, liked) {
-  const r = await gasGet('addLike', { postId, liked: liked ? '1' : '0' })
+export async function toggleLike(postId, userKey) {
+  const r = await gasGet('toggleLike', { postId, userKey: userKey || 'anonymous' })
   return r.data
 }
