@@ -650,6 +650,22 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
     transition:transform 0.25s cubic-bezier(0.34,1.2,0.64,1), opacity 0.2s ease;
     box-shadow:0 24px 80px rgba(30,21,53,0.25), 0 0 0 1px rgba(99,102,241,0.08);
   }
+  #modal-org .modal-sheet{
+    width:min(640px, calc(100vw - var(--sidebar) - 48px));
+    max-height:calc(100vh - 80px);
+  }
+  #modal-month .modal-sheet{
+    width:calc(100vw - var(--sidebar) - 40px);
+    max-height:min(800px, calc(100vh - 40px));
+    border-radius:24px;
+  }
+  #modal-month #modal-month-events{
+    grid-template-columns:repeat(3,1fr);
+    grid-auto-rows:1fr;
+    padding:20px 24px 24px;
+    gap:16px;
+    align-items:stretch;
+  }
   .modal-overlay.open .modal-sheet{
     transform:scale(1) translateY(0);
     opacity:1;
@@ -1399,14 +1415,18 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
       </div>
       <div class="tool-row">
         <div class="tool-card org ripple-host" onclick="addRipple(event,this);bounce(this);openModal('modal-org')">
-          <div class="ti"><svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sgC" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FFF8D6"/><stop offset="40%" stop-color="#FFE566"/><stop offset="70%" stop-color="#F5C518"/><stop offset="100%" stop-color="#C8860A"/></linearGradient><filter id="sgG"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><polygon points="16,1.5 19.8,11.5 30.5,11.5 22,18 25.2,28.5 16,22 6.8,28.5 10,18 1.5,11.5 12.2,11.5" fill="url(#sgC)" filter="url(#sgG)" stroke="#C8860A" stroke-width="0.5"/></svg></div>
-          <div class="tt" style="color: white;">STAR GANG</div>
-          <div class="ts" style="color: white;">ทีม DS ของเรา ✨</div>
-          <div class="org-avs">
-            <div class="org-av" style="background:linear-gradient(135deg,#C7D2FE,#818CF8)">👤</div>
-            <div class="org-av" style="background:linear-gradient(135deg,#BBF7D0,#4ADE80)">👤</div>
-            <div class="org-av" style="background:linear-gradient(135deg,#FBCFE8,#F472B6)">👤</div>
-            <div class="org-av" style="background:#F1F5F9;font-size:8px;color:#64748B;font-weight:700">+12</div>
+          <div style="display: flex;justify-content: space-between; align-items: center;">
+            <div class="ti"><svg width="72" height="72" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sgC" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FFF8D6"/><stop offset="40%" stop-color="#FFE566"/><stop offset="70%" stop-color="#F5C518"/><stop offset="100%" stop-color="#C8860A"/></linearGradient><filter id="sgG"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><polygon points="16,1.5 19.8,11.5 30.5,11.5 22,18 25.2,28.5 16,22 6.8,28.5 10,18 1.5,11.5 12.2,11.5" fill="url(#sgC)" filter="url(#sgG)" stroke="#C8860A" stroke-width="0.5"/></svg></div>
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-items: center;">
+              <div class="tt" style="color: white; font-size: 24px;">STAR GANG</div>
+              <div class="ts" style="color: white; font-size: 16px;">สมาชิก Engagement Team ✨</div>
+              <div class="org-avs">
+                <div class="org-av" style="background:linear-gradient(135deg,#C7D2FE,#818CF8)">👤</div>
+                <div class="org-av" style="background:linear-gradient(135deg,#BBF7D0,#4ADE80)">👤</div>
+                <div class="org-av" style="background:linear-gradient(135deg,#FBCFE8,#F472B6)">👤</div>
+                <div class="org-av" style="background:#F1F5F9;font-size:8px;color:#64748B;font-weight:700">+12</div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="tool-card emp ripple-host" onclick="addRipple(event,this);bounce(this);openModal('modal-emp')">
@@ -2702,12 +2722,12 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
           <div style="font-size:11px;color:rgba(255,210,60,0.8);font-weight:600;line-height:1.6;padding:0 10px;">Star gang ไม่ได้สร้างได้ในวันเดียว<br>แต่สร้างได้ถ้ามี 'เธอ' มาอยู่ร่วมทีม มา join เป็น team เดียวกัน!</div>
         </div>
       </div>
-      <div style="overflow-y:auto;padding:16px 20px 8px;">
+      <div style="overflow-y:auto;padding:16px 20px 8px;background:linear-gradient(180deg,#0D0900 0%,#120E00 60%,#0A0800 100%);">
         <div id="sg-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;"></div>
-        <button onclick="addSgMember()" style="width:100%;margin-top:14px;padding:11px;background:linear-gradient(135deg,#F5C518,#C8860A);border:none;border-radius:14px;font-family:sans-serif;font-size:13px;font-weight:800;color:#1A1200;cursor:pointer;">✦ เพิ่มสมาชิก</button>
+
       </div>
-      <div style="padding:8px 20px 20px;">
-        <button class="modal-close-btn" onclick="closeModal('modal-org')" style="background:linear-gradient(135deg,#1A1200,#3D2800);color:#FFD700;font-weight:800;border:1px solid #C8860A;">ปิด</button>
+      <div style="padding:8px 20px 20px;background:#0A0800;">
+        <button class="modal-close-btn" onclick="closeModal('modal-org')" style="background:linear-gradient(135deg,#1A1200,#3D2800);color:#FFD700;font-weight:800;border:1px solid #C8860A;box-shadow:0 2px 12px rgba(0,0,0,0.5);">ปิด</button>
       </div>
     </div>
   </div>
@@ -2844,7 +2864,8 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
       <div class="modal-handle"></div>
 
       <!-- Hero header gradient -->
-      <div id="modal-month-header" style="background:linear-gradient(135deg,#EEF2FF,#E0E7FF);padding:24px 24px 20px;text-align:center;border-bottom:none;position:relative;overflow:hidden;">
+      <div id="modal-month-header" style="background:linear-gradient(135deg,#EEF2FF,#E0E7FF);padding:28px 32px 24px;text-align:center;border-bottom:none;position:relative;overflow:hidden;">
+        <div id="modal-month-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,0);pointer-events:none;z-index:0;"></div>
         <div style="position:absolute;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,0.12);top:-40px;left:-30px;pointer-events:none;"></div>
         <div style="position:absolute;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.1);bottom:-20px;right:-10px;pointer-events:none;"></div>
         <div style="width:68px;height:68px;border-radius:50%;background:rgba(255,255,255,0.28);backdrop-filter:blur(8px);border:2px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 4px 20px rgba(0,0,0,0.12);position:relative;z-index:1;" id="modal-month-icon">📅</div>
@@ -2852,16 +2873,9 @@ body{font-family:'Sarabun','Noto Sans Thai',sans-serif;background:var(--bg);disp
         <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;position:relative;z-index:1;" id="modal-month-sub"></div>
       </div>
 
-      <!-- Body -->
-      <div style="padding:20px 20px 0;">
-        <div style="background:var(--bg);border-radius:16px;padding:16px 18px;border:1px solid var(--border);">
-          <div style="font-size:11px;font-weight:800;color:var(--light);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">รายละเอียดกิจกรรม</div>
-          <div style="font-size:13px;color:var(--mid);line-height:1.75;" id="modal-month-body">รายละเอียด</div>
-        </div>
-      </div>
-
-      <div style="padding:16px 20px 28px;">
-        <button class="modal-close-btn" onclick="closeModal('modal-month')">ดูรายละเอียด / ลงทะเบียน 📋</button>
+      <!-- Activity Cards -->
+      <div style="flex:1;overflow-y:auto;">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;padding:20px 24px 24px;" id="modal-month-events"></div>
       </div>
     </div>
   </div>
@@ -4282,8 +4296,15 @@ document.addEventListener('DOMContentLoaded', () => {
 var sgMembers = [];
 (function(){ for(var i=1;i<=30;i++) sgMembers.push({id:i,name:"สมาชิก "+i,role:"ฉายา...",photo:null}); })();
 var sgNextId = 31;
-var sgFallbacks = ["#FDE68A","#FECACA","#C7D2FE","#BBF7D0","#FED7E2","#DDD6FE"];
-var sgEmojis    = ["⭐","🌟","✨","💫","🌠","🏆"];
+var sgFallbacks = [
+  "linear-gradient(135deg,#2A1800,#4A2E00)",
+  "linear-gradient(135deg,#1A0022,#36004A)",
+  "linear-gradient(135deg,#001828,#003050)",
+  "linear-gradient(135deg,#001A10,#003822)",
+  "linear-gradient(135deg,#1A0014,#3A0030)",
+  "linear-gradient(135deg,#0A0A20,#18184A)"
+];
+var sgEmojis = ["⭐","🌟","✨","💫","🏆","👑","🦁","🐯","🦊","🌠","🎯","💎"];
 function renderSgGrid() {
   var grid = document.getElementById("sg-grid");
   if (!grid) return;
@@ -4291,14 +4312,14 @@ function renderSgGrid() {
     var fb = sgFallbacks[i % sgFallbacks.length];
     var em = sgEmojis[i % sgEmojis.length];
     var photo = m.photo
-      ? "<img src=" + m.photo + " style=\"width:100%;height:100%;object-fit:cover;border-radius:14px;\">"
-      : "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:26px;background:" + fb + ";border-radius:14px;\">" + em + "</div>";
-    return "<div style=\"position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;\">"
-      + "<div style=\"width:88px;height:88px;border-radius:16px;overflow:hidden;border:2px solid #F5C518;box-shadow:0 2px 10px rgba(245,197,24,0.3);cursor:pointer;\" onclick=\"sgPickPhoto(" + m.id + ")\">" + photo + "</div>"
-      + "<input id=\"sg-name-" + m.id + "\" value=\"" + m.name + "\" onchange=\"sgRename(" + m.id + ",this.value)\" style=\"width:88px;text-align:center;font-size:11px;font-weight:700;color:#1e293b;border:none;border-bottom:1.5px solid #FCD34D;background:transparent;padding:2px;outline:none;\">"
-      + "<input id=\"sg-role-" + m.id + "\" value=\"" + m.role + "\" onchange=\"sgReRole(" + m.id + ",this.value)\" style=\"width:88px;text-align:center;font-size:10px;font-weight:600;color:#D97706;border:none;border-bottom:1px dashed #FCD34D;background:transparent;padding:1px;outline:none;\">"
+      ? "<img src=" + m.photo + " style=\"width:100%;height:100%;object-fit:cover;\">"
+      : "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;background:" + fb + ";\">" + em + "</div>";
+    return "<div style=\"position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;background:linear-gradient(145deg,#1C1400,#251A00);border:1px solid rgba(245,197,24,0.28);border-radius:18px;padding:14px 8px 12px;box-shadow:0 4px 20px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,210,60,0.08);\">"
+      + "<div style=\"width:62px;height:62px;border-radius:50%;overflow:hidden;border:2.5px solid #F5C518;box-shadow:0 0 14px rgba(245,197,24,0.55),0 2px 8px rgba(0,0,0,0.6);cursor:pointer;flex-shrink:0;\" onclick=\"sgPickPhoto(" + m.id + ")\">" + photo + "</div>"
+      + "<input id=\"sg-name-" + m.id + "\" value=\"" + m.name + "\" onchange=\"sgRename(" + m.id + ",this.value)\" style=\"width:100%;text-align:center;font-size:11px;font-weight:800;color:#FFF5E0;border:none;border-bottom:1px solid rgba(245,197,24,0.35);background:transparent;padding:2px 0;outline:none;font-family:'Sarabun',sans-serif;\">"
+      + "<input id=\"sg-role-" + m.id + "\" value=\"" + m.role + "\" onchange=\"sgReRole(" + m.id + ",this.value)\" style=\"width:100%;text-align:center;font-size:9px;font-weight:700;color:rgba(245,197,24,0.75);border:none;border-bottom:1px dashed rgba(245,197,24,0.2);background:transparent;padding:1px 0;outline:none;font-family:'Sarabun',sans-serif;\">"
       + "<input type=\"file\" id=\"sg-file-" + m.id + "\" accept=\"image/*\" style=\"display:none;\" onchange=\"sgLoadPhoto(event," + m.id + ")\">"
-      + "<div onclick=\"sgDelete(" + m.id + ")\" style=\"position:absolute;top:-5px;right:2px;width:18px;height:18px;background:#EF4444;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;color:white;font-weight:900;\">×</div>"
+      + "<div onclick=\"sgDelete(" + m.id + ")\" style=\"position:absolute;top:6px;right:8px;width:16px;height:16px;background:rgba(239,68,68,0.85);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:white;font-weight:900;line-height:1;\">×</div>"
       + "</div>";
   }).join("");
 }
@@ -4673,51 +4694,142 @@ function sendEmpComment() {
   empPosts[_empCurrentPost].comments.push({av:'😊',grad:'linear-gradient(135deg,#C7D2FE,#818CF8)',name:'คุณ',text:text,time:'เมื่อกี้'});
   document.getElementById('emp-detail-cm-pill').textContent = '💬 ' + empPosts[_empCurrentPost].comments.length;
 }
+var _monthJoined = {};
+var _monthData = {
+  1:  {title:'January 🎆',   icon:'🎆', grad:'linear-gradient(135deg,#BFDBFE,#3B82F6)',
+    events:[
+      {id:'1a', emoji:'🎉', bg:'linear-gradient(145deg,#DBEAFE,#60A5FA)', img: 'Date  29 Jan 2026 Time  130-400 PM Agenda P.Manow Communication P.Nicole Communication Our Key Success in 2025 by 1Down HR Communication Game by KGIB & LF.jpg', name:'BI-Monthly Meeting', date:'5 ม.ค. 2568', loc:'Event Hall ชั้น 10', desc:'ปาร์ตี้ฉลองปีใหม่พร้อมกัน เล่นเกม ลุ้นรางวัลและรับอาหารดินเนอร์'},
+      {id:'1b', emoji:'📚', bg:'linear-gradient(145deg,#E0E7FF,#6366F1)', name:'ไหว้พระพรหม', date:'10 ม.ค. 2568', loc:'ห้องประชุม A ชั้น 5', desc:'ต้อนรับสมาชิกใหม่ของทีม DS พร้อม Buddy Program'}
+    ]},
+  2:  {title:'February 💕', icon:'💕', grad:'linear-gradient(135deg,#FBCFE8,#EC4899)',
+    events:[
+      {id:'2a', emoji:'💝', bg:'linear-gradient(145deg,#FCE7F3,#F472B6)', img:'S__36184074_0.jpg', name:'DS Secret Cupid Bot', date:'วันนี้ – 16 ก.พ. 69', loc:'สแกน QR Code เข้า Padlet', desc:'ภารกิจสายลับจับหัวใจ', joinUrl:'https://padlet.com/somnisa1993/ds-secret-cupid-bot-2026-qj6c8mx1uic4zm1c'},
+      {id:'2b', emoji:'🎡', bg:'linear-gradient(145deg,#FEE2E2,#EF4444)', img:'S__36184075_0.jpg', name:'Digital Angpao Hunt', date:'17 ก.พ. 69 (09:00–18:00)', loc:'ลิงก์ออนไลน์', desc:'หมุนปีบ รับทรัพย์!', joinUrl:'https://lucky-draw-azure-eta.vercel.app'}
+    ]},
+  3:  {title:'March 🌸',   icon:'🌸', grad:'linear-gradient(135deg,#C7D2FE,#818CF8)',
+    events:[
+      // {id:'3a', emoji:'🏛️', bg:'linear-gradient(145deg,#EEF2FF,#6366F1)', name:'Town Hall Q1', date:'15 มี.ค. 2568', loc:'Auditorium ชั้น 1', desc:'รับฟังนโยบายและทิศทางองค์กร ไตรมาส 1 จาก CEO'},
+      // {id:'3b', emoji:'🛠️', bg:'linear-gradient(145deg,#F5F3FF,#A78BFA)', name:'Skill Workshop', date:'22 มี.ค. 2568', loc:'Training Room ชั้น 6', desc:'Workshop พัฒนาทักษะ AI และ Data สำหรับทีม DS'}
+    ]},
+  4:  {title:'April 🎊',   icon:'🎊', grad:'linear-gradient(135deg,#BAE6FD,#38BDF8)',
+    events:[
+      // {id:'4a', emoji:'💧', bg:'linear-gradient(145deg,#BAE6FD,#0EA5E9)', name:'สงกรานต์ DS 2568', date:'11 เม.ย. 2568', loc:'ลานกิจกรรม ชั้น G', desc:'สาดน้ำ รดน้ำขอพร ฉลองสงกรานต์สไตล์ DS'},
+      // {id:'4b', emoji:'🎂', bg:'linear-gradient(145deg,#FCE7F3,#F472B6)', name:'Birthday Celebration', date:'30 เม.ย. 2568', loc:'Pantry Zone B', desc:'ฉลองวันเกิดพนักงานเดือน เมษายน ร่วมกัน'}
+    ]},
+  5:  {title:'May ☀️',    icon:'☀️', grad:'linear-gradient(135deg,#FEF08A,#FBBF24)',
+    events:[
+      // {id:'5a', emoji:'💼', bg:'linear-gradient(145deg,#FEF3C7,#F59E0B)', name:'Labor Day Lunch', date:'1 พ.ค. 2568', loc:'Restaurant ชั้น 3', desc:'Team Lunch ฉลองวันแรงงานสากล'},
+      // {id:'5b', emoji:'🧘', bg:'linear-gradient(145deg,#D1FAE5,#34D399)', name:'Yoga Morning', date:'15 พ.ค. 2568', loc:'ลาน Rooftop ชั้น 15', desc:'ออกกำลังกาย Yoga ยามเช้าก่อนเริ่มงาน เสริมสุขภาพกาย-ใจ'}
+    ]},
+  6:  {title:'June 🏕️',   icon:'🏕️', grad:'linear-gradient(135deg,#A7F3D0,#34D399)',
+    events:[
+      // {id:'6a', emoji:'🚌', bg:'linear-gradient(145deg,#A7F3D0,#10B981)', name:'Company Outing', date:'7 มิ.ย. 2568', loc:'เขาใหญ่ · นครราชสีมา', desc:'ทริปสัมพันธ์ทีมงาน 2 วัน 1 คืน Team Building กิจกรรมมากมาย'},
+      // {id:'6b', emoji:'🎤', bg:'linear-gradient(145deg,#E0E7FF,#6366F1)', name:'Leadership Talk', date:'25 มิ.ย. 2568', loc:'Auditorium ชั้น 1', desc:'เสวนากับผู้บริหาร เรื่อง Growth Mindset & Leadership'}
+    ]},
+  7:  {title:'July 🌿',   icon:'🌿', grad:'linear-gradient(135deg,#6EE7B7,#10B981)',
+    events:[
+      // {id:'7a', emoji:'🤝', bg:'linear-gradient(145deg,#D1FAE5,#059669)', name:'Volunteer Day', date:'12 ก.ค. 2568', loc:'โรงเรียน ต.คลองหลวง', desc:'กิจกรรมจิตอาสาร่วมกัน บริจาคสื่อการเรียน'},
+      // {id:'7b', emoji:'🎂', bg:'linear-gradient(145deg,#FBCFE8,#EC4899)', name:'Birthday เดือน ก.ค.', date:'31 ก.ค. 2568', loc:'Pantry Zone A', desc:'ฉลองวันเกิดพนักงานเดือนกรกฎาคม'}
+    ]},
+  8:  {title:'August 💐',  icon:'💐', grad:'linear-gradient(135deg,#DDD6FE,#A78BFA)',
+    events:[
+      // {id:'8a', emoji:'👩', bg:'linear-gradient(145deg,#FCE7F3,#F9A8D4)', name:'วันแม่ DS', date:'12 ส.ค. 2568', loc:'ล็อบบี้ ชั้น 1', desc:'กิจกรรมร่วมแสดงความรักแด่คุณแม่ พร้อมมอบของขวัญ'},
+      // {id:'8b', emoji:'💻', bg:'linear-gradient(145deg,#EDE9FE,#8B5CF6)', name:'Digital Skills Boot', date:'20 ส.ค. 2568', loc:'Training Room ชั้น 6', desc:'อบรม AI Tools และ No-code สำหรับงาน DS ยุคใหม่'}
+    ]},
+  9:  {title:'September ⚡', icon:'⚡', grad:'linear-gradient(135deg,#C7D2FE,#6366F1)',
+    events:[
+      // {id:'9a', emoji:'🚀', bg:'linear-gradient(145deg,#E0E7FF,#6366F1)', name:'DS Hackathon 2568', date:'13–14 ก.ย. 2568', loc:'Innovation Lab ชั้น 7', desc:'แข่งขัน Hackathon 24 ชม. ปลดปล่อยความคิดสร้างสรรค์ รับเงินรางวัล'},
+      // {id:'9b', emoji:'💚', bg:'linear-gradient(145deg,#D1FAE5,#10B981)', name:'Mental Health Week', date:'16–20 ก.ย. 2568', loc:'ออนไลน์ + Wellness Room', desc:'สัปดาห์สุขภาพจิต ปรึกษาผู้เชี่ยวชาญฟรี ตลอดสัปดาห์'}
+    ]},
+  10: {title:'October 🎃',  icon:'🎃', grad:'linear-gradient(135deg,#FED7AA,#F97316)',
+    events:[
+      // {id:'10a', emoji:'🎃', bg:'linear-gradient(145deg,#FED7AA,#F97316)', name:'Halloween Party', date:'31 ต.ค. 2568', loc:'Event Hall ชั้น 10', desc:'ปาร์ตี้ฮาโลวีน แต่งชุดแฟนซี ประกวดคอสตูม รับรางวัล'},
+      // {id:'10b', emoji:'🏮', bg:'linear-gradient(145deg,#FEF3C7,#F59E0B)', name:'ลอยกระทง DS', date:'ตามประกาศ', loc:'ลานหน้าออฟฟิศ', desc:'สืบสานประเพณีไทย ลอยกระทง ชมดนตรี'}
+    ]},
+  11: {title:'November 🍂', icon:'🍂', grad:'linear-gradient(135deg,#FDE68A,#F59E0B)',
+    events:[
+      // {id:'11a', emoji:'❤️', bg:'linear-gradient(145deg,#FEF3C7,#D97706)', name:'วันพ่อ DS', date:'5 ธ.ค. (ล่วงหน้า)', loc:'ล็อบบี้ ชั้น 1', desc:'กิจกรรมแสดงความกตัญญูและมอบของขวัญแด่คุณพ่อ'},
+      // {id:'11b', emoji:'📊', bg:'linear-gradient(145deg,#E0E7FF,#818CF8)', name:'Year-End Review', date:'28 พ.ย. 2568', loc:'Auditorium ชั้น 1', desc:'สรุปผลงานและเป้าหมายปีถัดไป ร่วมกับทีม Leadership'}
+    ]},
+  12: {title:'December 🎄', icon:'🎄', grad:'linear-gradient(135deg,#FECACA,#F87171)',
+    events:[
+      // {id:'12a', emoji:'🎄', bg:'linear-gradient(145deg,#FFE4E6,#F87171)', name:'Christmas & Year-End Party', date:'20 ธ.ค. 2568', loc:'Rooftop ชั้น 15', desc:'งานปาร์ตี้ใหญ่ส่งท้ายปี แลกของขวัญ ดนตรี อาหาร'},
+      // {id:'12b', emoji:'🥳', bg:'linear-gradient(145deg,#DDD6FE,#8B5CF6)', name:'Countdown DS 2569', date:'31 ธ.ค. 2568', loc:'Event Hall ชั้น 10', desc:'นับถอยหลังต้อนรับปีใหม่พร้อมกันทั้งทีม DS'}
+    ]}
+};
+
+function toggleMonthJoin(evId, btn) {
+  _monthJoined[evId] = !_monthJoined[evId];
+  if (_monthJoined[evId]) {
+    btn.style.background = 'linear-gradient(135deg,#10B981,#059669)';
+    btn.textContent = '✅ Joined แล้ว!';
+    if (typeof showToast === 'function') showToast('เข้าร่วมกิจกรรมแล้ว 🎉');
+  } else {
+    btn.style.background = 'linear-gradient(135deg,#6366F1,#A855F7)';
+    btn.textContent = '✅ Join กิจกรรม';
+  }
+}
+
 function openMonthModal(monthNum) {
-  var monthColors = {
-    1:  {grad:'linear-gradient(135deg,#DBEAFE,#3B82F6)',    icon:'🎆', light:'#DBEAFE', dark:'#1D4ED8'},
-    2:  {grad:'linear-gradient(135deg,#FCE7F3,#EC4899)',    icon:'💕', light:'#FCE7F3', dark:'#9D174D'},
-    3:  {grad:'linear-gradient(135deg,#EEF2FF,#6366F1)',    icon:'🌸', light:'#EEF2FF', dark:'#3730A3'},
-    4:  {grad:'linear-gradient(135deg,#EFF6FF,#60A5FA)',    icon:'🎊', light:'#EFF6FF', dark:'#1D4ED8'},
-    5:  {grad:'linear-gradient(135deg,#FEF3C7,#F59E0B)',    icon:'☀️', light:'#FEF9C3', dark:'#92400E'},
-    6:  {grad:'linear-gradient(135deg,#D1FAE5,#10B981)',    icon:'🏕️', light:'#D1FAE5', dark:'#065F46'},
-    7:  {grad:'linear-gradient(135deg,#D1FAE5,#059669)',    icon:'🌿', light:'#D1FAE5', dark:'#064E3B'},
-    8:  {grad:'linear-gradient(135deg,#EDE9FE,#8B5CF6)',    icon:'💐', light:'#EDE9FE', dark:'#5B21B6'},
-    9:  {grad:'linear-gradient(135deg,#E0E7FF,#6366F1)',    icon:'⚡', light:'#E0E7FF', dark:'#3730A3'},
-    10: {grad:'linear-gradient(135deg,#FED7AA,#F97316)',    icon:'🎃', light:'#FED7AA', dark:'#9A3412'},
-    11: {grad:'linear-gradient(135deg,#FEF3C7,#D97706)',    icon:'🍂', light:'#FEF3C7', dark:'#78350F'},
-    12: {grad:'linear-gradient(135deg,#FFE4E6,#EF4444)',    icon:'🎄', light:'#FFE4E6', dark:'#9F1239'}
-  };
-  var monthData = {
-    1:  {title:'January 🎆',    sub:['🎉 New Year Party','🌟 ปฐมนิเทศใหม่'],            body:'ยินดีต้อนรับปีใหม่! กิจกรรมเฉลิมฉลองและต้อนรับสมาชิกใหม่ขององค์กร พร้อมงาน Kick-Off เป้าหมายปีใหม่ร่วมกัน'},
-    2:  {title:'February 💕', sub:['💝 Valentine\'s Day','🏥 Health Check'],          body:'เดือนแห่งความรัก จัดกิจกรรมส่งความสุขให้กัน พร้อมตรวจสุขภาพประจำปีสำหรับพนักงานทุกคน'},
-    3:  {title:'March 🌸',    sub:['🏛️ Town Hall','🛠️ Skill Workshop'],              body:'ประชุม Town Hall รับฟังนโยบายและทิศทางองค์กร พร้อม Workshop พัฒนาทักษะที่จำเป็นสำหรับทีม DS'},
-    4:  {title:'April 🎊',    sub:['💧 สงกรานต์','🎂 Birthday Month'],               body:'สุขสันต์วันสงกรานต์! ฉลองปีใหม่ไทยและวันเกิดพนักงานประจำเดือนApril'},
-    5:  {title:'May ☀️',  sub:['💼 Labor Day','🧘 Yoga Session'],                 body:'วันแรงงานสากล ฉลองพร้อมกิจกรรม Yoga เพื่อสุขภาพ และ Team Lunch สำหรับทีมงาน'},
-    6:  {title:'June 🏕️',  sub:['🚌 Company Outing','🎤 Leadership Talk'],        body:'ทริปสัมพันธ์ทีมงานนอกสถานที่ พร้อม Leadership Talk จากผู้บริหาร และ Team Building Activities'},
-    7:  {title:'July 🌿',   sub:['🤝 Volunteer Day','🎂 Birthday Month'],          body:'กิจกรรมจิตอาสาสร้างสังคมที่ดี และฉลองวันเกิดพนักงานเดือนJulyพร้อมกัน'},
-    8:  {title:'August 💐',   sub:['👩 วันแม่','💻 Digital Skills'],                 body:'ร่วมแสดงความรักแด่คุณแม่ พร้อมอบรม Digital Skills สำหรับยุคใหม่ และ AI Tools สำหรับงาน DS'},
-    9:  {title:'September ⚡',   sub:['🚀 Hackathon','💊 Health Week'],                  body:'แข่งขัน Hackathon ภายในองค์กร ปลดปล่อยความคิดสร้างสรรค์ และสัปดาห์สุขภาพจิตดีร่วมกัน'},
-    10: {title:'October 🎃',    sub:['🎃 Halloween Party','🏮 ลอยกระทง'],             body:'ปาร์ตี้ฮาโลวีนสุดหลอน แต่งชุดแฟนซีมาสนุกด้วยกัน และลอยกระทงตามประเพณีไทย'},
-    11: {title:'November 🍂', sub:['❤️ วันพ่อ','📊 Year-End Prep'],                 body:'ร่วมแสดงความกตัญญูแด่คุณพ่อ และเตรียมความพร้อมสำหรับงานปิดปีขององค์กร'},
-    12: {title:'December 🎄',   sub:['🎄 Christmas','🥳 New Year Party'],              body:'เฉลิมฉลองคริสต์มาสและปีใหม่ พร้อมงานปาร์ตี้ส่งท้ายปีสุดยิ่งใหญ่ขององค์กร DS'}
-  };
-  var d = monthData[monthNum];
-  var c = monthColors[monthNum];
-  if (!d || !c) return;
+  var d = _monthData[monthNum];
+  if (!d) return;
   var el = document.getElementById('modal-month'); if (!el) return;
-  var t = document.getElementById('modal-month-title'); if(t){t.textContent=d.title;t.style.color='#fff';}
+
+  var t = document.getElementById('modal-month-title');
+  if (t) { t.textContent = d.title; }
+
+  var evs = d.events || [];
+
   var s = document.getElementById('modal-month-sub');
-  if(s) s.innerHTML = d.sub.map(function(item){
-    return '<span style="display:inline-flex;align-items:center;background:rgba(255,255,255,0.25);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.1);">'+item+'</span>';
+  if (s) s.innerHTML = evs.map(function(ev) {
+    return '<span style="display:inline-flex;align-items:center;background:rgba(255,255,255,0.25);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;">' + ev.emoji + ' ' + ev.name + '</span>';
   }).join('');
-  var b = document.getElementById('modal-month-body'); if(b) b.innerHTML='<span style="color:'+c.dark+'">'+d.body+'</span>';
-  var h = document.getElementById('modal-month-header'); if(h){h.style.background=c.grad;h.style.borderBottom='none';}
-  var icon = document.getElementById('modal-month-icon'); if(icon){icon.style.fontSize='34px';icon.textContent=c.icon;}
+
+  var h = document.getElementById('modal-month-header');
+  if (h) { h.style.background = d.grad; h.style.minHeight = ''; }
+
+  var icon = document.getElementById('modal-month-icon');
+  if (icon) { icon.textContent = d.icon; icon.style.fontSize = '34px'; }
+
+  var evContainer = document.getElementById('modal-month-events');
+  if (evContainer) {
+    if (evs.length === 0) {
+      evContainer.innerHTML = '<div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;text-align:center;padding:40px 20px;">'
+        + '<div style="font-size:56px;margin-bottom:16px;animation:floatY 3s ease-in-out infinite;">📭</div>'
+        + '<div style="font-size:16px;font-weight:900;color:var(--dark);margin-bottom:8px;">ยังไม่มีกิจกรรมเดือนนี้</div>'
+        + '<div style="font-size:12px;color:var(--light);line-height:1.8;background:var(--bg);border-radius:14px;padding:10px 20px;border:1px solid var(--border);">ติดตามกิจกรรมใหม่ๆ ได้เร็วๆ นี้ค่ะ ✨</div>'
+        + '</div>';
+    } else {
+    evContainer.innerHTML = evs.map(function(ev) {
+      var joined = !!_monthJoined[ev.id];
+      var joinBg = joined ? 'linear-gradient(135deg,#10B981,#059669)' : 'linear-gradient(135deg,#6366F1,#A855F7)';
+      var joinTxt = joined ? '✅ Joined แล้ว!' : '✅ Join กิจกรรม';
+      var cardHeader = ev.img
+        ? '<img src="' + ev.img + '" style="width:100%;max-height:600px;object-fit:contain;display:block;background:#0a0a0a;">'
+        : '<div style="height:130px;background:' + ev.bg + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px;">'
+          + '<div style="font-size:40px;">' + ev.emoji + '</div>'
+          + '<div style="font-size:14px;font-weight:900;color:#fff;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,0.25);line-height:1.3;">' + ev.name + '</div>'
+          + '</div>';
+      return '<div style="border-radius:16px;overflow:hidden;border:1.5px solid var(--border);background:#fff;box-shadow:0 4px 16px rgba(0,0,0,0.08);display:flex;flex-direction:column;height:100%;">'
+        + cardHeader
+        + '<div style="padding:10px 11px 12px;display:flex;flex-direction:column;flex:1;">'
+        +   '<div style="display:flex;flex-direction:column;gap:6px;">'
+        +     '<button style="width:100%;border:1.5px solid var(--border);background:#fff;border-radius:9px;padding:7px 4px;font-size:11px;font-weight:700;color:var(--mid);cursor:pointer;font-family:\'Sarabun\',sans-serif;" onclick="showToast(\'เปิดดูรายละเอียดแล้ว 📋\')">📋 รายละเอียด</button>'
+        +     (ev.joinUrl
+              ? '<a href="' + ev.joinUrl + '" target="_blank" rel="noopener" style="display:block;width:100%;background:linear-gradient(135deg,#6366F1,#A855F7);border:none;border-radius:9px;padding:7px 4px;font-size:11px;font-weight:900;color:#fff;cursor:pointer;font-family:\'Sarabun\',sans-serif;text-align:center;text-decoration:none;box-sizing:border-box;">✅ Join กิจกรรม</a>'
+              : '<button id="join-btn-' + ev.id + '" style="width:100%;background:' + joinBg + ';border:none;border-radius:9px;padding:7px 4px;font-size:11px;font-weight:900;color:#fff;cursor:pointer;font-family:\'Sarabun\',sans-serif;" onclick="toggleMonthJoin(\'' + ev.id + '\',this)">' + joinTxt + '</button>'
+              )
+        +   '</div>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+    }
+  }
+
   el.classList.add('open');
   document.body.classList.add('modal-open');
   window._activeModalId = 'modal-month';
-  var sheet = el.querySelector('.modal-sheet'); if(sheet) sheet.scrollTop = 0;
+  var sheet = el.querySelector('.modal-sheet'); if (sheet) sheet.scrollTop = 0;
 }
 </script>
 </body>
