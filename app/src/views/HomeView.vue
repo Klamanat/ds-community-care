@@ -1,47 +1,60 @@
 <template>
-  <div>
+  <div class="tab-page flex flex-col gap-5">
+
     <!-- Birthday Banner -->
-    <section class="sec">
-      <BdayBanner
-        :label="bdayLabel"
-        :sub="bdaySub"
-        :placeholders="bdayPlaceholders"
-      />
-    </section>
+    <BdayBanner
+      :label="bdayLabel"
+      :sub="bdaySub"
+      :placeholders="bdayPlaceholders"
+    />
 
     <!-- Carousel shortcuts -->
-    <section class="sec">
-      <div class="c-row">
-        <div class="c-card ripple-host" @click="router.push('/bday')">
-          <div class="c-bg bg-bday"><span class="c-emo">🎂</span><span class="c-lbl">Birthday</span></div>
-        </div>
-        <div class="c-card ripple-host" @click="router.push('/culture')">
-          <div class="c-bg bg-culture"><span class="c-emo">🔥</span><span class="c-lbl">FIRE Culture</span></div>
-        </div>
-        <div class="c-card ripple-host" @click="ui.openModal('modal-training')">
-          <div class="c-bg bg-training"><span class="c-emo">📚</span><span class="c-lbl">Training</span></div>
-        </div>
-        <div class="c-card ripple-host" @click="ui.openModal('modal-reward')">
-          <div class="c-bg bg-reward"><span class="c-emo">⭐</span><span class="c-lbl">DS Reward</span></div>
-        </div>
+    <div class="grid grid-cols-4 gap-2">
+      <div
+        class="c-card ripple-host bg-[linear-gradient(135deg,#FF6CAB,#FF3CAC,#784BA0)]"
+        @click="router.push('/bday')"
+      >
+        <div class="c-emo">🎂</div>
+        <div class="c-lbl">Birthday</div>
       </div>
-    </section>
+      <div
+        class="c-card ripple-host bg-[linear-gradient(135deg,#FF6B00,#FF3CAC,#A855F7,#3B82F6)]"
+        @click="router.push('/culture')"
+      >
+        <div class="c-emo">🔥</div>
+        <div class="c-lbl">FIRE Culture</div>
+      </div>
+      <div
+        class="c-card ripple-host bg-[linear-gradient(135deg,#FFD6DC,#FF8FA3,#FF4D6D)]"
+        @click="ui.showToast('Training — เร็วๆนี้ 🚀')"
+      >
+        <div class="c-emo">📚</div>
+        <div class="c-lbl">Training</div>
+      </div>
+      <div
+        class="c-card ripple-host bg-[linear-gradient(135deg,#06C755,#00A040)]"
+        @click="ui.showToast('DS Reward — เร็วๆนี้ 🚀')"
+      >
+        <div class="c-emo">⭐</div>
+        <div class="c-lbl">DS Reward</div>
+      </div>
+    </div>
 
     <!-- Consult cards -->
-    <section class="sec">
+    <div>
       <div class="sec-hdr">
         <div class="sec-title">🤝 บริการปรึกษา</div>
       </div>
       <ConsultCards />
-    </section>
+    </div>
 
     <!-- Tool cards -->
-    <section class="sec">
+    <div>
       <div class="sec-hdr">
         <div class="sec-title">🛠 เครื่องมือ</div>
       </div>
-      <div class="tool-row">
-        <div class="tool-card org ripple-host" @click="ui.openModal('modal-org')">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="tool-card org ripple-host flex-col items-start" @click="ui.openModal('modal-org')">
           <div class="ti">🏆</div>
           <div class="tt">Star Gang</div>
           <div class="ts">สมาชิกดาวเด่น</div>
@@ -51,45 +64,44 @@
             <div class="org-av" style="background:linear-gradient(135deg,#C7D2FE,#6366F1);">✨</div>
           </div>
         </div>
-        <div class="tool-card emp ripple-host" @click="ui.openModal('modal-emp')">
+        <div class="tool-card emp ripple-host flex-col items-start" @click="ui.openModal('modal-emp')">
           <div class="ti">💝</div>
           <div class="tt">Empathy Board</div>
           <div class="ts">ชื่นชมเพื่อนร่วมงาน</div>
           <div class="etags">
             <span class="etag">เก่งมาก ⭐</span>
             <span class="etag">ขอบคุณ 🙏</span>
-            <span class="etag">สู้ๆ 💪</span>
           </div>
         </div>
-        <div class="tool-card org ripple-host" @click="router.push('/idea')">
+        <div class="tool-card org ripple-host flex-col items-start" @click="router.push('/idea')">
           <div class="ti">💡</div>
           <div class="tt">เสนอไอเดีย</div>
           <div class="ts">แชร์ความคิดสร้างสรรค์</div>
         </div>
-        <div class="tool-card emp ripple-host" @click="router.push('/star')">
+        <div class="tool-card emp ripple-host flex-col items-start" @click="router.push('/star')">
           <div class="ti">⭐</div>
           <div class="tt">Star of Month</div>
           <div class="ts">พนักงานดาวเด่น</div>
         </div>
       </div>
-    </section>
+    </div>
 
     <!-- Months Grid -->
-    <section class="sec">
+    <div>
       <div class="sec-hdr">
         <div class="sec-title">📅 กิจกรรมรายเดือน</div>
       </div>
-      <MonthsGrid @month-click="openMonthModal" />
-    </section>
+      <MonthsGrid @month-click="() => router.push('/bday')" />
+    </div>
 
     <!-- Empathy Board -->
-    <section class="sec">
+    <div>
       <div class="sec-hdr">
         <div class="sec-title">💝 Empathy Board</div>
         <span class="sec-more" @click="ui.openModal('modal-emp')">ส่งคำชื่นชม</span>
       </div>
       <EmpathyBoard />
-    </section>
+    </div>
   </div>
 </template>
 
@@ -121,15 +133,10 @@ const bdaySub = computed(() => {
   return `เดือนนี้มี ${emps.length} คนเกิดวันเกิด! 🎉`
 })
 
-const bdayPlaceholders = computed(() => {
-  return (bday.allEmployees[currentMonth] || []).slice(0, 3).map((e, i) => ({
+const bdayPlaceholders = computed(() =>
+  (bday.allEmployees[currentMonth] || []).slice(0, 3).map(e => ({
     bg: bday.getFallbackBg(e.fallbackIdx),
     emoji: bday.getFallbackEmoji(e.fallbackIdx)
   }))
-})
-
-function openMonthModal(monthIdx) {
-  // Month detail shown via MonthModal - for now navigate to bday
-  router.push('/bday')
-}
+)
 </script>

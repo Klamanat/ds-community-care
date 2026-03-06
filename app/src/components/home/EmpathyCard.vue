@@ -1,45 +1,57 @@
 <template>
-  <div class="emp-item" :style="cardStyle" @click="$emit('click', post)">
+  <div
+    class="rounded-2xl overflow-hidden shadow-app-sm cursor-pointer border border-app-border/50"
+    :style="{ background: tagInfo.hdr }"
+    @click="$emit('click', post)"
+  >
     <!-- Tag header -->
-    <div class="emp-card-hdr" :style="hdrStyle">
-      <span class="emp-tag">{{ post.tag }}</span>
-      <span class="emp-stat">{{ post.react }}</span>
+    <div class="emp-card-hdr">
+      <span class="emp-tag text-white font-bold rounded-full px-3 py-1"
+            :style="{ background: tagInfo.bg }">{{ post.tag }}</span>
     </div>
 
     <!-- Spotlight photo -->
     <div class="emp-card-spotlight">
-      <img v-if="post.recImg" :src="post.recImg" :alt="post.recName" />
-      <div v-else class="emp-av-board" :style="{ background: fallbackGrad }">
-        <span style="display:flex;align-items:center;justify-content:center;height:100%;font-size:32px;font-weight:900;color:white;">{{ initials }}</span>
-      </div>
+      <img
+        v-if="post.recImg"
+        :src="post.recImg"
+        :alt="post.recName"
+        class="w-full h-[200px] object-cover block"
+      />
+      <div
+        v-else
+        class="w-full h-[200px] flex items-center justify-center text-[32px] font-black text-white"
+        :style="{ background: fallbackGrad }"
+      >{{ initials }}</div>
 
       <!-- Stats overlay -->
-      <div class="emp-card-stats">
+      <div class="emp-card-stats top-3 right-3">
         <span class="emp-stat-pill">{{ post.react }}</span>
         <span class="emp-stat-pill">💬 {{ post.comments?.length || 0 }}</span>
       </div>
 
       <!-- Name overlay -->
-      <div class="emp-spotlight-name">
-        <div style="font-size:13px;font-weight:900;color:white;text-shadow:0 1px 8px rgba(0,0,0,0.5);">{{ post.recName }}</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.85);margin-top:1px;">{{ post.recRole }}</div>
+      <div class="emp-spotlight-name p-3 pt-[50px]">
+        <div class="text-[13px] font-black text-white" style="text-shadow:0 1px 8px rgba(0,0,0,0.5);">{{ post.recName }}</div>
+        <div class="text-[10px] text-white/85 mt-0.5">{{ post.recRole }}</div>
       </div>
     </div>
 
     <!-- Message -->
     <div class="emp-card-msg">
-      <div class="emp-card-quote">"</div>
-      {{ post.msg }}
+      <span class="text-[20px] text-pink/40 font-black leading-none mr-1">"</span>{{ post.msg }}
     </div>
 
     <!-- Footer -->
     <div class="emp-card-footer">
-      <div class="emp-av emp-av-xs emp-sender-av">
-        <img v-if="post.sndImg" :src="post.sndImg" />
-        <span v-else style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#7C2D8C;">{{ post.sndName?.[0] }}</span>
+      <div class="flex items-center gap-2 flex-1 px-3 py-2.5">
+        <div class="w-6 h-6 rounded-full bg-[linear-gradient(135deg,#FBCFE8,#EC4899)]
+                    flex items-center justify-center text-[9px] font-extrabold text-[#7C2D8C]">
+          {{ post.sndName?.[0] }}
+        </div>
+        <span class="text-[11px] text-[#C084C0] font-semibold flex-1 truncate">{{ post.sndName }}</span>
+        <span class="text-[10px] text-[#C084C0]">{{ post.time }}</span>
       </div>
-      <span style="font-size:10px;color:#C084C0;font-weight:600;flex:1;">{{ post.sndName }}</span>
-      <span style="font-size:10px;color:#C084C0;">{{ post.time }}</span>
     </div>
   </div>
 </template>
@@ -65,10 +77,8 @@ const GRAD_FALLBACKS = [
 ]
 
 const tagInfo = computed(() => TAG_GRADS[props.post.tag] || { bg:'linear-gradient(135deg,#FBCFE8,#F9A8D4)', hdr:'linear-gradient(135deg,#FFF5FB,#F5F0FF)' })
-const cardStyle = computed(() => ({ background: tagInfo.value.hdr }))
-const hdrStyle = computed(() => ({ background: tagInfo.value.hdr }))
 const fallbackGrad = computed(() => GRAD_FALLBACKS[0])
-const initials = computed(() => {
-  return props.post.recName?.trim().split(/\s+/).slice(0,2).map(w => w[0]?.toUpperCase()).join('') || '?'
-})
+const initials = computed(() =>
+  props.post.recName?.trim().split(/\s+/).slice(0,2).map(w => w[0]?.toUpperCase()).join('') || '?'
+)
 </script>

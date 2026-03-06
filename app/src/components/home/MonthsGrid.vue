@@ -4,15 +4,16 @@
       v-for="m in months"
       :key="m.idx"
       class="m-card"
-      :class="{ 'm-current': m.idx === currentMonth }"
+      :class="{ 'ring-2 ring-indigo ring-offset-1': m.idx === currentMonth }"
       :style="{ background: m.grad }"
       @click="$emit('month-click', m.idx)"
     >
       <div class="m-body">
         <div class="m-head">
-          <div class="m-name">{{ m.name }}</div>
+          <span class="m-name text-app-dark">{{ m.name }}</span>
+          <span class="text-[11px] font-black text-app-mid">{{ m.idx }}</span>
         </div>
-        <div v-for="ev in m.events" :key="ev" class="m-ev">{{ ev }}</div>
+        <div v-for="ev in m.events" :key="ev" class="m-ev text-app-mid">{{ ev }}</div>
       </div>
     </div>
   </div>

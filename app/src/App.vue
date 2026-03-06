@@ -25,7 +25,7 @@
     <ProfileModal />
 
     <!-- Toast -->
-    <div class="toast" :class="{ show: ui.toast.visible }">{{ ui.toast.msg }}</div>
+    <div class="toast" :class="{ hidden: !ui.toast.visible }">{{ ui.toast.msg }}</div>
   </div>
 </template>
 

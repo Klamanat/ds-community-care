@@ -1,22 +1,17 @@
 <template>
-  <div class="empathy-box">
-    <div class="emp-intro">
+  <div class="flex flex-col gap-3">
+    <div class="text-[12px] font-semibold text-app-mid text-center py-2">
       💝 ชื่นชมเพื่อนร่วมงานของคุณวันนี้ • ทุก Empathy = +10 LINE pts
     </div>
 
-    <!-- Send button -->
-    <button
-      class="modal-close-btn"
-      style="margin-bottom:14px;margin-top:0;"
-      @click="ui.openModal('modal-emp')"
-    >
+    <button class="modal-close-btn" @click="ui.openModal('modal-emp')">
       💌 ส่งคำชื่นชม
     </button>
 
-    <div v-if="empathy.isLoading" class="emp-feed">
+    <div v-if="empathy.isLoading" class="flex flex-col gap-3">
       <SkeletonCard v-for="i in 3" :key="i" height="280px" radius="20px" />
     </div>
-    <div v-else class="emp-feed">
+    <div v-else class="flex flex-col gap-4">
       <EmpathyCard
         v-for="(post, idx) in empathy.posts"
         :key="post.id"
@@ -37,8 +32,7 @@ const empathy = useEmpathyStore()
 const ui = useUiStore()
 
 function openDetail(idx) {
-  ui.openModal('modal-emp-detail')
-  // store current post index in ui for detail modal
   ui._empDetailIdx = idx
+  ui.openModal('modal-emp-detail')
 }
 </script>

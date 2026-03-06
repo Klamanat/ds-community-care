@@ -1,11 +1,15 @@
 <template>
   <Teleport to="body">
     <div
+      v-show="ui.activeModal === modalId"
       class="modal-overlay"
-      :class="{ open: ui.activeModal === modalId }"
       @click.self="ui.closeModal()"
     >
-      <div class="modal-sheet" @click.stop>
+      <div
+        class="modal-sheet"
+        :class="{ open: ui.activeModal === modalId }"
+        @click.stop
+      >
         <slot />
       </div>
     </div>

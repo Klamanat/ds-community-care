@@ -1,20 +1,18 @@
 <template>
   <div class="bday-banner-card ripple-host" @click="onClick">
-    <div class="bbc-bg">
-      <!-- decorative dots -->
-      <div class="bbc-dot" style="width:80px;height:80px;background:#FF3CAC;top:-20px;right:60px;"></div>
-      <div class="bbc-dot" style="width:50px;height:50px;background:#C84B9E;bottom:-15px;left:40px;"></div>
+    <!-- decorative circles -->
+    <div class="absolute w-20 h-20 rounded-full opacity-10 bg-[#FF3CAC] -top-5 right-[60px]"></div>
+    <div class="absolute w-[50px] h-[50px] rounded-full opacity-10 bg-[#C84B9E] -bottom-4 left-10"></div>
 
-      <div class="bbc-left">
-        <div class="bbc-label">{{ label }}</div>
-        <div class="bbc-sub">{{ sub }}</div>
-      </div>
-
+    <div class="bbc-left">
+      <div class="bbc-label">{{ label }}</div>
+      <div class="text-[15px] font-black text-white leading-tight mt-1">{{ name }}</div>
+      <div class="bbc-sub">{{ sub }}</div>
       <div class="bbc-photos">
         <img
           v-for="(p, i) in photos"
           :key="i"
-          class="bbc-photo"
+          class="bbc-photo object-cover"
           :src="p.src || ''"
           :style="p.src ? '' : `background:${p.bg};`"
           @error="(e) => e.target.style.display='none'"
@@ -22,11 +20,13 @@
         <div
           v-for="(p, i) in placeholders"
           :key="'p'+i"
-          class="bbc-photo"
-          :style="`background:${p.bg};display:flex;align-items:center;justify-content:center;font-size:16px;`"
+          class="bbc-photo flex items-center justify-center text-[16px]"
+          :style="`background:${p.bg};`"
         >{{ p.emoji }}</div>
       </div>
     </div>
+
+    <div class="relative z-10 px-4 text-[48px]">🎂</div>
   </div>
 </template>
 
@@ -35,7 +35,8 @@ import { useUiStore } from '../../stores/ui.js'
 
 defineProps({
   label: { type: String, default: '🎂 Birthday Celebration' },
-  sub: { type: String, default: 'เดือนนี้มีใครเกิดบ้าง? 🎉' },
+  name:  { type: String, default: '' },
+  sub:   { type: String, default: 'เดือนนี้มีใครเกิดบ้าง? 🎉' },
   photos: { type: Array, default: () => [] },
   placeholders: { type: Array, default: () => [
     { bg: 'linear-gradient(135deg,#C7D2FE,#818CF8)', emoji: '😄' },
