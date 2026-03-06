@@ -2,24 +2,48 @@
   <div class="tab-page">
 
     <!-- Section 1: กิจกรรมและข่าวสาร -->
-    <div class="sec fade-in">
+    <div class="sec">
       <div class="sec-hdr">
         <span class="sec-title">🎊 กิจกรรมและข่าวสาร</span>
-        <span class="sec-more" @click="router.push('/bday')">ดูทั้งหมด</span>
+        <span class="sec-more" @click="ui.openModal('modal-bday')">ดูทั้งหมด</span>
       </div>
-      <BdayBanner
-        :label="bdayLabel"
-        :sub="bdaySub"
-        :placeholders="bdayPlaceholders"
-      />
-      <div class="grid grid-cols-4 gap-2 mt-3">
-        <div
-          class="c-card ripple-host bg-[linear-gradient(135deg,#FF6CAB,#FF3CAC,#784BA0)]"
-          @click="router.push('/bday')"
-        >
-          <div class="c-emo">🎂</div>
-          <div class="c-lbl">Birthday</div>
+
+      <!-- Birthday banner -->
+      <div class="bday-home-banner ripple-host" @click="ui.openModal('modal-bday')">
+        <img src="/images/bday-hero.jpg" class="bday-hero-img" />
+        <div class="bday-hero-overlay">
+          <!-- Confetti dots -->
+          <span class="bday-dot" style="top:10px;left:14%;background:#FFE500;width:7px;height:7px;animation-delay:0s;"></span>
+          <span class="bday-dot" style="top:7px;left:38%;background:#FF6BCB;width:5px;height:5px;animation-delay:0.5s;"></span>
+          <span class="bday-dot" style="top:14px;right:28%;background:#60AEFF;width:6px;height:6px;animation-delay:1s;"></span>
+          <span class="bday-dot" style="bottom:12px;left:22%;background:#44DD88;width:5px;height:5px;animation-delay:0.3s;"></span>
+          <span class="bday-dot" style="bottom:9px;right:18%;background:#FF8C00;width:7px;height:7px;animation-delay:0.8s;"></span>
+          <span class="bday-dot" style="top:42%;left:6%;background:#FF6BCB;width:4px;height:4px;animation-delay:1.3s;"></span>
+          <!-- Floating emoji -->
+          <span class="bday-float-emoji" style="right:14%;top:8%;animation-delay:0s;">🎉</span>
+          <span class="bday-float-emoji" style="right:6%;bottom:12%;animation-delay:1.1s;font-size:14px;">✨</span>
+          <span class="bday-float-emoji" style="left:4%;bottom:14%;animation-delay:0.6s;font-size:13px;">🎈</span>
+          <div class="flex-1">
+            <div class="bday-home-label">🎂 Birthday Celebration</div>
+            <div class="bday-home-sub">{{ bdaySub }}</div>
+          </div>
+          <div class="bday-home-strip">
+            <div
+              v-for="emp in bdayEmps.slice(0, 5)"
+              :key="emp.key"
+              class="bday-strip-av"
+              :style="{ background: bday.getFallbackBg(emp.fallbackIdx) }"
+            >
+              <img v-if="emp.photo" :src="emp.photo" class="w-full h-full object-cover" />
+              <span v-else>{{ bday.getFallbackEmoji(emp.fallbackIdx) }}</span>
+            </div>
+            <div v-if="bdayEmps.length > 5" class="bday-strip-more">+{{ bdayEmps.length - 5 }}</div>
+          </div>
         </div>
+      </div>
+
+      <!-- Quick links -->
+      <div class="grid grid-cols-3 gap-2 mt-3">
         <div
           class="c-card ripple-host bg-[linear-gradient(135deg,#FF6B00,#FF3CAC,#A855F7,#3B82F6)]"
           @click="router.push('/culture')"
@@ -113,7 +137,6 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import BdayBanner from '../components/home/BdayBanner.vue'
 import ConsultCards from '../components/home/ConsultCards.vue'
 import MonthsGrid from '../components/home/MonthsGrid.vue'
 import EmpathyBoard from '../components/home/EmpathyBoard.vue'
@@ -126,22 +149,10 @@ const bday = useBirthdayStore()
 
 const currentMonth = new Date().getMonth()
 
-const bdayLabel = computed(() => {
-  const emps = bday.allEmployees[currentMonth] || []
-  if (!emps.length) return '🎂 Birthday Celebration'
-  return `🎂 ${emps.map(e => e.name).join(', ')}`
-})
-
+const bdayEmps = computed(() => bday.allEmployees[currentMonth] || [])
 const bdaySub = computed(() => {
-  const emps = bday.allEmployees[currentMonth] || []
-  if (!emps.length) return 'เดือนนี้ยังไม่มีวันเกิด 🙁'
-  return `เดือนนี้มี ${emps.length} คนเกิดวันเกิด! 🎉`
+  const n = bdayEmps.value.length
+  if (!n) return 'เดือนนี้ยังไม่มีวันเกิด 🙁'
+  return `เดือนนี้มี ${n} คนเกิดวันเกิด 🎉`
 })
-
-const bdayPlaceholders = computed(() =>
-  (bday.allEmployees[currentMonth] || []).slice(0, 3).map(e => ({
-    bg: bday.getFallbackBg(e.fallbackIdx),
-    emoji: bday.getFallbackEmoji(e.fallbackIdx)
-  }))
-)
 </script>

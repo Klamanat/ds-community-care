@@ -1,56 +1,32 @@
 <template>
   <div
     class="rounded-2xl overflow-hidden shadow-app-sm cursor-pointer border border-app-border/50"
-    :style="{ background: tagInfo.hdr }"
     @click="$emit('click', post)"
   >
-    <!-- Tag header -->
-    <div class="emp-card-hdr">
-      <span class="emp-tag text-white font-bold rounded-full px-3 py-1"
-            :style="{ background: tagInfo.bg }">{{ post.tag }}</span>
-    </div>
-
-    <!-- Spotlight photo -->
-    <div class="emp-card-spotlight">
+    <!-- Spotlight photo only -->
+    <div class="emp-card-spotlight" style="margin:0; border-radius:0;">
       <img
         v-if="post.recImg"
         :src="post.recImg"
         :alt="post.recName"
-        class="w-full h-[200px] object-cover block"
+        class="w-full object-contain block"
       />
       <div
         v-else
-        class="w-full h-[200px] flex items-center justify-center text-[32px] font-black text-white"
+        class="w-full h-[120px] flex items-center justify-center text-[28px] font-black text-white"
         :style="{ background: fallbackGrad }"
       >{{ initials }}</div>
 
       <!-- Stats overlay -->
-      <div class="emp-card-stats top-3 right-3">
+      <div class="emp-card-stats top-2 right-2">
         <span class="emp-stat-pill">{{ post.react }}</span>
         <span class="emp-stat-pill">💬 {{ post.comments?.length || 0 }}</span>
       </div>
 
       <!-- Name overlay -->
-      <div class="emp-spotlight-name p-3 pt-[50px]">
-        <div class="text-[13px] font-black text-white" style="text-shadow:0 1px 8px rgba(0,0,0,0.5);">{{ post.recName }}</div>
-        <div class="text-[10px] text-white/85 mt-0.5">{{ post.recRole }}</div>
-      </div>
-    </div>
-
-    <!-- Message -->
-    <div class="emp-card-msg">
-      <span class="text-[20px] text-pink/40 font-black leading-none mr-1">"</span>{{ post.msg }}
-    </div>
-
-    <!-- Footer -->
-    <div class="emp-card-footer">
-      <div class="flex items-center gap-2 flex-1 px-3 py-2.5">
-        <div class="w-6 h-6 rounded-full bg-[linear-gradient(135deg,#FBCFE8,#EC4899)]
-                    flex items-center justify-center text-[9px] font-extrabold text-[#7C2D8C]">
-          {{ post.sndName?.[0] }}
-        </div>
-        <span class="text-[11px] text-[#C084C0] font-semibold flex-1 truncate">{{ post.sndName }}</span>
-        <span class="text-[10px] text-[#C084C0]">{{ post.time }}</span>
+      <div class="emp-spotlight-name p-2 pt-[40px]">
+        <div class="text-[11px] font-black text-white" style="text-shadow:0 1px 8px rgba(0,0,0,0.5);">{{ post.recName }}</div>
+        <div class="text-[9px] text-white/85 mt-0.5">{{ post.recRole }}</div>
       </div>
     </div>
   </div>

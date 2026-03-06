@@ -8,10 +8,10 @@
       💌 ส่งคำชื่นชม
     </button>
 
-    <div v-if="empathy.isLoading" class="flex flex-col gap-3">
-      <SkeletonCard v-for="i in 3" :key="i" height="280px" radius="20px" />
+    <div v-if="empathy.isLoading" class="grid grid-cols-3 gap-3">
+      <SkeletonCard v-for="i in 3" :key="i" height="220px" radius="16px" />
     </div>
-    <div v-else class="flex flex-col gap-4">
+    <div v-else class="grid grid-cols-3 gap-3">
       <EmpathyCard
         v-for="(post, idx) in empathy.posts"
         :key="post.id"
