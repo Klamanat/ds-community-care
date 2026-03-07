@@ -16,19 +16,45 @@ function getEmpathyPosts(params) {
     return new Date(b.createdAt) - new Date(a.createdAt);
   });
 
+  // Preload employees for image fallback (keyed by id)
+  var empMap = {};
+  try {
+    sheetToObjects('Employees').forEach(function(e) {
+      if (e.id) empMap[String(e.id)] = e;
+    });
+  } catch(e) {}
+
   var posts = rows.map(function(r) {
+    var recImg = String(r.recImgUrl || '');
+
+    // If no image stored, look up from Employees sheet by recEmployeeId
+    if (!recImg && r.recEmployeeId) {
+      var emp = empMap[String(r.recEmployeeId)];
+      if (emp) {
+        var empImg = String(emp.imgUrl || '');
+        if (empImg.indexOf('drive:') === 0) {
+          try {
+            var bytes = DriveApp.getFileById(empImg.slice(6)).getBlob().getBytes();
+            recImg = 'data:image/jpeg;base64,' + Utilities.base64Encode(bytes);
+          } catch(e) { recImg = ''; }
+        } else {
+          recImg = empImg;
+        }
+      }
+    }
+
     return {
       id:            String(r.id || ''),
       recEmployeeId: String(r.recEmployeeId || ''),
       recName:       String(r.recName || ''),
       recRole:       String(r.recRole || ''),
-      recImg:        String(r.recImgUrl || ''),
+      recImg:        recImg,
       sndName:       String(r.sndName || ''),
       msg:           String(r.msg || ''),
       tag:           String(r.tag || ''),
       likeCount:     parseInt(r.likeCount, 10) || 0,
       createdAt:     String(r.createdAt || ''),
-      comments:      [],  // loaded separately via getEmpathyComments
+      comments:      [],
       react:         (String(r.tag || '')).includes('เก่งมาก') ? '⭐' : (String(r.tag || '')).includes('ขอบคุณ') ? '🙏' : '💪',
     };
   });
@@ -65,13 +91,16 @@ function getEmpathyComments(params) {
   var rows     = sheetToObjects('EmpathyComments');
   var filtered = rows.filter(function(r) { return String(r.postId) === String(postId); });
 
+  filtered.sort(function(a, b) { return new Date(a.createdAt) - new Date(b.createdAt); });
+
   var comments = filtered.map(function(r) {
     return {
-      id:          String(r.id || ''),
-      postId:      String(r.postId || ''),
-      name:        String(r.authorName || ''),
-      text:        String(r.text || ''),
-      time:        String(r.createdAt || ''),
+      id:       String(r.id         || ''),
+      postId:   String(r.postId     || ''),
+      parentId: String(r.parentId   || ''),
+      name:     String(r.authorName || ''),
+      text:     String(r.text       || ''),
+      time:     String(r.createdAt  || ''),
     };
   });
 
@@ -82,6 +111,7 @@ function addComment(params) {
   var postId     = params.postId;
   var authorName = params.authorName;
   var text       = params.text;
+  var parentId   = params.parentId || '';
 
   if (!postId)     return err('postId required');
   if (!authorName) return err('authorName required');
@@ -90,9 +120,46 @@ function addComment(params) {
   var id        = uuid();
   var createdAt = formatDate(new Date());
 
-  appendRow('EmpathyComments', [id, postId, authorName, text, createdAt]);
+  // Column order: id | postId | parentId | authorName | text | createdAt
+  appendRow('EmpathyComments', [id, postId, parentId, authorName, text, createdAt]);
 
-  return ok({ id: id, postId: postId, name: authorName, text: text, time: createdAt });
+  return ok({ id: id, postId: postId, parentId: parentId, name: authorName, text: text, time: createdAt });
+}
+
+function ensurePost(params) {
+  var recEmployeeId = params.recEmployeeId || '';
+  var recName       = params.recName;
+  var recRole       = params.recRole   || '';
+  var recImgUrl     = params.recImgUrl || '';
+  var sndName       = params.sndName   || 'ทีม';
+
+  if (!recName) return err('recName required');
+
+  var rows = sheetToObjects('EmpathyPosts');
+
+  // Find by employeeId first, then by name
+  var existing = null;
+  if (recEmployeeId) {
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].recEmployeeId) === String(recEmployeeId)) { existing = rows[i]; break; }
+    }
+  }
+  if (!existing) {
+    for (var j = 0; j < rows.length; j++) {
+      if (String(rows[j].recName) === String(recName)) { existing = rows[j]; break; }
+    }
+  }
+
+  if (existing) {
+    return ok({ id: String(existing.id), recName: String(existing.recName), recRole: String(existing.recRole || ''), recImg: String(existing.recImgUrl || ''), isNew: false });
+  }
+
+  if (recImgUrl.length > 500) recImgUrl = '';
+  var id = uuid();
+  var createdAt = formatDate(new Date());
+  appendRow('EmpathyPosts', [id, recEmployeeId, recName, recRole, recImgUrl, sndName, '', '', 0, createdAt]);
+
+  return ok({ id: id, recName: recName, recRole: recRole, recImg: recImgUrl, isNew: true });
 }
 
 function toggleLike(params) {

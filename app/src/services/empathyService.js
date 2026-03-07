@@ -6,24 +6,46 @@ export async function fetchPosts() {
 }
 
 export async function createPost(p) {
-  // Never pass base64 data URLs in the query string — they exceed GAS URL limits
-  const rawImg = p.recImgUrl || ''
+  const rawImg  = p.recImgUrl || ''
   const safeImg = rawImg.startsWith('data:') ? '' : rawImg.slice(0, 300)
-
   const r = await gasGet('addEmpathyPost', {
     recEmployeeId: p.recEmployeeId || '',
-    recName: p.recName,
-    recRole: p.recRole,
+    recName:  p.recName,
+    recRole:  p.recRole,
     recImgUrl: safeImg,
-    sndName: p.sndName,
-    msg: p.msg.slice(0, 500),
-    tag: p.tag
+    sndName:  p.sndName,
+    msg:      p.msg.slice(0, 500),
+    tag:      p.tag
   })
   return r.data
 }
 
-export async function addComment(postId, text, authorName) {
-  const r = await gasGet('addComment', { postId, text: text.slice(0, 500), authorName })
+// Find existing post for this person, or create a shell post — atomic on GAS side
+export async function ensurePost(p) {
+  const rawImg  = p.recImgUrl || ''
+  const safeImg = rawImg.startsWith('data:') ? '' : rawImg.slice(0, 300)
+  const r = await gasGet('ensurePost', {
+    recEmployeeId: p.recEmployeeId || '',
+    recName:  p.recName,
+    recRole:  p.recRole  || '',
+    recImgUrl: safeImg,
+    sndName:  p.sndName  || 'ทีม'
+  })
+  return r.data   // { id, recName, recRole, recImg, isNew }
+}
+
+export async function fetchComments(postId) {
+  const r = await gasGet('getEmpathyComments', { postId })
+  return r.data   // [{ id, postId, parentId, name, text, time }]
+}
+
+export async function addComment(postId, text, authorName, parentId = '') {
+  const r = await gasGet('addComment', {
+    postId,
+    text:       text.slice(0, 500),
+    authorName,
+    parentId:   parentId || ''
+  })
   return r.data
 }
 

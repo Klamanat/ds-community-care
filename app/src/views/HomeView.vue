@@ -22,10 +22,14 @@
           <img src="/images/bday-header.jpg"
                class="absolute inset-0 w-full h-full object-cover object-top" />
           <div class="absolute inset-0" style="background:linear-gradient(to bottom,rgba(10,0,40,0.18) 0%,rgba(10,0,40,0.58) 100%);"></div>
-          <div class="absolute inset-0 flex flex-col justify-between p-3">
+          <div class="absolute inset-0 flex flex-col justify-center items-start p-3 gap-3">
             <div>
-              <div style="font-size:14px;font-weight:900;color:white;text-shadow:0 1px 4px rgba(0,0,0,0.3);">🎂 Birthday<br>Celebration</div>
-              <div style="font-size:10px;color:rgba(255,255,255,0.85);margin-top:3px;">{{ bdaySub }}</div>
+              <div style="font-size:28px;font-weight:900;color:white;line-height:1.1;white-space:nowrap;
+                          text-shadow:0 2px 12px rgba(0,0,0,0.5),0 0 24px rgba(255,100,200,0.4);">
+                🎂 Birthday Celebration
+              </div>
+              <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.9);margin-top:5px;
+                          text-shadow:0 1px 4px rgba(0,0,0,0.4);">{{ bdaySub }}</div>
             </div>
             <div class="bday-home-strip">
               <div

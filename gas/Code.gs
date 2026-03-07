@@ -46,6 +46,7 @@ function doGet(e) {
       // Empathy
       getEmpathyPosts:    function() { return getEmpathyPosts(e.parameter); },
       addEmpathyPost:     function() { return addEmpathyPost(e.parameter); },
+      ensurePost:         function() { return ensurePost(e.parameter); },
       getEmpathyComments: function() { return getEmpathyComments(e.parameter); },
       addComment:         function() { return addComment(e.parameter); },
       toggleLike:         function() { return toggleLike(e.parameter); },

@@ -14,8 +14,8 @@
       </div>
     </div>
 
-    <!-- Grid view -->
-    <div v-if="view === 'grid'" class="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-2.5">
+    <!-- ── GRID view ──────────────────────────────────────────────── -->
+    <div v-if="view === 'grid'" class="flex-1 overflow-y-auto px-5 pt-4 pb-6 flex flex-col gap-2.5">
       <input
         v-model="searchQ"
         placeholder="🔍 ค้นหาชื่อหรือตำแหน่ง..."
@@ -24,12 +24,12 @@
       <div class="text-[11px] font-extrabold text-[#C084C0] tracking-[1px] uppercase">👥 เลือกคนที่จะชื่นชม</div>
       <div class="grid grid-cols-3 gap-2.5">
         <div
-          v-for="(m, i) in filteredTeam"
+          v-for="m in filteredTeam"
           :key="m.id || m.name"
-          class="rounded-2xl overflow-hidden cursor-pointer border-[2.5px] border-pink/15 transition-all duration-200 bg-white relative"
+          class="rounded-2xl overflow-hidden cursor-pointer border-[2.5px] border-pink/15 transition-all duration-200 bg-white"
           @click="selectPerson(m)"
         >
-          <div :style="{ background: m.grad }" class="overflow-hidden relative">
+          <div :style="{ background: m.grad }" class="overflow-hidden">
             <img v-if="m.imgUrl" :src="m.imgUrl" class="w-full block object-cover object-top" @error="e => e.target.style.display='none'" />
             <div v-else class="w-full aspect-[3/4] min-h-[80px] flex items-center justify-center text-[28px] font-black text-white">{{ initials(m.name) }}</div>
           </div>
@@ -38,9 +38,8 @@
             <div class="text-[9px] text-[#C084C0] font-semibold mt-px overflow-hidden text-ellipsis whitespace-nowrap">{{ m.role }}</div>
           </div>
         </div>
-        <!-- Add person card -->
         <div
-          class="rounded-2xl overflow-hidden cursor-pointer border-2 border-dashed border-pink/30 bg-[linear-gradient(135deg,#FFF5FB,#F5F0FF)] flex flex-col items-center justify-center min-h-[110px] gap-1"
+          class="rounded-2xl cursor-pointer border-2 border-dashed border-pink/30 bg-[linear-gradient(135deg,#FFF5FB,#F5F0FF)] flex flex-col items-center justify-center min-h-[110px] gap-1"
           @click="view = 'add'"
         >
           <div class="w-9 h-9 rounded-full bg-[linear-gradient(135deg,#EC4899,#7C3AED)] flex items-center justify-center text-[20px] text-white">+</div>
@@ -49,117 +48,153 @@
       </div>
     </div>
 
-    <!-- Comment view (existing kudos) -->
-    <template v-else-if="view === 'comment' && selectedMember">
-      <div class="flex-1 overflow-y-auto flex flex-col">
-        <div class="emp-card-spotlight flex-shrink-0 h-auto">
-          <img v-if="selectedMember.imgUrl" :src="selectedMember.imgUrl" class="w-full block object-cover object-top" />
-          <div v-else :style="{ background: selectedMember.grad }" class="w-full h-[180px] flex items-center justify-center text-[64px]">{{ initials(selectedMember.name) }}</div>
-          <div class="emp-spotlight-name">
-            <div class="text-[14px] font-black text-white" style="text-shadow:0 1px 8px rgba(0,0,0,0.5);">{{ selectedMember.name }}</div>
-            <div class="text-[10px] text-white/88 font-semibold mt-0.5">{{ selectedMember.role }}</div>
-          </div>
-        </div>
-        <div class="px-4 py-3 flex flex-col gap-2 bg-[linear-gradient(160deg,#FFF9FD,#F8F5FF)] flex-1">
-          <div class="text-[11px] font-extrabold text-[#C084C0] tracking-[1px] mb-1">💌 คำชื่นชม</div>
-          <div v-if="existingPost" class="bg-[linear-gradient(135deg,#FFF0FB,#F5F0FF)] border border-pink/15 rounded-[14px] px-3.5 py-2.5 text-[12px] text-[#6B21A8] leading-relaxed">{{ existingPost.msg }}</div>
-          <div v-for="c in existingPost?.comments" :key="c.id" class="bg-white border border-pink/[0.12] rounded-xl px-3 py-2">
-            <div class="flex items-center gap-1.5 mb-1">
-              <div class="w-[22px] h-[22px] rounded-full bg-[linear-gradient(135deg,#FBCFE8,#EC4899)] flex items-center justify-center text-[10px] text-white font-extrabold flex-shrink-0">{{ c.name?.[0] }}</div>
-              <span class="text-[11px] font-extrabold text-[#BE185D]">{{ c.name }}</span>
-              <span class="text-[10px] text-[#C084C0] ml-auto">{{ c.time }}</span>
-            </div>
-            <div class="text-[12px] text-[#4C1D95] leading-relaxed">{{ c.text }}</div>
-          </div>
-          <div v-if="!existingPost?.comments?.length && !existingPost" class="text-center text-[#C084C0] text-[12px] py-4">ยังไม่มีความคิดเห็น 💭</div>
+    <!-- ── THREAD view ────────────────────────────────────────────── -->
+    <template v-else-if="view === 'thread' && selectedMember">
+
+      <!-- Person banner -->
+      <div class="flex-shrink-0 relative overflow-hidden" :style="{ background: selectedMember.grad || 'linear-gradient(135deg,#FBCFE8,#EC4899)' }" style="min-height:140px;">
+        <img
+          v-if="selectedMember.imgUrl"
+          :src="selectedMember.imgUrl"
+          class="w-full block object-contain object-top"
+          @error="e => e.target.style.display='none'"
+        />
+        <div
+          v-else
+          class="w-full flex items-center justify-center text-[64px] py-8"
+        >{{ initials(selectedMember.name) }}</div>
+        <div class="absolute bottom-0 left-0 right-0 bg-[linear-gradient(transparent,rgba(30,0,40,0.75))] px-4 pt-8 pb-3">
+          <div class="text-[15px] font-black text-white" style="text-shadow:0 1px 8px rgba(0,0,0,0.6);">{{ selectedMember.name }}</div>
+          <div class="text-[11px] text-white/85 mt-0.5">{{ selectedMember.role }}</div>
         </div>
       </div>
-      <!-- Comment input -->
-      <div class="flex-shrink-0 border-t border-pink/10 bg-white px-4 py-2.5 flex flex-col gap-2">
+
+      <!-- Comment thread -->
+      <div class="flex-1 overflow-y-auto bg-[linear-gradient(160deg,#FFF9FD,#F8F5FF)]" ref="threadScrollEl">
+        <div v-if="loadingThread" class="py-10 text-center text-[#C084C0] text-[13px]">กำลังโหลด... ✨</div>
+
+        <div v-else-if="!threadComments.length" class="py-10 text-center">
+          <div class="text-[32px] mb-2">💌</div>
+          <div class="text-[13px] font-bold text-[#C084C0]">เป็นคนแรกที่ชื่นชม {{ selectedMember.name }}</div>
+          <div class="text-[11px] text-[#D4A0CC] mt-1">พิมพ์ข้อความด้านล่าง แล้วกด ส่ง</div>
+        </div>
+
+        <div v-else class="cm-list">
+          <template v-for="cm in threadComments" :key="cm.id">
+
+            <!-- Top-level kudos comment -->
+            <div class="cm-item">
+              <div class="cm-av bg-[linear-gradient(135deg,#FBCFE8,#EC4899)]">{{ cm.name?.[0] }}</div>
+              <div class="flex-1 min-w-0">
+                <div class="cm-bubble">
+                  <span v-if="cm.tag" class="inline-block bg-pink/10 text-[#BE185D] text-[10px] font-extrabold px-2 py-0.5 rounded-full mb-1">{{ cm.tag }}</span>
+                  <div class="cm-name">{{ cm.name }}</div>
+                  <div class="cm-text">{{ cm.text }}</div>
+                  <div class="flex items-center gap-3 mt-1.5">
+                    <span class="cm-time">{{ cm.time }}</span>
+                    <button
+                      class="text-[11px] font-bold text-[#BE185D] bg-transparent border-none cursor-pointer p-0"
+                      @click="toggleReply(cm.id)"
+                    >💬 ตอบกลับ</button>
+                  </div>
+                </div>
+
+                <!-- Inline reply box -->
+                <div v-if="replyingTo === cm.id" class="mt-2 flex gap-2 items-end pl-1">
+                  <textarea
+                    v-model="replyText"
+                    rows="2"
+                    maxlength="500"
+                    :placeholder="`ตอบกลับ ${cm.name}...`"
+                    class="flex-1 border-[1.5px] border-pink/25 rounded-xl px-3 py-2 text-[12px] text-[#6B21A8] bg-[#FFF5FB] resize-none outline-none leading-relaxed"
+                    :ref="el => { if (el) replyRefs[cm.id] = el }"
+                  ></textarea>
+                  <button
+                    @click="submitReply(cm.id)"
+                    class="bg-[linear-gradient(135deg,#EC4899,#7C3AED)] text-white border-none rounded-xl px-3 py-2 text-[12px] font-extrabold cursor-pointer flex-shrink-0"
+                  >ส่ง</button>
+                </div>
+
+                <!-- Nested replies -->
+                <div v-if="cm.replies.length" class="mt-2 ml-4 flex flex-col gap-1.5">
+                  <div v-for="r in cm.replies" :key="r.id" class="cm-item">
+                    <div class="cm-av !w-6 !h-6 !text-[10px] bg-[linear-gradient(135deg,#DDD6FE,#7C3AED)]">{{ r.name?.[0] }}</div>
+                    <div class="cm-bubble !bg-[linear-gradient(135deg,#F5F3FF,#EDE9FE)] flex-1">
+                      <div class="cm-name">{{ r.name }}</div>
+                      <div class="cm-text">{{ r.text }}</div>
+                      <div class="cm-time">{{ r.time }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </template>
+        </div>
+      </div>
+
+      <!-- Compose bar -->
+      <div class="flex-shrink-0 border-t border-pink/10 bg-white px-4 pt-3 pb-6 flex flex-col gap-2">
+
+        <!-- Tag chips (collapsed by default) -->
+        <div v-if="showTags" class="flex gap-2 flex-wrap">
+          <button
+            v-for="tag in tags"
+            :key="tag"
+            class="wish-chip"
+            :class="{ selected: selectedTag === tag }"
+            @click="selectedTag = selectedTag === tag ? null : tag"
+          >{{ tag }}</button>
+        </div>
+
         <div class="flex gap-2 items-end">
+          <!-- Tag toggle -->
+          <button
+            @click="showTags = !showTags"
+            :title="selectedTag || 'เพิ่มแท็ก'"
+            class="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center border-[1.5px] transition-colors duration-150 text-[16px]"
+            :class="selectedTag ? 'bg-[linear-gradient(135deg,#EC4899,#7C3AED)] border-transparent text-white' : 'border-pink/25 bg-[#FFF5FB]'"
+          >🏷️</button>
+
           <textarea
-            v-model="commentText"
-            placeholder="เพิ่มความคิดเห็น... 💬"
+            v-model="composeText"
+            ref="composeEl"
             rows="2"
+            maxlength="500"
+            placeholder="พิมพ์คำชื่นชม... 💕"
             class="flex-1 border-[1.5px] border-pink/25 rounded-xl px-3 py-2.5 text-[13px] text-[#6B21A8] bg-[#FFF5FB] resize-none outline-none leading-relaxed"
           ></textarea>
+
           <button
-            @click="submitComment"
-            class="bg-[linear-gradient(135deg,#EC4899,#7C3AED)] text-white border-none rounded-xl px-4 py-2.5 text-[13px] font-extrabold cursor-pointer flex-shrink-0"
-          >ส่ง 💝</button>
+            @click="submitCompose"
+            :disabled="!composeText.trim() || sending"
+            class="bg-[linear-gradient(135deg,#EC4899,#7C3AED)] text-white border-none rounded-xl px-4 py-2.5 text-[13px] font-extrabold cursor-pointer flex-shrink-0 disabled:opacity-40"
+          >{{ sending ? '...' : 'ส่ง 💝' }}</button>
         </div>
-        <button
-          @click="view = 'grid'"
-          class="bg-pink/[0.08] border border-pink/25 rounded-xl py-2 text-[12px] font-bold text-[#BE185D] cursor-pointer w-full"
-        >👥 เลือกคนอื่น</button>
+
+        <div class="flex items-center gap-1.5 bg-[linear-gradient(135deg,#FFFBEB,#FEF3C7)] border border-[#FCD34D] rounded-xl px-3 py-2">
+          <span class="text-[14px]">🌟</span>
+          <div class="text-[11px] font-bold text-[#92400E]">ส่ง Empathy = <strong>+10 LINE pts</strong></div>
+        </div>
       </div>
+
     </template>
 
-    <!-- New kudos view -->
-    <template v-else-if="view === 'new' && selectedMember">
-      <div class="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
-        <div class="emp-card-spotlight rounded-2xl h-auto flex-shrink-0 overflow-hidden">
-          <img v-if="selectedMember.imgUrl" :src="selectedMember.imgUrl" class="w-full block object-cover object-top" />
-          <div v-else :style="{ background: selectedMember.grad }" class="w-full h-[160px] flex items-center justify-center text-[48px]">{{ initials(selectedMember.name) }}</div>
-          <div class="emp-spotlight-name">
-            <div class="text-[14px] font-black text-white">{{ selectedMember.name }}</div>
-          </div>
-        </div>
-
-        <div>
-          <div class="text-[11px] font-extrabold text-[#C084C0] tracking-[1px] mb-2">🏷️ แท็ก</div>
-          <div class="flex gap-2 flex-wrap">
-            <button
-              v-for="tag in tags"
-              :key="tag"
-              class="wish-chip"
-              :class="{ selected: selectedTag === tag }"
-              @click="selectedTag = tag"
-            >{{ tag }}</button>
-          </div>
-        </div>
-
-        <div>
-          <div class="text-[11px] font-extrabold text-[#C084C0] tracking-[1px] mb-2">✍️ ข้อความชื่นชม</div>
-          <textarea
-            v-model="kudosMsg"
-            placeholder="พิมพ์ข้อความชื่นชมจากใจ... 💕"
-            rows="3"
-            maxlength="500"
-            class="w-full border-[1.5px] border-pink/20 rounded-[14px] px-3.5 py-3 text-[13px] text-[#6B21A8] bg-[#FFF5FB] resize-none outline-none leading-relaxed"
-          ></textarea>
-        </div>
-
-        <div class="flex items-center gap-2 bg-[linear-gradient(135deg,#FFFBEB,#FEF3C7)] border border-[#FCD34D] rounded-xl px-3.5 py-2.5">
-          <span class="text-[16px]">🌟</span>
-          <div class="text-[11px] font-bold text-[#92400E]">ส่ง Empathy 1 ครั้ง = <strong>+10 LINE pts</strong></div>
-        </div>
-      </div>
-
-      <div class="flex-shrink-0 border-t border-pink/10 bg-white px-4 py-3 flex flex-col gap-2">
-        <button @click="submitKudos" class="modal-close-btn" style="background:linear-gradient(135deg,#EC4899,#7C3AED);">ส่งคำชื่นชม 💝</button>
-        <button
-          @click="view = 'grid'"
-          class="bg-pink/[0.08] border border-pink/25 rounded-xl py-2 text-[12px] font-bold text-[#BE185D] cursor-pointer w-full"
-        >👥 เลือกคนอื่น</button>
-      </div>
-    </template>
-
-    <!-- Add person view -->
+    <!-- ── ADD PERSON view ────────────────────────────────────────── -->
     <template v-else-if="view === 'add'">
-      <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-3.5">
+      <div class="flex-1 overflow-y-auto px-5 pt-5 pb-6 flex flex-col gap-3.5">
         <input
           v-model="dirSearch"
           @input="filterDir"
           placeholder="พิมพ์รหัสหรือชื่อพนักงาน..."
           class="w-full border-[1.5px] border-pink/25 rounded-xl px-3.5 py-2.5 text-[13px] text-[#6B21A8] bg-[#FFF5FB] outline-none"
         />
-        <div v-if="dirResults.length" class="border-[1.5px] border-pink/20 rounded-xl overflow-hidden bg-white shadow-[0_8px_24px_rgba(236,72,153,0.12)]">
+        <div v-if="dirResults.length" class="border-[1.5px] border-pink/20 rounded-xl overflow-hidden bg-white">
           <div
             v-for="e in dirResults"
             :key="e.id"
             @click="pickFromDir(e)"
-            class="flex items-center gap-2.5 px-3.5 py-2.5 cursor-pointer border-b border-pink/[0.08] last:border-0 hover:bg-[#FFF0FB] transition-colors duration-150"
+            class="flex items-center gap-2.5 px-3.5 py-2.5 cursor-pointer border-b border-pink/[0.08] last:border-0"
           >
             <div class="w-9 h-9 rounded-full bg-[linear-gradient(135deg,#FBCFE8,#EC4899)] flex items-center justify-center text-[13px] font-black text-white flex-shrink-0">{{ e.name?.[0] }}</div>
             <div class="flex-1 min-w-0">
@@ -169,117 +204,192 @@
           </div>
         </div>
         <div class="flex gap-2 mt-auto">
-          <button
-            @click="view = 'grid'"
-            class="flex-1 bg-pink/[0.08] border border-pink/25 rounded-xl py-[11px] text-[13px] font-bold text-[#BE185D] cursor-pointer"
-          >ยกเลิก</button>
-          <button
-            @click="addAndPraise"
-            class="flex-[2] bg-[linear-gradient(135deg,#EC4899,#7C3AED)] text-white border-none rounded-xl py-[11px] text-[13px] font-black cursor-pointer"
-          >เพิ่มและชื่นชม ✨</button>
+          <button @click="view = 'grid'" class="flex-1 bg-pink/[0.08] border border-pink/25 rounded-xl py-[11px] text-[13px] font-bold text-[#BE185D] cursor-pointer">ยกเลิก</button>
+          <button @click="addAndPraise" class="flex-[2] bg-[linear-gradient(135deg,#EC4899,#7C3AED)] text-white border-none rounded-xl py-[11px] text-[13px] font-black cursor-pointer">เพิ่มและชื่นชม ✨</button>
         </div>
       </div>
     </template>
+
   </BaseModal>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import BaseModal from '../shared/BaseModal.vue'
 import { useEmpathyStore } from '../../stores/empathy.js'
-import { useTeamStore } from '../../stores/team.js'
-import { useUiStore } from '../../stores/ui.js'
+import { useTeamStore }    from '../../stores/team.js'
+import { useUiStore }      from '../../stores/ui.js'
 
 const empathy = useEmpathyStore()
-const team = useTeamStore()
-const ui = useUiStore()
+const team    = useTeamStore()
+const ui      = useUiStore()
 
-onMounted(() => {
-  team.loadTeam()
-  team.loadDirectory()
-})
-
-// Reload when modal opens (in case data changed)
-watch(() => ui.activeModal, (id) => {
-  if (id === 'modal-emp') {
-    team.loadTeam()
-    team.loadDirectory()
-  }
-})
-
-const view = ref('grid')  // 'grid' | 'comment' | 'new' | 'add'
-const searchQ = ref('')
+// ── View ──────────────────────────────────────────────────────────
+const view           = ref('grid')
+const searchQ        = ref('')
 const selectedMember = ref(null)
-const commentText = ref('')
-const kudosMsg = ref('')
-const selectedTag = ref(null)
-const dirSearch = ref('')
+
+// Thread
+const loadingThread = ref(false)
+const activePostId  = ref(null)
+const composeText   = ref('')
+const selectedTag   = ref(null)
+const showTags      = ref(false)
+const sending       = ref(false)
+const replyingTo    = ref(null)
+const replyText     = ref('')
+const replyRefs     = ref({})
+const threadScrollEl = ref(null)
+const composeEl      = ref(null)
+
+// Add-person
+const dirSearch  = ref('')
 const dirResults = ref([])
-const pickedDir = ref(null)
+const pickedDir  = ref(null)
 
 const tags = ['เก่งมาก ⭐', 'ขอบคุณ 🙏', 'สู้ๆ 💪', 'ประทับใจ 💫', 'ช่วยเหลือ 🤝']
 
+// ── Lifecycle ──────────────────────────────────────────────────────
+onMounted(() => { empathy.loadPosts(); team.loadDirectory() })
+watch(() => ui.activeModal, id => {
+  if (id === 'modal-emp') { empathy.loadPosts(true); team.loadDirectory() }
+})
+
+// ── Derived ────────────────────────────────────────────────────────
 const headerTitle = computed(() => {
   if (view.value === 'grid') return 'ส่งคำชื่นชม 💝'
-  if (view.value === 'add') return 'เพิ่มคนใหม่'
-  return selectedMember.value?.name || 'ส่งคำชื่นชม'
+  if (view.value === 'add')  return 'เพิ่มคนใหม่'
+  return selectedMember.value?.name || 'คำชื่นชม'
+})
+
+// คนที่ถูกชื่นชมแล้ว (มีโพสต์ใน EmpathyPosts) — dedup by id/name
+const praiseList = computed(() => {
+  const seen = new Set()
+  return empathy.posts
+    .filter(p => {
+      const key = p.recEmployeeId || p.recName
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    .map((p, i) => ({
+      id:     p.recEmployeeId || p.recName,
+      name:   p.recName,
+      role:   p.recRole,
+      imgUrl: p.recImg,
+      grad:   team.getGrad(i),
+    }))
 })
 
 const filteredTeam = computed(() => {
   const q = searchQ.value.trim().toLowerCase()
-  if (!q) return team.empTeam
-  return team.empTeam.filter(m => m.name.toLowerCase().includes(q) || m.role.toLowerCase().includes(q))
+  if (!q) return praiseList.value
+  return praiseList.value.filter(m =>
+    m.name.toLowerCase().includes(q) || m.role.toLowerCase().includes(q)
+  )
 })
 
-const existingPost = computed(() => {
-  if (!selectedMember.value) return null
-  return empathy.posts.find(p => p.recName === selectedMember.value.name) || null
+// Extract [TAG] prefix embedded in text
+function parseComment(cm) {
+  const m = cm.text?.match(/^\[(.+?)\]\s*([\s\S]*)$/)
+  return m ? { ...cm, tag: m[1], text: m[2] } : { ...cm, tag: '' }
+}
+
+// Build nested tree: top-level with .replies[]
+const threadComments = computed(() => {
+  if (!activePostId.value) return []
+  const flat = empathy.postComments[activePostId.value] || []
+  const top  = flat.filter(c => !c.parentId).map(parseComment)
+  return top.map(cm => ({
+    ...cm,
+    replies: flat.filter(r => r.parentId === cm.id)
+  }))
 })
 
+// ── Helpers ────────────────────────────────────────────────────────
 function initials(name) {
-  return (name || '').trim().split(/\s+/).slice(0,2).map(w => w[0]?.toUpperCase()).join('') || '?'
+  return (name || '').trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase()).join('') || '?'
 }
 
-function selectPerson(m) {
-  selectedMember.value = m
-  searchQ.value = ''
-  const post = empathy.posts.find(p => p.recName === m.name)
-  view.value = post ? 'comment' : 'new'
+function scrollBottom() {
+  nextTick(() => {
+    if (threadScrollEl.value)
+      threadScrollEl.value.scrollTop = threadScrollEl.value.scrollHeight
+  })
 }
 
+// ── Navigation ─────────────────────────────────────────────────────
 function goBack() {
   view.value = 'grid'
   selectedMember.value = null
-  kudosMsg.value = ''
+  activePostId.value   = null
+  composeText.value    = ''
+  selectedTag.value    = null
+  showTags.value       = false
+  replyingTo.value     = null
+  replyText.value      = ''
+  sending.value        = false
+}
+
+// ── Select person ──────────────────────────────────────────────────
+async function selectPerson(m) {
+  selectedMember.value = m
+  searchQ.value        = ''
+  view.value           = 'thread'
+  loadingThread.value  = true
+  activePostId.value   = null
+
+  try {
+    const postId = await empathy.ensurePost(m, ui.currentUser?.name)
+    activePostId.value = postId
+    await empathy.loadComments(postId)
+    scrollBottom()
+    nextTick(() => composeEl.value?.focus())
+  } catch { /* toast shown by store */ }
+  finally { loadingThread.value = false }
+}
+
+// ── Reply ──────────────────────────────────────────────────────────
+function toggleReply(cmId) {
+  if (replyingTo.value === cmId) {
+    replyingTo.value = null
+    replyText.value  = ''
+  } else {
+    replyingTo.value = cmId
+    replyText.value  = ''
+    nextTick(() => replyRefs.value[cmId]?.focus())
+  }
+}
+
+async function submitReply(parentId) {
+  const text = replyText.value.trim()
+  if (!text || !activePostId.value) return
+  replyingTo.value = null
+  replyText.value  = ''
+  await empathy.addComment(activePostId.value, text, ui.currentUser?.name || 'ทีม', parentId)
+  scrollBottom()
+}
+
+// ── Compose (top-level kudos) ──────────────────────────────────────
+async function submitCompose() {
+  const text = composeText.value.trim()
+  if (!text || !activePostId.value || sending.value) return
+  const tag     = selectedTag.value || ''
+  const fullText = tag ? `[${tag}] ${text}` : text
+  composeText.value = ''
   selectedTag.value = null
-  commentText.value = ''
+  showTags.value    = false
+  sending.value     = true
+  try {
+    await empathy.addComment(activePostId.value, fullText, ui.currentUser?.name || 'ทีม', '')
+    ui.showToast('ส่งคำชื่นชมสำเร็จ! 💝')
+    scrollBottom()
+  } finally {
+    sending.value = false
+  }
 }
 
-function submitComment() {
-  if (!commentText.value.trim() || !existingPost.value) return
-  empathy.addComment(existingPost.value.id, commentText.value.trim(), ui.currentUser.name)
-  commentText.value = ''
-}
-
-function submitKudos() {
-  if (!kudosMsg.value.trim() || !selectedMember.value) { ui.showToast('กรุณาพิมพ์ข้อความ'); return }
-  if (!selectedTag.value) { ui.showToast('กรุณาเลือกแท็ก'); return }
-  empathy.addPost({
-    recName: selectedMember.value.name,
-    recRole: selectedMember.value.role,
-    recImgUrl: selectedMember.value.imgUrl || '',
-    sndName: ui.currentUser.name,
-    msg: kudosMsg.value.trim(),
-    tag: selectedTag.value,
-    time: 'เมื่อกี้',
-    react: '❤️ 0',
-    recImg: selectedMember.value.img || '',
-    likeCount: 0
-  })
-  ui.closeModal()
-  goBack()
-}
-
+// ── Add person ─────────────────────────────────────────────────────
 function filterDir() {
   const q = dirSearch.value.trim().toLowerCase()
   if (!q) { dirResults.value = []; return }
@@ -289,18 +399,17 @@ function filterDir() {
 }
 
 function pickFromDir(e) {
-  pickedDir.value = e
-  dirSearch.value = `${e.id} — ${e.name}`
+  pickedDir.value  = e
+  dirSearch.value  = `${e.id} — ${e.name}`
   dirResults.value = []
 }
 
-function addAndPraise() {
+async function addAndPraise() {
   if (!pickedDir.value) { ui.showToast('กรุณาค้นหาพนักงาน'); return }
   const m = pickedDir.value
   team.addToTeam({ ...m, grad: team.getGrad(team.empTeam.length) })
-  selectedMember.value = { ...m, grad: team.getGrad(team.empTeam.length - 1) }
-  view.value = 'new'
   dirSearch.value = ''
   pickedDir.value = null
+  await selectPerson({ ...m, grad: team.getGrad(team.empTeam.length - 1) })
 }
 </script>

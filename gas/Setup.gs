@@ -111,7 +111,7 @@ var ALL_SHEETS = [
   },
   {
     name: 'EmpathyComments',
-    headers: ['id','postId','authorName','text','createdAt'],
+    headers: ['id','postId','parentId','authorName','text','createdAt'],
   },
   {
     name: 'EmpathyLikes',
