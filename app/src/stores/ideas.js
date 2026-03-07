@@ -4,11 +4,7 @@ import * as svc from '../services/ideaService.js'
 import { useUiStore } from './ui.js'
 
 export const useIdeasStore = defineStore('ideas', () => {
-  const ideas = ref([
-    { id: '1', category: '🎉 สังสรรค์', title: 'งาน Team Building นอกสถานที่', detail: 'อยากพาทีมไปทำกิจกรรมนอกสถานที่เพื่อสร้างความสัมพันธ์', submitterName: 'NAMSOM', createdAt: '2025-03-01', status: 'pending' },
-    { id: '2', category: '📚 เรียนรู้', title: 'Workshop AI Tools ประจำเดือน', detail: 'เรียนรู้ AI tools ใหม่ๆ เพื่อเพิ่มประสิทธิภาพการทำงาน', submitterName: 'Nok S.', createdAt: '2025-02-20', status: 'approved' },
-    { id: '3', category: '🏃 กีฬา', title: 'ชมรมวิ่งตอนเช้า', detail: 'รวมกลุ่มวิ่งทุกเช้าวันอังคารและพฤหัส', submitterName: 'Anonymous', createdAt: '2025-02-15', status: 'pending' },
-  ])
+  const ideas = ref([])
   const selectedCategory = ref(null)
   const isLoading = ref(false)
   const lastFetched = ref(null)
@@ -20,9 +16,11 @@ export const useIdeasStore = defineStore('ideas', () => {
     isLoading.value = true
     try {
       const data = await svc.fetchIdeas()
-      if (data && data.length) ideas.value = data
+      ideas.value = data || []
       lastFetched.value = Date.now()
-    } catch { /* keep seed */ } finally {
+    } catch {
+      ideas.value = []
+    } finally {
       isLoading.value = false
     }
   }

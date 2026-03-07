@@ -5,12 +5,7 @@ export const useUiStore = defineStore('ui', () => {
   const activeModal = ref(null)
   const selectedMonthIdx = ref(1)
   const notifBadge = ref(3)
-  const currentUser = ref({
-    name: 'Anya R.',
-    role: 'HR Specialist · DS Group',
-    emoji: '😊',
-    id: 'HR001'
-  })
+  const currentUser = ref({ id: '', name: '', role: '', img: '', dept: '', emoji: '😊' })
   const toast = ref({ msg: '', visible: false })
   let _toastTimer = null
 

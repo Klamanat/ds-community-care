@@ -40,17 +40,24 @@
     </div>
 
     <!-- Star Grid -->
-    <div class="star-grid fade-in">
+    <div v-if="team.isLoading" class="text-center py-8 text-[13px]" style="color:#9CA3AF;">กำลังโหลด...</div>
+    <div v-else-if="team.sgMembers.length === 0" class="text-center py-8 text-[13px]" style="color:#9CA3AF;">
+      ยังไม่มีสมาชิก Star Gang
+    </div>
+    <div v-else class="star-grid fade-in">
       <div
-        v-for="s in starPlayers"
-        :key="s.name"
+        v-for="(s, idx) in team.sgMembers"
+        :key="s.id || s.name"
         class="star-card ripple-host"
         @click="handleRippleClick"
       >
-        <div class="star-av" :style="{ background: s.grad }">{{ s.emoji }}</div>
+        <div class="star-av" :style="{ background: team.getGrad(idx), overflow: 'hidden' }">
+          <img v-if="s.imgUrl" :src="s.imgUrl" style="width:100%;height:100%;object-fit:cover;" />
+          <span v-else>{{ EMOJIS[idx % EMOJIS.length] }}</span>
+        </div>
         <div class="star-name">{{ s.name }}</div>
-        <div class="star-role">{{ s.role }}</div>
-        <div class="star-pts">⭐ {{ s.pts }} pts</div>
+        <div class="star-role">{{ s.starGangRole || s.role }}</div>
+        <div v-if="s.pts" class="star-pts">⭐ {{ s.pts }} pts</div>
       </div>
     </div>
   </div>
@@ -68,22 +75,16 @@ const ui = useUiStore()
 const { handleRippleClick } = useRipple()
 useFadeIn()
 
+const EMOJIS = ['🦁','🌸','🦊','🐬','🦋','🐯','⭐','🌟','🦄','😎','🐺','✨']
+
 const joined = ref(false)
 
 onMounted(() => team.loadStarGang())
-const starPlayers = [
-  { emoji:'🦁', name:'Somsak P.', role:'HR Manager',   pts:580, grad:'linear-gradient(135deg,#FDE68A,#F59E0B)' },
-  { emoji:'🌸', name:'Nok S.',    role:'Team Lead',     pts:510, grad:'linear-gradient(135deg,#FBCFE8,#EC4899)' },
-  { emoji:'🦊', name:'Anya R.',   role:'HR Specialist', pts:480, grad:'linear-gradient(135deg,#C7D2FE,#818CF8)' },
-  { emoji:'🐬', name:'Pam W.',    role:'Developer',     pts:460, grad:'linear-gradient(135deg,#BAE6FD,#38BDF8)' },
-  { emoji:'🦋', name:'Tom K.',    role:'Designer',      pts:430, grad:'linear-gradient(135deg,#BBF7D0,#4ADE80)' },
-  { emoji:'🐯', name:'May J.',    role:'Marketing',     pts:400, grad:'linear-gradient(135deg,#FED7AA,#F97316)' },
-]
 
-function handleJoin() {
+async function handleJoin() {
   if (joined.value) return
   joined.value = true
-  team.joinCount++
+  await team.joinStarGang({ id: ui.currentUser.id, name: ui.currentUser.name, role: ui.currentUser.role })
   ui.showToast('ยินดีต้อนรับสู่ Star Gang! ⭐')
 }
 </script>

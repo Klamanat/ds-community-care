@@ -12,10 +12,12 @@ function doPost(e) {
     var action = body.action;
 
     var handlers = {
-      uploadImage:     function() { return uploadImage(body); },
-      login:           function() { return login(body); },
-      userLogin:       function() { return userLogin(body); },
-      userSetPassword: function() { return userSetPassword(body); },
+      uploadImage:          function() { return uploadImage(body); },
+      login:                function() { return login(body); },
+      userLogin:            function() { return userLogin(body); },
+      userSetPassword:      function() { return userSetPassword(body); },
+      adminAddActivity:     function() { return adminAddActivity(body); },
+      adminUpdateActivity:  function() { return adminUpdateActivity(body); },
     };
 
     if (!handlers[action]) return respond(err('Unknown action: ' + action));
@@ -53,6 +55,12 @@ function doGet(e) {
 
       // User auth
       userCheckPassword:  function() { return userCheckPassword(e.parameter); },
+
+      // Activities
+      getActivities:         function() { return getActivities(e.parameter); },
+      adminAddActivity:      function() { return adminAddActivity(e.parameter); },
+      adminUpdateActivity:   function() { return adminUpdateActivity(e.parameter); },
+      adminDeleteActivity:   function() { return adminDeleteActivity(e.parameter); },
 
       // Admin (token-gated)
       adminGetAll:        function() { return adminGetAll(e.parameter); },

@@ -44,7 +44,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useRoute, RouterView } from 'vue-router'
 import AppHeader from './components/layout/AppHeader.vue'
 import AppSidebar from './components/layout/AppSidebar.vue'
@@ -61,11 +61,29 @@ import CultureModal from './components/modals/CultureModal.vue'
 import TrainingModal from './components/modals/TrainingModal.vue'
 import RewardModal from './components/modals/RewardModal.vue'
 import { useUiStore } from './stores/ui.js'
+import { useUserAuthStore } from './stores/userAuth.js'
 
-const ui    = useUiStore()
-const route = useRoute()
+const ui       = useUiStore()
+const userAuth = useUserAuthStore()
+const route    = useRoute()
 const isAdmin  = computed(() => !!route.meta.adminLayout)
 const isAuth   = computed(() => !!route.meta.authLayout)
+
+// Sync logged-in user profile → ui.currentUser
+function syncUser() {
+  if (userAuth.userId) {
+    ui.currentUser = {
+      id:    userAuth.userId,
+      name:  userAuth.userName,
+      role:  userAuth.userRole,
+      img:   userAuth.userImgUrl,
+      dept:  userAuth.userDept,
+      emoji: '😊',
+    }
+  }
+}
+syncUser()
+watch(() => userAuth.userId, syncUser)
 </script>
 
 <style scoped>

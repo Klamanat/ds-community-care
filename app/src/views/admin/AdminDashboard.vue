@@ -12,7 +12,7 @@
     <main class="al-main">
       <h2 class="al-page-title">📊 Dashboard</h2>
 
-      <div class="al-grid-4">
+      <div class="al-grid-4" style="grid-template-columns:repeat(2,1fr);" >
         <router-link v-for="card in navCards" :key="card.to" :to="card.to" class="al-nav-card">
           <div class="al-nav-icon">{{ card.icon }}</div>
           <div class="al-nav-label">{{ card.label }}</div>
@@ -43,10 +43,11 @@ const admin  = useAdminStore()
 const router = useRouter()
 
 const navCards = [
-  { to: '/admin/employees', icon: '👥', label: 'พนักงาน',      sub: 'Employees sheet' },
-  { to: '/admin/birthdays', icon: '🎂', label: 'วันเกิด',       sub: 'Birthdays sheet' },
-  { to: '/admin/empathy',   icon: '💌', label: 'Empathy Posts', sub: 'EmpathyPosts sheet' },
-  { to: '/admin/ideas',     icon: '💡', label: 'ไอเดีย',        sub: 'Ideas sheet' },
+  { to: '/admin/employees',  icon: '👥', label: 'พนักงาน',      sub: 'Employees sheet' },
+  { to: '/admin/birthdays',  icon: '🎂', label: 'วันเกิด',       sub: 'Birthdays sheet' },
+  { to: '/admin/empathy',    icon: '💌', label: 'Empathy Posts', sub: 'EmpathyPosts sheet' },
+  { to: '/admin/ideas',      icon: '💡', label: 'ไอเดีย',        sub: 'Ideas sheet' },
+  { to: '/admin/activities', icon: '📅', label: 'กิจกรรม',       sub: 'Activities sheet' },
 ]
 
 function doLogout() {

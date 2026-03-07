@@ -13,24 +13,8 @@ const GRADS = [
 const SG_FALLBACKS = ['#FDE68A','#FECACA','#C7D2FE','#BBF7D0','#FED7E2','#DDD6FE']
 
 export const useTeamStore = defineStore('team', () => {
-  const empTeam = ref([
-    {id:'DS001', name:'Nok S.',  role:'Data Scientist',    img:'/images/nok.jpg',    grad:GRADS[0]},
-    {id:'DS002', name:'NAMSOM', role:'People Engagement', img:'/images/namsom.jpg', grad:GRADS[1]},
-    {id:'DS003', name:'WUT',    role:'Governance',        img:'/images/wut.jpg',    grad:GRADS[2]},
-  ])
-  const empDirectory = ref([
-    {id:'DS001', name:'Nok S.',     role:'Data Scientist',       dept:'DS Team',   img:'/images/nok.jpg'},
-    {id:'DS002', name:'NAMSOM',     role:'People Engagement',    dept:'DS Team',   img:'/images/namsom.jpg'},
-    {id:'DS003', name:'WUT',        role:'Governance',           dept:'DS Team',   img:'/images/wut.jpg'},
-    {id:'DS004', name:'ปราณี ขยัน', role:'Data Analyst',         dept:'DS Team',   img:''},
-    {id:'DS005', name:'วิชัย รัก',  role:'ML Engineer',          dept:'DS Team',   img:''},
-    {id:'HR001', name:'มาลี สุขดี', role:'HR Business Partner',  dept:'HR',        img:''},
-    {id:'HR002', name:'สุภา ใจดี',  role:'Talent Management',    dept:'HR',        img:''},
-    {id:'IT001', name:'ธนพล เทค',   role:'Software Engineer',    dept:'IT',        img:''},
-    {id:'IT002', name:'กานต์ โค้ด', role:'DevOps Engineer',      dept:'IT',        img:''},
-    {id:'FN001', name:'อรทัย ตัง',  role:'Financial Analyst',    dept:'Finance',   img:''},
-    {id:'MK001', name:'ชนม์ มาร์ค', role:'Marketing Specialist', dept:'Marketing', img:''},
-  ])
+  const empTeam      = ref([])
+  const empDirectory = ref([])
   const sgMembers = ref([])
   const joinCount = ref(0)
   const isLoading = ref(false)
@@ -44,9 +28,9 @@ export const useTeamStore = defineStore('team', () => {
     isLoading.value = true
     try {
       const data = await svc.fetchTeam()
-      if (data && data.length) empTeam.value = data
+      empTeam.value = data || []
       lastFetched.value = Date.now()
-    } catch { /* keep seed */ } finally {
+    } catch { } finally {
       isLoading.value = false
     }
   }
@@ -54,18 +38,16 @@ export const useTeamStore = defineStore('team', () => {
   async function loadStarGang() {
     try {
       const data = await svc.fetchStarGang()
-      if (data && data.length) {
-        sgMembers.value = data
-        joinCount.value = data.length
-      }
-    } catch { /* keep seed */ }
+      sgMembers.value = data || []
+      joinCount.value = sgMembers.value.length
+    } catch { }
   }
 
   async function loadDirectory() {
     try {
       const data = await svc.fetchDirectory()
-      if (data && data.length) empDirectory.value = data
-    } catch { /* keep seed */ }
+      empDirectory.value = data || []
+    } catch { }
   }
 
   async function addToTeam(member) {

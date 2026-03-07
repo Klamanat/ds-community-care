@@ -8,7 +8,7 @@
         <div class="ul-logo-sub">ระบบดูแลชุมชน DS</div>
       </div>
 
-      <div v-if="error" class="ul-error">⚠️ {{ error }}</div>
+      <div v-if="auth.error" class="ul-error">⚠️ {{ auth.error }}</div>
 
       <form @submit.prevent="doLogin">
         <label class="ul-label">รหัสพนักงาน</label>
@@ -21,8 +21,9 @@
           autofocus
           required
         />
-        <button type="submit" class="ul-btn" :disabled="!employeeId.trim()">
-          เข้าสู่ระบบ →
+        <button type="submit" class="ul-btn" :disabled="auth.isLoading || !employeeId.trim()">
+          <span v-if="auth.isLoading">กำลังตรวจสอบ...</span>
+          <span v-else>เข้าสู่ระบบ →</span>
         </button>
       </form>
 
@@ -41,15 +42,16 @@ import { useUserAuthStore } from '../stores/userAuth.js'
 const auth       = useUserAuthStore()
 const router     = useRouter()
 const employeeId = ref('')
-const error      = ref('')
 
-function doLogin() {
-  error.value = ''
+async function doLogin() {
+  auth.error = ''
   const id = employeeId.value.trim()
   if (!id) return
-  auth.loginWithId(id)
-  const redirect = router.currentRoute.value.query.redirect || '/'
-  router.push(redirect)
+  const ok = await auth.loginWithEmployee(id)
+  if (ok) {
+    const redirect = router.currentRoute.value.query.redirect || '/'
+    router.push(redirect)
+  }
 }
 </script>
 

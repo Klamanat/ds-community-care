@@ -4,45 +4,7 @@ import * as svc from '../services/empathyService.js'
 import { useUiStore } from './ui.js'
 
 export const useEmpathyStore = defineStore('empathy', () => {
-  const posts = ref([
-    {
-      id: '1',
-      recImg: '/images/nok.jpg', recName: 'Nok S.', recRole: 'Data Scientist · DS Team',
-      sndImg: '', sndName: 'Somsak P.',
-      msg: 'ขอบใจมากเลย! พี่น๊อกช่วยงานได้เยอะมากเลยค่ะ 🙌',
-      tag: 'เก่งมาก ⭐', time: '2 ชม. ที่แล้ว', react: '❤️ 12 · 👏 5', likeCount: 17,
-      comments: [
-        { id: 'c1', img: '', name: 'NAMSOM', text: 'เห็นด้วยมากค่ะ พี่น๊อกเก่งมาก 👏', time: '1 ชม. ที่แล้ว' },
-        { id: 'c2', img: '', name: 'Pam W.', text: 'ขอบคุณที่ชื่นชมพี่น๊อกนะคะ 🙏', time: '45 นาที' },
-        { id: 'c3', img: '', name: 'Ton K.', text: 'เก่งจริงๆ ครับ!', time: '20 นาที' }
-      ]
-    },
-    {
-      id: '2',
-      recImg: '/images/namsom.jpg', recName: 'NAMSOM', recRole: 'People Engagement · DS Team',
-      sndImg: '', sndName: 'Nok S.',
-      msg: 'ขอบคุณจุนมากเลยนะคะ 🙏 ช่วยเหลือทีมเสมอเลย',
-      tag: 'ขอบคุณ 🙏', time: 'เมื่อวาน', react: '🩷 8', likeCount: 8,
-      comments: [
-        { id: 'c4', img: '', name: 'Somsak P.', text: 'จุนดีมากจริงๆ ค่ะ ❤️', time: 'เมื่อวาน' },
-        { id: 'c5', img: '', name: 'Pam W.', text: 'ทีมเราดีมากเลย 🌟', time: 'เมื่อวาน' }
-      ]
-    },
-    {
-      id: '3',
-      recImg: '/images/wut.jpg', recName: 'WUT', recRole: 'Data Science Department',
-      sndImg: '', sndName: 'Pam W.',
-      msg: 'ทีม DS เก่งมากๆ ประทับใจทุกคนเลยค่ะ 💪 ขอบคุณทุกคนนะคะ',
-      tag: 'สู้ๆ 💪', time: '3 วันก่อน', react: '❤️ 20 · 🌟 6', likeCount: 26,
-      comments: [
-        { id: 'c6', img: '', name: 'Somsak P.', text: 'ขอบคุณ Pam มากเลยค่ะ 😊', time: '3 วันก่อน' },
-        { id: 'c7', img: '', name: 'Nok S.', text: 'ทีมเราเก่งด้วยกันทุกคนค่ะ 💪', time: '3 วันก่อน' },
-        { id: 'c8', img: '', name: 'Ton K.', text: 'สู้ๆ ครับทุกคน!', time: '2 วันก่อน' },
-        { id: 'c9', img: '', name: 'NAMSOM', text: 'ประทับใจทีมมากเลยค่ะ 🌟', time: '2 วันก่อน' },
-        { id: 'c10', img: '', name: 'Kai M.', text: 'ขอบคุณ Pam ที่ชื่นชมทีมนะคะ ❤️', time: '1 วันก่อน' }
-      ]
-    }
-  ])
+  const posts = ref([])
   const isLoading = ref(false)
   const lastFetched = ref(null)
 
@@ -54,7 +16,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
       posts.value = data
       lastFetched.value = Date.now()
     } catch {
-      // keep seeded data on error
+      posts.value = []
     } finally {
       isLoading.value = false
     }

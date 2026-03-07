@@ -49,6 +49,10 @@ function setupSheets() {
       headers: ['id','category','title','detail','submitterName','createdAt','status'],
     },
     {
+      name: 'Activities',
+      headers: ['id','monthIdx','name','emoji','date','loc','desc','joinUrl','imgUrl','createdAt'],
+    },
+    {
       name: 'Admins',
       headers: ['username','passwordHash','name','token','tokenExpires'],
     },

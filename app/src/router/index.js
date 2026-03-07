@@ -55,6 +55,12 @@ const routes = [
     component: () => import('../views/admin/AdminIdeasView.vue'),
     meta: { adminLayout: true, requiresAdmin: true },
   },
+  {
+    path: '/admin/activities',
+    name: 'admin-activities',
+    component: () => import('../views/admin/AdminActivitiesView.vue'),
+    meta: { adminLayout: true, requiresAdmin: true },
+  },
 ]
 
 const router = createRouter({
