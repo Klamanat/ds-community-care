@@ -2,12 +2,44 @@
 // วิธีใช้: เปิด GAS editor → เลือกฟังก์ชัน setupAll → กด Run
 //
 // ฟังก์ชันทั้งหมด:
-//   setupAll()         — ครั้งแรก: สร้างทุก sheet + seed + admin (safe to re-run)
-//   addMissingSheets() — เพิ่มเฉพาะ sheet ที่ยังไม่มี (ใช้เมื่อเพิ่ม feature ใหม่)
-//   setupSheets()      — สร้าง/อัปเดต header ทุก sheet (idempotent)
-//   setupAdmin()       — สร้าง admin account (ข้ามถ้ามีแล้ว)
-//   seedEmployees()    — seed พนักงานตัวอย่าง (ข้ามถ้ามีแล้ว)
-//   seedBirthdays()    — seed วันเกิดตัวอย่าง (ข้ามถ้ามีแล้ว)
+//   setupAll()           — ครั้งแรก: สร้างทุก sheet + seed + admin (safe to re-run)
+//   addMissingSheets()   — เพิ่มเฉพาะ sheet ที่ยังไม่มี (ใช้เมื่อเพิ่ม feature ใหม่)
+//   addMissingColumns()  — เพิ่ม column ที่ขาดใน sheet ที่มีอยู่แล้ว (safe to re-run)
+//   setupSheets()        — สร้าง/อัปเดต header ทุก sheet (idempotent)
+//   setupAdmin()         — สร้าง admin account (ข้ามถ้ามีแล้ว)
+//   seedEmployees()      — seed พนักงานตัวอย่าง (ข้ามถ้ามีแล้ว)
+//   seedBirthdays()      — seed วันเกิดตัวอย่าง (ข้ามถ้ามีแล้ว)
+
+/**
+ * addMissingColumns() — เพิ่ม column ที่ขาดใน sheet ที่มีข้อมูลอยู่แล้ว
+ * ปลอดภัย re-run ได้ — ถ้า column มีแล้วจะข้าม
+ * รันหลังจากเพิ่ม field ใหม่ใน ALL_SHEETS definitions
+ */
+function addMissingColumns() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  ALL_SHEETS.forEach(function(def) {
+    var sheet = ss.getSheetByName(def.name);
+    if (!sheet || sheet.getLastRow() === 0) return;
+
+    var existing = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+    def.headers.forEach(function(col) {
+      if (existing.indexOf(col) >= 0) return; // มีแล้ว
+
+      // เพิ่ม column ใหม่ท้ายสุด
+      var newCol = sheet.getLastColumn() + 1;
+      sheet.getRange(1, newCol).setValue(col);
+      sheet.getRange(1, newCol).setFontWeight('bold')
+                               .setBackground('#4F46E5')
+                               .setFontColor('#FFFFFF');
+      sheet.setColumnWidth(newCol, 140);
+      Logger.log('✅ เพิ่ม column "' + col + '" ใน ' + def.name);
+    });
+  });
+
+  Logger.log('✅ addMissingColumns เสร็จ');
+}
 
 /**
  * รันทุกอย่างในครั้งเดียว — ปลอดภัย re-run ได้
@@ -63,7 +95,7 @@ function addMissingSheets() {
 var ALL_SHEETS = [
   {
     name: 'Employees',
-    headers: ['id','name','role','dept','imgUrl','grad','inTeam','inStarGang','starGangName','starGangRole'],
+    headers: ['id','name','role','dept','imgUrl','imgId','grad','inTeam','inStarGang','starGangName','starGangRole'],
   },
   {
     name: 'Birthdays',
@@ -91,7 +123,7 @@ var ALL_SHEETS = [
   },
   {
     name: 'Activities',
-    headers: ['id','monthIdx','name','emoji','date','loc','desc','steps','joinUrl','imgUrl','createdAt'],
+    headers: ['id','monthIdx','name','emoji','date','loc','desc','steps','joinUrl','imgUrl','imgId','createdAt'],
   },
   {
     name: 'Admins',

@@ -470,6 +470,11 @@
     box-shadow: 0 0 0 3px rgba(255,255,255,0.9), 0 0 0 5.5px #6366F1, 0 8px 32px rgba(99,102,241,0.35);
   }
 
+  /* === Birthday modal — wider sheet === */
+  .modal-sheet--bday {
+    max-width: 620px !important;
+  }
+
   /* === Month modal — full screen sheet === */
   .modal-sheet--full {
     width: calc(100vw - 32px) !important;

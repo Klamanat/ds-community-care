@@ -117,7 +117,7 @@
         <!-- Image upload -->
         <div class="al-form-row">
           <label class="al-form-label">รูป Header (ถ้ามี)</label>
-          <div class="act-upload-zone" :style="imgUploading ? 'cursor:default;opacity:0.7;' : ''" @click="!imgUploading && imgFileInput.click()">
+          <div class="act-upload-zone" :style="imgUploading?'opacity:.6;cursor:default;':''" @click="!imgUploading && imgFileInput.click()">
             <img v-if="imgPreview && !imgUploading" :src="imgPreview" class="act-upload-preview" />
             <div v-else-if="imgUploading" class="act-upload-placeholder">
               <span style="font-size:22px;">⏳</span>
@@ -125,7 +125,7 @@
             </div>
             <div v-else class="act-upload-placeholder">
               <span style="font-size:28px;">🖼️</span>
-              <span style="font-size:12px;color:#9CA3AF;margin-top:4px;">คลิกเพื่ออัปโหลด → เก็บใน Google Drive</span>
+              <span style="font-size:12px;color:#9CA3AF;margin-top:4px;">คลิกเพื่ออัปโหลด → Google Drive</span>
             </div>
           </div>
           <button v-if="imgPreview && !imgUploading" class="al-btn" style="background:#FEE2E2;color:#DC2626;margin-top:6px;width:100%;" @click.stop="clearImg">🗑️ ลบรูป</button>
@@ -176,7 +176,7 @@ const acts   = useActivitiesStore()
 const loading     = ref(true)
 const filterMonth = ref(0)
 const modal  = reactive({ open: false, mode: 'add', saving: false, error: '' })
-const form   = reactive({ id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', imgUrl:'' })
+const form   = reactive({ id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', imgUrl:'', imgId:'' })
 const delTarget = ref(null)
 const deleting  = ref(false)
 
@@ -212,16 +212,17 @@ async function onImgChange(e) {
   imgUploading.value = true
   modal.error = ''
   try {
-    // Show local preview immediately
+    // Resize for local preview + Drive upload
     const b64 = await resizeToBase64(file, 1200, 600, 0.88)
-    imgPreview.value = b64
-    // Upload to Google Drive → store URL
-    const res = await svc.uploadImage(b64, file.name)
-    form.imgUrl = res.data.url
+    imgPreview.value = b64               // แสดง preview ทันที
+
+    // Upload to Drive → Profiles subfolder
+    const res = await svc.uploadImage(b64, file.name, 'activities')
+    form.imgId  = res.data.id            // เก็บ Drive file ID
+    form.imgUrl = ''                     // Drive เป็น source of truth แล้ว
   } catch (err) {
     modal.error = 'อัปโหลดรูปล้มเหลว: ' + (err.message || 'ลองใหม่อีกครั้ง')
     imgPreview.value = ''
-    form.imgUrl = ''
   } finally {
     imgUploading.value = false
     e.target.value = ''
@@ -229,7 +230,8 @@ async function onImgChange(e) {
 }
 
 function clearImg() {
-  form.imgUrl = ''
+  form.imgUrl  = ''
+  form.imgId   = ''
   imgPreview.value = ''
 }
 
@@ -265,7 +267,7 @@ onMounted(async () => {
 })
 
 function openAdd() {
-  Object.assign(form, { id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', imgUrl:'' })
+  Object.assign(form, { id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', imgUrl:'', imgId:'' })
   dateInput.value = ''
   imgPreview.value = ''
   imgUploading.value = false
@@ -274,6 +276,9 @@ function openAdd() {
 
 function openEdit(r) {
   Object.assign(form, { ...r, monthIdx: String(r.monthIdx) })
+  form.imgId = r.imgId || ''
+  // ถ้ามี imgId → imgUrl คือ base64 ที่ GAS inline มา ใช้แค่ preview ไม่ส่งกลับ Sheets
+  if (form.imgId) form.imgUrl = ''
   dateInput.value = thaiToIso(r.date)
   imgPreview.value = r.imgUrl || ''
   imgUploading.value = false

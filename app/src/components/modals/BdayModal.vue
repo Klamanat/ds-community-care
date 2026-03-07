@@ -1,18 +1,13 @@
 <template>
-  <BaseModal modal-id="modal-bday">
-    <!-- Gradient header with SVG scene -->
+  <BaseModal modal-id="modal-bday" sheet-class="modal-sheet--bday">
+    <!-- Festive illustrated header — ตรงกับ ds-community-care.html -->
     <div style="position:relative;overflow:hidden;flex-shrink:0;border-radius:28px 28px 0 0;background:linear-gradient(160deg,#FF6BC8 0%,#A855F7 45%,#3B82F6 100%);">
-      <div class="modal-handle" style="background:rgba(255,255,255,0.45);"></div>
-      <svg viewBox="0 0 375 130" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;margin-top:-4px;">
-        <rect width="375" height="130" fill="rgba(255,255,255,0.07)"/>
-        <!-- Decorative floating circles -->
-        <circle cx="40"  cy="30"  r="22" fill="rgba(255,255,255,0.1)"/>
-        <circle cx="335" cy="20"  r="16" fill="rgba(255,255,255,0.1)"/>
-        <circle cx="320" cy="100" r="28" fill="rgba(255,255,255,0.07)"/>
-        <circle cx="55"  cy="110" r="18" fill="rgba(255,255,255,0.07)"/>
-        <!-- Header text -->
-        <text x="187" y="72" text-anchor="middle" font-size="20" font-weight="800" fill="#1A1A2E" font-family="Sarabun,sans-serif" stroke="white" stroke-width="3" paint-order="stroke">🎂 Birthday Celebration 🎊</text>
-        <text x="187" y="96" text-anchor="middle" font-size="11" fill="#3D1A78" font-family="Sarabun,sans-serif" stroke="rgba(255,255,255,0.8)" stroke-width="2" paint-order="stroke" letter-spacing="1">✨ ฉลองวันเกิดพนักงานรายเดือน ✨</text>
+      <div class="modal-handle" style="background:rgba(255,255,255,0.45);margin:14px auto 0;position:relative;z-index:5;"></div>
+      <svg viewBox="0 0 375 188" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;margin-top:-4px;">
+        <image href="/images/bday-header.jpg" width="375" height="188" preserveAspectRatio="xMidYMid slice"/>
+        <rect width="375" height="188" fill="rgba(255,255,255,0.08)"/>
+        <text x="187" y="162" text-anchor="middle" font-size="22" font-weight="800" fill="#1A1A2E" font-family="Sarabun,sans-serif" stroke="white" stroke-width="3" paint-order="stroke">🎂 Birthday Celebration 🎊</text>
+        <text x="187" y="180" text-anchor="middle" font-size="12" fill="#3D1A78" font-family="Sarabun,sans-serif" stroke="rgba(255,255,255,0.8)" stroke-width="2" paint-order="stroke" letter-spacing="1">✨ ฉลองวันเกิดพนักงานรายเดือน ✨</text>
       </svg>
     </div>
 
@@ -25,6 +20,7 @@
           @click="activeTab = 'board'"
         >🎊 Birthday Board</button>
         <button
+          v-if="isMyBirthday"
           class="bday-tab"
           :class="{ active: activeTab === 'surprise' }"
           style="position:relative;"
@@ -183,7 +179,7 @@
       </div>
 
       <!-- ── SURPRISE BOX TAB ── -->
-      <div v-if="activeTab === 'surprise'" class="px-4 pb-4 pt-3">
+      <div v-if="activeTab === 'surprise' && isMyBirthday" class="px-4 pb-4 pt-3">
         <!-- Eligible state -->
         <div v-if="surpriseState === 'eligible'">
           <!-- Birthday card illustration -->
@@ -313,9 +309,19 @@ import { useUiStore } from '../../stores/ui.js'
 const bday = useBirthdayStore()
 const ui = useUiStore()
 
+const currentMonth = new Date().getMonth() + 1
+
+// Surprise Box only available to the user whose birthday is this month
+const isMyBirthday = computed(() => {
+  const myName = (ui.currentUser?.name || '').trim().toLowerCase()
+  if (!myName) return false
+  const emps = bday.allEmployees[currentMonth - 1] || []
+  return emps.some(e => e.name.trim().toLowerCase() === myName)
+})
+
 // Tab & navigation
 const activeTab = ref('board')
-const selectedMonth = ref(new Date().getMonth() + 1)
+const selectedMonth = ref(currentMonth)
 const selectedPerson = ref(null)
 
 // Wish composer

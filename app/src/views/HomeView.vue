@@ -8,63 +8,56 @@
         <span class="sec-more" @click="ui.openModal('modal-bday')">ดูทั้งหมด</span>
       </div>
 
-      <!-- Birthday banner -->
-      <div class="bday-home-banner ripple-host" @click="ui.openModal('modal-bday')">
-        <img src="/images/bday-hero.jpg" class="bday-hero-img" />
-        <div class="bday-hero-overlay">
-          <!-- Confetti dots -->
-          <span class="bday-dot" style="top:10px;left:14%;background:#FFE500;width:7px;height:7px;animation-delay:0s;"></span>
-          <span class="bday-dot" style="top:7px;left:38%;background:#FF6BCB;width:5px;height:5px;animation-delay:0.5s;"></span>
-          <span class="bday-dot" style="top:14px;right:28%;background:#60AEFF;width:6px;height:6px;animation-delay:1s;"></span>
-          <span class="bday-dot" style="bottom:12px;left:22%;background:#44DD88;width:5px;height:5px;animation-delay:0.3s;"></span>
-          <span class="bday-dot" style="bottom:9px;right:18%;background:#FF8C00;width:7px;height:7px;animation-delay:0.8s;"></span>
-          <span class="bday-dot" style="top:42%;left:6%;background:#FF6BCB;width:4px;height:4px;animation-delay:1.3s;"></span>
-          <!-- Floating emoji -->
-          <span class="bday-float-emoji" style="right:14%;top:8%;animation-delay:0s;">🎉</span>
-          <span class="bday-float-emoji" style="right:6%;bottom:12%;animation-delay:1.1s;font-size:14px;">✨</span>
-          <span class="bday-float-emoji" style="left:4%;bottom:14%;animation-delay:0.6s;font-size:13px;">🎈</span>
-          <div class="flex-1">
-            <div class="bday-home-label">🎂 Birthday Celebration</div>
-            <div class="bday-home-sub">{{ bdaySub }}</div>
-          </div>
-          <div class="bday-home-strip">
-            <div
-              v-for="emp in bdayEmps.slice(0, 5)"
-              :key="emp.key"
-              class="bday-strip-av"
-              :style="{ background: bday.getFallbackBg(emp.fallbackIdx) }"
-            >
-              <img v-if="emp.photo" :src="emp.photo" class="w-full h-full object-cover" />
-              <span v-else>{{ bday.getFallbackEmoji(emp.fallbackIdx) }}</span>
-            </div>
-            <div v-if="bdayEmps.length > 5" class="bday-strip-more">+{{ bdayEmps.length - 5 }}</div>
-          </div>
-        </div>
-      </div>
+      <!-- Birthday + quick links -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:items-stretch">
 
-      <!-- Quick links -->
-      <div class="grid grid-cols-3 gap-2 mt-3">
+        <!-- Birthday card -->
         <div
-          class="c-card ripple-host bg-[linear-gradient(135deg,#FF6B00,#FF3CAC,#A855F7,#3B82F6)]"
-          @click="ui.openModal('modal-culture')"
+          class="ripple-host relative overflow-hidden rounded-2xl cursor-pointer sm:h-full"
+          @click="ui.openModal('modal-bday')"
         >
-          <div class="c-emo">🔥</div>
-          <div class="c-lbl">FIRE Culture</div>
+          <!-- Mobile-only height spacer (aspect-ratio 375/150) -->
+          <div class="sm:hidden" style="aspect-ratio:375/150;"></div>
+
+          <img src="/images/bday-header.jpg"
+               class="absolute inset-0 w-full h-full object-cover object-top" />
+          <div class="absolute inset-0" style="background:linear-gradient(to bottom,rgba(10,0,40,0.18) 0%,rgba(10,0,40,0.58) 100%);"></div>
+          <div class="absolute inset-0 flex flex-col justify-between p-3">
+            <div>
+              <div style="font-size:14px;font-weight:900;color:white;text-shadow:0 1px 4px rgba(0,0,0,0.3);">🎂 Birthday<br>Celebration</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.85);margin-top:3px;">{{ bdaySub }}</div>
+            </div>
+            <div class="bday-home-strip">
+              <div
+                v-for="emp in bdayEmps.slice(0, 3)"
+                :key="emp.key"
+                class="bday-strip-av"
+                :style="{ background: bday.getFallbackBg(emp.fallbackIdx) }"
+              >
+                <img v-if="emp.photo" :src="emp.photo" class="w-full h-full object-cover" />
+                <span v-else>{{ bday.getFallbackEmoji(emp.fallbackIdx) }}</span>
+              </div>
+              <div v-if="bdayEmps.length > 3" class="bday-strip-more">+{{ bdayEmps.length - 3 }}</div>
+            </div>
+          </div>
         </div>
-        <div
-          class="c-card ripple-host bg-[linear-gradient(135deg,#FFD6DC,#FF8FA3,#FF4D6D)]"
-          @click="ui.openModal('modal-training')"
-        >
-          <div class="c-emo">📚</div>
-          <div class="c-lbl">Training</div>
+
+        <!-- Quick links: 3-col on mobile, flex-col on PC -->
+        <div class="grid grid-cols-3 gap-2 sm:flex sm:flex-col">
+          <div class="c-card ripple-host bg-[linear-gradient(135deg,#FF6B00,#FF3CAC,#A855F7,#3B82F6)] sm:flex-1" @click="ui.openModal('modal-culture')">
+            <div class="c-emo">🔥</div>
+            <div class="c-lbl">FIRE Culture</div>
+          </div>
+          <div class="c-card ripple-host bg-[linear-gradient(135deg,#FFD6DC,#FF8FA3,#FF4D6D)] sm:flex-1" @click="ui.openModal('modal-training')">
+            <div class="c-emo">📚</div>
+            <div class="c-lbl">Training</div>
+          </div>
+          <div class="c-card ripple-host bg-[linear-gradient(135deg,#06C755,#00A040)] sm:flex-1" @click="ui.openModal('modal-reward')">
+            <div class="c-emo">⭐</div>
+            <div class="c-lbl">DS Reward</div>
+          </div>
         </div>
-        <div
-          class="c-card ripple-host bg-[linear-gradient(135deg,#06C755,#00A040)]"
-          @click="ui.openModal('modal-reward')"
-        >
-          <div class="c-emo">⭐</div>
-          <div class="c-lbl">DS Reward</div>
-        </div>
+
       </div>
     </div>
 

@@ -48,9 +48,8 @@ function uploadImage(params) {
 function getEmployees(params) {
   var rows = sheetToObjects('Employees');
 
-  // Optional filters
-  var inTeam      = params.inTeam;
-  var inStarGang  = params.inStarGang;
+  var inTeam     = params.inTeam;
+  var inStarGang = params.inStarGang;
 
   if (inTeam === 'true') {
     rows = rows.filter(function(r) { return r.inTeam === true || r.inTeam === 'TRUE'; });
@@ -60,12 +59,25 @@ function getEmployees(params) {
   }
 
   var employees = rows.map(function(r) {
+    var imgUrl = String(r.imgUrl || '');
+
+    // ถ้า imgUrl มี prefix "drive:" → fetch จาก Drive แล้ว inline เป็น base64
+    if (imgUrl.indexOf('drive:') === 0) {
+      var fileId = imgUrl.slice(6);
+      try {
+        var bytes = DriveApp.getFileById(fileId).getBlob().getBytes();
+        imgUrl = 'data:image/jpeg;base64,' + Utilities.base64Encode(bytes);
+      } catch (e) {
+        imgUrl = '';
+      }
+    }
+
     return {
       id:           String(r.id || ''),
       name:         String(r.name || ''),
       role:         String(r.role || ''),
       dept:         String(r.dept || ''),
-      imgUrl:       String(r.imgUrl || ''),
+      imgUrl:       imgUrl,
       grad:         String(r.grad || ''),
       inTeam:       r.inTeam === true || r.inTeam === 'TRUE',
       inStarGang:   r.inStarGang === true || r.inStarGang === 'TRUE',
@@ -114,10 +126,12 @@ function addTeamMember(params) {
 }
 
 function updateEmployeeSelf(params) {
-  var id   = params.id;
-  var name = (params.name || '').trim();
-  var role = (params.role || '').trim();
-  var dept = (params.dept || '').trim();
+  var id     = params.id;
+  var name   = (params.name   || '').trim();
+  var role   = (params.role   || '').trim();
+  var dept   = (params.dept   || '').trim();
+  var imgUrl = (params.imgUrl || '').trim();
+  var imgId  = (params.imgId  || '').trim();
 
   if (!id) return err('id required');
 
@@ -128,12 +142,20 @@ function updateEmployeeSelf(params) {
 
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][idIdx]) === String(id)) {
-      var nameIdx = headers.indexOf('name');
-      var roleIdx = headers.indexOf('role');
-      var deptIdx = headers.indexOf('dept');
-      if (name && nameIdx >= 0) sheet.getRange(i + 1, nameIdx + 1).setValue(name);
-      if (role && roleIdx >= 0) sheet.getRange(i + 1, roleIdx + 1).setValue(role);
-      if (dept && deptIdx >= 0) sheet.getRange(i + 1, deptIdx + 1).setValue(dept);
+      var nameIdx   = headers.indexOf('name');
+      var roleIdx   = headers.indexOf('role');
+      var deptIdx   = headers.indexOf('dept');
+      var imgUrlIdx = headers.indexOf('imgUrl');
+      var imgIdIdx  = headers.indexOf('imgId');
+      if (name   && nameIdx   >= 0) sheet.getRange(i + 1, nameIdx   + 1).setValue(name);
+      if (role   && roleIdx   >= 0) sheet.getRange(i + 1, roleIdx   + 1).setValue(role);
+      if (dept   && deptIdx   >= 0) sheet.getRange(i + 1, deptIdx   + 1).setValue(dept);
+      if (imgId  && imgUrlIdx >= 0) {
+        // เก็บ Drive file ID ด้วย prefix "drive:" ใน imgUrl column เดิม — ไม่ต้องเพิ่ม column ใหม่
+        sheet.getRange(i + 1, imgUrlIdx + 1).setValue('drive:' + imgId);
+      } else if (imgUrl && imgUrlIdx >= 0) {
+        sheet.getRange(i + 1, imgUrlIdx + 1).setValue(imgUrl);
+      }
       return ok({ id: id, updated: true });
     }
   }

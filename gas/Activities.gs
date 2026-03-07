@@ -1,9 +1,10 @@
 // Activities.gs — Monthly activities management
-// Sheet "Activities": id | monthIdx | name | emoji | date | loc | desc | steps | joinUrl | imgUrl | createdAt
+// Sheet "Activities": id | monthIdx | name | emoji | date | loc | desc | steps | joinUrl | imgUrl | imgId | createdAt
 
 /**
  * GET: getActivities
  * params: { monthIdx? } — ถ้าไม่ส่งจะ return ทุกเดือน
+ * ถ้า row มี imgId (Drive file ID) จะ fetch รูปจาก Drive แล้ว inline เป็น base64 ใน imgUrl
  */
 function getActivities(params) {
   var data = sheetToObjects('Activities');
@@ -11,18 +12,31 @@ function getActivities(params) {
     var m = String(params.monthIdx);
     data = data.filter(function(r) { return String(r.monthIdx) === m; });
   }
+  // Inline Drive images by ID → reliable base64 for <img> display
+  data = data.map(function(r) {
+    var imgId = String(r.imgId || '').trim();
+    if (imgId) {
+      try {
+        var bytes = DriveApp.getFileById(imgId).getBlob().getBytes();
+        r.imgUrl  = 'data:image/jpeg;base64,' + Utilities.base64Encode(bytes);
+      } catch (e) {
+        r.imgUrl = '';
+      }
+    }
+    return r;
+  });
   return ok(data);
 }
 
 /**
- * GET: adminAddActivity (token-gated)
- * params: { token, monthIdx, name, emoji, date, loc, desc, joinUrl, imgUrl }
+ * POST: adminAddActivity (token-gated)
+ * params: { token, monthIdx, name, emoji, date, loc, desc, steps, joinUrl, imgUrl, imgId }
  */
 function adminAddActivity(params) {
   verifyToken(params.token);
-  var sheet = getSheet('Activities');
-  var id    = uuid();
-  var now   = new Date().toISOString();
+  var sheet   = getSheet('Activities');
+  var id      = uuid();
+  var now     = new Date().toISOString();
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   var row = headers.map(function(h) {
     if (h === 'id')        return id;
@@ -34,7 +48,8 @@ function adminAddActivity(params) {
     if (h === 'desc')      return params.desc      || '';
     if (h === 'steps')     return params.steps     || '';
     if (h === 'joinUrl')   return params.joinUrl   || '';
-    if (h === 'imgUrl')    return params.imgUrl    || '';
+    if (h === 'imgUrl')    return params.imgId ? '' : (params.imgUrl || ''); // ถ้ามี imgId ไม่ต้องเก็บ base64
+    if (h === 'imgId')     return params.imgId     || '';
     if (h === 'createdAt') return now;
     return '';
   });
@@ -43,7 +58,7 @@ function adminAddActivity(params) {
 }
 
 /**
- * GET: adminUpdateActivity (token-gated)
+ * POST: adminUpdateActivity (token-gated)
  * params: { token, id, ...fields }
  */
 function adminUpdateActivity(params) {
@@ -60,11 +75,18 @@ function adminUpdateActivity(params) {
   }
   if (rowNum < 0) return err('ไม่พบ activity id: ' + params.id);
 
-  var EDITABLE = ['monthIdx','name','emoji','date','loc','desc','steps','joinUrl','imgUrl'];
+  var EDITABLE = ['monthIdx','name','emoji','date','loc','desc','steps','joinUrl','imgUrl','imgId'];
   EDITABLE.forEach(function(field) {
     if (params[field] !== undefined) {
       var col = headers.indexOf(field) + 1;
-      if (col > 0) sheet.getRange(rowNum, col).setValue(params[field]);
+      if (col > 0) {
+        // ถ้ามี imgId ให้ clear imgUrl (Drive เป็น source of truth)
+        if (field === 'imgId' && params.imgId) {
+          var imgUrlCol = headers.indexOf('imgUrl') + 1;
+          if (imgUrlCol > 0) sheet.getRange(rowNum, imgUrlCol).setValue('');
+        }
+        sheet.getRange(rowNum, col).setValue(params[field]);
+      }
     }
   });
   return ok({ updated: true });

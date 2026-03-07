@@ -115,8 +115,9 @@ import { useRouter } from 'vue-router'
 import BaseModal from '../shared/BaseModal.vue'
 import { useUiStore } from '../../stores/ui.js'
 import { useUserAuthStore } from '../../stores/userAuth.js'
-import { fileToCompressedBase64 } from '../../composables/useImageCompress.js'
+import { resizeToBase64 } from '../../composables/useImageCompress.js'
 import { gasGet, gasPost } from '../../services/api.js'
+import { uploadImage as driveUpload } from '../../services/activitiesService.js'
 
 const ui       = useUiStore()
 const userAuth = useUserAuthStore()
@@ -139,17 +140,25 @@ async function onFileChange(e) {
   if (!file) return
   uploading.value = true; uploadError.value = ''
   try {
-    const base64 = await fileToCompressedBase64(file)
-    userAuth.userImgUrl = base64
-    localStorage.setItem('user_img', base64)
-    ui.currentUser.img = base64
-    await gasPost('uploadImage', {
-      sheetName: 'Employees',
-      keyCol:    'id',
-      keyVal:    userAuth.userId,
-      imageBase64: base64,
+    // อ่านไฟล์ original — ไม่ resize
+    const b64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onerror = () => reject(new Error('อ่านไฟล์ไม่ได้'))
+      reader.onload  = ev => resolve(ev.target.result)
+      reader.readAsDataURL(file)
     })
+
+    // แสดงทันที (local b64 ใน localStorage, ไม่ขึ้นอยู่กับ Drive URL)
+    userAuth.userImgUrl = b64
+    localStorage.setItem('user_img', b64)
+    ui.currentUser.img = b64
+
     ui.showToast('อัปโหลดรูปสำเร็จ 📷')
+
+    // Upload to Drive + sync file ID ไป Sheets (background, silent)
+    driveUpload(b64, file.name, 'profiles')
+      .then(res => gasGet('updateEmployeeSelf', { id: userAuth.userId, imgId: res.data.id }))
+      .catch(() => {})
   } catch (err) {
     uploadError.value = err.message || 'อัปโหลดไม่สำเร็จ'
   } finally {

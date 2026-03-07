@@ -24,6 +24,6 @@ export async function deleteActivity(id) {
   return gasGet('adminDeleteActivity', { token: token(), id })
 }
 
-export async function uploadImage(base64, fileName) {
-  return gasPost('uploadImage', { base64, fileName: fileName || 'activity.jpg' })
+export async function uploadImage(base64, fileName, folderType = 'activities') {
+  return gasPost('uploadImage', { base64, fileName: fileName || 'image.jpg', folderType })
 }
