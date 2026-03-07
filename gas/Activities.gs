@@ -1,5 +1,5 @@
 // Activities.gs — Monthly activities management
-// Sheet "Activities": id | monthIdx | name | emoji | date | loc | desc | joinUrl | imgUrl | createdAt
+// Sheet "Activities": id | monthIdx | name | emoji | date | loc | desc | steps | joinUrl | imgUrl | createdAt
 
 /**
  * GET: getActivities
@@ -32,6 +32,7 @@ function adminAddActivity(params) {
     if (h === 'date')      return params.date      || '';
     if (h === 'loc')       return params.loc       || '';
     if (h === 'desc')      return params.desc      || '';
+    if (h === 'steps')     return params.steps     || '';
     if (h === 'joinUrl')   return params.joinUrl   || '';
     if (h === 'imgUrl')    return params.imgUrl    || '';
     if (h === 'createdAt') return now;
@@ -59,7 +60,7 @@ function adminUpdateActivity(params) {
   }
   if (rowNum < 0) return err('ไม่พบ activity id: ' + params.id);
 
-  var EDITABLE = ['monthIdx','name','emoji','date','loc','desc','joinUrl','imgUrl'];
+  var EDITABLE = ['monthIdx','name','emoji','date','loc','desc','steps','joinUrl','imgUrl'];
   EDITABLE.forEach(function(field) {
     if (params[field] !== undefined) {
       var col = headers.indexOf(field) + 1;

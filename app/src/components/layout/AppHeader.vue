@@ -15,7 +15,16 @@
         🔔
         <div v-if="ui.notifBadge > 0" class="hbadge">{{ ui.notifBadge }}</div>
       </div>
-      <div class="hdr-avatar" @click="ui.openModal('modal-profile')">😊</div>
+      <div class="hdr-user" @click="ui.openModal('modal-profile')">
+        <div class="hdr-avatar">
+          <img v-if="ui.currentUser.img" :src="ui.currentUser.img" class="hdr-avatar-img" @error="e => e.target.style.display='none'" />
+          <span v-else>{{ ui.currentUser.emoji || '😊' }}</span>
+        </div>
+        <div class="hdr-user-info">
+          <div class="hdr-user-name">{{ ui.currentUser.name || 'โปรไฟล์' }}</div>
+          <div v-if="ui.currentUser.role" class="hdr-user-role">{{ ui.currentUser.role }}</div>
+        </div>
+      </div>
     </div>
   </header>
 </template>

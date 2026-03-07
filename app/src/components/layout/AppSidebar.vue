@@ -4,8 +4,6 @@
 
     <NavItem to="/" icon="🏠" label="หน้าหลัก" />
     <NavItem to="/star" icon="⭐" label="Star Gang" />
-    <NavItem to="/bday" icon="🎂" label="Birthday" />
-    <NavItem to="/culture" icon="🔥" label="Team Culture" />
     <NavItem to="/idea" icon="💡" label="ไอเดีย" />
 
     <div class="sidebar-divider"></div>

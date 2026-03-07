@@ -30,7 +30,7 @@
           @click="selectPerson(m)"
         >
           <div :style="{ background: m.grad }" class="overflow-hidden relative">
-            <img v-if="m.img" :src="m.img" class="w-full block object-cover object-top" @error="e => e.target.style.display='none'" />
+            <img v-if="m.imgUrl" :src="m.imgUrl" class="w-full block object-cover object-top" @error="e => e.target.style.display='none'" />
             <div v-else class="w-full aspect-[3/4] min-h-[80px] flex items-center justify-center text-[28px] font-black text-white">{{ initials(m.name) }}</div>
           </div>
           <div class="px-1.5 pt-1.5 pb-2 text-center">
@@ -53,7 +53,7 @@
     <template v-else-if="view === 'comment' && selectedMember">
       <div class="flex-1 overflow-y-auto flex flex-col">
         <div class="emp-card-spotlight flex-shrink-0 h-auto">
-          <img v-if="selectedMember.img" :src="selectedMember.img" class="w-full block object-cover object-top" />
+          <img v-if="selectedMember.imgUrl" :src="selectedMember.imgUrl" class="w-full block object-cover object-top" />
           <div v-else :style="{ background: selectedMember.grad }" class="w-full h-[180px] flex items-center justify-center text-[64px]">{{ initials(selectedMember.name) }}</div>
           <div class="emp-spotlight-name">
             <div class="text-[14px] font-black text-white" style="text-shadow:0 1px 8px rgba(0,0,0,0.5);">{{ selectedMember.name }}</div>
@@ -99,7 +99,7 @@
     <template v-else-if="view === 'new' && selectedMember">
       <div class="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
         <div class="emp-card-spotlight rounded-2xl h-auto flex-shrink-0 overflow-hidden">
-          <img v-if="selectedMember.img" :src="selectedMember.img" class="w-full block object-cover object-top" />
+          <img v-if="selectedMember.imgUrl" :src="selectedMember.imgUrl" class="w-full block object-cover object-top" />
           <div v-else :style="{ background: selectedMember.grad }" class="w-full h-[160px] flex items-center justify-center text-[48px]">{{ initials(selectedMember.name) }}</div>
           <div class="emp-spotlight-name">
             <div class="text-[14px] font-black text-white">{{ selectedMember.name }}</div>
@@ -184,7 +184,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import BaseModal from '../shared/BaseModal.vue'
 import { useEmpathyStore } from '../../stores/empathy.js'
 import { useTeamStore } from '../../stores/team.js'
@@ -193,6 +193,19 @@ import { useUiStore } from '../../stores/ui.js'
 const empathy = useEmpathyStore()
 const team = useTeamStore()
 const ui = useUiStore()
+
+onMounted(() => {
+  team.loadTeam()
+  team.loadDirectory()
+})
+
+// Reload when modal opens (in case data changed)
+watch(() => ui.activeModal, (id) => {
+  if (id === 'modal-emp') {
+    team.loadTeam()
+    team.loadDirectory()
+  }
+})
 
 const view = ref('grid')  // 'grid' | 'comment' | 'new' | 'add'
 const searchQ = ref('')
@@ -254,7 +267,7 @@ function submitKudos() {
   empathy.addPost({
     recName: selectedMember.value.name,
     recRole: selectedMember.value.role,
-    recImgUrl: selectedMember.value.img || '',
+    recImgUrl: selectedMember.value.imgUrl || '',
     sndName: ui.currentUser.name,
     msg: kudosMsg.value.trim(),
     tag: selectedTag.value,

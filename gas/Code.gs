@@ -33,9 +33,10 @@ function doGet(e) {
 
     var handlers = {
       // Employees
-      getEmployees:       function() { return getEmployees(e.parameter); },
-      addTeamMember:      function() { return addTeamMember(e.parameter); },
-      joinStarGang:       function() { return joinStarGang(e.parameter); },
+      getEmployees:         function() { return getEmployees(e.parameter); },
+      addTeamMember:        function() { return addTeamMember(e.parameter); },
+      joinStarGang:         function() { return joinStarGang(e.parameter); },
+      updateEmployeeSelf:   function() { return updateEmployeeSelf(e.parameter); },
 
       // Birthdays
       getBirthdays:       function() { return getBirthdays(e.parameter); },

@@ -63,13 +63,14 @@
           <input v-model="form.role" class="al-form-input" placeholder="ตำแหน่ง" />
         </div>
         <div class="al-form-row">
-          <label class="al-form-label">วันเกิด (เช่น 15 ม.ค.)</label>
-          <input v-model="form.date" class="al-form-input" placeholder="15 ม.ค." />
+          <label class="al-form-label">วันเกิด</label>
+          <input v-model="dateInput" type="date" class="al-form-input" @change="onDateChange" />
+          <div v-if="dateInput" style="font-size:11px;color:#6B7280;margin-top:4px;">{{ isoToThaiShort(dateInput) }}</div>
         </div>
         <div class="al-form-row">
-          <label class="al-form-label">เดือน (0–11)</label>
+          <label class="al-form-label">เดือน</label>
           <select v-model="form.monthIdx" class="al-form-select">
-            <option v-for="(m,i) in MONTHS" :key="i" :value="String(i)">{{ i }} – {{ m }}</option>
+            <option v-for="(m,i) in MONTHS" :key="i" :value="String(i)">{{ m }}</option>
           </select>
         </div>
         <div class="al-form-row">
@@ -121,8 +122,32 @@ function monthName(idx) { return MONTHS[Number(idx)] || idx }
 const rows    = ref([])
 const loading = ref(true)
 
-const modal = reactive({ open: false, saving: false, error: '' })
-const form  = reactive({ key:'', name:'', role:'', date:'', monthIdx:'0', fallbackIdx:'0' })
+const modal     = reactive({ open: false, saving: false, error: '' })
+const form      = reactive({ key:'', name:'', role:'', date:'', monthIdx:'0', fallbackIdx:'0' })
+const dateInput = ref('')
+
+function isoToThaiShort(iso) {
+  if (!iso) return ''
+  const d = new Date(iso + 'T00:00:00')
+  if (isNaN(d)) return iso
+  return `${d.getDate()} ${MONTHS[d.getMonth()]}`
+}
+
+function thaiShortToIso(thai) {
+  if (!thai) return ''
+  const m = thai.match(/(\d+)\s*([\u0E00-\u0E7F.]+)/)
+  if (!m) return ''
+  const monthIdx = MONTHS.indexOf(m[2])
+  if (monthIdx < 0) return ''
+  const year = new Date().getFullYear()
+  return `${year}-${String(monthIdx + 1).padStart(2,'0')}-${String(parseInt(m[1])).padStart(2,'0')}`
+}
+
+function onDateChange() {
+  if (!dateInput.value) return
+  const d = new Date(dateInput.value + 'T00:00:00')
+  form.monthIdx = String(d.getMonth())  // 0-based
+}
 
 const delTarget = ref(null)
 const deleting  = ref(false)
@@ -145,11 +170,13 @@ onMounted(async () => {
 
 function openEdit(r) {
   Object.assign(form, { ...r, monthIdx: String(r.monthIdx), fallbackIdx: String(r.fallbackIdx) })
+  dateInput.value = thaiShortToIso(r.date)
   modal.error = ''; modal.open = true
 }
 
 async function saveModal() {
   if (!form.name.trim()) { modal.error = 'กรุณากรอกชื่อ'; return }
+  form.date = isoToThaiShort(dateInput.value) || form.date
   modal.saving = true; modal.error = ''
   try {
     await svc.updateRow('Birthdays', 'key', form.key, {

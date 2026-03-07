@@ -1,8 +1,16 @@
 // Setup.gs — รันครั้งเดียวเพื่อสร้าง sheets + seed ข้อมูลเริ่มต้น
 // วิธีใช้: เปิด GAS editor → เลือกฟังก์ชัน setupAll → กด Run
+//
+// ฟังก์ชันทั้งหมด:
+//   setupAll()         — ครั้งแรก: สร้างทุก sheet + seed + admin (safe to re-run)
+//   addMissingSheets() — เพิ่มเฉพาะ sheet ที่ยังไม่มี (ใช้เมื่อเพิ่ม feature ใหม่)
+//   setupSheets()      — สร้าง/อัปเดต header ทุก sheet (idempotent)
+//   setupAdmin()       — สร้าง admin account (ข้ามถ้ามีแล้ว)
+//   seedEmployees()    — seed พนักงานตัวอย่าง (ข้ามถ้ามีแล้ว)
+//   seedBirthdays()    — seed วันเกิดตัวอย่าง (ข้ามถ้ามีแล้ว)
 
 /**
- * รันทุกอย่างในครั้งเดียว
+ * รันทุกอย่างในครั้งเดียว — ปลอดภัย re-run ได้
  */
 function setupAll() {
   setupSheets();
@@ -12,6 +20,89 @@ function setupAll() {
   Logger.log('✅ Setup เสร็จสมบูรณ์ — ดูผลใน Spreadsheet');
 }
 
+/**
+ * addMissingSheets() — สร้างเฉพาะ sheet ที่ยังไม่มีใน Spreadsheet
+ * ใช้เมื่อเพิ่ม feature ใหม่ที่ต้องการ sheet ใหม่
+ * ไม่กระทบ sheet หรือข้อมูลที่มีอยู่แล้ว
+ */
+function addMissingSheets() {
+  var ss      = SpreadsheetApp.getActiveSpreadsheet();
+  var created = 0;
+
+  ALL_SHEETS.forEach(function(def) {
+    var sheet = ss.getSheetByName(def.name);
+    if (sheet) {
+      Logger.log('✓ มีแล้ว: ' + def.name);
+      return;
+    }
+    sheet = ss.insertSheet(def.name);
+    sheet.appendRow(def.headers);
+
+    var headerRange = sheet.getRange(1, 1, 1, def.headers.length);
+    headerRange.setFontWeight('bold');
+    headerRange.setBackground('#4F46E5');
+    headerRange.setFontColor('#FFFFFF');
+    sheet.setFrozenRows(1);
+    for (var i = 1; i <= def.headers.length; i++) {
+      sheet.setColumnWidth(i, 140);
+    }
+
+    Logger.log('✅ สร้างใหม่: ' + def.name);
+    created++;
+  });
+
+  Logger.log(created > 0
+    ? '✅ addMissingSheets เสร็จ — สร้าง ' + created + ' sheet ใหม่'
+    : '✅ ทุก sheet มีอยู่แล้ว ไม่มีอะไรสร้างใหม่');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sheet definitions — เพิ่ม sheet ใหม่ที่นี่ แล้วรัน addMissingSheets()
+// ─────────────────────────────────────────────────────────────────────────────
+
+var ALL_SHEETS = [
+  {
+    name: 'Employees',
+    headers: ['id','name','role','dept','imgUrl','grad','inTeam','inStarGang','starGangName','starGangRole'],
+  },
+  {
+    name: 'Birthdays',
+    headers: ['key','employeeId','name','role','monthIdx','date','fallbackIdx','imgUrl'],
+  },
+  {
+    name: 'BirthdayWishes',
+    headers: ['id','birthdayKey','fromName','fromAvIdx','msg','time','year'],
+  },
+  {
+    name: 'EmpathyPosts',
+    headers: ['id','recEmployeeId','recName','recRole','recImgUrl','sndName','msg','tag','likeCount','createdAt'],
+  },
+  {
+    name: 'EmpathyComments',
+    headers: ['id','postId','authorName','text','createdAt'],
+  },
+  {
+    name: 'EmpathyLikes',
+    headers: ['postId','userKey'],
+  },
+  {
+    name: 'Ideas',
+    headers: ['id','category','title','detail','submitterName','createdAt','status'],
+  },
+  {
+    name: 'Activities',
+    headers: ['id','monthIdx','name','emoji','date','loc','desc','steps','joinUrl','imgUrl','createdAt'],
+  },
+  {
+    name: 'Admins',
+    headers: ['username','passwordHash','name','token','tokenExpires'],
+  },
+  {
+    name: 'UserAuth',
+    headers: ['employeeId','passwordHash','token','tokenExpires'],
+  },
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. สร้าง Sheets + Headers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -19,50 +110,7 @@ function setupAll() {
 function setupSheets() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  var SHEETS = [
-    {
-      name: 'Employees',
-      headers: ['id','name','role','dept','imgUrl','grad','inTeam','inStarGang','starGangName','starGangRole'],
-    },
-    {
-      name: 'Birthdays',
-      headers: ['key','employeeId','name','role','monthIdx','date','fallbackIdx','imgUrl'],
-    },
-    {
-      name: 'BirthdayWishes',
-      headers: ['id','birthdayKey','fromName','fromAvIdx','msg','time','year'],
-    },
-    {
-      name: 'EmpathyPosts',
-      headers: ['id','recEmployeeId','recName','recRole','recImgUrl','sndName','msg','tag','likeCount','createdAt'],
-    },
-    {
-      name: 'EmpathyComments',
-      headers: ['id','postId','authorName','text','createdAt'],
-    },
-    {
-      name: 'EmpathyLikes',
-      headers: ['postId','userKey'],
-    },
-    {
-      name: 'Ideas',
-      headers: ['id','category','title','detail','submitterName','createdAt','status'],
-    },
-    {
-      name: 'Activities',
-      headers: ['id','monthIdx','name','emoji','date','loc','desc','joinUrl','imgUrl','createdAt'],
-    },
-    {
-      name: 'Admins',
-      headers: ['username','passwordHash','name','token','tokenExpires'],
-    },
-    {
-      name: 'UserAuth',
-      headers: ['employeeId','passwordHash','token','tokenExpires'],
-    },
-  ];
-
-  SHEETS.forEach(function(def) {
+  ALL_SHEETS.forEach(function(def) {
     var sheet = ss.getSheetByName(def.name);
     if (!sheet) {
       sheet = ss.insertSheet(def.name);
@@ -96,7 +144,7 @@ function setupSheets() {
     Logger.log('ลบ Sheet1 ออก');
   }
 
-  Logger.log('✅ setupSheets เสร็จ — สร้าง ' + SHEETS.length + ' sheets');
+  Logger.log('✅ setupSheets เสร็จ — ตรวจสอบ ' + ALL_SHEETS.length + ' sheets');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

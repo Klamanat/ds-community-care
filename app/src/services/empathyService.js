@@ -6,11 +6,15 @@ export async function fetchPosts() {
 }
 
 export async function createPost(p) {
+  // Never pass base64 data URLs in the query string — they exceed GAS URL limits
+  const rawImg = p.recImgUrl || ''
+  const safeImg = rawImg.startsWith('data:') ? '' : rawImg.slice(0, 300)
+
   const r = await gasGet('addEmpathyPost', {
     recEmployeeId: p.recEmployeeId || '',
     recName: p.recName,
     recRole: p.recRole,
-    recImgUrl: p.recImgUrl || '',
+    recImgUrl: safeImg,
     sndName: p.sndName,
     msg: p.msg.slice(0, 500),
     tag: p.tag

@@ -47,6 +47,7 @@ function addEmpathyPost(params) {
 
   if (!recName)  return err('recName required');
   if (!sndName)  return err('sndName required');
+  if (recImgUrl.length > 500) recImgUrl = '';  // strip oversized images
 
   var id        = uuid();
   var likeCount = 0;

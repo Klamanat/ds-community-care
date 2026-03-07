@@ -94,7 +94,8 @@
         </div>
         <div class="al-form-row">
           <label class="al-form-label">วันที่</label>
-          <input v-model="form.date" class="al-form-input" placeholder="เช่น 14 ก.พ. 2568" />
+          <input v-model="dateInput" type="date" class="al-form-input" />
+          <div v-if="dateInput" style="font-size:11px;color:#6B7280;margin-top:4px;">{{ isoToThai(dateInput) }}</div>
         </div>
         <div class="al-form-row">
           <label class="al-form-label">สถานที่</label>
@@ -105,6 +106,10 @@
           <textarea v-model="form.desc" class="al-form-textarea" placeholder="รายละเอียดกิจกรรม"></textarea>
         </div>
         <div class="al-form-row">
+          <label class="al-form-label">ขั้นตอนกิจกรรม (แต่ละขั้นขึ้นบรรทัดใหม่)</label>
+          <textarea v-model="form.steps" class="al-form-textarea" rows="5" placeholder="1. ลงทะเบียน&#10;2. รับเอกสาร&#10;3. เข้าร่วมกิจกรรม"></textarea>
+        </div>
+        <div class="al-form-row">
           <label class="al-form-label">Join URL (ถ้ามี)</label>
           <input v-model="form.joinUrl" class="al-form-input" placeholder="https://..." />
         </div>
@@ -112,14 +117,18 @@
         <!-- Image upload -->
         <div class="al-form-row">
           <label class="al-form-label">รูป Header (ถ้ามี)</label>
-          <div class="act-upload-zone" @click="imgFileInput.click()">
-            <img v-if="imgPreview" :src="imgPreview" class="act-upload-preview" />
+          <div class="act-upload-zone" :style="imgUploading ? 'cursor:default;opacity:0.7;' : ''" @click="!imgUploading && imgFileInput.click()">
+            <img v-if="imgPreview && !imgUploading" :src="imgPreview" class="act-upload-preview" />
+            <div v-else-if="imgUploading" class="act-upload-placeholder">
+              <span style="font-size:22px;">⏳</span>
+              <span style="font-size:12px;color:#6B7280;margin-top:4px;">กำลังอัปโหลดไป Google Drive...</span>
+            </div>
             <div v-else class="act-upload-placeholder">
               <span style="font-size:28px;">🖼️</span>
-              <span style="font-size:12px;color:#9CA3AF;margin-top:4px;">คลิกเพื่ออัปโหลด (แนะนำ 800×400)</span>
+              <span style="font-size:12px;color:#9CA3AF;margin-top:4px;">คลิกเพื่ออัปโหลด → เก็บใน Google Drive</span>
             </div>
           </div>
-          <button v-if="imgPreview" class="al-btn" style="background:#FEE2E2;color:#DC2626;margin-top:6px;width:100%;" @click.stop="clearImg">🗑️ ลบรูป</button>
+          <button v-if="imgPreview && !imgUploading" class="al-btn" style="background:#FEE2E2;color:#DC2626;margin-top:6px;width:100%;" @click.stop="clearImg">🗑️ ลบรูป</button>
           <input ref="imgFileInput" type="file" accept="image/*" style="display:none" @change="onImgChange" />
         </div>
 
@@ -127,8 +136,8 @@
 
         <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
           <button class="al-btn" style="background:#F3F4F6;color:#374151;" @click="modal.open=false">ยกเลิก</button>
-          <button class="al-btn al-btn-save" :disabled="modal.saving" @click="saveModal">
-            {{ modal.saving ? 'กำลังบันทึก...' : 'บันทึก' }}
+          <button class="al-btn al-btn-save" :disabled="modal.saving || imgUploading" @click="saveModal">
+            {{ modal.saving ? 'กำลังบันทึก...' : imgUploading ? 'รอรูปอัปโหลด...' : 'บันทึก' }}
           </button>
         </div>
       </div>
@@ -158,6 +167,7 @@ import { useRouter } from 'vue-router'
 import { useAdminStore } from '../../stores/admin.js'
 import { useActivitiesStore } from '../../stores/activities.js'
 import * as svc from '../../services/activitiesService.js'
+import { resizeToBase64 } from '../../composables/useImageCompress.js'
 
 const admin  = useAdminStore()
 const router = useRouter()
@@ -166,42 +176,56 @@ const acts   = useActivitiesStore()
 const loading     = ref(true)
 const filterMonth = ref(0)
 const modal  = reactive({ open: false, mode: 'add', saving: false, error: '' })
-const form   = reactive({ id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', joinUrl:'', imgUrl:'' })
+const form   = reactive({ id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', imgUrl:'' })
 const delTarget = ref(null)
 const deleting  = ref(false)
+
+// Date helpers
+const THAI_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+const dateInput = ref('')
+
+function isoToThai(iso) {
+  if (!iso) return ''
+  const d = new Date(iso + 'T00:00:00')
+  if (isNaN(d)) return iso
+  return `${d.getDate()} ${THAI_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`
+}
+
+function thaiToIso(thai) {
+  if (!thai) return ''
+  const m = thai.match(/(\d+)\s*([\u0E00-\u0E7F.]+)\s*(\d{4})?/)
+  if (!m) return ''
+  const monthIdx = THAI_MONTHS.indexOf(m[2])
+  if (monthIdx < 0) return ''
+  const year = m[3] ? parseInt(m[3]) - 543 : new Date().getFullYear()
+  return `${year}-${String(monthIdx + 1).padStart(2,'0')}-${String(parseInt(m[1])).padStart(2,'0')}`
+}
 
 // Image upload
 const imgFileInput = ref(null)
 const imgPreview   = ref('')
-
-function compressImage(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const img = new Image()
-      img.onload = () => {
-        const MAX_W = 800, MAX_H = 400
-        let w = img.width, h = img.height
-        if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W }
-        if (h > MAX_H) { w = Math.round(w * MAX_H / h); h = MAX_H }
-        const canvas = document.createElement('canvas')
-        canvas.width = w; canvas.height = h
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h)
-        resolve(canvas.toDataURL('image/jpeg', 0.75))
-      }
-      img.src = e.target.result
-    }
-    reader.readAsDataURL(file)
-  })
-}
+const imgUploading = ref(false)
 
 async function onImgChange(e) {
   const file = e.target.files?.[0]
   if (!file) return
-  const b64 = await compressImage(file)
-  form.imgUrl = b64
-  imgPreview.value = b64
-  e.target.value = ''
+  imgUploading.value = true
+  modal.error = ''
+  try {
+    // Show local preview immediately
+    const b64 = await resizeToBase64(file, 1200, 600, 0.88)
+    imgPreview.value = b64
+    // Upload to Google Drive → store URL
+    const res = await svc.uploadImage(b64, file.name)
+    form.imgUrl = res.data.url
+  } catch (err) {
+    modal.error = 'อัปโหลดรูปล้มเหลว: ' + (err.message || 'ลองใหม่อีกครั้ง')
+    imgPreview.value = ''
+    form.imgUrl = ''
+  } finally {
+    imgUploading.value = false
+    e.target.value = ''
+  }
 }
 
 function clearImg() {
@@ -241,19 +265,24 @@ onMounted(async () => {
 })
 
 function openAdd() {
-  Object.assign(form, { id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', joinUrl:'', imgUrl:'' })
+  Object.assign(form, { id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', imgUrl:'' })
+  dateInput.value = ''
   imgPreview.value = ''
+  imgUploading.value = false
   modal.mode = 'add'; modal.error = ''; modal.open = true
 }
 
 function openEdit(r) {
   Object.assign(form, { ...r, monthIdx: String(r.monthIdx) })
+  dateInput.value = thaiToIso(r.date)
   imgPreview.value = r.imgUrl || ''
+  imgUploading.value = false
   modal.mode = 'edit'; modal.error = ''; modal.open = true
 }
 
 async function saveModal() {
   if (!form.name.trim()) { modal.error = 'กรุณากรอกชื่อกิจกรรม'; return }
+  form.date = isoToThai(dateInput.value)
   modal.saving = true; modal.error = ''
   try {
     if (modal.mode === 'add') {

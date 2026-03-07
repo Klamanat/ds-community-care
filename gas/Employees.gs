@@ -113,6 +113,33 @@ function addTeamMember(params) {
   return ok({ id: id, created: true });
 }
 
+function updateEmployeeSelf(params) {
+  var id   = params.id;
+  var name = (params.name || '').trim();
+  var role = (params.role || '').trim();
+  var dept = (params.dept || '').trim();
+
+  if (!id) return err('id required');
+
+  var sheet   = getSheet('Employees');
+  var data    = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var idIdx   = headers.indexOf('id');
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idIdx]) === String(id)) {
+      var nameIdx = headers.indexOf('name');
+      var roleIdx = headers.indexOf('role');
+      var deptIdx = headers.indexOf('dept');
+      if (name && nameIdx >= 0) sheet.getRange(i + 1, nameIdx + 1).setValue(name);
+      if (role && roleIdx >= 0) sheet.getRange(i + 1, roleIdx + 1).setValue(role);
+      if (dept && deptIdx >= 0) sheet.getRange(i + 1, deptIdx + 1).setValue(dept);
+      return ok({ id: id, updated: true });
+    }
+  }
+  return err('Employee not found: ' + id);
+}
+
 function joinStarGang(params) {
   var name = params.name;
   var role = params.role || '';

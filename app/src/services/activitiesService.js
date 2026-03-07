@@ -23,3 +23,7 @@ export async function updateActivity(id, fields) {
 export async function deleteActivity(id) {
   return gasGet('adminDeleteActivity', { token: token(), id })
 }
+
+export async function uploadImage(base64, fileName) {
+  return gasPost('uploadImage', { base64, fileName: fileName || 'activity.jpg' })
+}

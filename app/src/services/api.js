@@ -1,41 +1,54 @@
-const GAS_URL = import.meta.env.VITE_GAS_URL
+// In dev: use /api so requests go through the Vite proxy (no CORS)
+// In prod: use the full GAS URL directly (GAS sets CORS headers after redirect)
+const GAS_URL = import.meta.env.DEV
+  ? '/api'
+  : import.meta.env.VITE_GAS_URL
+
+function assertConfigured() {
+  if (!import.meta.env.DEV && (!GAS_URL || GAS_URL.includes('YOUR_DEPLOYMENT_ID'))) {
+    throw new Error('VITE_GAS_URL not configured')
+  }
+}
 
 /**
  * POST to GAS Web App — used for large payloads like base64 images.
- * Body is sent as text/plain JSON to avoid CORS preflight.
+ * Body is sent without Content-Type to avoid CORS preflight.
  */
 export async function gasPost(action, payload = {}) {
-  if (!GAS_URL || GAS_URL.includes('YOUR_DEPLOYMENT_ID')) {
-    throw new Error('VITE_GAS_URL not configured')
-  }
+  assertConfigured()
   const res = await fetch(GAS_URL, {
     method: 'POST',
     redirect: 'follow',
     body: JSON.stringify({ action, ...payload }),
   })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const data = await res.json()
-  if (!data.ok) throw new Error(data.error || 'GAS error')
-  return data
+  return parseGasResponse(res)
 }
 
 /**
- * Base GAS GET function.
+ * GET from GAS Web App.
  * Thai text is handled by URLSearchParams which auto-encodes UTF-8.
- * redirect:'follow' is required because GAS redirects to the execution URL.
  */
 export async function gasGet(action, params = {}) {
-  if (!GAS_URL || GAS_URL.includes('YOUR_DEPLOYMENT_ID')) {
-    throw new Error('VITE_GAS_URL not configured')
-  }
-  const url = new URL(GAS_URL)
-  url.searchParams.set('action', action)
+  assertConfigured()
+  const qs = new URLSearchParams({ action })
   Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== null) url.searchParams.set(k, String(v))
+    if (v !== undefined && v !== null) qs.set(k, String(v))
   })
-  const res = await fetch(url.toString(), { redirect: 'follow' })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const data = await res.json()
+  const res = await fetch(`${GAS_URL}?${qs}`, { redirect: 'follow' })
+  return parseGasResponse(res)
+}
+
+async function parseGasResponse(res) {
+  const text = await res.text()
+  let data
+  try {
+    data = JSON.parse(text)
+  } catch {
+    // GAS returned HTML — usually means: not deployed, needs re-authorization,
+    // or script has an error. Check GAS editor logs.
+    const preview = text.slice(0, 120).replace(/\s+/g, ' ')
+    throw new Error(`GAS returned HTML instead of JSON: "${preview}"`)
+  }
   if (!data.ok) throw new Error(data.error || 'GAS error')
   return data
 }
