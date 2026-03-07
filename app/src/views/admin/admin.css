@@ -1,0 +1,139 @@
+/* ── Admin Layout ── */
+.al-wrap { min-height: 100dvh; background: #F3F4F6; font-family: 'Sarabun', sans-serif; }
+
+.al-header {
+  background: white; border-bottom: 1px solid #E5E7EB;
+  padding: 0 24px; height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.al-logo { font-size: 16px; font-weight: 900; color: #4F46E5; }
+
+.al-logout-btn {
+  padding: 6px 14px; background: #FEF2F2; border: 1.5px solid #FECACA;
+  border-radius: 8px; color: #DC2626; font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: 'Sarabun', sans-serif; transition: all 0.15s;
+}
+.al-logout-btn:hover { background: #FEE2E2; }
+
+.al-main { padding: 24px 20px; max-width: 960px; margin: 0 auto; }
+
+/* Back link */
+.al-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 700; color: #6366F1;
+  text-decoration: none; margin-bottom: 16px; cursor: pointer;
+}
+.al-back:hover { text-decoration: underline; }
+
+/* Page title */
+.al-page-title { font-size: 20px; font-weight: 900; color: #1F2937; margin: 0 0 20px; }
+
+/* Dashboard nav cards */
+.al-grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media (min-width: 600px) { .al-grid-4 { grid-template-columns: repeat(4, 1fr); } }
+
+.al-nav-card {
+  background: white; border-radius: 14px; padding: 20px 16px;
+  border: 1.5px solid #E5E7EB; text-decoration: none; color: inherit;
+  transition: all 0.15s; position: relative;
+  display: flex; flex-direction: column; gap: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.al-nav-card:hover { border-color: #6366F1; box-shadow: 0 4px 16px rgba(99,102,241,0.15); transform: translateY(-1px); }
+.al-nav-icon  { font-size: 28px; }
+.al-nav-label { font-size: 14px; font-weight: 800; color: #1F2937; }
+.al-nav-sub   { font-size: 11px; color: #9CA3AF; }
+.al-nav-arrow { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; color: #C7D2FE; }
+
+/* ── Table ── */
+.al-card {
+  background: white; border-radius: 14px; border: 1.5px solid #E5E7EB;
+  overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.al-card-header {
+  padding: 14px 18px; border-bottom: 1px solid #F3F4F6;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
+}
+.al-card-title { font-size: 14px; font-weight: 800; color: #1F2937; }
+
+.al-table-wrap { overflow-x: auto; }
+.al-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.al-table th {
+  background: #F9FAFB; padding: 10px 12px; text-align: left;
+  font-size: 11px; font-weight: 700; color: #6B7280;
+  text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+  border-bottom: 1px solid #E5E7EB;
+}
+.al-table td {
+  padding: 10px 12px; border-bottom: 1px solid #F3F4F6;
+  color: #374151; vertical-align: middle;
+}
+.al-table tr:last-child td { border-bottom: none; }
+.al-table tr:hover td { background: #FAFAFA; }
+
+/* ── Buttons ── */
+.al-btn {
+  padding: 5px 12px; border-radius: 7px; border: none; cursor: pointer;
+  font-size: 12px; font-weight: 700; font-family: 'Sarabun', sans-serif;
+  transition: all 0.15s;
+}
+.al-btn-edit   { background: #EEF2FF; color: #4F46E5; }
+.al-btn-edit:hover   { background: #E0E7FF; }
+.al-btn-delete { background: #FEF2F2; color: #DC2626; }
+.al-btn-delete:hover { background: #FEE2E2; }
+.al-btn-primary { background: linear-gradient(135deg,#6366F1,#4F46E5); color: white; padding: 8px 16px; border-radius: 9px; }
+.al-btn-primary:hover { opacity: 0.9; }
+.al-btn-save   { background: linear-gradient(135deg,#10B981,#059669); color: white; }
+.al-btn-save:hover { opacity: 0.9; }
+
+/* ── Status badges ── */
+.al-badge {
+  display: inline-block; padding: 2px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700;
+}
+.al-badge-pending  { background: #FEF3C7; color: #92400E; }
+.al-badge-approved { background: #D1FAE5; color: #065F46; }
+.al-badge-rejected { background: #FEE2E2; color: #991B1B; }
+.al-badge-yes { background: #D1FAE5; color: #065F46; }
+.al-badge-no  { background: #F3F4F6; color: #9CA3AF; }
+
+/* ── Modal overlay ── */
+.al-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 500;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.al-modal {
+  background: white; border-radius: 16px; padding: 24px;
+  width: 100%; max-width: 480px; max-height: 90dvh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.al-modal-title { font-size: 16px; font-weight: 900; color: #1F2937; margin: 0 0 16px; }
+
+/* ── Form inputs ── */
+.al-form-row { margin-bottom: 12px; }
+.al-form-label { display: block; font-size: 11px; font-weight: 700; color: #6B7280; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.al-form-input, .al-form-select, .al-form-textarea {
+  width: 100%; padding: 8px 12px; border: 1.5px solid #E5E7EB; border-radius: 8px;
+  font-size: 13px; font-family: 'Sarabun', sans-serif; color: #1F2937;
+  background: #F9FAFB; outline: none; transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.al-form-input:focus, .al-form-select:focus, .al-form-textarea:focus {
+  border-color: #6366F1; background: white;
+}
+.al-form-textarea { resize: vertical; min-height: 80px; }
+
+/* ── Empty / loading ── */
+.al-empty { text-align: center; padding: 40px 20px; color: #9CA3AF; font-size: 13px; }
+.al-loading { text-align: center; padding: 40px 20px; color: #6366F1; font-size: 14px; }
+
+/* ── Info box ── */
+.al-info-box {
+  background: #EEF2FF; border: 1.5px solid #C7D2FE; border-radius: 12px; padding: 16px 18px;
+}
+.mt-6 { margin-top: 24px; }
+.mt-2 { margin-top: 8px; }
+.gap-2 { gap: 8px; }

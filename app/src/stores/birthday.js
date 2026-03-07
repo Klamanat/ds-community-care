@@ -83,9 +83,16 @@ export const useBirthdayStore = defineStore('birthday', () => {
     }
   }
 
-  function uploadPhoto(key, dataUrl) {
+  async function uploadPhoto(key, dataUrl) {
     const emp = getEmployee(key)
-    if (emp) emp.photo = dataUrl
+    if (!emp) return
+    // Optimistic: show immediately
+    emp.photo = dataUrl
+    try {
+      await svc.uploadPhoto(key, dataUrl)
+    } catch {
+      // Keep local preview even if GAS fails — photo is stored in memory this session
+    }
   }
 
   return { allEmployees, loadedMonths, isLoading, getEmployee, getFallbackBg, getFallbackEmoji, getSenderAvatar, loadMonth, sendWish, uploadPhoto }

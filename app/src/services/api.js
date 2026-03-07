@@ -1,6 +1,25 @@
 const GAS_URL = import.meta.env.VITE_GAS_URL
 
 /**
+ * POST to GAS Web App — used for large payloads like base64 images.
+ * Body is sent as text/plain JSON to avoid CORS preflight.
+ */
+export async function gasPost(action, payload = {}) {
+  if (!GAS_URL || GAS_URL.includes('YOUR_DEPLOYMENT_ID')) {
+    throw new Error('VITE_GAS_URL not configured')
+  }
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    redirect: 'follow',
+    body: JSON.stringify({ action, ...payload }),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const data = await res.json()
+  if (!data.ok) throw new Error(data.error || 'GAS error')
+  return data
+}
+
+/**
  * Base GAS GET function.
  * Thai text is handled by URLSearchParams which auto-encodes UTF-8.
  * redirect:'follow' is required because GAS redirects to the execution URL.
