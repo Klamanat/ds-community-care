@@ -22,6 +22,9 @@
     <OrgModal />
     <ProfileModal />
     <MonthModal />
+    <CultureModal />
+    <TrainingModal />
+    <RewardModal />
 
     <!-- Toast -->
     <div class="toast" :class="{ hidden: !ui.toast.visible }">{{ ui.toast.msg }}</div>
@@ -41,6 +44,9 @@ import MentalModal from './components/modals/MentalModal.vue'
 import OrgModal from './components/modals/OrgModal.vue'
 import ProfileModal from './components/modals/ProfileModal.vue'
 import MonthModal from './components/modals/MonthModal.vue'
+import CultureModal from './components/modals/CultureModal.vue'
+import TrainingModal from './components/modals/TrainingModal.vue'
+import RewardModal from './components/modals/RewardModal.vue'
 import { useUiStore } from './stores/ui.js'
 
 const ui = useUiStore()

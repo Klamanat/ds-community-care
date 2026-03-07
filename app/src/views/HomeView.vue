@@ -46,21 +46,21 @@
       <div class="grid grid-cols-3 gap-2 mt-3">
         <div
           class="c-card ripple-host bg-[linear-gradient(135deg,#FF6B00,#FF3CAC,#A855F7,#3B82F6)]"
-          @click="router.push('/culture')"
+          @click="ui.openModal('modal-culture')"
         >
           <div class="c-emo">🔥</div>
           <div class="c-lbl">FIRE Culture</div>
         </div>
         <div
           class="c-card ripple-host bg-[linear-gradient(135deg,#FFD6DC,#FF8FA3,#FF4D6D)]"
-          @click="ui.showToast('Training — เร็วๆนี้ 🚀')"
+          @click="ui.openModal('modal-training')"
         >
           <div class="c-emo">📚</div>
           <div class="c-lbl">Training</div>
         </div>
         <div
           class="c-card ripple-host bg-[linear-gradient(135deg,#06C755,#00A040)]"
-          @click="ui.showToast('DS Reward — เร็วๆนี้ 🚀')"
+          @click="ui.openModal('modal-reward')"
         >
           <div class="c-emo">⭐</div>
           <div class="c-lbl">DS Reward</div>
