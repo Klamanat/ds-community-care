@@ -607,41 +607,18 @@
     height: 160px; display: flex; align-items: center;
     justify-content: center; font-size: 52px;
   }
-  .month-detail-body { padding: 20px 20px 32px; }
+  .month-detail-body { padding: 16px 20px 28px; }
   .month-detail-title {
-    font-size: 20px; font-weight: 900; color: #1E1B4B;
-    margin-bottom: 12px; line-height: 1.3;
+    font-size: 16px; font-weight: 800; color: #1E1B4B;
+    margin-bottom: 16px; line-height: 1.4;
   }
-  .month-detail-row {
-    font-size: 13px; color: #64748B; font-weight: 600;
-    margin-bottom: 6px;
-  }
-  .month-detail-desc {
-    font-size: 14px; color: #475569; line-height: 1.7;
-    margin-top: 12px; white-space: pre-wrap;
-  }
-  .month-steps-label {
-    font-size: 12px; font-weight: 800; color: #6366F1;
-    letter-spacing: 0.5px; text-transform: uppercase;
-    margin-bottom: 14px; margin-top: 4px;
-  }
-  .month-steps-list { display: flex; flex-direction: column; gap: 12px; }
+  .month-steps-list { display: flex; flex-direction: column; gap: 8px; }
   .month-step-item {
-    display: flex; gap: 12px; align-items: flex-start;
+    display: flex; gap: 10px; align-items: flex-start;
+    background: #F8F9FF; border-radius: 12px; padding: 10px 12px;
   }
-  .month-step-num {
-    flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
-    background: linear-gradient(135deg,#6366F1,#A855F7);
-    color: white; font-size: 12px; font-weight: 900;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .month-step-text {
-    font-size: 14px; color: #374151; line-height: 1.6;
-    padding-top: 4px;
-  }
-  .month-steps-empty {
-    font-size: 13px; color: #9CA3AF; text-align: center; padding: 24px 0;
-  }
+  .month-step-num { flex-shrink: 0; font-size: 16px; }
+  .month-step-text { font-size: 13px; color: #374151; line-height: 1.6; }
   .detail-slide-enter-active, .detail-slide-leave-active { transition: opacity 0.25s ease; }
   .detail-slide-enter-from, .detail-slide-leave-to { opacity: 0; }
   .detail-slide-enter-active .month-detail-panel,

@@ -1,5 +1,10 @@
 import { gasGet } from './api.js'
 
+export async function fetchPeople() {
+  const r = await gasGet('getEmpathyPeople')
+  return r.data   // [{ id, name, role, imgUrl, commentCount }]
+}
+
 export async function fetchPosts() {
   const r = await gasGet('getEmpathyPosts')
   return r.data
@@ -34,9 +39,11 @@ export async function ensurePost(p) {
   return r.data   // { id, recName, recRole, recImg, isNew }
 }
 
-export async function fetchComments(postId) {
-  const r = await gasGet('getEmpathyComments', { postId })
-  return r.data   // [{ id, postId, parentId, name, text, time }]
+export async function fetchComments(postId, userKey = '') {
+  const params = { postId }
+  if (userKey) params.userKey = userKey
+  const r = await gasGet('getEmpathyComments', params)
+  return r.data   // [{ id, postId, parentId, name, text, time, likeCount, _liked? }]
 }
 
 export async function addComment(postId, text, authorName, parentId = '') {
@@ -52,4 +59,19 @@ export async function addComment(postId, text, authorName, parentId = '') {
 export async function toggleLike(postId, userKey) {
   const r = await gasGet('toggleLike', { postId, userKey: userKey || 'anonymous' })
   return r.data
+}
+
+export async function toggleCommentLike(commentId, userKey) {
+  const r = await gasGet('toggleCommentLike', { commentId, userKey: userKey || 'anonymous' })
+  return r.data   // { commentId, liked, likeCount }
+}
+
+export async function toggleChannelLike(channelId, userKey) {
+  const r = await gasGet('toggleChannelLike', { channelId, userKey: userKey || 'anonymous' })
+  return r.data   // { channelId, liked, likeCount }
+}
+
+export async function fetchChannelLike(channelId, userKey) {
+  const r = await gasGet('getChannelLike', { channelId, userKey: userKey || 'anonymous' })
+  return r.data   // { channelId, liked, likeCount }
 }

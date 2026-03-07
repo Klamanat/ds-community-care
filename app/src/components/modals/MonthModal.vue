@@ -10,19 +10,16 @@
           <div class="month-detail-body">
             <div class="month-detail-title">{{ detailEv.emoji }} {{ detailEv.name }}</div>
 
-            <div class="month-steps-label">📋 ขั้นตอนกิจกรรม</div>
-
             <div v-if="detailEv.steps" class="month-steps-list">
               <div
                 v-for="(step, i) in parseSteps(detailEv.steps)"
                 :key="i"
                 class="month-step-item"
               >
-                <div class="month-step-num">{{ i + 1 }}</div>
-                <div class="month-step-text">{{ step }}</div>
+                <span class="month-step-num">📢</span>
+                <span class="month-step-text">{{ step }}</span>
               </div>
             </div>
-            <div v-else class="month-steps-empty">ยังไม่มีขั้นตอน</div>
           </div>
         </div>
       </div>
@@ -73,15 +70,16 @@
               <span v-if="ev.loc">📍 {{ ev.loc }}</span>
             </div>
             <div v-if="ev.desc" class="month-ev-desc">{{ ev.desc }}</div>
-            <div class="month-ev-actions">
-              <button class="month-ev-detail" @click="detailEv = ev">รายละเอียด 📋</button>
+            <div v-if="ev.steps || ev.joinUrl" class="month-ev-actions">
+              <button v-if="ev.steps" class="month-ev-detail" @click="detailEv = ev">รายละเอียด 📋</button>
               <a v-if="ev.joinUrl" :href="ev.joinUrl" target="_blank" rel="noopener" class="month-ev-join">
                 ✅ Join
               </a>
-              <button v-else class="month-ev-join"
+              <button v-else-if="ev.steps" class="month-ev-join"
                 :class="{ 'month-ev-join--joined': joined[ev.id] }"
-                @click="toggleJoin(ev.id)">
-                {{ joined[ev.id] ? '✅ Joined!' : '✅ Join' }}
+                :disabled="joined[ev.id] || stamping[ev.id]"
+                @click="stampJoin(ev)">
+                {{ stamping[ev.id] ? '...' : joined[ev.id] ? '✅ แจ้งแล้ว' : '🙋 แจ้งเข้าร่วม' }}
               </button>
             </div>
           </div>
@@ -96,10 +94,12 @@ import { computed, ref } from 'vue'
 import BaseModal from '../shared/BaseModal.vue'
 import { useUiStore } from '../../stores/ui.js'
 import { useActivitiesStore } from '../../stores/activities.js'
+import { joinActivity } from '../../services/activitiesService.js'
 
 const ui   = useUiStore()
 const acts = useActivitiesStore()
 const joined   = ref({})
+const stamping = ref({})
 const detailEv = ref(null)
 
 const MONTH_META = [
@@ -120,9 +120,20 @@ const MONTH_META = [
 const meta   = computed(() => MONTH_META[(ui.selectedMonthIdx ?? 1) - 1] ?? MONTH_META[0])
 const events = computed(() => acts.getMonth(ui.selectedMonthIdx ?? 1))
 
-function toggleJoin(evId) {
-  joined.value[evId] = !joined.value[evId]
-  if (joined.value[evId]) ui.showToast('เข้าร่วมกิจกรรมแล้ว 🎉')
+
+async function stampJoin(ev) {
+  if (joined.value[ev.id] || stamping.value[ev.id]) return
+  stamping.value[ev.id] = true
+  try {
+    const name   = ui.currentUser?.name || 'ไม่ระบุชื่อ'
+    const result = await joinActivity(ev.id, ev.name, name)
+    joined.value[ev.id] = true
+    ui.showToast(result?.alreadyJoined ? 'คุณแจ้งเข้าร่วมแล้ว ✅' : 'แจ้งเข้าร่วมกิจกรรมสำเร็จ 🎉')
+  } catch {
+    ui.showToast('เกิดข้อผิดพลาด กรุณาลองใหม่')
+  } finally {
+    stamping.value[ev.id] = false
+  }
 }
 
 // Split desc by newline or numbered list into step array

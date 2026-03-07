@@ -49,15 +49,22 @@
         <!-- Quick links: 3-col on mobile, flex-col on PC -->
         <div class="grid grid-cols-3 gap-2 sm:flex sm:flex-col">
           <div class="c-card ripple-host bg-[linear-gradient(135deg,#FF6B00,#FF3CAC,#A855F7,#3B82F6)] sm:flex-1" @click="ui.openModal('modal-culture')">
-            <div class="c-emo">🔥</div>
-            <div class="c-lbl">FIRE Culture</div>
+            <div class="c-emo">🤝</div>
+            <div class="c-lbl">Team Culture</div>
+            <div class="c-sub">วัฒนธรรมองค์กร</div>
           </div>
           <div class="c-card ripple-host bg-[linear-gradient(135deg,#FFD6DC,#FF8FA3,#FF4D6D)] sm:flex-1" @click="ui.openModal('modal-training')">
-            <div class="c-emo">📚</div>
+            <div class="c-emo"><img src="/images/icon-training.png" style="width:26px;height:26px;object-fit:contain;" /></div>
             <div class="c-lbl">Training</div>
+            <div class="c-sub">การฝึกอบรม</div>
           </div>
           <div class="c-card ripple-host bg-[linear-gradient(135deg,#06C755,#00A040)] sm:flex-1" @click="ui.openModal('modal-reward')">
-            <div class="c-emo">⭐</div>
+            <div class="c-emo">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L4 5.5V11C4 15.5 7.5 19.7 12 21C16.5 19.7 20 15.5 20 11V5.5L12 2Z" fill="white"/>
+                <text x="12" y="16.5" text-anchor="middle" font-size="10" font-weight="900" fill="#06C755" font-family="Arial,sans-serif">R</text>
+              </svg>
+            </div>
             <div class="c-lbl">DS Reward</div>
           </div>
         </div>
@@ -68,7 +75,7 @@
     <!-- Section 2: บริการปรึกษา -->
     <div class="sec">
       <div class="sec-hdr">
-        <span class="sec-title">🤝 บริการปรึกษา</span>
+        <span class="sec-title">💙 Consult Service</span>
       </div>
       <ConsultCards />
     </div>

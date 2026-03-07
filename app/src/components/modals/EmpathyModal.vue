@@ -51,26 +51,40 @@
     <!-- ── THREAD view ────────────────────────────────────────────── -->
     <template v-else-if="view === 'thread' && selectedMember">
 
-      <!-- Person banner -->
-      <div class="flex-shrink-0 relative overflow-hidden" :style="{ background: selectedMember.grad || 'linear-gradient(135deg,#FBCFE8,#EC4899)' }" style="min-height:140px;">
-        <img
-          v-if="selectedMember.imgUrl"
-          :src="selectedMember.imgUrl"
-          class="w-full block object-contain object-top"
-          @error="e => e.target.style.display='none'"
-        />
-        <div
-          v-else
-          class="w-full flex items-center justify-center text-[64px] py-8"
-        >{{ initials(selectedMember.name) }}</div>
-        <div class="absolute bottom-0 left-0 right-0 bg-[linear-gradient(transparent,rgba(30,0,40,0.75))] px-4 pt-8 pb-3">
-          <div class="text-[15px] font-black text-white" style="text-shadow:0 1px 8px rgba(0,0,0,0.6);">{{ selectedMember.name }}</div>
-          <div class="text-[11px] text-white/85 mt-0.5">{{ selectedMember.role }}</div>
-        </div>
-      </div>
-
-      <!-- Comment thread -->
+      <!-- Scrollable: banner + like bar + comments -->
       <div class="flex-1 overflow-y-auto bg-[linear-gradient(160deg,#FFF9FD,#F8F5FF)]" ref="threadScrollEl">
+
+        <!-- Person banner -->
+        <div
+          class="relative"
+          :style="{ background: selectedMember.grad || 'linear-gradient(135deg,#FBCFE8,#EC4899)' }"
+        >
+          <img
+            v-if="selectedMember.imgUrl"
+            :src="selectedMember.imgUrl"
+            class="w-full block"
+            @error="e => e.target.style.display='none'"
+          />
+          <div
+            v-else
+            class="w-full h-[240px] flex items-center justify-center text-[64px]"
+          >{{ initials(selectedMember.name) }}</div>
+          <div class="absolute bottom-0 left-0 right-0" style="background:linear-gradient(transparent,rgba(30,0,40,0.78));padding:40px 16px 12px;">
+            <div class="text-[15px] font-black text-white" style="text-shadow:0 1px 8px rgba(0,0,0,0.6);">{{ selectedMember.name }}</div>
+            <div class="text-[11px] text-white/85 mt-0.5">{{ selectedMember.role }}</div>
+          </div>
+        </div>
+
+        <!-- Person-level like bar -->
+        <div class="flex border-b border-pink/10 bg-white/70">
+          <button
+            class="flex-1 py-2.5 text-[13px] font-bold flex items-center justify-center gap-1.5 transition-colors"
+            :class="channelLiked ? 'text-[#EC4899]' : 'text-[#C084C0]'"
+            @click="empathy.toggleChannelLike(activePostId)"
+          >{{ channelLiked ? '❤️' : '🤍' }} {{ channelLikeCount || 0 }} ชื่นชม</button>
+        </div>
+
+        <!-- Comments -->
         <div v-if="loadingThread" class="py-10 text-center text-[#C084C0] text-[13px]">กำลังโหลด... ✨</div>
 
         <div v-else-if="!threadComments.length" class="py-10 text-center">
@@ -91,7 +105,12 @@
                   <div class="cm-name">{{ cm.name }}</div>
                   <div class="cm-text">{{ cm.text }}</div>
                   <div class="flex items-center gap-3 mt-1.5">
-                    <span class="cm-time">{{ cm.time }}</span>
+                    <span class="cm-time">{{ formatThaiDatetime(cm.time) }}</span>
+                    <button
+                      class="text-[11px] font-bold bg-transparent border-none cursor-pointer p-0 transition-colors"
+                      :class="cm._liked ? 'text-[#EC4899]' : 'text-[#C084C0]'"
+                      @click="empathy.toggleCommentLike(activePostId, cm.id)"
+                    >{{ cm._liked ? '❤️' : '🤍' }} {{ cm.likeCount || '' }}</button>
                     <button
                       class="text-[11px] font-bold text-[#BE185D] bg-transparent border-none cursor-pointer p-0"
                       @click="toggleReply(cm.id)"
@@ -122,7 +141,14 @@
                     <div class="cm-bubble !bg-[linear-gradient(135deg,#F5F3FF,#EDE9FE)] flex-1">
                       <div class="cm-name">{{ r.name }}</div>
                       <div class="cm-text">{{ r.text }}</div>
-                      <div class="cm-time">{{ r.time }}</div>
+                      <div class="flex items-center gap-3 mt-1">
+                        <span class="cm-time">{{ formatThaiDatetime(r.time) }}</span>
+                        <button
+                          class="text-[11px] font-bold bg-transparent border-none cursor-pointer p-0 transition-colors"
+                          :class="r._liked ? 'text-[#EC4899]' : 'text-[#C084C0]'"
+                          @click="empathy.toggleCommentLike(activePostId, r.id)"
+                        >{{ r._liked ? '❤️' : '🤍' }} {{ r.likeCount || '' }}</button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -219,6 +245,7 @@ import BaseModal from '../shared/BaseModal.vue'
 import { useEmpathyStore } from '../../stores/empathy.js'
 import { useTeamStore }    from '../../stores/team.js'
 import { useUiStore }      from '../../stores/ui.js'
+import { formatThaiDatetime } from '../../utils/date.js'
 
 const empathy = useEmpathyStore()
 const team    = useTeamStore()
@@ -250,10 +277,23 @@ const pickedDir  = ref(null)
 const tags = ['เก่งมาก ⭐', 'ขอบคุณ 🙏', 'สู้ๆ 💪', 'ประทับใจ 💫', 'ช่วยเหลือ 🤝']
 
 // ── Lifecycle ──────────────────────────────────────────────────────
-onMounted(() => { empathy.loadPosts(); team.loadDirectory() })
-watch(() => ui.activeModal, id => {
-  if (id === 'modal-emp') { empathy.loadPosts(true); team.loadDirectory() }
+onMounted(() => { empathy.loadPeople(); team.loadDirectory() })
+watch(() => ui.activeModal, async id => {
+  if (id !== 'modal-emp') return
+  empathy.loadPeople()
+  team.loadDirectory()
+  // Pre-select person from EmpathyBoard click
+  if (ui._empPreselect) {
+    const person = ui._empPreselect
+    ui._empPreselect = null
+    await nextTick()
+    selectPerson(person)
+  }
 })
+
+// ── Channel (person) like ──────────────────────────────────────────
+const channelLiked     = computed(() => empathy.channelLikes[activePostId.value]?.liked || false)
+const channelLikeCount = computed(() => empathy.channelLikes[activePostId.value]?.count || 0)
 
 // ── Derived ────────────────────────────────────────────────────────
 const headerTitle = computed(() => {
@@ -262,24 +302,10 @@ const headerTitle = computed(() => {
   return selectedMember.value?.name || 'คำชื่นชม'
 })
 
-// คนที่ถูกชื่นชมแล้ว (มีโพสต์ใน EmpathyPosts) — dedup by id/name
-const praiseList = computed(() => {
-  const seen = new Set()
-  return empathy.posts
-    .filter(p => {
-      const key = p.recEmployeeId || p.recName
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
-    .map((p, i) => ({
-      id:     p.recEmployeeId || p.recName,
-      name:   p.recName,
-      role:   p.recRole,
-      imgUrl: p.recImg,
-      grad:   team.getGrad(i),
-    }))
-})
+// คนที่ถูกชื่นชมแล้ว — จาก praisedPeople (populated from posts + session)
+const praiseList = computed(() =>
+  empathy.praisedPeople.map((p, i) => ({ ...p, grad: team.getGrad(i) }))
+)
 
 const filteredTeam = computed(() => {
   const q = searchQ.value.trim().toLowerCase()
@@ -337,15 +363,19 @@ async function selectPerson(m) {
   searchQ.value        = ''
   view.value           = 'thread'
   loadingThread.value  = true
-  activePostId.value   = null
+
+  // Use employeeId (or name) as channelId — no post created in EmpathyPosts
+  const channelId = String(m.id || m.name).trim()
+  activePostId.value = channelId
 
   try {
-    const postId = await empathy.ensurePost(m, ui.currentUser?.name)
-    activePostId.value = postId
-    await empathy.loadComments(postId)
+    await Promise.all([
+      empathy.loadComments(channelId, true),    // fetch comments + _liked from GAS
+      empathy.loadChannelLike(channelId),       // fetch person-level like from GAS
+    ])
     scrollBottom()
     nextTick(() => composeEl.value?.focus())
-  } catch { /* toast shown by store */ }
+  } catch { }
   finally { loadingThread.value = false }
 }
 
@@ -382,7 +412,9 @@ async function submitCompose() {
   sending.value     = true
   try {
     await empathy.addComment(activePostId.value, fullText, ui.currentUser?.name || 'ทีม', '')
+    empathy.recordPraise(selectedMember.value, activePostId.value)
     ui.showToast('ส่งคำชื่นชมสำเร็จ! 💝')
+    ui.closeModal()
     scrollBottom()
   } finally {
     sending.value = false

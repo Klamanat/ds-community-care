@@ -2,13 +2,57 @@
 // วิธีใช้: เปิด GAS editor → เลือกฟังก์ชัน setupAll → กด Run
 //
 // ฟังก์ชันทั้งหมด:
-//   setupAll()           — ครั้งแรก: สร้างทุก sheet + seed + admin (safe to re-run)
-//   addMissingSheets()   — เพิ่มเฉพาะ sheet ที่ยังไม่มี (ใช้เมื่อเพิ่ม feature ใหม่)
-//   addMissingColumns()  — เพิ่ม column ที่ขาดใน sheet ที่มีอยู่แล้ว (safe to re-run)
-//   setupSheets()        — สร้าง/อัปเดต header ทุก sheet (idempotent)
-//   setupAdmin()         — สร้าง admin account (ข้ามถ้ามีแล้ว)
-//   seedEmployees()      — seed พนักงานตัวอย่าง (ข้ามถ้ามีแล้ว)
-//   seedBirthdays()      — seed วันเกิดตัวอย่าง (ข้ามถ้ามีแล้ว)
+//   setupAll()                    — ครั้งแรก: สร้างทุก sheet + seed + admin (safe to re-run)
+//   addMissingSheets()            — เพิ่มเฉพาะ sheet ที่ยังไม่มี (ใช้เมื่อเพิ่ม feature ใหม่)
+//   addMissingColumns()           — เพิ่ม column ที่ขาดใน sheet ที่มีอยู่แล้ว (safe to re-run)
+//   cleanUnusedSheetsAndColumns() — ลบ sheet + column ที่ไม่ได้ใช้ออก ⚠️ ลบข้อมูลจริง
+//   setupSheets()                 — สร้าง/อัปเดต header ทุก sheet (idempotent)
+//   setupAdmin()                  — สร้าง admin account (ข้ามถ้ามีแล้ว)
+//   seedEmployees()               — seed พนักงานตัวอย่าง (ข้ามถ้ามีแล้ว)
+//   seedBirthdays()               — seed วันเกิดตัวอย่าง (ข้ามถ้ามีแล้ว)
+
+/**
+ * cleanUnusedSheetsAndColumns() — ลบ sheet และ column ที่ไม่ได้นิยามใน ALL_SHEETS
+ * ⚠️  ลบข้อมูลจริง — ตรวจสอบ ALL_SHEETS ให้ครบก่อนรัน
+ * ปลอดภัย re-run ได้ — ลบเฉพาะสิ่งที่ไม่อยู่ใน definition
+ */
+function cleanUnusedSheetsAndColumns() {
+  var ss      = SpreadsheetApp.getActiveSpreadsheet();
+  var defined = ALL_SHEETS.map(function(d) { return d.name; });
+
+  // ── 1. ลบ sheet ที่ไม่อยู่ใน ALL_SHEETS ────────────────────────
+  ss.getSheets().forEach(function(sheet) {
+    var name = sheet.getName();
+    if (defined.indexOf(name) === -1) {
+      // ป้องกันลบ sheet สุดท้าย (Google Sheets ต้องมีอย่างน้อย 1 sheet)
+      if (ss.getNumSheets() > 1) {
+        ss.deleteSheet(sheet);
+        Logger.log('🗑️ ลบ sheet: ' + name);
+      } else {
+        Logger.log('⚠️ ข้าม (sheet สุดท้าย): ' + name);
+      }
+    }
+  });
+
+  // ── 2. ลบ column ที่ไม่อยู่ใน headers ของแต่ละ sheet ──────────
+  ALL_SHEETS.forEach(function(def) {
+    var sheet = ss.getSheetByName(def.name);
+    if (!sheet || sheet.getLastColumn() === 0) return;
+
+    var existing = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+    // ลบจากขวาไปซ้าย เพื่อไม่ให้ index เลื่อน
+    for (var col = existing.length; col >= 1; col--) {
+      var colName = String(existing[col - 1]).trim();
+      if (colName !== '' && def.headers.indexOf(colName) === -1) {
+        sheet.deleteColumn(col);
+        Logger.log('🗑️ ลบ column "' + colName + '" จาก ' + def.name);
+      }
+    }
+  });
+
+  Logger.log('✅ cleanUnusedSheetsAndColumns เสร็จ');
+}
 
 /**
  * addMissingColumns() — เพิ่ม column ที่ขาดใน sheet ที่มีข้อมูลอยู่แล้ว
@@ -118,12 +162,24 @@ var ALL_SHEETS = [
     headers: ['postId','userKey'],
   },
   {
+    name: 'CommentLikes',
+    headers: ['commentId','userKey'],
+  },
+  {
+    name: 'ChannelLikes',
+    headers: ['channelId','userKey'],
+  },
+  {
     name: 'Ideas',
     headers: ['id','category','title','detail','submitterName','createdAt','status'],
   },
   {
     name: 'Activities',
     headers: ['id','monthIdx','name','emoji','date','loc','desc','steps','joinUrl','imgUrl','imgId','createdAt'],
+  },
+  {
+    name: 'ActivityJoins',
+    headers: ['id','activityId','activityName','employeeName','stampedAt'],
   },
   {
     name: 'Admins',

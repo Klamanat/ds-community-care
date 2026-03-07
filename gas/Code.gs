@@ -44,12 +44,16 @@ function doGet(e) {
       addBirthdayWish:    function() { return addBirthdayWish(e.parameter); },
 
       // Empathy
+      getEmpathyPeople:   function() { return getEmpathyPeople(e.parameter); },
       getEmpathyPosts:    function() { return getEmpathyPosts(e.parameter); },
       addEmpathyPost:     function() { return addEmpathyPost(e.parameter); },
       ensurePost:         function() { return ensurePost(e.parameter); },
       getEmpathyComments: function() { return getEmpathyComments(e.parameter); },
       addComment:         function() { return addComment(e.parameter); },
       toggleLike:         function() { return toggleLike(e.parameter); },
+      toggleCommentLike:  function() { return toggleCommentLike(e.parameter); },
+      toggleChannelLike:  function() { return toggleChannelLike(e.parameter); },
+      getChannelLike:     function() { return getChannelLike(e.parameter); },
 
       // Ideas
       getIdeas:           function() { return getIdeas(e.parameter); },
@@ -60,6 +64,7 @@ function doGet(e) {
 
       // Activities
       getActivities:         function() { return getActivities(e.parameter); },
+      joinActivity:          function() { return joinActivity(e.parameter); },
       adminAddActivity:      function() { return adminAddActivity(e.parameter); },
       adminUpdateActivity:   function() { return adminUpdateActivity(e.parameter); },
       adminDeleteActivity:   function() { return adminDeleteActivity(e.parameter); },

@@ -3,10 +3,63 @@
 // Columns: id | recEmployeeId | recName | recRole | recImgUrl | sndName | msg | tag | likeCount | createdAt
 //
 // Sheet: EmpathyComments
-// Columns: id | postId | authorName | text | createdAt
+// Columns: id | postId | parentId | authorName | text | createdAt
 //
 // Sheet: EmpathyLikes
 // Columns: postId | userKey (track unique likes)
+
+// getEmpathyPeople — unique people from EmpathyComments (keyed by channelId = employeeId)
+function getEmpathyPeople(params) {
+  var comments = sheetToObjects('EmpathyComments');
+
+  // Preload employees for name/role/img enrichment
+  var empMap = {};
+  try {
+    sheetToObjects('Employees').forEach(function(e) {
+      if (e.id) empMap[String(e.id)] = e;
+    });
+  } catch(e) {}
+
+  // Aggregate unique channelIds
+  var channelMap = {};
+  comments.forEach(function(c) {
+    var cid = String(c.postId || '').trim();
+    if (!cid) return;
+    if (!channelMap[cid]) channelMap[cid] = { count: 0, lastTime: '' };
+    channelMap[cid].count++;
+    if (String(c.createdAt) > channelMap[cid].lastTime) channelMap[cid].lastTime = String(c.createdAt);
+  });
+
+  var people = Object.keys(channelMap).map(function(cid) {
+    var emp = empMap[cid];
+    var imgUrl = '';
+    if (emp && emp.imgUrl) {
+      var raw = String(emp.imgUrl);
+      if (raw.indexOf('drive:') === 0) {
+        try {
+          var bytes = DriveApp.getFileById(raw.slice(6)).getBlob().getBytes();
+          imgUrl = 'data:image/jpeg;base64,' + Utilities.base64Encode(bytes);
+        } catch(e) {}
+      } else {
+        imgUrl = raw;
+      }
+    }
+    return {
+      id:           cid,
+      name:         emp ? String(emp.name  || cid) : cid,
+      role:         emp ? String(emp.role  || '')  : '',
+      imgUrl:       imgUrl,
+      commentCount: channelMap[cid].count,
+    };
+  });
+
+  // Sort newest activity first
+  people.sort(function(a, b) {
+    return channelMap[b.id].lastTime > channelMap[a.id].lastTime ? 1 : -1;
+  });
+
+  return ok(people);
+}
 
 function getEmpathyPosts(params) {
   var rows = sheetToObjects('EmpathyPosts');
@@ -85,26 +138,131 @@ function addEmpathyPost(params) {
 }
 
 function getEmpathyComments(params) {
-  var postId = params.postId;
+  var postId  = params.postId;
+  var userKey = params.userKey || '';
   if (!postId) return err('postId required');
 
   var rows     = sheetToObjects('EmpathyComments');
   var filtered = rows.filter(function(r) { return String(r.postId) === String(postId); });
-
   filtered.sort(function(a, b) { return new Date(a.createdAt) - new Date(b.createdAt); });
 
+  // Build likeCount + userLiked map from CommentLikes sheet
+  var likeMap = {};  // { commentId: { count, userLiked } }
+  try {
+    sheetToObjects('CommentLikes').forEach(function(r) {
+      var cid = String(r.commentId || '');
+      if (!cid) return;
+      if (!likeMap[cid]) likeMap[cid] = { count: 0, userLiked: false };
+      likeMap[cid].count++;
+      if (userKey && String(r.userKey) === String(userKey)) likeMap[cid].userLiked = true;
+    });
+  } catch(e) {}
+
   var comments = filtered.map(function(r) {
-    return {
-      id:       String(r.id         || ''),
-      postId:   String(r.postId     || ''),
-      parentId: String(r.parentId   || ''),
-      name:     String(r.authorName || ''),
-      text:     String(r.text       || ''),
-      time:     String(r.createdAt  || ''),
+    var cid  = String(r.id || '');
+    var lk   = likeMap[cid] || { count: 0, userLiked: false };
+    var obj  = {
+      id:        cid,
+      postId:    String(r.postId     || ''),
+      parentId:  String(r.parentId   || ''),
+      name:      String(r.authorName || ''),
+      text:      String(r.text       || ''),
+      time:      String(r.createdAt  || ''),
+      likeCount: lk.count,
     };
+    if (userKey) obj._liked = lk.userLiked;
+    return obj;
   });
 
   return ok(comments);
+}
+
+// toggleCommentLike — like / unlike a comment, tracked in CommentLikes sheet
+function toggleCommentLike(params) {
+  var commentId = params.commentId;
+  var userKey   = params.userKey || 'anonymous';
+  if (!commentId) return err('commentId required');
+
+  var sheet   = getSheet('CommentLikes');
+  var data    = sheet.getDataRange().getValues();
+  var headers = data[0] || ['commentId','userKey'];
+  var cidIdx  = headers.indexOf('commentId');
+  var ukIdx   = headers.indexOf('userKey');
+
+  var existingRow = -1;
+  var likeCount   = 0;
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][cidIdx]) === String(commentId)) {
+      likeCount++;
+      if (String(data[i][ukIdx]) === String(userKey)) existingRow = i + 1;
+    }
+  }
+
+  var liked;
+  if (existingRow > 0) {
+    sheet.deleteRow(existingRow);
+    likeCount = Math.max(0, likeCount - 1);
+    liked = false;
+  } else {
+    sheet.appendRow([commentId, userKey]);
+    likeCount++;
+    liked = true;
+  }
+
+  return ok({ commentId: commentId, liked: liked, likeCount: likeCount });
+}
+
+// toggleChannelLike — like / unlike a person's channel, tracked in ChannelLikes sheet
+function toggleChannelLike(params) {
+  var channelId = params.channelId;
+  var userKey   = params.userKey || 'anonymous';
+  if (!channelId) return err('channelId required');
+
+  var sheet   = getSheet('ChannelLikes');
+  var data    = sheet.getDataRange().getValues();
+  var headers = data[0] || ['channelId','userKey'];
+  var cidIdx  = headers.indexOf('channelId');
+  var ukIdx   = headers.indexOf('userKey');
+
+  var existingRow = -1;
+  var likeCount   = 0;
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][cidIdx]) === String(channelId)) {
+      likeCount++;
+      if (String(data[i][ukIdx]) === String(userKey)) existingRow = i + 1;
+    }
+  }
+
+  var liked;
+  if (existingRow > 0) {
+    sheet.deleteRow(existingRow);
+    likeCount = Math.max(0, likeCount - 1);
+    liked = false;
+  } else {
+    sheet.appendRow([channelId, userKey]);
+    likeCount++;
+    liked = true;
+  }
+
+  return ok({ channelId: channelId, liked: liked, likeCount: likeCount });
+}
+
+// getChannelLike — return like count + whether userKey has liked a channel
+function getChannelLike(params) {
+  var channelId = params.channelId;
+  var userKey   = params.userKey || '';
+  if (!channelId) return err('channelId required');
+
+  var rows      = sheetToObjects('ChannelLikes');
+  var liked     = false;
+  var likeCount = 0;
+  rows.forEach(function(r) {
+    if (String(r.channelId) !== String(channelId)) return;
+    likeCount++;
+    if (userKey && String(r.userKey) === String(userKey)) liked = true;
+  });
+
+  return ok({ channelId: channelId, liked: liked, likeCount: likeCount });
 }
 
 function addComment(params) {

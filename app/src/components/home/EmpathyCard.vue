@@ -19,7 +19,7 @@
 
       <!-- Stats overlay -->
       <div class="emp-card-stats top-2 right-2">
-        <span class="emp-stat-pill">{{ post.react }}</span>
+        <span class="emp-stat-pill">❤️ {{ post.likeCount || 0 }}</span>
         <span class="emp-stat-pill">💬 {{ post.comments?.length || 0 }}</span>
       </div>
 

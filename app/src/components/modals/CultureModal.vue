@@ -1,5 +1,5 @@
 <template>
-  <BaseModal modal-id="modal-culture" sheet-class="modal-sheet--full">
+  <BaseModal modal-id="modal-culture">
     <!-- Dark hero header -->
     <div style="background:#0A0A1A;padding:20px 20px 18px;position:relative;overflow:hidden;flex-shrink:0;border-radius:28px 28px 0 0;">
       <div class="modal-handle" style="background:rgba(255,255,255,0.25);"></div>

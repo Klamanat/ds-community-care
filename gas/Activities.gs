@@ -93,6 +93,45 @@ function adminUpdateActivity(params) {
 }
 
 /**
+ * GET: joinActivity — stamp ความตั้งใจเข้าร่วมกิจกรรม (ไม่ต้อง token)
+ * params: { activityId, activityName, employeeName }
+ */
+function joinActivity(params) {
+  var activityId   = String(params.activityId   || '').trim();
+  var activityName = String(params.activityName || '').trim();
+  var employeeName = String(params.employeeName || 'ไม่ระบุชื่อ').trim();
+
+  if (!activityId) return err('activityId required');
+
+  var sheet   = getSheet('ActivityJoins');
+  var data    = sheet.getDataRange().getValues();
+  var headers = data[0] || ['id','activityId','activityName','employeeName','stampedAt'];
+  var aidIdx  = headers.indexOf('activityId');
+  var nameIdx = headers.indexOf('employeeName');
+
+  // ตรวจว่า stamp แล้วหรือยัง
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][aidIdx]) === activityId && String(data[i][nameIdx]) === employeeName) {
+      return ok({ alreadyJoined: true, joinCount: countJoins(data, aidIdx, activityId) });
+    }
+  }
+
+  var id        = uuid();
+  var stampedAt = formatDate(new Date());
+  sheet.appendRow([id, activityId, activityName, employeeName, stampedAt]);
+
+  return ok({ alreadyJoined: false, joinCount: countJoins(data, aidIdx, activityId) + 1 });
+}
+
+function countJoins(data, aidIdx, activityId) {
+  var count = 0;
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][aidIdx]) === activityId) count++;
+  }
+  return count;
+}
+
+/**
  * GET: adminDeleteActivity (token-gated)
  * params: { token, id }
  */
