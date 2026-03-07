@@ -29,10 +29,11 @@ function uploadImage(body) {
   var folder = DriveApp.getFolderById(folderId);
   var file = folder.createFile(blob);
 
-  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  // ANYONE (fully public) is required for direct <img> embedding
+  file.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
 
   return ok({
-    url: "https://drive.google.com/uc?export=view&id=" + file.getId(),
+    url: "https://drive.google.com/thumbnail?id=" + file.getId() + "&sz=w1600",
     id: file.getId(),
   });
 }
