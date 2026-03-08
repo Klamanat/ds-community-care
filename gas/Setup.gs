@@ -175,11 +175,11 @@ var ALL_SHEETS = [
   },
   {
     name: 'Activities',
-    headers: ['id','monthIdx','name','emoji','date','loc','desc','steps','joinUrl','imgUrl','imgId','createdAt'],
+    headers: ['id','monthIdx','name','emoji','date','loc','desc','steps','joinUrl','joinOpen','joinLabel','imgUrl','imgId','createdAt'],
   },
   {
     name: 'ActivityJoins',
-    headers: ['id','activityId','activityName','employeeName','stampedAt'],
+    headers: ['id','activityId','activityName','employeeName','stampedAt','rewardClaimed','rewardType'],
   },
   {
     name: 'Admins',

@@ -49,9 +49,18 @@
               <div class="al-item-sub">{{ r.date }} {{ r.loc ? '· ' + r.loc : '' }}</div>
               <div class="al-item-meta">
                 <span class="al-badge al-badge-month">{{ monthName(r.monthIdx) }}</span>
+                <span class="al-badge" :class="r.joinOpen === false ? 'al-badge-red' : 'al-badge-green'">
+                  {{ r.joinOpen === false ? 'Join ปิด' : 'Join เปิด' }}
+                </span>
               </div>
             </div>
             <div class="al-item-actions">
+              <button
+                class="al-btn al-btn-join-toggle"
+                :class="r.joinOpen === false ? 'closed' : 'open'"
+                :disabled="!!togglingJoin[r.id]"
+                @click="toggleJoin(r)"
+              >{{ r.joinOpen === false ? '🔴 Join ปิด' : '🟢 Join เปิด' }}</button>
               <button class="al-btn al-btn-edit" @click="openEdit(r)">แก้ไข</button>
               <button class="al-btn al-btn-delete" @click="confirmDelete(r)">ลบ</button>
             </div>
@@ -103,6 +112,15 @@
         <div class="al-form-row">
           <label class="al-form-label">Join URL (ถ้ามี)</label>
           <input v-model="form.joinUrl" class="al-form-input" placeholder="https://..." />
+        </div>
+        <div class="al-form-row">
+          <label class="al-form-label">ปุ่ม Join (label)</label>
+          <div class="join-label-options">
+            <label v-for="opt in JOIN_LABEL_OPTIONS" :key="opt.value" class="join-label-opt">
+              <input type="radio" v-model="form.joinLabel" :value="opt.value" />
+              <span>{{ opt.label }}</span>
+            </label>
+          </div>
         </div>
 
         <!-- Image upload -->
@@ -167,8 +185,16 @@ const acts   = useActivitiesStore()
 
 const loading     = ref(true)
 const filterMonth = ref(0)
+const togglingJoin = ref({})
 const modal  = reactive({ open: false, mode: 'add', saving: false, error: '' })
-const form   = reactive({ id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', imgUrl:'', imgId:'' })
+const form   = reactive({ id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', imgUrl:'', imgId:'' })
+
+const JOIN_LABEL_OPTIONS = [
+  { value: '',        label: '— ไม่แสดงปุ่ม' },
+  { value: 'stamp',   label: '🎯 เข้าร่วม + Stamp' },
+  { value: 'checkin', label: '✅ Check-in' },
+  { value: 'join',    label: '🔗 Join' },
+]
 const delTarget = ref(null)
 const deleting  = ref(false)
 
@@ -251,7 +277,7 @@ onMounted(async () => {
 })
 
 function openAdd() {
-  Object.assign(form, { id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', imgUrl:'', imgId:'' })
+  Object.assign(form, { id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', imgUrl:'', imgId:'' })
   dateInput.value = ''; imgPreview.value = ''; imgUploading.value = false
   modal.mode = 'add'; modal.error = ''; modal.open = true
 }
@@ -283,6 +309,19 @@ async function saveModal() {
     modal.error = e.message || 'เกิดข้อผิดพลาด'
   } finally {
     modal.saving = false
+  }
+}
+
+async function toggleJoin(r) {
+  const newVal = r.joinOpen === false ? true : false
+  togglingJoin.value[r.id] = true
+  acts.localUpdate(r.id, { joinOpen: newVal })
+  try {
+    await svc.updateActivity(r.id, { ...r, joinOpen: newVal })
+  } catch {
+    acts.localUpdate(r.id, { joinOpen: r.joinOpen })
+  } finally {
+    togglingJoin.value[r.id] = false
   }
 }
 

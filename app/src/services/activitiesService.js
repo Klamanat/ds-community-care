@@ -32,3 +32,13 @@ export async function joinActivity(activityId, activityName, employeeName) {
 export async function uploadImage(base64, fileName, folderType = 'activities') {
   return gasPost('uploadImage', { base64, fileName: fileName || 'image.jpg', folderType })
 }
+
+export async function getMyStamps(employeeName) {
+  const r = await gasGet('getMyStamps', { employeeName })
+  return r.data || []
+}
+
+export async function claimReward(activityId, employeeName, rewardType) {
+  const r = await gasGet('claimActivityReward', { activityId, employeeName, rewardType })
+  return r.data
+}

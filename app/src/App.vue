@@ -25,7 +25,7 @@
       <MonthModal     :key="ui.modalKeys['modal-month']      || 0" />
       <CultureModal   :key="ui.modalKeys['modal-culture']    || 0" />
       <TrainingModal  :key="ui.modalKeys['modal-training']   || 0" />
-      <RewardModal    :key="ui.modalKeys['modal-reward']     || 0" />
+      <RewardModal       :key="ui.modalKeys['modal-reward']      || 0" />
 
       <!-- Toast -->
       <div class="toast" :class="{ hidden: !ui.toast.visible }">{{ ui.toast.msg }}</div>

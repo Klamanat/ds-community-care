@@ -185,9 +185,9 @@
       <!-- ── SURPRISE BOX TAB ── -->
       <div v-if="activeTab === 'surprise' && isMyBirthday" class="px-4 pb-4 pt-3">
         <!-- Eligible state -->
-        <div v-if="surpriseState === 'eligible'">
+        <div v-if="surpriseState === 'eligible'" class="eligible-arena">
           <!-- Birthday card illustration -->
-          <div class="rounded-3xl overflow-hidden mb-4" style="background:linear-gradient(135deg,#FFF0FB,#FCE7F3);border:1.5px solid #FBCFE8;">
+          <div class="rounded-3xl overflow-hidden mb-4" style="background:rgba(255,255,255,0.72);border:1.5px solid rgba(251,191,36,0.35);backdrop-filter:blur(4px);">
             <div class="text-center py-5 px-4">
               <div class="text-[14px] font-black" style="color:#9D174D;">🎂 Happy Birthday! 🎂</div>
               <div class="text-[36px] my-2">🎉 🎊 🎈</div>
@@ -221,24 +221,28 @@
             </div>
           </div>
 
-          <!-- Open instruction -->
-          <div class="text-center mb-2">
-            <div style="display:inline-block;background:linear-gradient(135deg,#FFF3F0,#FFE8E3);border:1.5px solid #FDBA9D;border-radius:20px;padding:5px 16px;font-size:11px;font-weight:700;color:#C2410C;margin-bottom:14px;">
-              🎁 แตะกล่องเพื่อเปิดและลุ้นรางวัล!
-            </div>
+          <!-- Screen flash on open -->
+          <div class="screen-flash" :class="{ active: flashScreen }"></div>
 
-            <!-- Gift Box 3D — Shopee style -->
-            <div
-              class="gift-anim-wrap"
-              :class="{ 'is-bouncing': !lidLifting && !boxOpened && !isShaking, 'is-shaking': isShaking }"
-              style="width:160px;margin:0 auto;cursor:pointer;"
-              @click="openBox"
+          <!-- Open instruction -->
+          <div class="text-center" style="margin-bottom:6px;">
+            <div style="display:inline-block;background:linear-gradient(135deg,#FFF3F0,#FFE8E3);border:1.5px solid #FDBA9D;border-radius:20px;padding:5px 18px;font-size:12px;font-weight:700;color:#C2410C;">
+              🎁 แตะกล่องเพื่อลุ้นรางวัล!
+            </div>
+          </div>
+
+          <!-- Gift Box block -->
+          <div style="border:2.5px dashed rgba(234,179,8,0.7);border-radius:24px;padding:16px 12px 10px;background:rgba(255,255,255,0.35);backdrop-filter:blur(2px);margin:0 4px;">
+          <div
+            class="gift-anim-wrap gift-block"
+            :class="{ 'is-bouncing': !lidLifting && !boxOpened && !isShaking, 'is-shaking': isShaking }"
+            @click="openBox"
+          >
+            <svg
+              viewBox="0 0 160 170"
+              style="display:block;width:100%;max-width:240px;margin:0 auto;overflow:visible;transition:transform 0.5s cubic-bezier(0.4,0,0.2,1),opacity 0.5s;"
+              :style="boxOpened ? 'transform:scale(0.05);opacity:0;' : ''"
             >
-              <svg
-                width="160" height="170" viewBox="0 0 160 170"
-                style="display:block;overflow:visible;filter:drop-shadow(0 10px 28px rgba(238,77,45,0.45));transition:transform 0.5s cubic-bezier(0.4,0,0.2,1),opacity 0.5s;"
-                :style="boxOpened ? 'transform:scale(0.05);opacity:0;' : ''"
-              >
                 <defs>
                   <linearGradient id="sBodyF" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%"   stop-color="#FF6840"/>
@@ -261,6 +265,18 @@
                     <stop offset="100%" stop-color="#FF9575"/>
                   </linearGradient>
                 </defs>
+
+                <!-- Light rays (burst on open) -->
+                <g class="ray-group" :class="{ 'ray-active': showRays }">
+                  <line x1="64" y1="123" x2="64"  y2="15"  stroke="#FFE566" stroke-width="9" stroke-linecap="round" opacity="0.75"/>
+                  <line x1="64" y1="123" x2="134" y2="53"  stroke="#FFCF5C" stroke-width="8" stroke-linecap="round" opacity="0.65"/>
+                  <line x1="64" y1="123" x2="154" y2="123" stroke="#FFE566" stroke-width="9" stroke-linecap="round" opacity="0.75"/>
+                  <line x1="64" y1="123" x2="134" y2="193" stroke="#FFCF5C" stroke-width="8" stroke-linecap="round" opacity="0.65"/>
+                  <line x1="64" y1="123" x2="64"  y2="215" stroke="#FFE566" stroke-width="9" stroke-linecap="round" opacity="0.75"/>
+                  <line x1="64" y1="123" x2="-6"  y2="193" stroke="#FFCF5C" stroke-width="8" stroke-linecap="round" opacity="0.65"/>
+                  <line x1="64" y1="123" x2="-26" y2="123" stroke="#FFE566" stroke-width="9" stroke-linecap="round" opacity="0.75"/>
+                  <line x1="64" y1="123" x2="-6"  y2="53"  stroke="#FFCF5C" stroke-width="8" stroke-linecap="round" opacity="0.65"/>
+                </g>
 
                 <!-- Ground shadow -->
                 <ellipse cx="80" cy="163" rx="56" ry="6" fill="rgba(0,0,0,0.2)"/>
@@ -329,19 +345,35 @@
                   <ellipse cx="76" cy="41" rx="3"  ry="2" fill="rgba(255,255,255,0.65)"/>
                 </g>
               </svg>
-            </div>
+          </div>
           </div>
 
-          <div class="text-center mt-3">
-            <span class="text-[10px] text-app-light font-semibold">⏳ สิทธิ์ 1 ครั้งต่อเดือน ⏳</span>
+          <div class="text-center mt-3" style="position:relative;z-index:1;">
+            <span class="text-[10px] font-semibold" style="color:#92400E;">⏳ สิทธิ์ 1 ครั้งต่อเดือน ⏳</span>
           </div>
+
+          <!-- Coin decorations (bg layer) -->
+          <div class="bg-coin" style="top:6px;left:8px;font-size:28px;animation-delay:0s">🪙</div>
+          <div class="bg-coin" style="top:10px;right:10px;font-size:22px;animation-delay:0.5s">🪙</div>
+          <div class="bg-coin" style="top:36%;left:0px;font-size:20px;animation-delay:1s">🪙</div>
+          <div class="bg-coin" style="top:36%;right:0px;font-size:20px;animation-delay:1.5s">🪙</div>
+          <div class="bg-coin" style="top:62%;left:6px;font-size:24px;animation-delay:0.7s">🪙</div>
+          <div class="bg-coin" style="top:62%;right:6px;font-size:22px;animation-delay:1.2s">🪙</div>
+          <div class="bg-coin" style="bottom:44px;left:22%;font-size:15px;animation-delay:2s">🪙</div>
+          <div class="bg-coin" style="bottom:44px;right:22%;font-size:13px;animation-delay:0.9s">🪙</div>
+          <div class="bg-coin" style="top:18%;left:42%;font-size:12px;animation-delay:2.4s">🪙</div>
+          <div class="bg-coin" style="top:52%;left:18%;font-size:11px;animation-delay:1.7s">🪙</div>
+          <div class="bg-coin" style="top:52%;right:18%;font-size:11px;animation-delay:2.8s">🪙</div>
         </div>
 
         <!-- Prize reveal state -->
         <div v-if="surpriseState === 'reveal'" class="text-center py-4">
           <div class="text-[28px] mb-1" style="letter-spacing:6px;animation:floatY 1.5s ease-in-out infinite;">🎉 🎊 🎈</div>
-          <div class="text-[72px] my-3" style="animation:prizePopIn 0.6s cubic-bezier(0.34,1.56,0.64,1);filter:drop-shadow(0 6px 16px rgba(255,150,0,0.35));">
-            {{ currentPrize.icon }}
+          <div style="position:relative;display:inline-block;margin:12px 0;">
+            <div class="prize-glow-aura"></div>
+            <div style="position:relative;z-index:1;font-size:72px;animation:prizePopIn 0.6s cubic-bezier(0.34,1.56,0.64,1);filter:drop-shadow(0 6px 20px rgba(255,150,0,0.5));">
+              {{ currentPrize.icon }}
+            </div>
           </div>
           <div class="text-[20px] font-black mb-1" :style="{ color: currentPrize.color }">{{ currentPrize.name }}</div>
           <div class="text-[13px] text-app-mid mb-5 leading-relaxed">{{ currentPrize.desc }}</div>
@@ -372,6 +404,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import BaseModal from '../shared/BaseModal.vue'
 import { useBirthdayStore } from '../../stores/birthday.js'
 import { useUiStore } from '../../stores/ui.js'
+import { useConfetti } from '../../composables/useConfetti.js'
 
 const bday = useBirthdayStore()
 const ui = useUiStore()
@@ -404,7 +437,11 @@ const surpriseState = ref('eligible') // 'eligible' | 'reveal' | 'used'
 const boxOpened = ref(false)
 const lidLifting = ref(false)
 const isShaking = ref(false)
+const tapCount = ref(0)
+const showRays = ref(false)
+const flashScreen = ref(false)
 const currentPrize = ref(null)
+const { launchConfetti } = useConfetti()
 
 const PRIZES = [
   { icon: '🏠', name: 'WFH พิเศษ 1 วัน', desc: 'Work From Home ได้ 1 วัน เลือกวันได้เองภายใน 30 วัน', color: '#F59E0B' },
@@ -478,13 +515,19 @@ function openBox() {
   isShaking.value = true
   setTimeout(() => {
     isShaking.value = false
+    showRays.value = true
+    flashScreen.value = true
+    setTimeout(() => { flashScreen.value = false }, 350)
     lidLifting.value = true
     setTimeout(() => {
       boxOpened.value = true
       const prize = PRIZES[Math.floor(Math.random() * PRIZES.length)]
       currentPrize.value = prize
-      setTimeout(() => { surpriseState.value = 'reveal' }, 400)
-    }, 600)
+      setTimeout(() => {
+        surpriseState.value = 'reveal'
+        launchConfetti({ count: 120, colors: ['#EE4D2D','#FF6840','#FFE566','#FBBF24','#FF3CAC','#44AAFF','#44DD88'] })
+      }, 400)
+    }, 650)
   }, 500)
 }
 
@@ -494,23 +537,110 @@ function confirmPrize() {
 </script>
 
 <style scoped>
-@keyframes giftBounce {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-9px); }
+
+/* ── Golden arena ── */
+.eligible-arena {
+  position: relative;
+  background: linear-gradient(160deg, #FFFBEB 0%, #FEF9C3 30%, #FEF08A 60%, #FCD34D 90%, #F59E0B 100%);
+  border-radius: 20px;
+  border: 2px solid rgba(234,179,8,0.45);
+  padding: 12px 6px 6px;
+  overflow: hidden;
 }
-@keyframes giftShake {
-  0%, 100% { transform: rotate(0deg) scale(1); }
-  15%  { transform: rotate(-7deg) scale(1.03); }
-  30%  { transform: rotate(7deg)  scale(1.03); }
-  45%  { transform: rotate(-5deg) scale(1.01); }
-  60%  { transform: rotate(5deg)  scale(1.01); }
-  75%  { transform: rotate(-2deg); }
-  90%  { transform: rotate(2deg); }
+/* push all direct-children content above the coin layer */
+.eligible-arena > *:not(.bg-coin) {
+  position: relative;
+  z-index: 1;
+}
+.bg-coin {
+  position: absolute;
+  z-index: 0;
+  opacity: 0.17;
+  pointer-events: none;
+  user-select: none;
+  animation: coinFloat 3s ease-in-out infinite;
+  filter: saturate(1.3);
+}
+@keyframes coinFloat {
+  0%, 100% { transform: translateY(0) rotate(-8deg) scale(1); }
+  50%       { transform: translateY(-12px) rotate(10deg) scale(1.06); }
+}
+
+/* ── Gift block ── */
+.gift-block {
+  display: block;
+  width: 100%;
+  cursor: pointer;
+  padding: 10px 0 4px;
+}
+
+/* ── Bounce + glow ── */
+@keyframes giftBounce {
+  0%, 100% { transform: translateY(0) scaleX(1) scaleY(1); }
+  40%       { transform: translateY(-12px) scaleX(0.96) scaleY(1.04); }
+  55%       { transform: translateY(-14px) scaleX(0.95) scaleY(1.05); }
+  70%       { transform: translateY(-2px) scaleX(1.02) scaleY(0.98); }
+}
+@keyframes giftGlow {
+  0%, 100% { filter: drop-shadow(0 10px 22px rgba(238,77,45,0.4)); }
+  50%       { filter: drop-shadow(0 16px 36px rgba(238,77,45,0.75)) drop-shadow(0 0 20px rgba(255,150,50,0.5)); }
 }
 .gift-anim-wrap.is-bouncing {
   animation: giftBounce 2s ease-in-out infinite;
 }
-.gift-anim-wrap.is-shaking {
-  animation: giftShake 0.5s ease-in-out;
+.gift-anim-wrap.is-bouncing svg {
+  animation: giftGlow 2s ease-in-out infinite;
+}
+
+/* ── Shake ── */
+@keyframes giftShake {
+  0%   { transform: rotate(0) scale(1); }
+  12%  { transform: rotate(-11deg) scale(1.05) translateX(-3px); }
+  28%  { transform: rotate(11deg)  scale(1.05) translateX(3px); }
+  44%  { transform: rotate(-7deg)  scale(1.02) translateX(-2px); }
+  60%  { transform: rotate(7deg)   scale(1.02) translateX(2px); }
+  76%  { transform: rotate(-3deg); }
+  90%  { transform: rotate(3deg); }
+  100% { transform: rotate(0) scale(1); }
+}
+.gift-anim-wrap.is-shaking { animation: giftShake 0.5s ease-in-out; }
+
+/* ── SVG light rays ── */
+.ray-group { opacity: 0; }
+.ray-group.ray-active { animation: rayBurst 0.8s ease-out forwards; }
+@keyframes rayBurst {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ── Screen flash ── */
+.screen-flash {
+  position: fixed;
+  inset: 0;
+  background: white;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+.screen-flash.active {
+  animation: flashPop 0.4s ease-out forwards;
+}
+@keyframes flashPop {
+  0%   { opacity: 0.65; }
+  100% { opacity: 0; }
+}
+
+/* ── Prize glow aura ── */
+.prize-glow-aura {
+  position: absolute;
+  inset: -24px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,200,50,0.55) 0%, transparent 70%);
+  animation: prizeAuraPulse 1.2s ease-in-out infinite;
+}
+@keyframes prizeAuraPulse {
+  0%, 100% { transform: scale(1);    opacity: 0.7; }
+  50%       { transform: scale(1.18); opacity: 1;   }
 }
 </style>

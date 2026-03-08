@@ -252,6 +252,26 @@
 .al-badge-no       { background: #F3F4F6; color: #9CA3AF; }
 .al-badge-blue     { background: #DBEAFE; color: #1D4ED8; }
 .al-badge-month    { background: #EEF2FF; color: #4F46E5; }
+.al-badge-green    { background: #D1FAE5; color: #065F46; }
+.al-badge-red      { background: #FEE2E2; color: #991B1B; }
+
+/* ── Join label radio group ── */
+.join-label-options { display: flex; flex-direction: column; gap: 8px; }
+.join-label-opt {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: #374151; cursor: pointer;
+  padding: 8px 12px; border-radius: 10px;
+  border: 1.5px solid #E5E7EB; background: #F9FAFB;
+  transition: border-color 0.15s, background 0.15s;
+}
+.join-label-opt:has(input:checked) { border-color: #6366F1; background: #EEF2FF; color: #4338CA; }
+.join-label-opt input { accent-color: #6366F1; }
+
+/* ── Join toggle button ── */
+.al-btn-join-toggle { font-size: 12px; font-weight: 700; border-radius: 10px; padding: 5px 10px; transition: opacity 0.2s; }
+.al-btn-join-toggle.open   { background: #D1FAE5; color: #065F46; }
+.al-btn-join-toggle.closed { background: #FEE2E2; color: #991B1B; }
+.al-btn-join-toggle:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ── Filter chips ── */
 .al-filters {

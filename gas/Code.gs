@@ -69,6 +69,8 @@ function doGet(e) {
       // Activities
       getActivities:         function() { return getActivities(e.parameter); },
       joinActivity:          function() { return joinActivity(e.parameter); },
+      getMyStamps:           function() { return getMyStamps(e.parameter); },
+      claimActivityReward:   function() { return claimActivityReward(e.parameter); },
       adminAddActivity:      function() { return adminAddActivity(e.parameter); },
       adminUpdateActivity:   function() { return adminUpdateActivity(e.parameter); },
       adminDeleteActivity:   function() { return adminDeleteActivity(e.parameter); },

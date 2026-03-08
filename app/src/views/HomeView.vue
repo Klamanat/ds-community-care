@@ -46,9 +46,9 @@
           </div>
         </div>
 
-        <!-- Quick links: 3-col on mobile, flex-col on PC -->
-        <div class="grid grid-cols-3 gap-2 sm:flex sm:flex-col">
-          <div class="c-card ripple-host bg-[linear-gradient(135deg,#FF6B00,#FF3CAC,#A855F7,#3B82F6)] sm:flex-1" @click="ui.openModal('modal-culture')">
+        <!-- Quick links: 4-col on mobile, flex-col on PC -->
+        <div class="grid grid-cols-4 gap-2 sm:flex sm:flex-col">
+<div class="c-card ripple-host bg-[linear-gradient(135deg,#FF6B00,#FF3CAC,#A855F7,#3B82F6)] sm:flex-1" @click="ui.openModal('modal-culture')">
             <div class="c-emo">🤝</div>
             <div class="c-lbl">Team Culture</div>
             <div class="c-sub">วัฒนธรรมองค์กร</div>

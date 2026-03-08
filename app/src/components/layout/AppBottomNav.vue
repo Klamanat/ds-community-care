@@ -3,7 +3,7 @@
     <NavItem to="/"         icon="🏠" label="หน้าหลัก"  mobile />
     <NavItem to="/star"     icon="⭐" label="Star"      mobile />
     <NavItem to="/idea"     icon="💡" label="ไอเดีย"    mobile />
-    <NavItem to="/notif"    icon="🔔" label="แจ้งเตือน" mobile :badge="ui.notifBadge" />
+    <NavItem to="/notif"      icon="🔔" label="แจ้งเตือน" mobile :badge="ui.notifBadge" />
     <NavItem to="/settings" icon="⚙️" label="ตั้งค่า"   mobile />
   </nav>
 </template>

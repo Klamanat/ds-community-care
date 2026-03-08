@@ -16,7 +16,7 @@ const routes = [
   { path: '/settings', name: 'settings', component: () => import('../views/SettingsView.vue'), meta: { requiresUser: true } },
   { path: '/idea',     name: 'idea',     component: () => import('../views/IdeaView.vue'),     meta: { requiresUser: true } },
   { path: '/bday',     name: 'bday',     component: () => import('../views/BdayView.vue'),     meta: { requiresUser: true } },
-  { path: '/culture',  name: 'culture',  component: () => import('../views/CultureView.vue'),  meta: { requiresUser: true } },
+  { path: '/culture',    name: 'culture',    component: () => import('../views/CultureView.vue'),    meta: { requiresUser: true } },
 
   // Admin routes (separate auth)
   {

@@ -49,6 +49,15 @@ async function parseGasResponse(res) {
     const preview = text.slice(0, 120).replace(/\s+/g, ' ')
     throw new Error(`GAS returned HTML instead of JSON: "${preview}"`)
   }
-  if (!data.ok) throw new Error(data.error || 'GAS error')
+  if (!data.ok) {
+    const msg = data.error || 'GAS error'
+    // Token invalid/expired → clear and redirect to admin login
+    if (msg === 'Invalid token' || msg === 'Token expired' || msg === 'token required') {
+      localStorage.removeItem('admin_token')
+      localStorage.removeItem('admin_name')
+      window.location.hash = '#/admin/login'
+    }
+    throw new Error(msg)
+  }
   return data
 }
