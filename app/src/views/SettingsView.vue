@@ -104,11 +104,11 @@
         </div>
         <span class="setting-arr">›</span>
       </div>
-      <div class="setting-item" @click="ui.showToast('DS Community Care v2.0 🚀')">
+      <div class="setting-item" @click="ui.showToast(`DS Community Care ${appVersion} 🚀`)">
         <span class="setting-ico">ℹ️</span>
         <div class="setting-info">
           <div class="setting-title">เกี่ยวกับแอป</div>
-          <div class="setting-sub">DS Community Care v2.0</div>
+          <div class="setting-sub">DS Community Care {{ appVersion }}</div>
         </div>
         <span class="setting-arr">›</span>
       </div>
@@ -129,14 +129,26 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUiStore } from '../stores/ui.js'
 import { useUserAuthStore } from '../stores/userAuth.js'
+import { gasGet } from '../services/api.js'
 
 const ui       = useUiStore()
 const userAuth = useUserAuthStore()
 const router   = useRouter()
+
+const appVersion = ref('v2.0')
+
+onMounted(async () => {
+  try {
+    const res = await gasGet('getVersion')
+    appVersion.value = 'v' + res.data.version
+  } catch {
+    // keep fallback
+  }
+})
 
 const toggles = ref([
   { key:'push',    ico:'🔔', title:'Push Notification', sub:'รับแจ้งเตือนกิจกรรมทั้งหมด',          on: true  },

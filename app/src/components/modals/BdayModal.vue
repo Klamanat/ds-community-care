@@ -191,7 +191,7 @@
             <div class="text-center py-5 px-4">
               <div class="text-[14px] font-black" style="color:#9D174D;">🎂 Happy Birthday! 🎂</div>
               <div class="text-[36px] my-2">🎉 🎊 🎈</div>
-              <div class="text-[12px] font-bold" style="color:#BE185D;">ทุบไข่ทองเพื่อลุ้นรางวัลสุดพิเศษ!</div>
+              <div class="text-[12px] font-bold" style="color:#BE185D;">เปิดกล่องของขวัญเพื่อลุ้นรางวัลสุดพิเศษ!</div>
             </div>
           </div>
 
@@ -221,51 +221,114 @@
             </div>
           </div>
 
-          <!-- Smash instruction -->
+          <!-- Open instruction -->
           <div class="text-center mb-2">
-            <div style="display:inline-block;background:linear-gradient(135deg,#FFF7ED,#FFFBEB);border:1.5px solid #FCD34D;border-radius:20px;padding:5px 16px;font-size:11px;font-weight:700;color:#92400E;margin-bottom:14px;">
-              🔨 กดฆ้อนเพื่อทุบไข่และลุ้นรางวัล!
+            <div style="display:inline-block;background:linear-gradient(135deg,#FFF3F0,#FFE8E3);border:1.5px solid #FDBA9D;border-radius:20px;padding:5px 16px;font-size:11px;font-weight:700;color:#C2410C;margin-bottom:14px;">
+              🎁 แตะกล่องเพื่อเปิดและลุ้นรางวัล!
             </div>
 
-            <!-- Egg + Hammer -->
-            <div style="position:relative;width:160px;margin:0 auto;">
+            <!-- Gift Box 3D — Shopee style -->
+            <div
+              class="gift-anim-wrap"
+              :class="{ 'is-bouncing': !lidLifting && !boxOpened && !isShaking, 'is-shaking': isShaking }"
+              style="width:160px;margin:0 auto;cursor:pointer;"
+              @click="openBox"
+            >
               <svg
-                width="120" height="140" viewBox="0 0 120 140"
-                style="display:block;margin:0 auto;filter:drop-shadow(0 8px 20px rgba(255,150,0,0.4));transition:transform 0.3s,opacity 0.3s;cursor:pointer;"
-                :style="eggSmashed ? 'transform:scale(0);opacity:0;' : ''"
-                @click="smashEgg"
+                width="160" height="170" viewBox="0 0 160 170"
+                style="display:block;overflow:visible;filter:drop-shadow(0 10px 28px rgba(238,77,45,0.45));transition:transform 0.5s cubic-bezier(0.4,0,0.2,1),opacity 0.5s;"
+                :style="boxOpened ? 'transform:scale(0.05);opacity:0;' : ''"
               >
                 <defs>
-                  <radialGradient id="eggGrad2" cx="38%" cy="35%" r="60%">
-                    <stop offset="0%" stop-color="#FFFDE7"/>
-                    <stop offset="50%" stop-color="#FFD54F"/>
-                    <stop offset="100%" stop-color="#FF8F00"/>
-                  </radialGradient>
-                  <radialGradient id="eggShine2" cx="35%" cy="28%" r="30%">
-                    <stop offset="0%" stop-color="rgba(255,255,255,0.7)"/>
-                    <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-                  </radialGradient>
+                  <linearGradient id="sBodyF" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stop-color="#FF6840"/>
+                    <stop offset="100%" stop-color="#EE4D2D"/>
+                  </linearGradient>
+                  <linearGradient id="sBodyR" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%"   stop-color="#D94126"/>
+                    <stop offset="100%" stop-color="#B83320"/>
+                  </linearGradient>
+                  <linearGradient id="sLidF" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stop-color="#FF7D52"/>
+                    <stop offset="100%" stop-color="#F26144"/>
+                  </linearGradient>
+                  <linearGradient id="sLidR" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%"   stop-color="#E05035"/>
+                    <stop offset="100%" stop-color="#C24028"/>
+                  </linearGradient>
+                  <linearGradient id="sLidTop" x1="0" y1="1" x2="0" y2="0">
+                    <stop offset="0%"   stop-color="#F47A5E"/>
+                    <stop offset="100%" stop-color="#FF9575"/>
+                  </linearGradient>
                 </defs>
-                <ellipse cx="60" cy="78" rx="48" ry="58" fill="url(#eggGrad2)"/>
-                <ellipse cx="60" cy="78" rx="48" ry="58" fill="url(#eggShine2)"/>
-                <!-- Cracks -->
-                <g :style="eggCracked ? 'opacity:1;transition:opacity 0.3s;' : 'opacity:0;'">
-                  <path d="M55,45 L48,55 L58,60 L50,72" stroke="#B45309" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                  <path d="M65,50 L72,58 L62,65 L68,78" stroke="#B45309" stroke-width="2" fill="none" stroke-linecap="round"/>
-                  <path d="M40,80 L50,75 L45,90" stroke="#B45309" stroke-width="2" fill="none" stroke-linecap="round"/>
-                </g>
-                <text x="38" y="90" font-size="14" opacity="0.6">✨</text>
-                <text x="62" y="75" font-size="10" opacity="0.5">⭐</text>
-                <text x="52" y="110" font-size="12" opacity="0.5">🌟</text>
-              </svg>
 
-              <!-- Hammer -->
-              <div
-                class="sb-hammer"
-                :class="{ smashing: hammerSwing }"
-                :style="eggSmashed ? 'display:none;' : ''"
-                @click="smashEgg"
-              >🔨</div>
+                <!-- Ground shadow -->
+                <ellipse cx="80" cy="163" rx="56" ry="6" fill="rgba(0,0,0,0.2)"/>
+
+                <!-- Box body: front face -->
+                <rect x="10" y="88" width="108" height="70" rx="5" fill="url(#sBodyF)"/>
+                <rect x="10" y="88" width="52"  height="70" rx="5" fill="rgba(255,255,255,0.06)"/>
+                <!-- Box body: right side face -->
+                <polygon points="118,88 144,72 144,142 118,158" fill="url(#sBodyR)"/>
+                <polygon points="118,88 144,72 144,94 118,102"  fill="rgba(255,255,255,0.06)"/>
+                <!-- Bottom edge -->
+                <rect x="10" y="153" width="108" height="5" rx="2" fill="rgba(0,0,0,0.12)"/>
+
+                <!-- Ribbon: vertical on front body -->
+                <rect x="57" y="88" width="22" height="70" fill="rgba(255,255,255,0.88)"/>
+                <!-- Ribbon: horizontal on front body -->
+                <rect x="10" y="113" width="108" height="18" fill="rgba(255,255,255,0.84)"/>
+                <rect x="57" y="113" width="22"  height="18" fill="rgba(255,255,255,0.96)"/>
+                <!-- Ribbon: horizontal on right side (perspective) -->
+                <polygon points="118,113 144,99 144,115 118,129" fill="rgba(255,255,255,0.65)"/>
+
+                <!-- Sparkles (appear on open) -->
+                <g style="transition:opacity 0.25s 0.15s;" :style="lidLifting ? 'opacity:1' : 'opacity:0'">
+                  <text x="2"   y="60" font-size="15">✨</text>
+                  <text x="130" y="48" font-size="13">⭐</text>
+                  <text x="138" y="82" font-size="12">✨</text>
+                  <text x="0"   y="90" font-size="11">🌟</text>
+                  <text x="58"  y="12" font-size="18">🎊</text>
+                  <text x="108" y="24" font-size="13">💫</text>
+                </g>
+                <!-- Prize peek inside -->
+                <g style="transition:opacity 0.4s 0.32s;" :style="lidLifting ? 'opacity:1' : 'opacity:0'">
+                  <text x="38" y="105" font-size="22">🎉</text>
+                  <text x="78" y="102" font-size="16">✨</text>
+                </g>
+
+                <!-- Lid group (flies up on open) -->
+                <g
+                  style="transition:transform 0.55s cubic-bezier(0.22,0.61,0.36,1),opacity 0.45s 0.05s;"
+                  :style="lidLifting ? 'transform:translateY(-62px);opacity:0;' : 'transform:translateY(0);opacity:1;'"
+                >
+                  <!-- Lid: top surface -->
+                  <polygon points="8,64 118,64 144,48 34,48" fill="url(#sLidTop)"/>
+                  <polygon points="8,64 60,64 86,48 34,48"   fill="rgba(255,255,255,0.1)"/>
+                  <!-- Lid: front face -->
+                  <rect x="8" y="64" width="110" height="24" rx="5" fill="url(#sLidF)"/>
+                  <rect x="8" y="64" width="55"  height="24" rx="5" fill="rgba(255,255,255,0.09)"/>
+                  <!-- Lid: right face -->
+                  <polygon points="118,64 144,48 144,72 118,88" fill="url(#sLidR)"/>
+                  <!-- Lid: bottom edge -->
+                  <rect x="8" y="82" width="110" height="6" rx="3" fill="rgba(0,0,0,0.12)"/>
+                  <!-- Ribbon: vertical on lid front -->
+                  <rect x="57" y="64" width="22" height="24" fill="rgba(255,255,255,0.88)"/>
+                  <!-- Ribbon: vertical on lid top (perspective strip) -->
+                  <polygon points="57,64 79,64 105,48 83,48" fill="rgba(255,255,255,0.72)"/>
+                  <!-- Bow: left loop -->
+                  <ellipse cx="62" cy="44" rx="22" ry="10" fill="white" opacity="0.96" transform="rotate(-22 62 44)"/>
+                  <!-- Bow: right loop -->
+                  <ellipse cx="92" cy="38" rx="22" ry="10" fill="white" opacity="0.96" transform="rotate(22 92 38)"/>
+                  <!-- Bow: loop depth shadows -->
+                  <ellipse cx="55" cy="41" rx="9" ry="4" fill="rgba(210,65,35,0.13)" transform="rotate(-22 55 41)"/>
+                  <ellipse cx="99" cy="35" rx="9" ry="4" fill="rgba(210,65,35,0.13)" transform="rotate(22 99 35)"/>
+                  <!-- Bow: center knot -->
+                  <ellipse cx="77" cy="43" rx="12" ry="8" fill="white"/>
+                  <ellipse cx="77" cy="42" rx="6"  ry="4" fill="#FBBF24"/>
+                  <ellipse cx="76" cy="41" rx="3"  ry="2" fill="rgba(255,255,255,0.65)"/>
+                </g>
+              </svg>
             </div>
           </div>
 
@@ -338,9 +401,9 @@ const successMsg = ref('')
 
 // Surprise box
 const surpriseState = ref('eligible') // 'eligible' | 'reveal' | 'used'
-const eggSmashed = ref(false)
-const eggCracked = ref(false)
-const hammerSwing = ref(false)
+const boxOpened = ref(false)
+const lidLifting = ref(false)
+const isShaking = ref(false)
 const currentPrize = ref(null)
 
 const PRIZES = [
@@ -410,19 +473,44 @@ function resetSurpriseView() {
   // Keep current state — don't reset if already used/revealed
 }
 
-function smashEgg() {
-  if (eggSmashed.value) return
-  hammerSwing.value = true
-  setTimeout(() => { eggCracked.value = true }, 200)
+function openBox() {
+  if (boxOpened.value || lidLifting.value || isShaking.value) return
+  isShaking.value = true
   setTimeout(() => {
-    eggSmashed.value = true
-    const prize = PRIZES[Math.floor(Math.random() * PRIZES.length)]
-    currentPrize.value = prize
-    setTimeout(() => { surpriseState.value = 'reveal' }, 400)
-  }, 700)
+    isShaking.value = false
+    lidLifting.value = true
+    setTimeout(() => {
+      boxOpened.value = true
+      const prize = PRIZES[Math.floor(Math.random() * PRIZES.length)]
+      currentPrize.value = prize
+      setTimeout(() => { surpriseState.value = 'reveal' }, 400)
+    }, 600)
+  }, 500)
 }
 
 function confirmPrize() {
   surpriseState.value = 'used'
 }
 </script>
+
+<style scoped>
+@keyframes giftBounce {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-9px); }
+}
+@keyframes giftShake {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  15%  { transform: rotate(-7deg) scale(1.03); }
+  30%  { transform: rotate(7deg)  scale(1.03); }
+  45%  { transform: rotate(-5deg) scale(1.01); }
+  60%  { transform: rotate(5deg)  scale(1.01); }
+  75%  { transform: rotate(-2deg); }
+  90%  { transform: rotate(2deg); }
+}
+.gift-anim-wrap.is-bouncing {
+  animation: giftBounce 2s ease-in-out infinite;
+}
+.gift-anim-wrap.is-shaking {
+  animation: giftShake 0.5s ease-in-out;
+}
+</style>

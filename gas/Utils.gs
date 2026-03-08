@@ -58,6 +58,15 @@ function safeJson(str) {
 }
 
 /**
+ * App version — update this string when deploying new GAS builds
+ */
+var APP_VERSION = '2.1.0';
+
+function getVersion() {
+  return ok({ version: APP_VERSION });
+}
+
+/**
  * Success response wrapper
  */
 function ok(data) {

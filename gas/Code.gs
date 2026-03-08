@@ -33,6 +33,9 @@ function doGet(e) {
     var action = e.parameter.action;
 
     var handlers = {
+      // App version
+      getVersion:           function() { return getVersion(); },
+
       // Employees
       getEmployees:         function() { return getEmployees(e.parameter); },
       addTeamMember:        function() { return addTeamMember(e.parameter); },
