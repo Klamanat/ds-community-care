@@ -2,9 +2,21 @@ import { gasGet, gasPost } from './api.js'
 
 const token = () => localStorage.getItem('admin_token') || ''
 
-export async function fetchAll() {
-  const r = await gasGet('getActivities')
-  return r.data || []
+// Dedup: if a fetch is already in-flight, return the same Promise
+// Prevents 200 users opening the modal simultaneously from each firing a separate GAS call
+const _inflight = {}
+function dedupGet(key, fn) {
+  if (_inflight[key]) return _inflight[key]
+  const p = fn().finally(() => { delete _inflight[key] })
+  _inflight[key] = p
+  return p
+}
+
+export function fetchAll() {
+  return dedupGet('getActivities', async () => {
+    const r = await gasGet('getActivities')
+    return r.data || []
+  })
 }
 
 export async function fetchByMonth(monthIdx) {

@@ -46,7 +46,7 @@ function uploadImage(params) {
 // Columns: id | name | role | dept | imgUrl | grad | inTeam | inStarGang | starGangName | starGangRole
 
 function getEmployees(params) {
-  var rows = sheetToObjects('Employees');
+  var rows = cachedSheetRead('Employees', 600); // 10 min — employees change rarely
 
   var inTeam     = params.inTeam;
   var inStarGang = params.inStarGang;
@@ -63,13 +63,7 @@ function getEmployees(params) {
 
     // ถ้า imgUrl มี prefix "drive:" → fetch จาก Drive แล้ว inline เป็น base64
     if (imgUrl.indexOf('drive:') === 0) {
-      var fileId = imgUrl.slice(6);
-      try {
-        var bytes = DriveApp.getFileById(fileId).getBlob().getBytes();
-        imgUrl = 'data:image/jpeg;base64,' + Utilities.base64Encode(bytes);
-      } catch (e) {
-        imgUrl = '';
-      }
+      imgUrl = cachedDriveImage(imgUrl.slice(6)); // cached 60 min
     }
 
     return {
@@ -110,6 +104,7 @@ function addTeamMember(params) {
       // Update inTeam = TRUE
       var inTeamIdx = headers.indexOf('inTeam');
       if (inTeamIdx >= 0) sheet.getRange(i + 1, inTeamIdx + 1).setValue(true);
+      invalidateSheet('Employees');
       return ok({ id: id, updated: true });
     }
   }
@@ -124,6 +119,7 @@ function addTeamMember(params) {
     return '';
   });
   sheet.appendRow(row);
+  invalidateSheet('Employees');
   return ok({ id: id, created: true });
 }
 
@@ -153,11 +149,11 @@ function updateEmployeeSelf(params) {
       if (role   && roleIdx   >= 0) sheet.getRange(i + 1, roleIdx   + 1).setValue(role);
       if (dept   && deptIdx   >= 0) sheet.getRange(i + 1, deptIdx   + 1).setValue(dept);
       if (imgId  && imgUrlIdx >= 0) {
-        // เก็บ Drive file ID ด้วย prefix "drive:" ใน imgUrl column เดิม — ไม่ต้องเพิ่ม column ใหม่
         sheet.getRange(i + 1, imgUrlIdx + 1).setValue('drive:' + imgId);
       } else if (imgUrl && imgUrlIdx >= 0) {
         sheet.getRange(i + 1, imgUrlIdx + 1).setValue(imgUrl);
       }
+      invalidateSheet('Employees');
       return ok({ id: id, updated: true });
     }
   }

@@ -252,9 +252,8 @@ function getActEmoji(activityId) {
   return acts.all.find(a => a.id === activityId)?.emoji || '🎯'
 }
 
-onMounted(async () => {
-  await acts.load()
-  await loadMyStamps()
+onMounted(() => {
+  Promise.all([acts.load(), loadMyStamps()])
 })
 
 watch(() => ui.activeModal, (val) => {

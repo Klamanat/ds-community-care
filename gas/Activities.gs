@@ -7,22 +7,16 @@
  * ถ้า row มี imgId (Drive file ID) จะ fetch รูปจาก Drive แล้ว inline เป็น base64 ใน imgUrl
  */
 function getActivities(params) {
-  var data = sheetToObjects('Activities');
+  // cachedSheetRead: shared cache → 200 users share one sheet read per 5 min
+  var data = cachedSheetRead('Activities');
   if (params.monthIdx !== undefined && params.monthIdx !== '') {
     var m = String(params.monthIdx);
     data = data.filter(function(r) { return String(r.monthIdx) === m; });
   }
-  // Inline Drive images by ID → reliable base64 for <img> display
+  // cachedDriveImage: cache each image 60 min — avoids re-fetching same Drive file
   data = data.map(function(r) {
     var imgId = String(r.imgId || '').trim();
-    if (imgId) {
-      try {
-        var bytes = DriveApp.getFileById(imgId).getBlob().getBytes();
-        r.imgUrl  = 'data:image/jpeg;base64,' + Utilities.base64Encode(bytes);
-      } catch (e) {
-        r.imgUrl = '';
-      }
-    }
+    if (imgId) r.imgUrl = cachedDriveImage(imgId);
     return r;
   });
   return ok(data);
@@ -56,6 +50,7 @@ function adminAddActivity(params) {
     return '';
   });
   sheet.appendRow(row);
+  invalidateSheet('Activities');
   return ok({ id: id });
 }
 
@@ -91,6 +86,7 @@ function adminUpdateActivity(params) {
       }
     }
   });
+  invalidateSheet('Activities');
   return ok({ updated: true });
 }
 
@@ -121,6 +117,7 @@ function joinActivity(params) {
   var id        = uuid();
   var stampedAt = formatDate(new Date());
   sheet.appendRow([id, activityId, activityName, employeeName, stampedAt]);
+  invalidateSheet('ActivityJoins');
 
   return ok({ alreadyJoined: false, joinCount: countJoins(data, aidIdx, activityId) + 1 });
 }
@@ -140,7 +137,7 @@ function countJoins(data, aidIdx, activityId) {
 function getMyStamps(params) {
   var employeeName = String(params.employeeName || '').trim();
   if (!employeeName) return ok([]);
-  var data = sheetToObjects('ActivityJoins');
+  var data = cachedSheetRead('ActivityJoins', 120); // 2 min — stamps update often
   var myStamps = data.filter(function(r) {
     return String(r.employeeName || '').trim() === employeeName;
   });
@@ -173,6 +170,7 @@ function claimActivityReward(params) {
       if (claimedIdx >= 0 && data[i][claimedIdx] === true) return ok({ alreadyClaimed: true });
       if (claimedIdx    >= 0) sheet.getRange(i + 1, claimedIdx    + 1).setValue(true);
       if (rewardTypeIdx >= 0) sheet.getRange(i + 1, rewardTypeIdx + 1).setValue(rewardType);
+      invalidateSheet('ActivityJoins');
       return ok({ claimed: true, rewardType: rewardType });
     }
   }
@@ -193,6 +191,7 @@ function adminDeleteActivity(params) {
   for (var i = ids.length - 1; i >= 0; i--) {
     if (String(ids[i][0]) === String(params.id)) {
       sheet.deleteRow(i + 2);
+      invalidateSheet('Activities');
       return ok({ deleted: true });
     }
   }

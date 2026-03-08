@@ -134,6 +134,7 @@ function adminUpdateRow(params) {
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][keyIdx]).trim() === keyVal) {
       doUpdate(i);
+      invalidateSheet(sheetName);
       return ok({ updated: true, key: keyVal });
     }
   }
@@ -143,6 +144,7 @@ function adminUpdateRow(params) {
     for (var j = 1; j < data.length; j++) {
       if (String(data[j][fallbackIdx]).trim() === keyVal) {
         doUpdate(j);
+        invalidateSheet(sheetName);
         return ok({ updated: true, key: keyVal, matchedBy: 'empCode' });
       }
     }
@@ -169,6 +171,7 @@ function adminDeleteRow(params) {
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][keyIdx]) === keyVal) {
       sheet.deleteRow(i + 1);
+      invalidateSheet(params.sheetName);
       return ok({ deleted: true, key: keyVal });
     }
   }
@@ -201,6 +204,7 @@ function adminAddEmployee(params) {
     return '';
   });
   sheet.appendRow(row);
+  invalidateSheet('Employees');
   return ok({ created: true, id: id });
 }
 
@@ -226,6 +230,7 @@ function adminAddBirthday(params) {
     return '';
   });
   sheet.appendRow(row);
+  invalidateSheet('Birthdays');
   return ok({ created: true, key: key });
 }
 
@@ -248,6 +253,7 @@ function adminUpdateIdea(params) {
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][idIdx]) === String(params.id)) {
       sheet.getRange(i + 1, statIdx + 1).setValue(params.status);
+      invalidateSheet('Ideas');
       return ok({ updated: true, id: params.id, status: params.status });
     }
   }
@@ -265,12 +271,10 @@ function adminDeletePost(params) {
 
   // Delete from EmpathyPosts
   _deleteRowsByCol('EmpathyPosts', 'id', postId);
-
-  // Cascade: delete comments
   _deleteRowsByCol('EmpathyComments', 'postId', postId);
-
-  // Cascade: delete likes
   _deleteRowsByCol('EmpathyLikes', 'postId', postId);
+  invalidateSheet('EmpathyPosts');
+  invalidateSheet('EmpathyComments');
 
   return ok({ deleted: true, postId: postId });
 }

@@ -10,13 +10,12 @@
 
 // getEmpathyPeople — unique people from EmpathyComments (keyed by channelId = empCode)
 function getEmpathyPeople(params) {
-  var comments = sheetToObjects('EmpathyComments');
+  var comments = cachedSheetRead('EmpathyComments');
 
-  // Preload employees — dual-keyed by empCode AND id for backward compat
   var empByCode = {};
   var empById   = {};
   try {
-    sheetToObjects('Employees').forEach(function(e) {
+    cachedSheetRead('Employees', 600).forEach(function(e) {
       if (e.empCode) empByCode[String(e.empCode)] = e;
       if (e.id)      empById[String(e.id)]         = e;
     });
@@ -39,10 +38,7 @@ function getEmpathyPeople(params) {
     if (emp && emp.imgUrl) {
       var raw = String(emp.imgUrl);
       if (raw.indexOf('drive:') === 0) {
-        try {
-          var bytes = DriveApp.getFileById(raw.slice(6)).getBlob().getBytes();
-          imgUrl = 'data:image/jpeg;base64,' + Utilities.base64Encode(bytes);
-        } catch(e) {}
+        imgUrl = cachedDriveImage(raw.slice(6));
       } else {
         imgUrl = raw;
       }
@@ -66,18 +62,16 @@ function getEmpathyPeople(params) {
 }
 
 function getEmpathyPosts(params) {
-  var rows = sheetToObjects('EmpathyPosts');
+  var rows = cachedSheetRead('EmpathyPosts');
 
-  // Sort by createdAt descending (newest first)
   rows.sort(function(a, b) {
     return new Date(b.createdAt) - new Date(a.createdAt);
   });
 
-  // Preload employees — dual-keyed by empCode AND id for backward compat
   var empByCode = {};
   var empById   = {};
   try {
-    sheetToObjects('Employees').forEach(function(e) {
+    cachedSheetRead('Employees', 600).forEach(function(e) {
       if (e.empCode) empByCode[String(e.empCode)] = e;
       if (e.id)      empById[String(e.id)]         = e;
     });
@@ -92,10 +86,7 @@ function getEmpathyPosts(params) {
       if (emp) {
         var empImg = String(emp.imgUrl || '');
         if (empImg.indexOf('drive:') === 0) {
-          try {
-            var bytes = DriveApp.getFileById(empImg.slice(6)).getBlob().getBytes();
-            recImg = 'data:image/jpeg;base64,' + Utilities.base64Encode(bytes);
-          } catch(e) { recImg = ''; }
+          recImg = cachedDriveImage(empImg.slice(6));
         } else {
           recImg = empImg;
         }
@@ -139,6 +130,7 @@ function addEmpathyPost(params) {
   var createdAt = formatDate(new Date());
 
   appendRow('EmpathyPosts', [id, recEmployeeId, recName, recRole, recImgUrl, sndName, msg, tag, likeCount, createdAt]);
+  invalidateSheet('EmpathyPosts');
 
   return ok({ id: id, recEmployeeId: recEmployeeId, recName: recName, recRole: recRole, recImg: recImgUrl, sndName: sndName, msg: msg, tag: tag, likeCount: likeCount, createdAt: createdAt, comments: [] });
 }
@@ -148,14 +140,14 @@ function getEmpathyComments(params) {
   var userKey = params.userKey || '';
   if (!postId) return err('postId required');
 
-  var rows     = sheetToObjects('EmpathyComments');
+  var rows     = cachedSheetRead('EmpathyComments');
   var filtered = rows.filter(function(r) { return String(r.postId) === String(postId); });
   filtered.sort(function(a, b) { return new Date(a.createdAt) - new Date(b.createdAt); });
 
   // Build likeCount + userLiked map from CommentLikes sheet
   var likeMap = {};  // { commentId: { count, userLiked } }
   try {
-    sheetToObjects('CommentLikes').forEach(function(r) {
+    cachedSheetRead('CommentLikes').forEach(function(r) {
       var cid = String(r.commentId || '');
       if (!cid) return;
       if (!likeMap[cid]) likeMap[cid] = { count: 0, userLiked: false };
@@ -214,6 +206,7 @@ function toggleCommentLike(params) {
     likeCount++;
     liked = true;
   }
+  invalidateSheet('CommentLikes');
 
   return ok({ commentId: commentId, liked: liked, likeCount: likeCount });
 }
@@ -249,6 +242,7 @@ function toggleChannelLike(params) {
     likeCount++;
     liked = true;
   }
+  invalidateSheet('ChannelLikes');
 
   return ok({ channelId: channelId, liked: liked, likeCount: likeCount });
 }
@@ -259,7 +253,7 @@ function getChannelLike(params) {
   var userKey   = params.userKey || '';
   if (!channelId) return err('channelId required');
 
-  var rows      = sheetToObjects('ChannelLikes');
+  var rows      = cachedSheetRead('ChannelLikes');
   var liked     = false;
   var likeCount = 0;
   rows.forEach(function(r) {
@@ -286,6 +280,7 @@ function addComment(params) {
 
   // Column order: id | postId | parentId | authorName | text | createdAt
   appendRow('EmpathyComments', [id, postId, parentId, authorName, text, createdAt]);
+  invalidateSheet('EmpathyComments');
 
   return ok({ id: id, postId: postId, parentId: parentId, name: authorName, text: text, time: createdAt });
 }
@@ -299,7 +294,7 @@ function ensurePost(params) {
 
   if (!recName) return err('recName required');
 
-  var rows = sheetToObjects('EmpathyPosts');
+  var rows = cachedSheetRead('EmpathyPosts');
 
   // Find by empCode first (stored in recEmployeeId column), then by name
   var existing = null;
@@ -322,6 +317,7 @@ function ensurePost(params) {
   var id = uuid();
   var createdAt = formatDate(new Date());
   appendRow('EmpathyPosts', [id, recEmployeeId, recName, recRole, recImgUrl, sndName, '', '', 0, createdAt]);
+  invalidateSheet('EmpathyPosts');
 
   return ok({ id: id, recName: recName, recRole: recRole, recImg: recImgUrl, isNew: true });
 }
@@ -380,6 +376,7 @@ function toggleLike(params) {
   }
 
   postsSheet.getRange(postRow, pLikeIdx + 1).setValue(currentLikes);
+  invalidateSheet('EmpathyPosts');
 
   return ok({ postId: postId, liked: liked, likeCount: currentLikes });
 }
