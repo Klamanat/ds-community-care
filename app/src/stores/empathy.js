@@ -77,7 +77,8 @@ export const useEmpathyStore = defineStore('empathy', () => {
       const sessionOnly = praisedPeople.value.filter(p => !serverIds.has(String(p.id)))
       praisedPeople.value = [
         ...data.map(p => ({
-          id:           String(p.id),
+          id:           String(p.empCode || p.id),
+          empCode:      String(p.empCode || ''),
           name:         p.name,
           role:         p.role,
           imgUrl:       p.imgUrl || '',
@@ -90,13 +91,14 @@ export const useEmpathyStore = defineStore('empathy', () => {
 
   // ── recordPraise — add/update session praise list (no GAS call) ─
   function recordPraise(member, channelId) {
-    const uid = channelId || String(member.id || member.name).trim()
+    const uid = channelId || String(member.empCode || member.id || member.name).trim()
     const existing = praisedPeople.value.find(p => String(p.id).trim() === uid)
     if (existing) {
       existing.commentCount = (existing.commentCount || 0) + 1
     } else {
       praisedPeople.value.unshift({
         id:           uid,
+        empCode:      member.empCode || '',
         name:         member.name,
         role:         member.role,
         imgUrl:       member.imgUrl || '',

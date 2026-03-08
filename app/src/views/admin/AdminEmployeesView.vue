@@ -348,7 +348,10 @@ async function doSave() {
         bdayRows.value.push({ key: bRes?.key || 'bday_' + Date.now(), employeeId: empId, name: form.name, role: form.role, ...bdayForm })
       }
     } else {
-      await svc.updateRow('Employees', 'id', empId, {
+      // Prefer empCode as key (human-assigned, stable); fall back to id
+      const keyCol = form.empCode ? 'empCode' : 'id'
+      const keyVal = form.empCode || empId
+      await svc.updateRow('Employees', keyCol, keyVal, {
         empCode: form.empCode,
         name: form.name, role: form.role, dept: form.dept, grad: form.grad,
         inTeam: form.inTeam, inStarGang: form.inStarGang,

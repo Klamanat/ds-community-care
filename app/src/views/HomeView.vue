@@ -83,7 +83,7 @@
     <!-- Section 3: เครื่องมือ -->
     <div class="sec">
       <div class="sec-hdr">
-        <span class="sec-title">🛠 เครื่องมือ</span>
+        <span class="sec-title">🛠 Other</span>
       </div>
       <div class="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-4">
         <div class="tool-card org ripple-host flex-col items-start" @click="ui.openModal('modal-org')">
@@ -99,7 +99,7 @@
         <div class="tool-card emp ripple-host flex-col items-start opacity-70" @click="ui.showToast('ตลาดนัด — เร็วๆ นี้ 🚀')">
           <div class="ti">🛍️</div>
           <div class="tt">ตลาดนัด</div>
-          <div class="ts">ซื้อ-ขายของในทีม</div>
+          <div class="ts">ปล่อยของง่าย ขายคล่อง เพื่อนจองพร้อมช้อป!</div>
           <div class="etags">
             <span class="etag">🚀 เร็วๆ นี้</span>
           </div>
@@ -124,7 +124,7 @@
     <!-- Section 5: กิจกรรมรายเดือน -->
     <div class="sec">
       <div class="sec-hdr">
-        <span class="sec-title">📅 กิจกรรมรายเดือน</span>
+        <span class="sec-title">📅 Activities</span>
       </div>
       <MonthsGrid @month-click="(idx) => ui.openMonthModal(idx)" />
     </div>

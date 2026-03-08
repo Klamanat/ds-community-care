@@ -357,8 +357,8 @@ async function selectPerson(m) {
   view.value           = 'thread'
   loadingThread.value  = true
 
-  // Use employeeId (or name) as channelId — no post created in EmpathyPosts
-  const channelId = String(m.id || m.name).trim()
+  // Use empCode as channelId — fallback to id or name for backward compat
+  const channelId = String(m.empCode || m.id || m.name).trim()
   activePostId.value = channelId
 
   try {

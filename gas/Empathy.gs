@@ -8,15 +8,17 @@
 // Sheet: EmpathyLikes
 // Columns: postId | userKey (track unique likes)
 
-// getEmpathyPeople — unique people from EmpathyComments (keyed by channelId = employeeId)
+// getEmpathyPeople — unique people from EmpathyComments (keyed by channelId = empCode)
 function getEmpathyPeople(params) {
   var comments = sheetToObjects('EmpathyComments');
 
-  // Preload employees for name/role/img enrichment
-  var empMap = {};
+  // Preload employees — dual-keyed by empCode AND id for backward compat
+  var empByCode = {};
+  var empById   = {};
   try {
     sheetToObjects('Employees').forEach(function(e) {
-      if (e.id) empMap[String(e.id)] = e;
+      if (e.empCode) empByCode[String(e.empCode)] = e;
+      if (e.id)      empById[String(e.id)]         = e;
     });
   } catch(e) {}
 
@@ -31,7 +33,8 @@ function getEmpathyPeople(params) {
   });
 
   var people = Object.keys(channelMap).map(function(cid) {
-    var emp = empMap[cid];
+    // Look up by empCode first (new data), then by id (old data)
+    var emp = empByCode[cid] || empById[cid];
     var imgUrl = '';
     if (emp && emp.imgUrl) {
       var raw = String(emp.imgUrl);
@@ -46,8 +49,9 @@ function getEmpathyPeople(params) {
     }
     return {
       id:           cid,
-      name:         emp ? String(emp.name  || cid) : cid,
-      role:         emp ? String(emp.role  || '')  : '',
+      empCode:      emp ? String(emp.empCode || '') : '',
+      name:         emp ? String(emp.name    || cid) : cid,
+      role:         emp ? String(emp.role    || '')  : '',
       imgUrl:       imgUrl,
       commentCount: channelMap[cid].count,
     };
@@ -69,20 +73,22 @@ function getEmpathyPosts(params) {
     return new Date(b.createdAt) - new Date(a.createdAt);
   });
 
-  // Preload employees for image fallback (keyed by id)
-  var empMap = {};
+  // Preload employees — dual-keyed by empCode AND id for backward compat
+  var empByCode = {};
+  var empById   = {};
   try {
     sheetToObjects('Employees').forEach(function(e) {
-      if (e.id) empMap[String(e.id)] = e;
+      if (e.empCode) empByCode[String(e.empCode)] = e;
+      if (e.id)      empById[String(e.id)]         = e;
     });
   } catch(e) {}
 
   var posts = rows.map(function(r) {
     var recImg = String(r.recImgUrl || '');
 
-    // If no image stored, look up from Employees sheet by recEmployeeId
+    // If no image stored, look up by recEmployeeId treating as empCode first, then id
     if (!recImg && r.recEmployeeId) {
-      var emp = empMap[String(r.recEmployeeId)];
+      var emp = empByCode[String(r.recEmployeeId)] || empById[String(r.recEmployeeId)];
       if (emp) {
         var empImg = String(emp.imgUrl || '');
         if (empImg.indexOf('drive:') === 0) {
@@ -295,7 +301,7 @@ function ensurePost(params) {
 
   var rows = sheetToObjects('EmpathyPosts');
 
-  // Find by employeeId first, then by name
+  // Find by empCode first (stored in recEmployeeId column), then by name
   var existing = null;
   if (recEmployeeId) {
     for (var i = 0; i < rows.length; i++) {

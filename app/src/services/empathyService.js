@@ -14,7 +14,7 @@ export async function createPost(p) {
   const rawImg  = p.recImgUrl || ''
   const safeImg = rawImg.startsWith('data:') ? '' : rawImg.slice(0, 300)
   const r = await gasGet('addEmpathyPost', {
-    recEmployeeId: p.recEmployeeId || '',
+    recEmployeeId: p.recEmpCode || p.recEmployeeId || '',
     recName:  p.recName,
     recRole:  p.recRole,
     recImgUrl: safeImg,
@@ -30,7 +30,7 @@ export async function ensurePost(p) {
   const rawImg  = p.recImgUrl || ''
   const safeImg = rawImg.startsWith('data:') ? '' : rawImg.slice(0, 300)
   const r = await gasGet('ensurePost', {
-    recEmployeeId: p.recEmployeeId || '',
+    recEmployeeId: p.recEmpCode || p.recEmployeeId || '',
     recName:  p.recName,
     recRole:  p.recRole  || '',
     recImgUrl: safeImg,

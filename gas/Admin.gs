@@ -106,7 +106,7 @@ function adminUpdateRow(params) {
   verifyToken(params.token);
   var sheetName = params.sheetName;
   var keyCol    = params.keyCol || 'id';
-  var keyVal    = String(params.keyVal || '');
+  var keyVal    = String(params.keyVal || '').trim();
 
   var RESERVED = ['token','sheetName','keyCol','keyVal','action'];
   var updates  = {};
@@ -120,15 +120,34 @@ function adminUpdateRow(params) {
   var keyIdx  = headers.indexOf(keyCol);
   if (keyIdx < 0) return err('Column not found: ' + keyCol);
 
+  // Also try empCode as fallback when primary key misses (Employees sheet only)
+  var fallbackIdx = (keyCol === 'id' && sheetName === 'Employees')
+    ? headers.indexOf('empCode') : -1;
+
+  function doUpdate(rowIdx) {
+    Object.keys(updates).forEach(function(col) {
+      var cIdx = headers.indexOf(col);
+      if (cIdx >= 0) sheet.getRange(rowIdx + 1, cIdx + 1).setValue(updates[col]);
+    });
+  }
+
   for (var i = 1; i < data.length; i++) {
-    if (String(data[i][keyIdx]) === keyVal) {
-      Object.keys(updates).forEach(function(col) {
-        var cIdx = headers.indexOf(col);
-        if (cIdx >= 0) sheet.getRange(i + 1, cIdx + 1).setValue(updates[col]);
-      });
+    if (String(data[i][keyIdx]).trim() === keyVal) {
+      doUpdate(i);
       return ok({ updated: true, key: keyVal });
     }
   }
+
+  // Fallback: match by empCode
+  if (fallbackIdx >= 0) {
+    for (var j = 1; j < data.length; j++) {
+      if (String(data[j][fallbackIdx]).trim() === keyVal) {
+        doUpdate(j);
+        return ok({ updated: true, key: keyVal, matchedBy: 'empCode' });
+      }
+    }
+  }
+
   return err('Row not found: ' + keyVal);
 }
 
