@@ -15,6 +15,29 @@ function getBirthdays(params) {
     rows = rows.filter(function(r) { return parseInt(r.monthIdx, 10) === m; });
   }
 
+  // Pre-load employees for imgUrl fallback (birthday row may have no photo)
+  var empRows = sheetToObjects('Employees');
+  var empMap = {};
+  empRows.forEach(function(e) { empMap[String(e.id)] = e; });
+
+  function resolveImgUrl(rawUrl, employeeId) {
+    var imgUrl = String(rawUrl || '');
+    // Fall back to employee's imgUrl if birthday has none
+    if (!imgUrl && employeeId) {
+      var emp = empMap[String(employeeId)];
+      if (emp) imgUrl = String(emp.imgUrl || '');
+    }
+    // Convert drive:fileId → base64 inline
+    if (imgUrl.indexOf('drive:') === 0) {
+      var fileId = imgUrl.slice(6);
+      try {
+        var bytes = DriveApp.getFileById(fileId).getBlob().getBytes();
+        imgUrl = 'data:image/jpeg;base64,' + Utilities.base64Encode(bytes);
+      } catch (e) { imgUrl = ''; }
+    }
+    return imgUrl;
+  }
+
   var result = rows.map(function(r) {
     return {
       key:         String(r.key || ''),
@@ -24,7 +47,7 @@ function getBirthdays(params) {
       monthIdx:    parseInt(r.monthIdx, 10) || 0,
       date:        String(r.date || ''),
       fallbackIdx: parseInt(r.fallbackIdx, 10) || 0,
-      imgUrl:      String(r.imgUrl || ''),
+      imgUrl:      resolveImgUrl(r.imgUrl, r.employeeId),
     };
   });
 

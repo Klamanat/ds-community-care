@@ -1,14 +1,17 @@
 <template>
   <div class="flex flex-col gap-3">
-    <div class="text-[12px] font-semibold text-app-mid text-center py-2">
-      💝 ชื่นชมเพื่อนร่วมงานของคุณวันนี้ • ทุก Empathy = +10 LINE pts
+    <div class="rounded-2xl px-4 py-3 text-center"
+         style="background:linear-gradient(135deg,#FDF2F8,#F5F0FF);border:1.5px solid rgba(236,72,153,0.15);">
+      <div class="text-[15px] font-black bg-[linear-gradient(135deg,#BE185D,#7C3AED)] bg-clip-text text-transparent">
+        💝 ชื่นชมเพื่อนร่วมงานของคุณวันนี้
+      </div>
+      <div class="mt-1 inline-flex items-center gap-1.5 bg-[linear-gradient(135deg,#FFF7ED,#FEF3C7)] border border-[#FCD34D] rounded-full px-3 py-0.5">
+        <span class="text-[12px]">🌟</span>
+        <span class="text-[11px] font-extrabold text-[#92400E]">ทุก Empathy = +10 LINE pts</span>
+      </div>
     </div>
 
-    <button class="modal-close-btn" @click="ui.openModal('modal-emp')">
-      💌 ส่งคำชื่นชม
-    </button>
-
-    <div v-if="loading" class="grid grid-cols-3 gap-3">
+<div v-if="loading" class="grid grid-cols-3 gap-3">
       <SkeletonCard v-for="i in 3" :key="i" height="220px" radius="16px" />
     </div>
     <div v-else-if="!empathy.praisedPeople.length" class="text-center py-6 text-app-light text-[13px]">

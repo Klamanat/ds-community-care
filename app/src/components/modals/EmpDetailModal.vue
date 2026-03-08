@@ -48,7 +48,10 @@
         <div class="cm-list">
           <div v-if="!post.comments.length" class="text-center py-5 text-app-light text-[13px]">ยังไม่มีความคิดเห็น 💭</div>
           <div v-for="c in post.comments" :key="c.id" class="cm-item">
-            <div class="cm-av bg-[linear-gradient(135deg,#FBCFE8,#EC4899)]">{{ c.name?.[0] }}</div>
+            <div class="cm-av bg-[linear-gradient(135deg,#FBCFE8,#EC4899)]">
+              <img v-if="commentImg(c.name)" :src="commentImg(c.name)" class="w-full h-full object-cover rounded-full" @error="(e) => e.target.style.display='none'" />
+              <template v-else>{{ c.name?.[0] }}</template>
+            </div>
             <div class="cm-bubble">
               <div class="cm-name">{{ c.name }}</div>
               <div class="cm-text">{{ c.text }}</div>
@@ -86,14 +89,25 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import BaseModal from '../shared/BaseModal.vue'
 import { useEmpathyStore } from '../../stores/empathy.js'
 import { useUiStore } from '../../stores/ui.js'
+import { useTeamStore } from '../../stores/team.js'
 import { formatThaiDatetime } from '../../utils/date.js'
 
 const empathy = useEmpathyStore()
 const ui = useUiStore()
+const team = useTeamStore()
+
+onMounted(() => { if (!team.empDirectory.length) team.loadDirectory() })
+
+const imgByName = computed(() => {
+  const map = {}
+  team.empDirectory.forEach(e => { if (e.name) map[e.name.trim()] = e.imgUrl || '' })
+  return map
+})
+function commentImg(name) { return imgByName.value[name?.trim()] || '' }
 const newComment = ref('')
 
 const post = computed(() => {

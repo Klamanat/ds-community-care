@@ -14,18 +14,18 @@
       </div>
       <AppBottomNav />
 
-      <!-- Global Modals -->
-      <BdayModal />
-      <EmpathyModal />
-      <EmpDetailModal />
-      <FinancialModal />
-      <MentalModal />
-      <OrgModal />
-      <ProfileModal />
-      <MonthModal />
-      <CultureModal />
-      <TrainingModal />
-      <RewardModal />
+      <!-- Global Modals — :key forces remount on every open so state resets -->
+      <BdayModal      :key="ui.modalKeys['modal-bday']      || 0" />
+      <EmpathyModal   :key="ui.modalKeys['modal-emp']       || 0" />
+      <EmpDetailModal :key="ui.modalKeys['modal-emp-detail'] || 0" />
+      <FinancialModal :key="ui.modalKeys['modal-financial']  || 0" />
+      <MentalModal    :key="ui.modalKeys['modal-mental']     || 0" />
+      <OrgModal       :key="ui.modalKeys['modal-org']        || 0" />
+      <ProfileModal   :key="ui.modalKeys['modal-profile']    || 0" />
+      <MonthModal     :key="ui.modalKeys['modal-month']      || 0" />
+      <CultureModal   :key="ui.modalKeys['modal-culture']    || 0" />
+      <TrainingModal  :key="ui.modalKeys['modal-training']   || 0" />
+      <RewardModal    :key="ui.modalKeys['modal-reward']     || 0" />
 
       <!-- Toast -->
       <div class="toast" :class="{ hidden: !ui.toast.visible }">{{ ui.toast.msg }}</div>

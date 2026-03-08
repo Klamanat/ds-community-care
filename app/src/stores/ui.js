@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 
 export const useUiStore = defineStore('ui', () => {
   const activeModal = ref(null)
@@ -7,9 +7,11 @@ export const useUiStore = defineStore('ui', () => {
   const notifBadge = ref(3)
   const currentUser = ref({ id: '', name: '', role: '', img: '', dept: '', emoji: '😊' })
   const toast = ref({ msg: '', visible: false })
+  const modalKeys = reactive({})
   let _toastTimer = null
 
   function openModal(id) {
+    modalKeys[id] = (modalKeys[id] || 0) + 1
     activeModal.value = id
     document.body.classList.add('modal-open')
   }
@@ -36,5 +38,5 @@ export const useUiStore = defineStore('ui', () => {
     notifBadge.value = 0
   }
 
-  return { activeModal, selectedMonthIdx, notifBadge, currentUser, toast, openModal, openMonthModal, closeModal, showToast, clearNotifBadge }
+  return { activeModal, modalKeys, selectedMonthIdx, notifBadge, currentUser, toast, openModal, openMonthModal, closeModal, showToast, clearNotifBadge }
 })

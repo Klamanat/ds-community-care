@@ -49,7 +49,7 @@
         v-for="(s, idx) in team.sgMembers"
         :key="s.id || s.name"
         class="star-card ripple-host"
-        @click="handleRippleClick"
+        @click="ui.showToast('Star Gang Profile — เร็วๆ นี้ 🚀')"
       >
         <div class="star-av" :style="{ background: team.getGrad(idx), overflow: 'hidden' }">
           <img v-if="s.imgUrl" :src="s.imgUrl" style="width:100%;height:100%;object-fit:cover;" />
@@ -67,12 +67,10 @@
 import { ref, onMounted } from 'vue'
 import { useTeamStore } from '../stores/team.js'
 import { useUiStore } from '../stores/ui.js'
-import { useRipple } from '../composables/useRipple.js'
 import { useFadeIn } from '../composables/useFadeIn.js'
 
 const team = useTeamStore()
 const ui = useUiStore()
-const { handleRippleClick } = useRipple()
 useFadeIn()
 
 const EMOJIS = ['🦁','🌸','🦊','🐬','🦋','🐯','⭐','🌟','🦄','😎','🐺','✨']

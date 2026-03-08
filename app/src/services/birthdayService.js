@@ -2,7 +2,27 @@ import { gasGet, gasPost } from './api.js'
 
 export async function fetchMonth(monthIdx) {
   const r = await gasGet('getBirthdays', { monthIdx })
-  return r.data
+  return (r.data || []).map(b => ({
+    key:         b.key,
+    employeeId:  b.employeeId,
+    name:        b.name,
+    role:        b.role,
+    date:        b.date,
+    monthIdx:    b.monthIdx,
+    fallbackIdx: Number(b.fallbackIdx) || 0,
+    photo:       b.imgUrl || '',   // GAS returns imgUrl, component expects photo
+    wishes:      [],               // loaded lazily via loadWishes
+  }))
+}
+
+export async function fetchWishes(birthdayKey) {
+  const r = await gasGet('getBirthdayWishes', { birthdayKey })
+  return (r.data || []).map(w => ({
+    from:  w.fromName,
+    avIdx: w.fromAvIdx,
+    msg:   w.msg,
+    time:  w.time,
+  }))
 }
 
 /**

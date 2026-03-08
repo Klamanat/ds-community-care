@@ -139,7 +139,7 @@ function addMissingSheets() {
 var ALL_SHEETS = [
   {
     name: 'Employees',
-    headers: ['id','name','role','dept','imgUrl','imgId','grad','inTeam','inStarGang','starGangName','starGangRole'],
+    headers: ['id','empCode','name','role','dept','imgUrl','imgId','grad','inTeam','inStarGang','starGangName','starGangRole'],
   },
   {
     name: 'Birthdays',

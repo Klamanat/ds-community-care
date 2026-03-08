@@ -68,6 +68,14 @@ export const useBirthdayStore = defineStore('birthday', () => {
     }
   }
 
+  async function loadWishes(key) {
+    const emp = getEmployee(key)
+    if (!emp) return
+    try {
+      emp.wishes = await svc.fetchWishes(key)
+    } catch { /* keep empty */ }
+  }
+
   async function uploadPhoto(key, dataUrl) {
     const emp = getEmployee(key)
     if (!emp) return
@@ -80,5 +88,5 @@ export const useBirthdayStore = defineStore('birthday', () => {
     }
   }
 
-  return { allEmployees, loadedMonths, isLoading, getEmployee, getFallbackBg, getFallbackEmoji, getSenderAvatar, loadMonth, sendWish, uploadPhoto }
+  return { allEmployees, loadedMonths, isLoading, getEmployee, getFallbackBg, getFallbackEmoji, getSenderAvatar, loadMonth, loadWishes, sendWish, uploadPhoto }
 })

@@ -39,7 +39,6 @@
           <span v-if="!events.length" class="month-pill">ยังไม่มีกิจกรรม</span>
         </div>
       </div>
-      <button class="month-close-btn" @click="ui.closeModal()">✕</button>
     </div>
 
     <!-- Events list -->

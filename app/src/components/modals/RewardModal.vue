@@ -42,7 +42,7 @@
         </div>
       </div>
 
-      <button class="modal-close-btn mt-4" style="background:linear-gradient(135deg,#06C755,#00A040);" @click="ui.closeModal()">
+      <button class="modal-close-btn mt-4" style="background:linear-gradient(135deg,#06C755,#00A040);" @click="ui.showToast('ระบบสะสมคะแนน — เร็วๆ นี้ 🚀')">
         สะสมคะแนนเลย ⭐
       </button>
     </div>

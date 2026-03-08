@@ -17,9 +17,9 @@ export const useUserAuthStore = defineStore('userAuth', () => {
     isLoading.value = true; error.value = ''
     try {
       const res  = await gasGet('getEmployees')
-      const emp  = (res.data || []).find(e => String(e.id) === String(id).trim())
+      const emp  = (res.data || []).find(e => String(e.empCode).toLowerCase() === String(id).trim().toLowerCase())
       if (!emp) {
-        error.value = 'ไม่พบรหัสพนักงาน กรุณาตรวจสอบอีกครั้ง'
+        error.value = 'ไม่พบรหัสพนักงานนี้ กรุณาตรวจสอบอีกครั้ง'
         return false
       }
       _persist(emp)

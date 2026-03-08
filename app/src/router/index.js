@@ -39,9 +39,7 @@ const routes = [
   },
   {
     path: '/admin/birthdays',
-    name: 'admin-birthdays',
-    component: () => import('../views/admin/AdminBirthdaysView.vue'),
-    meta: { adminLayout: true, requiresAdmin: true },
+    redirect: '/admin/employees',
   },
   {
     path: '/admin/empathy',

@@ -167,20 +167,47 @@ function adminAddEmployee(params) {
 
   var id = params.id || uuid();
   var row = headers.map(function(h) {
-    if (h === 'id')          return id;
-    if (h === 'name')        return params.name        || '';
-    if (h === 'role')        return params.role        || '';
-    if (h === 'dept')        return params.dept        || '';
-    if (h === 'imgUrl')      return params.imgUrl      || '';
-    if (h === 'grad')        return params.grad        || '';
-    if (h === 'inTeam')      return params.inTeam === 'true' || params.inTeam === true;
-    if (h === 'inStarGang')  return params.inStarGang === 'true' || params.inStarGang === true;
+    if (h === 'id')           return id;
+    if (h === 'empCode')      return params.empCode     || '';
+    if (h === 'name')         return params.name        || '';
+    if (h === 'role')         return params.role        || '';
+    if (h === 'dept')         return params.dept        || '';
+    if (h === 'imgUrl')       return params.imgUrl      || '';
+    if (h === 'imgId')        return params.imgId       || '';
+    if (h === 'grad')         return params.grad        || '';
+    if (h === 'inTeam')       return params.inTeam === 'true' || params.inTeam === true;
+    if (h === 'inStarGang')   return params.inStarGang === 'true' || params.inStarGang === true;
     if (h === 'starGangName') return params.starGangName || '';
     if (h === 'starGangRole') return params.starGangRole || '';
     return '';
   });
   sheet.appendRow(row);
   return ok({ created: true, id: id });
+}
+
+/**
+ * adminAddBirthday — append a new row to the Birthdays sheet.
+ * params: token, name, role, monthIdx, date, fallbackIdx, employeeId
+ */
+function adminAddBirthday(params) {
+  verifyToken(params.token);
+  var sheet   = getSheet('Birthdays');
+  var headers = sheet.getDataRange().getValues()[0];
+
+  var key = 'bday_' + uuid();
+  var row = headers.map(function(h) {
+    if (h === 'key')         return key;
+    if (h === 'employeeId')  return params.employeeId  || '';
+    if (h === 'name')        return params.name        || '';
+    if (h === 'role')        return params.role        || '';
+    if (h === 'monthIdx')    return parseInt(params.monthIdx,    10) || 0;
+    if (h === 'date')        return params.date        || '';
+    if (h === 'fallbackIdx') return parseInt(params.fallbackIdx, 10) || 0;
+    if (h === 'imgUrl')      return params.imgUrl      || '';
+    return '';
+  });
+  sheet.appendRow(row);
+  return ok({ created: true, key: key });
 }
 
 /**

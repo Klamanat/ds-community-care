@@ -4,12 +4,7 @@
 
     <!-- Header -->
     <div class="flex-shrink-0 bg-[linear-gradient(135deg,#FDF2F8,#F5F0FF)] px-5 py-3.5 border-b border-pink/[0.12] flex items-center gap-2.5">
-      <div
-        v-if="view !== 'grid'"
-        @click="goBack"
-        class="flex w-[30px] h-[30px] rounded-full bg-pink/10 cursor-pointer items-center justify-center text-[14px] flex-shrink-0"
-      >←</div>
-      <div class="flex-1 text-center">
+<div class="flex-1 text-center">
         <div class="text-[16px] font-black bg-[linear-gradient(135deg,#BE185D,#7C3AED)] bg-clip-text text-transparent">{{ headerTitle }}</div>
       </div>
     </div>
@@ -212,7 +207,7 @@
         <input
           v-model="dirSearch"
           @input="filterDir"
-          placeholder="พิมพ์รหัสหรือชื่อพนักงาน..."
+          placeholder="พิมพ์รหัสพนักงาน (empCode) หรือชื่อ..."
           class="w-full border-[1.5px] border-pink/25 rounded-xl px-3.5 py-2.5 text-[13px] text-[#6B21A8] bg-[#FFF5FB] outline-none"
         />
         <div v-if="dirResults.length" class="border-[1.5px] border-pink/20 rounded-xl overflow-hidden bg-white">
@@ -225,7 +220,7 @@
             <div class="w-9 h-9 rounded-full bg-[linear-gradient(135deg,#FBCFE8,#EC4899)] flex items-center justify-center text-[13px] font-black text-white flex-shrink-0">{{ e.name?.[0] }}</div>
             <div class="flex-1 min-w-0">
               <div class="text-[12px] font-extrabold text-[#7C2D8C]">{{ e.name }}</div>
-              <div class="text-[10px] text-[#C084C0] font-semibold">{{ e.id }} · {{ e.role }}</div>
+              <div class="text-[10px] text-[#C084C0] font-semibold">{{ e.empCode || e.id }} · {{ e.role }}</div>
             </div>
           </div>
         </div>
@@ -240,7 +235,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted, watch } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import BaseModal from '../shared/BaseModal.vue'
 import { useEmpathyStore } from '../../stores/empathy.js'
 import { useTeamStore }    from '../../stores/team.js'
@@ -277,12 +272,10 @@ const pickedDir  = ref(null)
 const tags = ['เก่งมาก ⭐', 'ขอบคุณ 🙏', 'สู้ๆ 💪', 'ประทับใจ 💫', 'ช่วยเหลือ 🤝']
 
 // ── Lifecycle ──────────────────────────────────────────────────────
-onMounted(() => { empathy.loadPeople(); team.loadDirectory() })
-watch(() => ui.activeModal, async id => {
-  if (id !== 'modal-emp') return
+onMounted(async () => {
   empathy.loadPeople()
   team.loadDirectory()
-  // Pre-select person from EmpathyBoard click
+  // Pre-select person from EmpathyBoard card click
   if (ui._empPreselect) {
     const person = ui._empPreselect
     ui._empPreselect = null
@@ -426,13 +419,13 @@ function filterDir() {
   const q = dirSearch.value.trim().toLowerCase()
   if (!q) { dirResults.value = []; return }
   dirResults.value = team.empDirectory.filter(e =>
-    e.id.toLowerCase().includes(q) || e.name.toLowerCase().includes(q)
+    (e.empCode || '').toLowerCase().includes(q) || e.name.toLowerCase().includes(q)
   ).slice(0, 8)
 }
 
 function pickFromDir(e) {
   pickedDir.value  = e
-  dirSearch.value  = `${e.id} — ${e.name}`
+  dirSearch.value  = `${e.empCode || e.id} — ${e.name}`
   dirResults.value = []
 }
 

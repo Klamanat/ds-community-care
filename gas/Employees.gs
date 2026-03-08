@@ -73,12 +73,14 @@ function getEmployees(params) {
     }
 
     return {
-      id:           String(r.id || ''),
-      name:         String(r.name || ''),
-      role:         String(r.role || ''),
-      dept:         String(r.dept || ''),
+      id:           String(r.id      || ''),
+      empCode:      String(r.empCode || ''),
+      name:         String(r.name    || ''),
+      role:         String(r.role    || ''),
+      dept:         String(r.dept    || ''),
       imgUrl:       imgUrl,
-      grad:         String(r.grad || ''),
+      imgId:        String(r.imgId   || ''),
+      grad:         String(r.grad    || ''),
       inTeam:       r.inTeam === true || r.inTeam === 'TRUE',
       inStarGang:   r.inStarGang === true || r.inStarGang === 'TRUE',
       starGangName: String(r.starGangName || ''),

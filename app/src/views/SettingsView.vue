@@ -33,7 +33,7 @@
         </div>
         <span class="setting-arr">›</span>
       </div>
-      <div class="setting-item">
+      <div class="setting-item" @click="ui.showToast('ความปลอดภัย — เร็วๆ นี้ 🚀')">
         <span class="setting-ico">🔐</span>
         <div class="setting-info">
           <div class="setting-title">ความปลอดภัย</div>
@@ -41,7 +41,7 @@
         </div>
         <span class="setting-arr">›</span>
       </div>
-      <div class="setting-item">
+      <div class="setting-item" @click="ui.showToast('เชื่อมต่อบัญชี — เร็วๆ นี้ 🚀')">
         <span class="setting-ico">🔗</span>
         <div class="setting-info">
           <div class="setting-title">เชื่อมต่อบัญชี</div>
@@ -60,7 +60,7 @@
           <div class="setting-title">{{ tog.title }}</div>
           <div class="setting-sub">{{ tog.sub }}</div>
         </div>
-        <div class="toggle" :class="{ on: tog.on }" @click="tog.on = !tog.on"></div>
+        <div class="toggle" :class="{ on: tog.on }" @click="tog.on = !tog.on; ui.showToast('การตั้งค่าการแจ้งเตือน — เร็วๆ นี้ 🚀')"></div>
       </div>
     </div>
 
@@ -73,7 +73,7 @@
           <div class="setting-title">แสดงสถานะออนไลน์</div>
           <div class="setting-sub">ให้คนอื่นเห็นว่าคุณออนไลน์</div>
         </div>
-        <div class="toggle on" @click="(e) => e.target.classList.toggle('on')"></div>
+        <div class="toggle on" @click="ui.showToast('การตั้งค่าความเป็นส่วนตัว — เร็วๆ นี้ 🚀')"></div>
       </div>
       <div class="setting-item">
         <span class="setting-ico">🎉</span>
@@ -81,14 +81,14 @@
           <div class="setting-title">แสดงวันเกิดในปฏิทิน</div>
           <div class="setting-sub">ให้ทีมเห็นวันเกิดของคุณ</div>
         </div>
-        <div class="toggle on" @click="(e) => e.target.classList.toggle('on')"></div>
+        <div class="toggle on" @click="ui.showToast('การตั้งค่าความเป็นส่วนตัว — เร็วๆ นี้ 🚀')"></div>
       </div>
     </div>
 
     <!-- General -->
     <div class="setting-group">
       <div class="setting-group-title">ทั่วไป</div>
-      <div class="setting-item">
+      <div class="setting-item" @click="ui.showToast('การตั้งค่าภาษา — เร็วๆ นี้ 🚀')">
         <span class="setting-ico">🌏</span>
         <div class="setting-info">
           <div class="setting-title">ภาษา</div>
@@ -96,7 +96,7 @@
         </div>
         <span class="setting-arr">›</span>
       </div>
-      <div class="setting-item">
+      <div class="setting-item" @click="ui.showToast('การตั้งค่าธีม — เร็วๆ นี้ 🚀')">
         <span class="setting-ico">🎨</span>
         <div class="setting-info">
           <div class="setting-title">ธีม</div>
@@ -104,7 +104,7 @@
         </div>
         <span class="setting-arr">›</span>
       </div>
-      <div class="setting-item">
+      <div class="setting-item" @click="ui.showToast('DS Community Care v2.0 🚀')">
         <span class="setting-ico">ℹ️</span>
         <div class="setting-info">
           <div class="setting-title">เกี่ยวกับแอป</div>
@@ -116,7 +116,7 @@
 
     <!-- Logout -->
     <div class="bg-white rounded-lg border border-red-100 shadow-app-sm overflow-hidden mb-8">
-      <div class="setting-item text-red-500">
+      <div class="setting-item text-red-500" @click="handleLogout">
         <span class="setting-ico">🚪</span>
         <div class="setting-info">
           <div class="setting-title text-red-500">ออกจากระบบ</div>
@@ -130,8 +130,13 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUiStore } from '../stores/ui.js'
-const ui = useUiStore()
+import { useUserAuthStore } from '../stores/userAuth.js'
+
+const ui       = useUiStore()
+const userAuth = useUserAuthStore()
+const router   = useRouter()
 
 const toggles = ref([
   { key:'push',    ico:'🔔', title:'Push Notification', sub:'รับแจ้งเตือนกิจกรรมทั้งหมด',          on: true  },
@@ -139,4 +144,9 @@ const toggles = ref([
   { key:'empathy', ico:'💝', title:'Community Empathy', sub:'แจ้งเมื่อมีคนส่งความรู้สึกดีๆ',          on: true  },
   { key:'event',   ico:'📅', title:'กิจกรรมใหม่',       sub:'แจ้งเตือนเมื่อมีกิจกรรมใหม่',            on: false },
 ])
+
+function handleLogout() {
+  userAuth.logout()
+  router.push('/login')
+}
 </script>

@@ -96,24 +96,18 @@
             <div class="org-av" style="background:linear-gradient(135deg,#C7D2FE,#6366F1);">✨</div>
           </div>
         </div>
-        <div class="tool-card emp ripple-host flex-col items-start" @click="ui.openModal('modal-emp')">
-          <div class="ti">💝</div>
-          <div class="tt">Empathy Board</div>
-          <div class="ts">ชื่นชมเพื่อนร่วมงาน</div>
+        <div class="tool-card emp ripple-host flex-col items-start opacity-70" @click="ui.showToast('ตลาดนัด — เร็วๆ นี้ 🚀')">
+          <div class="ti">🛍️</div>
+          <div class="tt">ตลาดนัด</div>
+          <div class="ts">ซื้อ-ขายของในทีม</div>
           <div class="etags">
-            <span class="etag">เก่งมาก ⭐</span>
-            <span class="etag">ขอบคุณ 🙏</span>
+            <span class="etag">🚀 เร็วๆ นี้</span>
           </div>
         </div>
         <div class="tool-card org ripple-host flex-col items-start" @click="router.push('/idea')">
           <div class="ti">💡</div>
           <div class="tt">เสนอไอเดีย</div>
           <div class="ts">แชร์ความคิดสร้างสรรค์</div>
-        </div>
-        <div class="tool-card emp ripple-host flex-col items-start" @click="router.push('/star')">
-          <div class="ti">⭐</div>
-          <div class="tt">Star of Month</div>
-          <div class="ts">พนักงานดาวเด่น</div>
         </div>
       </div>
     </div>
@@ -139,7 +133,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import ConsultCards from '../components/home/ConsultCards.vue'
 import MonthsGrid from '../components/home/MonthsGrid.vue'
@@ -151,7 +145,9 @@ const router = useRouter()
 const ui = useUiStore()
 const bday = useBirthdayStore()
 
-const currentMonth = new Date().getMonth()
+const currentMonth = new Date().getMonth()  // 0-based
+
+onMounted(() => bday.loadMonth(currentMonth))
 
 const bdayEmps = computed(() => bday.allEmployees[currentMonth] || [])
 const bdaySub = computed(() => {

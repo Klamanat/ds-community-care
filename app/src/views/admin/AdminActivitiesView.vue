@@ -2,80 +2,71 @@
   <div class="al-wrap">
     <header class="al-header">
       <div class="al-logo">🛡️ DS Admin</div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span style="font-size:13px;color:#6B7280;">สวัสดี, <strong>{{ admin.adminName }}</strong></span>
+      <div class="al-header-right">
+        <span class="al-user-name">{{ admin.adminName }}</span>
         <button class="al-logout-btn" @click="doLogout">ออกจากระบบ</button>
       </div>
     </header>
 
     <main class="al-main">
-      <a class="al-back" @click="router.push('/admin')">← กลับ Dashboard</a>
-      <h2 class="al-page-title">📅 จัดการกิจกรรมรายเดือน</h2>
+      <a class="al-back" @click="router.push('/admin')">← Dashboard</a>
 
-      <!-- Month filter -->
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+      <div class="al-page-header">
+        <h2 class="al-page-title">📅 กิจกรรม</h2>
+        <button class="al-btn al-btn-primary" @click="openAdd">+ เพิ่มกิจกรรม</button>
+      </div>
+
+      <!-- Month filter chips -->
+      <div class="al-filters">
         <button
-          v-for="m in MONTHS" :key="m.idx"
-          class="al-btn"
-          :style="filterMonth === m.idx ? 'background:#6366F1;color:white;' : 'background:#F3F4F6;color:#374151;'"
-          @click="filterMonth = m.idx"
-        >{{ m.short }}</button>
-        <button
-          class="al-btn"
-          :style="filterMonth === 0 ? 'background:#6366F1;color:white;' : 'background:#F3F4F6;color:#374151;'"
+          class="al-chip"
+          :class="{ active: filterMonth === 0 }"
           @click="filterMonth = 0"
         >ทั้งหมด</button>
+        <button
+          v-for="m in MONTHS" :key="m.idx"
+          class="al-chip"
+          :class="{ active: filterMonth === m.idx }"
+          @click="filterMonth = m.idx"
+        >{{ m.short }}</button>
       </div>
 
       <div class="al-card">
         <div class="al-card-header">
-          <span class="al-card-title">กิจกรรม ({{ filtered.length }})</span>
-          <button class="al-btn al-btn-primary" @click="openAdd">+ เพิ่มกิจกรรม</button>
+          <span class="al-card-title">กิจกรรม</span>
+          <span class="al-badge al-badge-blue">{{ filtered.length }} รายการ</span>
         </div>
 
-        <div v-if="loading" class="al-loading">กำลังโหลด...</div>
-        <div v-else-if="filtered.length === 0" class="al-empty">ไม่มีกิจกรรม</div>
-        <div v-else class="al-table-wrap">
-          <table class="al-table">
-            <thead>
-              <tr>
-                <th>เดือน</th>
-                <th>รูป</th>
-                <th>กิจกรรม</th>
-                <th>วันที่</th>
-                <th>สถานที่</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="r in filtered" :key="r.id">
-                <td style="white-space:nowrap;">
-                  <span class="al-badge al-badge-pending">{{ monthName(r.monthIdx) }}</span>
-                </td>
-                <td>
-                  <img v-if="r.imgUrl" :src="r.imgUrl" class="act-thumb" />
-                  <span v-else style="font-size:18px;opacity:0.3;">🖼️</span>
-                </td>
-                <td style="font-weight:700;">{{ r.emoji }} {{ r.name }}</td>
-                <td style="font-size:12px;white-space:nowrap;">{{ r.date }}</td>
-                <td style="font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ r.loc }}</td>
-                <td style="display:flex;gap:6px;">
-                  <button class="al-btn al-btn-edit" @click="openEdit(r)">แก้ไข</button>
-                  <button class="al-btn al-btn-delete" @click="confirmDelete(r)">ลบ</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div v-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
+        <div v-else-if="!filtered.length" class="al-empty">📭 ไม่มีกิจกรรม</div>
+
+        <div v-else>
+          <div class="al-item" v-for="r in filtered" :key="r.id">
+            <img v-if="r.imgUrl" :src="r.imgUrl" class="al-item-thumb" />
+            <div v-else class="al-item-avatar">{{ r.emoji || '📅' }}</div>
+            <div class="al-item-body">
+              <div class="al-item-title">{{ r.name }}</div>
+              <div class="al-item-sub">{{ r.date }} {{ r.loc ? '· ' + r.loc : '' }}</div>
+              <div class="al-item-meta">
+                <span class="al-badge al-badge-month">{{ monthName(r.monthIdx) }}</span>
+              </div>
+            </div>
+            <div class="al-item-actions">
+              <button class="al-btn al-btn-edit" @click="openEdit(r)">แก้ไข</button>
+              <button class="al-btn al-btn-delete" @click="confirmDelete(r)">ลบ</button>
+            </div>
+          </div>
         </div>
       </div>
     </main>
 
     <!-- Add/Edit Modal -->
     <div v-if="modal.open" class="al-modal-overlay" @click.self="modal.open=false">
-      <div class="al-modal" style="max-width:520px;">
+      <div class="al-modal">
+        <div class="al-modal-handle"></div>
         <div class="al-modal-title">{{ modal.mode === 'add' ? '+ เพิ่มกิจกรรม' : '✏️ แก้ไขกิจกรรม' }}</div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="al-form-2col">
           <div class="al-form-row">
             <label class="al-form-label">เดือน *</label>
             <select v-model="form.monthIdx" class="al-form-select">
@@ -107,7 +98,7 @@
         </div>
         <div class="al-form-row">
           <label class="al-form-label">ขั้นตอนกิจกรรม (แต่ละขั้นขึ้นบรรทัดใหม่)</label>
-          <textarea v-model="form.steps" class="al-form-textarea" rows="5" placeholder="1. ลงทะเบียน&#10;2. รับเอกสาร&#10;3. เข้าร่วมกิจกรรม"></textarea>
+          <textarea v-model="form.steps" class="al-form-textarea" rows="4" placeholder="1. ลงทะเบียน&#10;2. รับเอกสาร&#10;3. เข้าร่วมกิจกรรม"></textarea>
         </div>
         <div class="al-form-row">
           <label class="al-form-label">Join URL (ถ้ามี)</label>
@@ -121,23 +112,23 @@
             <img v-if="imgPreview && !imgUploading" :src="imgPreview" class="act-upload-preview" />
             <div v-else-if="imgUploading" class="act-upload-placeholder">
               <span style="font-size:22px;">⏳</span>
-              <span style="font-size:12px;color:#6B7280;margin-top:4px;">กำลังอัปโหลดไป Google Drive...</span>
+              <span style="font-size:12px;color:#6B7280;margin-top:4px;">กำลังอัปโหลด...</span>
             </div>
             <div v-else class="act-upload-placeholder">
               <span style="font-size:28px;">🖼️</span>
               <span style="font-size:12px;color:#9CA3AF;margin-top:4px;">คลิกเพื่ออัปโหลด → Google Drive</span>
             </div>
           </div>
-          <button v-if="imgPreview && !imgUploading" class="al-btn" style="background:#FEE2E2;color:#DC2626;margin-top:6px;width:100%;" @click.stop="clearImg">🗑️ ลบรูป</button>
+          <button v-if="imgPreview && !imgUploading" class="al-btn al-btn-delete" style="margin-top:6px;width:100%;" @click.stop="clearImg">🗑️ ลบรูป</button>
           <input ref="imgFileInput" type="file" accept="image/*" style="display:none" @change="onImgChange" />
         </div>
 
-        <div v-if="modal.error" style="color:#DC2626;font-size:12px;margin-bottom:10px;">{{ modal.error }}</div>
+        <div v-if="modal.error" class="al-error">⚠️ {{ modal.error }}</div>
 
-        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
-          <button class="al-btn" style="background:#F3F4F6;color:#374151;" @click="modal.open=false">ยกเลิก</button>
+        <div class="al-modal-footer">
+          <button class="al-btn al-btn-cancel" @click="modal.open=false">ยกเลิก</button>
           <button class="al-btn al-btn-save" :disabled="modal.saving || imgUploading" @click="saveModal">
-            {{ modal.saving ? 'กำลังบันทึก...' : imgUploading ? 'รอรูปอัปโหลด...' : 'บันทึก' }}
+            {{ modal.saving ? 'กำลังบันทึก...' : imgUploading ? 'รอรูป...' : '✅ บันทึก' }}
           </button>
         </div>
       </div>
@@ -145,15 +136,16 @@
 
     <!-- Delete Confirm -->
     <div v-if="delTarget" class="al-modal-overlay" @click.self="delTarget=null">
-      <div class="al-modal" style="max-width:360px;">
+      <div class="al-modal">
+        <div class="al-modal-handle"></div>
         <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
         <p style="font-size:13px;color:#374151;margin:0 0 16px;">
           ลบกิจกรรม "<strong>{{ delTarget.name }}</strong>" ใช่หรือไม่?
         </p>
-        <div style="display:flex;gap:8px;justify-content:flex-end;">
-          <button class="al-btn" style="background:#F3F4F6;color:#374151;" @click="delTarget=null">ยกเลิก</button>
+        <div class="al-modal-footer">
+          <button class="al-btn al-btn-cancel" @click="delTarget=null">ยกเลิก</button>
           <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
-            {{ deleting ? 'กำลังลบ...' : 'ลบ' }}
+            {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
           </button>
         </div>
       </div>
@@ -180,7 +172,6 @@ const form   = reactive({ id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', l
 const delTarget = ref(null)
 const deleting  = ref(false)
 
-// Date helpers
 const THAI_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
 const dateInput = ref('')
 
@@ -201,7 +192,6 @@ function thaiToIso(thai) {
   return `${year}-${String(monthIdx + 1).padStart(2,'0')}-${String(parseInt(m[1])).padStart(2,'0')}`
 }
 
-// Image upload
 const imgFileInput = ref(null)
 const imgPreview   = ref('')
 const imgUploading = ref(false)
@@ -212,16 +202,13 @@ async function onImgChange(e) {
   imgUploading.value = true
   modal.error = ''
   try {
-    // Resize for local preview + Drive upload
     const b64 = await resizeToBase64(file, 1200, 600, 0.88)
-    imgPreview.value = b64               // แสดง preview ทันที
-
-    // Upload to Drive → Profiles subfolder
+    imgPreview.value = b64
     const res = await svc.uploadImage(b64, file.name, 'activities')
-    form.imgId  = res.data.id            // เก็บ Drive file ID
-    form.imgUrl = ''                     // Drive เป็น source of truth แล้ว
+    form.imgId  = res.data.id
+    form.imgUrl = ''
   } catch (err) {
-    modal.error = 'อัปโหลดรูปล้มเหลว: ' + (err.message || 'ลองใหม่อีกครั้ง')
+    modal.error = 'อัปโหลดรูปล้มเหลว: ' + (err.message || 'ลองใหม่')
     imgPreview.value = ''
   } finally {
     imgUploading.value = false
@@ -230,9 +217,7 @@ async function onImgChange(e) {
 }
 
 function clearImg() {
-  form.imgUrl  = ''
-  form.imgId   = ''
-  imgPreview.value = ''
+  form.imgUrl = ''; form.imgId = ''; imgPreview.value = ''
 }
 
 const MONTHS = [
@@ -251,8 +236,7 @@ const MONTHS = [
 ]
 
 function monthName(idx) {
-  const m = MONTHS.find(m => String(m.idx) === String(idx))
-  return m ? m.short : idx
+  return MONTHS.find(m => String(m.idx) === String(idx))?.short || idx
 }
 
 const filtered = computed(() =>
@@ -268,16 +252,13 @@ onMounted(async () => {
 
 function openAdd() {
   Object.assign(form, { id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', imgUrl:'', imgId:'' })
-  dateInput.value = ''
-  imgPreview.value = ''
-  imgUploading.value = false
+  dateInput.value = ''; imgPreview.value = ''; imgUploading.value = false
   modal.mode = 'add'; modal.error = ''; modal.open = true
 }
 
 function openEdit(r) {
   Object.assign(form, { ...r, monthIdx: String(r.monthIdx) })
   form.imgId = r.imgId || ''
-  // ถ้ามี imgId → imgUrl คือ base64 ที่ GAS inline มา ใช้แค่ preview ไม่ส่งกลับ Sheets
   if (form.imgId) form.imgUrl = ''
   dateInput.value = thaiToIso(r.date)
   imgPreview.value = r.imgUrl || ''
@@ -322,40 +303,4 @@ function doLogout() { admin.logout(); router.push('/admin/login') }
 
 <style scoped>
 @import './admin.css';
-
-.act-thumb {
-  width: 48px;
-  height: 28px;
-  object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid #E5E7EB;
-}
-
-.act-upload-zone {
-  border: 2px dashed #D1D5DB;
-  border-radius: 8px;
-  cursor: pointer;
-  overflow: hidden;
-  min-height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: border-color 0.2s;
-}
-.act-upload-zone:hover { border-color: #6366F1; }
-
-.act-upload-preview {
-  width: 100%;
-  max-height: 200px;
-  object-fit: cover;
-  display: block;
-}
-
-.act-upload-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 24px;
-}
 </style>

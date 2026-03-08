@@ -12,8 +12,9 @@ function doPost(e) {
     var action = body.action;
 
     var handlers = {
-      uploadImage:          function() { return uploadImage(body); },
-      login:                function() { return login(body); },
+      uploadImage:               function() { return uploadImage(body); },
+      adminUploadProfileImage:   function() { return adminUploadProfileImage(body); },
+      login:                     function() { return login(body); },
       userLogin:            function() { return userLogin(body); },
       userSetPassword:      function() { return userSetPassword(body); },
       adminAddActivity:     function() { return adminAddActivity(body); },
@@ -74,6 +75,7 @@ function doGet(e) {
       adminUpdateRow:     function() { return adminUpdateRow(e.parameter); },
       adminDeleteRow:     function() { return adminDeleteRow(e.parameter); },
       adminAddEmployee:   function() { return adminAddEmployee(e.parameter); },
+      adminAddBirthday:   function() { return adminAddBirthday(e.parameter); },
       adminUpdateIdea:    function() { return adminUpdateIdea(e.parameter); },
       adminDeletePost:    function() { return adminDeletePost(e.parameter); },
     };

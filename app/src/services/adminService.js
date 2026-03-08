@@ -1,5 +1,30 @@
 import { gasGet, gasPost } from './api.js'
 
+// Upload employee profile image to Google Drive (overwrites old file if exists)
+// Returns { url, id }
+export async function uploadProfileImage(employeeId, base64, fileName) {
+  const r = await gasPost('adminUploadProfileImage', {
+    token: token(), employeeId, base64, fileName: fileName || 'profile.jpg',
+  })
+  return r.data
+}
+
+// Use public endpoints so drive:fileId → base64 conversion is applied
+export async function getEmployees() {
+  const r = await gasGet('getEmployees')
+  return r.data || []
+}
+
+export async function getBirthdays() {
+  const r = await gasGet('getBirthdays')
+  return r.data || []
+}
+
+export async function addBirthday(fields) {
+  const r = await gasGet('adminAddBirthday', { token: token(), ...fields })
+  return r.data
+}
+
 function token() {
   return localStorage.getItem('admin_token') || ''
 }

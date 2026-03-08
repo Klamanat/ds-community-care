@@ -49,7 +49,11 @@
           <div class="text-[12px] font-black text-app-mid mb-3">
             🎂 พนักงานเดือน {{ monthFullNames[selectedMonth - 1] }}
           </div>
-          <div v-if="currentEmps.length === 0" class="text-center py-8 text-app-light">
+          <div v-if="loading" class="text-center py-10 text-app-light">
+            <div class="bday-spinner"></div>
+            <div class="text-[12px] font-bold mt-3">กำลังโหลด...</div>
+          </div>
+          <div v-else-if="!loading && currentEmps.length === 0" class="text-center py-8 text-app-light">
             <div class="text-[40px] mb-2">🎈</div>
             <div class="text-[13px] font-bold">ไม่มีพนักงานเกิดเดือนนี้</div>
           </div>
@@ -301,7 +305,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import BaseModal from '../shared/BaseModal.vue'
 import { useBirthdayStore } from '../../stores/birthday.js'
 import { useUiStore } from '../../stores/ui.js'
@@ -363,12 +367,28 @@ const monthFullNames = [
 
 const currentEmps = computed(() => bday.allEmployees[selectedMonth.value - 1] || [])
 
-function openPerson(emp) {
+// Local loading state — starts true, resolves after fetch
+const loading = ref(true)
+
+onMounted(async () => {
+  await bday.loadMonth(selectedMonth.value - 1)
+  loading.value = false
+})
+
+watch(selectedMonth, async (m) => {
+  const idx = m - 1
+  if (!bday.loadedMonths.has(idx)) loading.value = true
+  await bday.loadMonth(idx)
+  loading.value = false
+})
+
+async function openPerson(emp) {
   selectedPerson.value = emp
   wishSent.value = false
   wishMsg.value = ''
   selectedChip.value = null
   justSent.value = false
+  await bday.loadWishes(emp.key)
 }
 
 function sendWish() {
