@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
 import * as svc from '../services/empathyService.js'
 import { useUiStore } from './ui.js'
+import { lsGet, lsSet, lsDel } from '../utils/cache.js'
 
 // ── localStorage helpers ─────────────────────────────────────────────
 const LIKES_KEY = 'ds_emp_likes'
@@ -36,7 +37,7 @@ function _applyCommentLikes(comments) {
 }
 
 export const useEmpathyStore = defineStore('empathy', () => {
-  const posts        = ref([])
+  const posts        = ref(lsGet('empathy_posts') || [])
   const isLoading    = ref(false)
   const lastFetched  = ref(null)
 
@@ -46,8 +47,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
   // Person-level likes in EmpathyModal thread view
   const channelLikes = reactive({})   // { [channelId]: { count: number, liked: boolean } }
 
-  // People who have been praised (populated from posts + session activity)
-  const praisedPeople = ref([])
+  const praisedPeople = ref(lsGet('empathy_people') || [])
 
   // ── Hydrate channel likes from localStorage on init ─────────────
   const _init = _loadStored()
@@ -55,15 +55,14 @@ export const useEmpathyStore = defineStore('empathy', () => {
 
   // ── loadPosts — for EmpathyBoard (legacy cards) ───────────────
   async function loadPosts(force = false) {
-    if (!force && lastFetched.value && (Date.now() - lastFetched.value) < 60000) return
-    isLoading.value = true
+    if (!force && lastFetched.value && (Date.now() - lastFetched.value) < 30000) return // 30s
+    isLoading.value = !posts.value.length
     try {
       const data = await svc.fetchPosts()
       posts.value = data
       lastFetched.value = Date.now()
-    } catch {
-      posts.value = []
-    } finally {
+      lsSet('empathy_posts', data, 60 * 1000) // 1 min — likes/comments เปลี่ยนบ่อย
+    } catch {} finally {
       isLoading.value = false
     }
   }
@@ -75,7 +74,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
       if (!data?.length) return
       const serverIds = new Set(data.map(p => String(p.id)))
       const sessionOnly = praisedPeople.value.filter(p => !serverIds.has(String(p.id)))
-      praisedPeople.value = [
+      const merged = [
         ...data.map(p => ({
           id:           String(p.empCode || p.id),
           empCode:      String(p.empCode || ''),
@@ -86,6 +85,8 @@ export const useEmpathyStore = defineStore('empathy', () => {
         })),
         ...sessionOnly,
       ]
+      praisedPeople.value = merged
+      lsSet('empathy_people', merged, 10 * 60 * 1000) // 10 min
     } catch { }
   }
 
@@ -148,6 +149,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
 
     const temp = { id: 'tmp_cm_' + Date.now(), postId: channelId, parentId: parentId || '', name: authorName, text, time: 'เมื่อกี้', likeCount: 0, _liked: false }
     postComments[channelId].push(temp)
+    lsDel('empathy_people') // commentCount เปลี่ยน
 
     try {
       const cm = await svc.addComment(channelId, text, authorName, parentId)
@@ -234,6 +236,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
     const wasLiked = post._liked
     post._liked    = !wasLiked
     post.likeCount = (post.likeCount || 0) + (post._liked ? 1 : -1)
+    lsDel('empathy_posts') // invalidate — likeCount เปลี่ยนทันที
     try {
       const result = await svc.toggleLike(postId, ui.currentUser?.id || 'anonymous')
       if (result && typeof result.likeCount === 'number') {
@@ -251,6 +254,8 @@ export const useEmpathyStore = defineStore('empathy', () => {
     const ui   = useUiStore()
     const temp = { ...payload, id: 'tmp_' + Date.now(), comments: [], likeCount: 0 }
     posts.value.unshift(temp)
+    lsDel('empathy_posts')
+    lsDel('empathy_people')
     try {
       const created = await svc.createPost(payload)
       const idx = posts.value.findIndex(p => p.id === temp.id)

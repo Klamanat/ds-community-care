@@ -40,10 +40,10 @@ const empathy = useEmpathyStore()
 const ui = useUiStore()
 const loading = ref(false)
 
-onMounted(async () => {
-  loading.value = true
-  await empathy.loadPeople()
-  loading.value = false
+onMounted(() => {
+  // ถ้ามี cache อยู่แล้ว → ไม่ต้อง spinner รอ GAS
+  loading.value = !empathy.praisedPeople.length
+  empathy.loadPeople().finally(() => { loading.value = false })
 })
 
 const GRADS = [

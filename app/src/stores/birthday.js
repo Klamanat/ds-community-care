@@ -2,6 +2,9 @@ import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
 import * as svc from '../services/birthdayService.js'
 import { useUiStore } from './ui.js'
+import { lsGet, lsSet } from '../utils/cache.js'
+
+const TTL = 60 * 60 * 1000 // 60 min — birthday data changes rarely
 
 const FALLBACK_BG = [
   'linear-gradient(135deg,#C7D2FE,#818CF8)',
@@ -14,10 +17,9 @@ const FALLBACK_BG = [
 const FALLBACK_EMOJI = ['😄','🌟','🦊','🦋','🐯','🌸']
 
 export const useBirthdayStore = defineStore('birthday', () => {
-  // allEmployees is reactive object keyed by month index
   const allEmployees = reactive({})
   const loadedMonths = ref(new Set())
-  const isLoading = ref(false)
+  const isLoading    = ref(false)
 
   const SENDER_AVATARS = [
     {av:'😊',bg:'linear-gradient(135deg,#C7D2FE,#818CF8)',name:'Anya R.'},
@@ -34,19 +36,28 @@ export const useBirthdayStore = defineStore('birthday', () => {
     return null
   }
 
-  function getFallbackBg(idx) { return FALLBACK_BG[idx % FALLBACK_BG.length] }
+  function getFallbackBg(idx)    { return FALLBACK_BG[idx % FALLBACK_BG.length] }
   function getFallbackEmoji(idx) { return FALLBACK_EMOJI[idx % FALLBACK_EMOJI.length] }
-  function getSenderAvatar(idx) { return SENDER_AVATARS[idx % SENDER_AVATARS.length] }
+  function getSenderAvatar(idx)  { return SENDER_AVATARS[idx % SENDER_AVATARS.length] }
 
   async function loadMonth(monthIdx, force = false) {
+    // In-session: already loaded → skip
     if (!force && loadedMonths.value.has(monthIdx)) return
-    isLoading.value = true
+
+    // Hydrate from localStorage immediately
+    if (!allEmployees[monthIdx]) {
+      const cached = lsGet('bday_m' + monthIdx)
+      if (cached) { allEmployees[monthIdx] = cached; loadedMonths.value.add(monthIdx) }
+    }
+
+    isLoading.value = !allEmployees[monthIdx]
     try {
       const data = await svc.fetchMonth(monthIdx)
       allEmployees[monthIdx] = data || []
       loadedMonths.value.add(monthIdx)
+      lsSet('bday_m' + monthIdx, data || [], TTL)
     } catch {
-      allEmployees[monthIdx] = []
+      if (!allEmployees[monthIdx]) allEmployees[monthIdx] = []
       loadedMonths.value.add(monthIdx)
     } finally {
       isLoading.value = false
@@ -54,7 +65,7 @@ export const useBirthdayStore = defineStore('birthday', () => {
   }
 
   async function sendWish(key, msg, fromName, avIdx) {
-    const ui = useUiStore()
+    const ui  = useUiStore()
     const emp = getEmployee(key)
     if (!emp) return
     const temp = { from: fromName, avIdx, msg, time: 'เมื่อกี้' }
@@ -71,21 +82,14 @@ export const useBirthdayStore = defineStore('birthday', () => {
   async function loadWishes(key) {
     const emp = getEmployee(key)
     if (!emp) return
-    try {
-      emp.wishes = await svc.fetchWishes(key)
-    } catch { /* keep empty */ }
+    try { emp.wishes = await svc.fetchWishes(key) } catch {}
   }
 
   async function uploadPhoto(key, dataUrl) {
     const emp = getEmployee(key)
     if (!emp) return
-    // Optimistic: show immediately
     emp.photo = dataUrl
-    try {
-      await svc.uploadPhoto(key, dataUrl)
-    } catch {
-      // Keep local preview even if GAS fails — photo is stored in memory this session
-    }
+    try { await svc.uploadPhoto(key, dataUrl) } catch {}
   }
 
   return { allEmployees, loadedMonths, isLoading, getEmployee, getFallbackBg, getFallbackEmoji, getSenderAvatar, loadMonth, loadWishes, sendWish, uploadPhoto }

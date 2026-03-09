@@ -154,6 +154,7 @@ function updateEmployeeSelf(params) {
         sheet.getRange(i + 1, imgUrlIdx + 1).setValue(imgUrl);
       }
       invalidateSheet('Employees');
+      invalidateResult('people'); // profile image อาจเปลี่ยน
       return ok({ id: id, updated: true });
     }
   }

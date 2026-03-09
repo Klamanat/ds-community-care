@@ -10,6 +10,10 @@
 
 // getEmpathyPeople — unique people from EmpathyComments (keyed by channelId = empCode)
 function getEmpathyPeople(params) {
+  // Full-result cache: avoids re-joining sheets + re-fetching Drive images
+  var hit = getCachedResult('people');
+  if (hit) return ok(hit);
+
   var comments = cachedSheetRead('EmpathyComments');
 
   var empByCode = {};
@@ -53,15 +57,18 @@ function getEmpathyPeople(params) {
     };
   });
 
-  // Sort newest activity first
   people.sort(function(a, b) {
     return channelMap[b.id].lastTime > channelMap[a.id].lastTime ? 1 : -1;
   });
 
+  cacheResult('people', people, 600); // 10 min
   return ok(people);
 }
 
 function getEmpathyPosts(params) {
+  var hit = getCachedResult('posts');
+  if (hit) return ok(hit);
+
   var rows = cachedSheetRead('EmpathyPosts');
 
   rows.sort(function(a, b) {
@@ -109,6 +116,7 @@ function getEmpathyPosts(params) {
     };
   });
 
+  cacheResult('posts', posts, 60); // 1 min — likes/comments เปลี่ยนบ่อย
   return ok(posts);
 }
 
@@ -131,6 +139,7 @@ function addEmpathyPost(params) {
 
   appendRow('EmpathyPosts', [id, recEmployeeId, recName, recRole, recImgUrl, sndName, msg, tag, likeCount, createdAt]);
   invalidateSheet('EmpathyPosts');
+  invalidateResult('posts');
 
   return ok({ id: id, recEmployeeId: recEmployeeId, recName: recName, recRole: recRole, recImg: recImgUrl, sndName: sndName, msg: msg, tag: tag, likeCount: likeCount, createdAt: createdAt, comments: [] });
 }
@@ -281,6 +290,7 @@ function addComment(params) {
   // Column order: id | postId | parentId | authorName | text | createdAt
   appendRow('EmpathyComments', [id, postId, parentId, authorName, text, createdAt]);
   invalidateSheet('EmpathyComments');
+  invalidateResult('people'); // comment count เปลี่ยน
 
   return ok({ id: id, postId: postId, parentId: parentId, name: authorName, text: text, time: createdAt });
 }
@@ -377,6 +387,7 @@ function toggleLike(params) {
 
   postsSheet.getRange(postRow, pLikeIdx + 1).setValue(currentLikes);
   invalidateSheet('EmpathyPosts');
+  invalidateResult('posts');
 
   return ok({ postId: postId, liked: liked, likeCount: currentLikes });
 }

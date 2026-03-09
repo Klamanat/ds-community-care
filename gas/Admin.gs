@@ -275,6 +275,8 @@ function adminDeletePost(params) {
   _deleteRowsByCol('EmpathyLikes', 'postId', postId);
   invalidateSheet('EmpathyPosts');
   invalidateSheet('EmpathyComments');
+  invalidateResult('posts');
+  invalidateResult('people');
 
   return ok({ deleted: true, postId: postId });
 }

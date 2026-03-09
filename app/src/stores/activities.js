@@ -1,13 +1,15 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import * as svc from '../services/activitiesService.js'
+import { lsGet, lsSet } from '../utils/cache.js'
+
+const TTL = 5 * 60 * 1000 // 5 min — admin อาจเปลี่ยน joinOpen บ่อย
 
 export const useActivitiesStore = defineStore('activities', () => {
-  const all       = ref([])   // flat list, loaded once
+  const all       = ref([])
   const isLoading = ref(false)
   const loaded    = ref(false)
 
-  // Group by monthIdx (1-12)
   const byMonth = computed(() => {
     const map = {}
     all.value.forEach(a => {
@@ -23,28 +25,34 @@ export const useActivitiesStore = defineStore('activities', () => {
   }
 
   async function load(force = false) {
+    // In-session: already loaded → skip
     if (!force && loaded.value) return
-    isLoading.value = true
+
+    // Hydrate from localStorage immediately (user sees data at ~0ms)
+    if (!all.value.length) {
+      const cached = lsGet('activities')
+      if (cached?.length) all.value = cached
+    }
+
+    // Only show spinner if nothing to display yet
+    isLoading.value = !all.value.length
     try {
-      all.value = await svc.fetchAll()
+      const data = await svc.fetchAll()
+      all.value  = data
       loaded.value = true
+      lsSet('activities', data, TTL)
     } catch {
-      all.value = []
+      if (!loaded.value) loaded.value = !!all.value.length
     } finally {
       isLoading.value = false
     }
   }
 
-  // Local optimistic mutations (admin use)
-  function localAdd(act) { all.value.push(act) }
-
+  function localAdd(act)    { all.value.push(act) }
+  function localDelete(id)  { all.value = all.value.filter(a => a.id !== id) }
   function localUpdate(id, fields) {
     const idx = all.value.findIndex(a => a.id === id)
     if (idx >= 0) Object.assign(all.value[idx], fields)
-  }
-
-  function localDelete(id) {
-    all.value = all.value.filter(a => a.id !== id)
   }
 
   return { all, byMonth, isLoading, loaded, getMonth, load, localAdd, localUpdate, localDelete }

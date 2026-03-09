@@ -89,6 +89,22 @@ function invalidateSheet(sheetName) {
 }
 
 /**
+ * Cache a full computed result (e.g. getEmpathyPeople after joining sheets + images).
+ * Avoids re-doing expensive multi-step computation on every request.
+ */
+function cacheResult(key, val, ttl) {
+  try { CacheService.getScriptCache().put('res_' + key, JSON.stringify(val), ttl || 600); } catch(e) {}
+}
+function getCachedResult(key) {
+  var hit = CacheService.getScriptCache().get('res_' + key);
+  if (!hit) return null;
+  try { return JSON.parse(hit); } catch(e) { return null; }
+}
+function invalidateResult(key) {
+  CacheService.getScriptCache().remove('res_' + key);
+}
+
+/**
  * Fetch Drive image as base64, cached for 60 min per imgId.
  * Avoids re-fetching the same image on every request.
  */

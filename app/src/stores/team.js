@@ -2,6 +2,9 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import * as svc from '../services/teamService.js'
 import { useUiStore } from './ui.js'
+import { lsGet, lsSet } from '../utils/cache.js'
+
+const TTL = 10 * 60 * 1000 // 10 min
 
 const GRADS = [
   'linear-gradient(135deg,#FBCFE8,#EC4899)',
@@ -13,26 +16,25 @@ const GRADS = [
 const SG_FALLBACKS = ['#FDE68A','#FECACA','#C7D2FE','#BBF7D0','#FED7E2','#DDD6FE']
 
 export const useTeamStore = defineStore('team', () => {
-  const empTeam      = ref([])
-  const empDirectory = ref([])
-  const sgMembers = ref([])
-  const joinCount = ref(0)
-  const isLoading = ref(false)
-  const lastFetched = ref(null)
+  const empTeam      = ref(lsGet('team_list') || [])
+  const empDirectory = ref(lsGet('team_dir')  || [])
+  const sgMembers    = ref(lsGet('star_gang')  || [])
+  const joinCount    = ref(sgMembers.value.length)
+  const isLoading    = ref(false)
+  const lastFetched  = ref(null)
 
   function getSgFallback(idx) { return SG_FALLBACKS[idx % SG_FALLBACKS.length] }
-  function getGrad(idx) { return GRADS[idx % GRADS.length] }
+  function getGrad(idx)       { return GRADS[idx % GRADS.length] }
 
   async function loadTeam(force = false) {
     if (!force && lastFetched.value && (Date.now() - lastFetched.value) < 60000) return
-    isLoading.value = true
+    isLoading.value = !empTeam.value.length
     try {
       const data = await svc.fetchTeam()
       empTeam.value = data || []
       lastFetched.value = Date.now()
-    } catch { } finally {
-      isLoading.value = false
-    }
+      lsSet('team_list', data || [], TTL)
+    } catch {} finally { isLoading.value = false }
   }
 
   async function loadStarGang() {
@@ -40,23 +42,22 @@ export const useTeamStore = defineStore('team', () => {
       const data = await svc.fetchStarGang()
       sgMembers.value = data || []
       joinCount.value = sgMembers.value.length
-    } catch { }
+      lsSet('star_gang', data || [], TTL)
+    } catch {}
   }
 
   async function loadDirectory() {
     try {
       const data = await svc.fetchDirectory()
       empDirectory.value = data || []
-    } catch { }
+      lsSet('team_dir', data || [], TTL)
+    } catch {}
   }
 
   async function addToTeam(member) {
     const ui = useUiStore()
     const exists = empTeam.value.some(m => m.id === member.id || m.name === member.name)
-    if (exists) {
-      ui.showToast('มีรายชื่อนี้ในทีมแล้ว')
-      return
-    }
+    if (exists) { ui.showToast('มีรายชื่อนี้ในทีมแล้ว'); return }
     const newMember = { ...member, grad: getGrad(empTeam.value.length) }
     empTeam.value.push(newMember)
     try {
@@ -69,7 +70,7 @@ export const useTeamStore = defineStore('team', () => {
   }
 
   async function joinStarGang(member) {
-    const ui = useUiStore()
+    const ui  = useUiStore()
     const temp = { ...member, id: 'sg_' + Date.now() }
     sgMembers.value.push(temp)
     joinCount.value++
