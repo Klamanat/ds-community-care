@@ -355,21 +355,21 @@ async function selectPerson(m) {
   selectedMember.value = m
   searchQ.value        = ''
   view.value           = 'thread'
-  loadingThread.value  = true
 
   // Use empCode as channelId — fallback to id or name for backward compat
   const channelId = String(m.empCode || m.id || m.name).trim()
   activePostId.value = channelId
 
-  try {
-    await Promise.all([
-      empathy.loadComments(channelId, true),    // fetch comments + _liked from GAS
-      empathy.loadChannelLike(channelId),       // fetch person-level like from GAS
-    ])
-    scrollBottom()
-    nextTick(() => composeEl.value?.focus())
-  } catch { }
-  finally { loadingThread.value = false }
+  // Show spinner only when no cached data available
+  const hasCache = !!(empathy.postComments[channelId]?.length)
+  loadingThread.value = !hasCache
+
+  empathy.loadChannelLike(channelId)  // fire-and-forget, non-blocking
+
+  await empathy.loadComments(channelId)
+  loadingThread.value = false
+  scrollBottom()
+  nextTick(() => composeEl.value?.focus())
 }
 
 // ── Reply ──────────────────────────────────────────────────────────

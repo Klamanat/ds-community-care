@@ -122,20 +122,28 @@ export const useEmpathyStore = defineStore('empathy', () => {
   }
 
   // ── loadComments — fetch with userKey so GAS returns _liked per comment ─
-  async function loadComments(channelId, force = false) {
+  async function loadComments(channelId) {
     const ui      = useUiStore()
     const userKey = ui.currentUser?.id || ''
-    if (!force && postComments[channelId]?.length > 0) return
+    // Hydrate from localStorage immediately (shows comments without waiting for GAS)
+    if (!postComments[channelId]) {
+      const cached = lsGet('dsc_cm_' + channelId)
+      if (cached?.length) {
+        postComments[channelId] = cached
+        _applyCommentLikes(postComments[channelId])
+      }
+    }
+    // Skip GAS if already loaded in this session
+    if (postComments[channelId]?.length > 0) return
     try {
       const arr = await svc.fetchComments(channelId, userKey)
-      // Apply localStorage for comments GAS didn't return _liked for (no userKey)
       _applyCommentLikes(arr)
-      // Sync GAS-confirmed likes back to localStorage
       arr.forEach(cm => {
         if (cm._liked !== undefined)
           _saveCommentLike(cm.id, { liked: !!cm._liked, count: cm.likeCount || 0 })
       })
       postComments[channelId] = arr
+      lsSet('dsc_cm_' + channelId, arr.map(c => ({ ...c, _liked: undefined })), 2 * 60 * 1000)
     } catch {
       if (!postComments[channelId]) postComments[channelId] = []
       _applyCommentLikes(postComments[channelId])
