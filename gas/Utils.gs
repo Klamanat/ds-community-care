@@ -123,6 +123,19 @@ function cachedDriveImage(imgId) {
 }
 
 /**
+ * getImages — batch proxy for Drive images. Called by frontend after page renders.
+ * params: { imgIds: "id1,id2,id3" }
+ * Uses cachedDriveImage (ScriptCache 60 min) per image — fast after first load.
+ */
+function getImages(params) {
+  var ids = String(params.imgIds || '').split(',')
+    .map(function(s) { return s.trim(); }).filter(Boolean);
+  var result = {};
+  ids.forEach(function(imgId) { result[imgId] = cachedDriveImage(imgId); });
+  return ok(result);
+}
+
+/**
  * App version — update this string when deploying new GAS builds
  */
 var APP_VERSION = '2.1.0';

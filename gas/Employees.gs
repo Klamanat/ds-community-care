@@ -61,9 +61,11 @@ function getEmployees(params) {
   var employees = rows.map(function(r) {
     var imgUrl = String(r.imgUrl || '');
 
-    // ถ้า imgUrl มี prefix "drive:" → fetch จาก Drive แล้ว inline เป็น base64
+    // ถ้า imgUrl มี prefix "drive:" → ส่ง imgId กลับ ให้ frontend batch-fetch ผ่าน getImages
+    var imgId2 = String(r.imgId || '');
     if (imgUrl.indexOf('drive:') === 0) {
-      imgUrl = cachedDriveImage(imgUrl.slice(6)); // cached 60 min
+      imgId2 = imgUrl.slice(6);
+      imgUrl  = '';
     }
 
     return {
@@ -73,7 +75,7 @@ function getEmployees(params) {
       role:         String(r.role    || ''),
       dept:         String(r.dept    || ''),
       imgUrl:       imgUrl,
-      imgId:        String(r.imgId   || ''),
+      imgId:        imgId2,
       grad:         String(r.grad    || ''),
       inTeam:       r.inTeam === true || r.inTeam === 'TRUE',
       inStarGang:   r.inStarGang === true || r.inStarGang === 'TRUE',

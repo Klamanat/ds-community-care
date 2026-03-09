@@ -75,6 +75,9 @@ function doGet(e) {
       adminUpdateActivity:   function() { return adminUpdateActivity(e.parameter); },
       adminDeleteActivity:   function() { return adminDeleteActivity(e.parameter); },
 
+      // Images (Drive proxy — called by frontend after page renders)
+      getImages:          function() { return getImages(e.parameter); },
+
       // Admin (token-gated)
       adminGetAll:        function() { return adminGetAll(e.parameter); },
       adminUpdateRow:     function() { return adminUpdateRow(e.parameter); },

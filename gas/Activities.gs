@@ -13,12 +13,7 @@ function getActivities(params) {
     var m = String(params.monthIdx);
     data = data.filter(function(r) { return String(r.monthIdx) === m; });
   }
-  // cachedDriveImage: cache each image 60 min — avoids re-fetching same Drive file
-  data = data.map(function(r) {
-    var imgId = String(r.imgId || '').trim();
-    if (imgId) r.imgUrl = cachedDriveImage(imgId);
-    return r;
-  });
+  // imgId passed as-is — frontend batch-fetches via getImages after page renders
   return ok(data);
 }
 

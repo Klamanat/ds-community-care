@@ -39,10 +39,11 @@ function getEmpathyPeople(params) {
     // Look up by empCode first (new data), then by id (old data)
     var emp = empByCode[cid] || empById[cid];
     var imgUrl = '';
+    var imgId  = '';
     if (emp && emp.imgUrl) {
       var raw = String(emp.imgUrl);
       if (raw.indexOf('drive:') === 0) {
-        imgUrl = cachedDriveImage(raw.slice(6));
+        imgId = raw.slice(6); // frontend batch-fetches via getImages
       } else {
         imgUrl = raw;
       }
@@ -53,6 +54,7 @@ function getEmpathyPeople(params) {
       name:         emp ? String(emp.name    || cid) : cid,
       role:         emp ? String(emp.role    || '')  : '',
       imgUrl:       imgUrl,
+      imgId:        imgId,
       commentCount: channelMap[cid].count,
     };
   });
@@ -87,13 +89,14 @@ function getEmpathyPosts(params) {
   var posts = rows.map(function(r) {
     var recImg = String(r.recImgUrl || '');
 
-    // If no image stored, look up by recEmployeeId treating as empCode first, then id
+    var recImgId = '';
+    // If no image stored, look up by recEmployeeId
     if (!recImg && r.recEmployeeId) {
       var emp = empByCode[String(r.recEmployeeId)] || empById[String(r.recEmployeeId)];
       if (emp) {
         var empImg = String(emp.imgUrl || '');
         if (empImg.indexOf('drive:') === 0) {
-          recImg = cachedDriveImage(empImg.slice(6));
+          recImgId = empImg.slice(6); // frontend batch-fetches via getImages
         } else {
           recImg = empImg;
         }
@@ -106,6 +109,7 @@ function getEmpathyPosts(params) {
       recName:       String(r.recName || ''),
       recRole:       String(r.recRole || ''),
       recImg:        recImg,
+      recImgId:      recImgId,
       sndName:       String(r.sndName || ''),
       msg:           String(r.msg || ''),
       tag:           String(r.tag || ''),

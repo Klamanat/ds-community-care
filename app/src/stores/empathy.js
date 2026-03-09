@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
 import * as svc from '../services/empathyService.js'
+import { fetchImages, getCached } from '../services/imageService.js'
 import { useUiStore } from './ui.js'
 import { lsGet, lsSet, lsDel, stripBase64 } from '../utils/cache.js'
 
@@ -59,9 +60,15 @@ export const useEmpathyStore = defineStore('empathy', () => {
     isLoading.value = !posts.value.length
     try {
       const data = await svc.fetchPosts()
-      posts.value = data
+      // Apply cached images immediately before lazy-fetch
+      posts.value = data.map(p => p.recImgId ? { ...p, recImg: getCached(p.recImgId) || p.recImg || '' } : p)
       lastFetched.value = Date.now()
       lsSet('empathy_posts', stripBase64(data, 'recImg', 'imgUrl'), 60 * 1000)
+      // Lazy-fetch Drive images after page renders
+      const ids = [...new Set(data.map(p => p.recImgId).filter(Boolean))]
+      if (ids.length) fetchImages(ids).then(map => {
+        posts.value = posts.value.map(p => (p.recImgId && map[p.recImgId]) ? { ...p, recImg: map[p.recImgId] } : p)
+      }).catch(() => {})
     } catch {} finally {
       isLoading.value = false
     }
@@ -80,13 +87,19 @@ export const useEmpathyStore = defineStore('empathy', () => {
           empCode:      String(p.empCode || ''),
           name:         p.name,
           role:         p.role,
-          imgUrl:       p.imgUrl || '',
+          imgUrl:       p.imgUrl || getCached(p.imgId) || '',
+          imgId:        p.imgId  || '',
           commentCount: p.commentCount || 0,
         })),
         ...sessionOnly,
       ]
       praisedPeople.value = merged
       lsSet('empathy_people', stripBase64(merged, 'imgUrl'), 10 * 60 * 1000)
+      // Lazy-fetch Drive images after page renders
+      const ids = [...new Set(merged.map(p => p.imgId).filter(Boolean))]
+      if (ids.length) fetchImages(ids).then(map => {
+        praisedPeople.value = praisedPeople.value.map(p => (p.imgId && map[p.imgId]) ? { ...p, imgUrl: map[p.imgId] } : p)
+      }).catch(() => {})
     } catch { }
   }
 

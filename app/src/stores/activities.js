@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import * as svc from '../services/activitiesService.js'
+import { fetchImages, getCached } from '../services/imageService.js'
 import { lsGet, lsSet, stripBase64 } from '../utils/cache.js'
 
 const TTL = 5 * 60 * 1000 // 5 min — admin อาจเปลี่ยน joinOpen บ่อย
@@ -38,9 +39,15 @@ export const useActivitiesStore = defineStore('activities', () => {
     isLoading.value = !all.value.length
     try {
       const data = await svc.fetchAll()
-      all.value  = data
+      // Apply cached images immediately before lazy-fetch
+      all.value  = data.map(a => a.imgId ? { ...a, imgUrl: getCached(a.imgId) || a.imgUrl || '' } : a)
       loaded.value = true
       lsSet('activities', stripBase64(data, 'imgUrl'), TTL)
+      // Lazy-fetch Drive images after page renders
+      const ids = [...new Set(data.map(a => String(a.imgId || '')).filter(Boolean))]
+      if (ids.length) fetchImages(ids).then(map => {
+        all.value = all.value.map(a => (a.imgId && map[a.imgId]) ? { ...a, imgUrl: map[a.imgId] } : a)
+      }).catch(() => {})
     } catch {
       if (!loaded.value) loaded.value = !!all.value.length
     } finally {
