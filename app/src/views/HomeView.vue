@@ -38,8 +38,10 @@
                 class="bday-strip-av"
                 :style="{ background: bday.getFallbackBg(emp.fallbackIdx) }"
               >
-                <img v-if="emp.photo" :src="emp.photo" class="w-full h-full object-cover" />
-                <span v-else>{{ bday.getFallbackEmoji(emp.fallbackIdx) }}</span>
+                <img v-if="emp.photo" :src="emp.photo" class="w-full h-full object-cover" @error="(e) => e.target.style.display='none'" />
+                <svg v-else xmlns="http://www.w3.org/2000/svg" style="width:60%;height:60%;fill:rgba(255,255,255,0.8);" viewBox="0 0 24 24">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
               </div>
               <div v-if="bdayEmps.length > 3" class="bday-strip-more">+{{ bdayEmps.length - 3 }}</div>
             </div>

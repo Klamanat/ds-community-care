@@ -20,7 +20,7 @@
            class="w-full h-[120px] flex flex-col items-center justify-center gap-0.5"
            :style="{ background: fallbackGrad }">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white/60" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
         </svg>
         <span class="text-[10px] font-bold text-white/70">{{ initials }}</span>
       </div>
