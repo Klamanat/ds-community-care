@@ -10,8 +10,9 @@ export async function fetchMonth(monthIdx) {
     date:        b.date,
     monthIdx:    b.monthIdx,
     fallbackIdx: Number(b.fallbackIdx) || 0,
-    photo:       b.imgUrl || '',   // GAS returns imgUrl, component expects photo
-    wishes:      [],               // loaded lazily via loadWishes
+    photo:       b.imgUrl || '',
+    imgId:       b.imgId  || '',
+    wishes:      [],
   }))
 }
 

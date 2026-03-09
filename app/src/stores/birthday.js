@@ -3,6 +3,7 @@ import { ref, reactive } from 'vue'
 import * as svc from '../services/birthdayService.js'
 import { useUiStore } from './ui.js'
 import { lsGet, lsSet, stripBase64 } from '../utils/cache.js'
+import { fetchImages, getCached } from '../services/imageService.js'
 
 const TTL = 60 * 60 * 1000 // 60 min — birthday data changes rarely
 
@@ -53,9 +54,21 @@ export const useBirthdayStore = defineStore('birthday', () => {
     isLoading.value = !allEmployees[monthIdx]
     try {
       const data = await svc.fetchMonth(monthIdx)
-      allEmployees[monthIdx] = data || []
+      // Apply cached Drive images immediately — no waiting for getImages call
+      const enriched = (data || []).map(e => ({
+        ...e, photo: e.photo || getCached(e.imgId) || '',
+      }))
+      allEmployees[monthIdx] = enriched
       loadedMonths.value.add(monthIdx)
-      lsSet('bday_m' + monthIdx, stripBase64(data || [], 'imgUrl', 'photo'), TTL)
+      lsSet('bday_m' + monthIdx, stripBase64(enriched, 'imgUrl', 'photo'), TTL)
+      // Lazy-fetch uncached Drive images in background
+      const ids = [...new Set(enriched.map(e => e.imgId).filter(Boolean))]
+      if (ids.length) fetchImages(ids).then(map => {
+        if (!allEmployees[monthIdx]) return
+        allEmployees[monthIdx] = allEmployees[monthIdx].map(e =>
+          (e.imgId && map[e.imgId]) ? { ...e, photo: map[e.imgId] } : e
+        )
+      }).catch(() => {})
     } catch {
       if (!allEmployees[monthIdx]) allEmployees[monthIdx] = []
       loadedMonths.value.add(monthIdx)

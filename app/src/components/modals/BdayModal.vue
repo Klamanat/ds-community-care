@@ -65,13 +65,16 @@
               @click="openPerson(emp)"
             >
               <div class="photo-circle-wrap-sm">
-                <img v-if="emp.photo" :src="emp.photo" style="width:100%;height:100%;object-fit:cover;" />
+                <img v-if="emp.photo" :src="emp.photo" style="width:100%;height:100%;object-fit:cover;" @error="(e) => e.target.style.display='none'" />
                 <div
                   v-else
                   class="photo-circle-fallback"
-                  style="font-size:30px;"
                   :style="{ background: bday.getFallbackBg(emp.fallbackIdx) }"
-                >{{ bday.getFallbackEmoji(emp.fallbackIdx) }}</div>
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" style="width:55%;height:55%;fill:rgba(255,255,255,0.8);" viewBox="0 0 24 24">
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                  </svg>
+                </div>
               </div>
               <div class="epc-name">{{ emp.name }}</div>
               <div class="epc-date">🎂 {{ emp.date }}</div>
@@ -92,12 +95,16 @@
           <div class="bday-person-banner mb-4">
             <div class="bb-confetti">🎉🎊✨🎈🎁</div>
             <div class="photo-circle-wrap-sm" style="margin:0 auto 8px;border:3px solid rgba(255,255,255,0.6);box-shadow:0 4px 12px rgba(0,0,0,0.2);">
-              <img v-if="selectedPerson.photo" :src="selectedPerson.photo" style="width:100%;height:100%;object-fit:cover;" />
+              <img v-if="selectedPerson.photo" :src="selectedPerson.photo" style="width:100%;height:100%;object-fit:cover;" @error="(e) => e.target.style.display='none'" />
               <div
                 v-else
                 class="photo-circle-fallback"
-                style="font-size:30px;background:rgba(255,255,255,0.2);"
-              >{{ bday.getFallbackEmoji(selectedPerson.fallbackIdx) }}</div>
+                style="background:rgba(255,255,255,0.2);"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:55%;height:55%;fill:rgba(255,255,255,0.85);" viewBox="0 0 24 24">
+                  <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                </svg>
+              </div>
             </div>
             <div class="bb-name">{{ selectedPerson.name }}</div>
             <div class="bb-role">{{ selectedPerson.role }} • {{ selectedPerson.date }}</div>

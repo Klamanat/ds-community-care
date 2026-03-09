@@ -6,39 +6,32 @@
 // Columns: id | birthdayKey | fromName | fromAvIdx | msg | time | year
 
 function getBirthdays(params) {
-  var rows = sheetToObjects('Birthdays');
+  var rows = cachedSheetRead('Birthdays', 300); // 5 min cache
 
-  // Optional: filter by monthIdx
   var monthIdx = params.monthIdx;
   if (monthIdx !== undefined && monthIdx !== '') {
     var m = parseInt(monthIdx, 10);
     rows = rows.filter(function(r) { return parseInt(r.monthIdx, 10) === m; });
   }
 
-  // Pre-load employees for imgUrl fallback (birthday row may have no photo)
-  var empRows = sheetToObjects('Employees');
+  // Pre-load employees for imgUrl fallback
   var empMap = {};
-  empRows.forEach(function(e) { empMap[String(e.id)] = e; });
+  try {
+    cachedSheetRead('Employees', 600).forEach(function(e) { empMap[String(e.id)] = e; });
+  } catch(e) {}
 
-  function resolveImgUrl(rawUrl, employeeId) {
-    var imgUrl = String(rawUrl || '');
-    // Fall back to employee's imgUrl if birthday has none
-    if (!imgUrl && employeeId) {
+  function resolveImg(rawUrl, employeeId) {
+    var raw = String(rawUrl || '');
+    if (!raw && employeeId) {
       var emp = empMap[String(employeeId)];
-      if (emp) imgUrl = String(emp.imgUrl || '');
+      if (emp) raw = String(emp.imgUrl || '');
     }
-    // Convert drive:fileId → base64 inline
-    if (imgUrl.indexOf('drive:') === 0) {
-      var fileId = imgUrl.slice(6);
-      try {
-        var bytes = DriveApp.getFileById(fileId).getBlob().getBytes();
-        imgUrl = 'data:image/jpeg;base64,' + Utilities.base64Encode(bytes);
-      } catch (e) { imgUrl = ''; }
-    }
-    return imgUrl;
+    if (raw.indexOf('drive:') === 0) return { imgUrl: '', imgId: raw.slice(6) };
+    return { imgUrl: raw, imgId: '' };
   }
 
   var result = rows.map(function(r) {
+    var img = resolveImg(r.imgUrl, r.employeeId);
     return {
       key:         String(r.key || ''),
       employeeId:  String(r.employeeId || ''),
@@ -47,7 +40,8 @@ function getBirthdays(params) {
       monthIdx:    parseInt(r.monthIdx, 10) || 0,
       date:        String(r.date || ''),
       fallbackIdx: parseInt(r.fallbackIdx, 10) || 0,
-      imgUrl:      resolveImgUrl(r.imgUrl, r.employeeId),
+      imgUrl:      img.imgUrl,
+      imgId:       img.imgId,
     };
   });
 
