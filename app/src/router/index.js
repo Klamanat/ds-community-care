@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
+import { track } from '@vercel/analytics'
 
 const routes = [
   // User auth (no login required)
@@ -65,6 +66,11 @@ const router = createRouter({
   history: createWebHashHistory(),
   routes,
   scrollBehavior() { return { top: 0 } },
+})
+
+// Hash routing ไม่ trigger History API → ส่ง pageview ด้วยตัวเองทุกครั้งที่ route เปลี่ยน
+router.afterEach((to) => {
+  track('pageview', { path: to.fullPath, name: String(to.name || '') })
 })
 
 router.beforeEach((to) => {
