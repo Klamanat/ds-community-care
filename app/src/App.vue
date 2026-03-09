@@ -1,4 +1,5 @@
 <template>
+  <Analytics />
   <div id="app-shell">
     <template v-if="!isAdmin && !isAuth">
       <AppHeader />
@@ -46,6 +47,7 @@
 <script setup>
 import { computed, watch } from 'vue'
 import { useRoute, RouterView } from 'vue-router'
+import { Analytics } from '@vercel/analytics/vue'
 import AppHeader from './components/layout/AppHeader.vue'
 import AppSidebar from './components/layout/AppSidebar.vue'
 import AppBottomNav from './components/layout/AppBottomNav.vue'
