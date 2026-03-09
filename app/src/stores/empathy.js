@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
 import * as svc from '../services/empathyService.js'
 import { useUiStore } from './ui.js'
-import { lsGet, lsSet, lsDel } from '../utils/cache.js'
+import { lsGet, lsSet, lsDel, stripBase64 } from '../utils/cache.js'
 
 // ── localStorage helpers ─────────────────────────────────────────────
 const LIKES_KEY = 'ds_emp_likes'
@@ -61,7 +61,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
       const data = await svc.fetchPosts()
       posts.value = data
       lastFetched.value = Date.now()
-      lsSet('empathy_posts', data, 60 * 1000) // 1 min — likes/comments เปลี่ยนบ่อย
+      lsSet('empathy_posts', stripBase64(data, 'recImg', 'imgUrl'), 60 * 1000)
     } catch {} finally {
       isLoading.value = false
     }
@@ -86,7 +86,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
         ...sessionOnly,
       ]
       praisedPeople.value = merged
-      lsSet('empathy_people', merged, 10 * 60 * 1000) // 10 min
+      lsSet('empathy_people', stripBase64(merged, 'imgUrl'), 10 * 60 * 1000)
     } catch { }
   }
 

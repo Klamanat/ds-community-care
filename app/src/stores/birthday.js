@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
 import * as svc from '../services/birthdayService.js'
 import { useUiStore } from './ui.js'
-import { lsGet, lsSet } from '../utils/cache.js'
+import { lsGet, lsSet, stripBase64 } from '../utils/cache.js'
 
 const TTL = 60 * 60 * 1000 // 60 min — birthday data changes rarely
 
@@ -55,7 +55,7 @@ export const useBirthdayStore = defineStore('birthday', () => {
       const data = await svc.fetchMonth(monthIdx)
       allEmployees[monthIdx] = data || []
       loadedMonths.value.add(monthIdx)
-      lsSet('bday_m' + monthIdx, data || [], TTL)
+      lsSet('bday_m' + monthIdx, stripBase64(data || [], 'imgUrl', 'photo'), TTL)
     } catch {
       if (!allEmployees[monthIdx]) allEmployees[monthIdx] = []
       loadedMonths.value.add(monthIdx)

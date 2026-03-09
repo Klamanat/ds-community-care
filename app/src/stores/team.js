@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import * as svc from '../services/teamService.js'
 import { useUiStore } from './ui.js'
-import { lsGet, lsSet } from '../utils/cache.js'
+import { lsGet, lsSet, stripBase64 } from '../utils/cache.js'
 
 const TTL = 10 * 60 * 1000 // 10 min
 
@@ -33,7 +33,7 @@ export const useTeamStore = defineStore('team', () => {
       const data = await svc.fetchTeam()
       empTeam.value = data || []
       lastFetched.value = Date.now()
-      lsSet('team_list', data || [], TTL)
+      lsSet('team_list', stripBase64(data || [], 'imgUrl'), TTL)
     } catch {} finally { isLoading.value = false }
   }
 
@@ -42,7 +42,7 @@ export const useTeamStore = defineStore('team', () => {
       const data = await svc.fetchStarGang()
       sgMembers.value = data || []
       joinCount.value = sgMembers.value.length
-      lsSet('star_gang', data || [], TTL)
+      lsSet('star_gang', stripBase64(data || [], 'imgUrl'), TTL)
     } catch {}
   }
 
@@ -50,7 +50,7 @@ export const useTeamStore = defineStore('team', () => {
     try {
       const data = await svc.fetchDirectory()
       empDirectory.value = data || []
-      lsSet('team_dir', data || [], TTL)
+      lsSet('team_dir', stripBase64(data || [], 'imgUrl'), TTL)
     } catch {}
   }
 

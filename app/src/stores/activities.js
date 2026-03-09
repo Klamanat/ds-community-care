@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import * as svc from '../services/activitiesService.js'
-import { lsGet, lsSet } from '../utils/cache.js'
+import { lsGet, lsSet, stripBase64 } from '../utils/cache.js'
 
 const TTL = 5 * 60 * 1000 // 5 min — admin อาจเปลี่ยน joinOpen บ่อย
 
@@ -40,7 +40,7 @@ export const useActivitiesStore = defineStore('activities', () => {
       const data = await svc.fetchAll()
       all.value  = data
       loaded.value = true
-      lsSet('activities', data, TTL)
+      lsSet('activities', stripBase64(data, 'imgUrl'), TTL)
     } catch {
       if (!loaded.value) loaded.value = !!all.value.length
     } finally {
