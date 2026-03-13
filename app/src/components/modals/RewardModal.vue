@@ -57,9 +57,9 @@
               :key="h.id"
               class="rw-hist-row"
             >
-              <div class="rw-hist-icon">{{ typeEmoji(h.type) }}</div>
+              <div class="rw-hist-icon">{{ typeEmoji(h.type, h.subtype) }}</div>
               <div class="rw-hist-info">
-                <div class="rw-hist-desc">{{ h.desc || typeLabel(h.type) }}</div>
+                <div class="rw-hist-desc">{{ h.desc || typeLabel(h.type, h.subtype) }}</div>
                 <div class="rw-hist-time">{{ formatTime(h.createdAt) }}</div>
               </div>
               <div class="rw-hist-pts">+{{ h.amount }}</div>
@@ -81,14 +81,17 @@
               v-for="item in displayRules"
               :key="item.type"
               class="rw-earn-row"
-              :style="{ background: ruleStyle(item.type).bgColor, borderColor: ruleStyle(item.type).color + '30' }"
+              :style="{ background: ruleStyle(item).bgColor, borderColor: ruleStyle(item).color + '50' }"
             >
               <div class="rw-earn-icon">{{ item.icon }}</div>
               <div class="rw-earn-info">
-                <div class="rw-earn-name">{{ item.name }}</div>
+                <div class="rw-earn-name">
+                  {{ item.name }}
+                  <span v-if="item.subtype" class="rw-subtype-tag">{{ item.subtype }}</span>
+                </div>
                 <div class="rw-earn-desc">{{ item.desc }}</div>
               </div>
-              <div class="rw-earn-badge" :style="{ background: ruleStyle(item.type).color }">+{{ item.pts }} pts</div>
+              <div class="rw-earn-badge" :style="{ background: ruleStyle(item).color }">+{{ item.pts }} pts</div>
             </div>
           </div>
         </div>
@@ -113,9 +116,9 @@ onMounted(() => {
 
 // Fallback static rules if GAS not connected yet
 const FALLBACK_RULES = [
-  { type: 'join_activity', icon: '🙌', name: 'เข้าร่วมกิจกรรม',       desc: 'เข้าร่วม event / กิจกรรมองค์กร',           pts: 50 },
-  { type: 'send_empathy',  icon: '💌', name: 'ส่ง Empathy ให้เพื่อน', desc: 'ส่งกำลังใจ / ข้อความให้เพื่อนร่วมงาน',    pts: 10 },
-  { type: 'birthday_wish', icon: '🎂', name: 'อวยพรวันเกิดเพื่อน',    desc: 'ส่งคำอวยพรวันเกิดให้เพื่อนร่วมงาน',       pts: 5  },
+  { type: 'join_activity', icon: '🙌', name: 'เข้าร่วมกิจกรรม',       desc: 'เข้าร่วม event / กิจกรรมองค์กร',           pts: 50, color: '#6366F1' },
+  { type: 'send_empathy',  icon: '💌', name: 'ส่ง Empathy ให้เพื่อน', desc: 'ส่งกำลังใจ / ข้อความให้เพื่อนร่วมงาน',    pts: 10, color: '#EC4899' },
+  { type: 'birthday_wish', icon: '🎂', name: 'อวยพรวันเกิดเพื่อน',    desc: 'ส่งคำอวยพรวันเกิดให้เพื่อนร่วมงาน',       pts: 5,  color: '#A855F7' },
 ]
 
 const displayRules = computed(() => {
@@ -123,26 +126,31 @@ const displayRules = computed(() => {
   return list.filter(r => String(r.active) !== 'false')
 })
 
-const RULE_COLORS = {
-  join_activity: { color: '#6366F1', bgColor: '#EEF2FF' },
-  send_empathy:  { color: '#EC4899', bgColor: '#FDF2F8' },
-  birthday_wish: { color: '#A855F7', bgColor: '#F5F3FF' },
-}
-function ruleStyle(type) {
-  return RULE_COLORS[type] || { color: '#06C755', bgColor: '#F0FFF4' }
+// Build a type|subtype → rule map for history lookup
+const ruleMap = computed(() => {
+  const map = {}
+  displayRules.value.forEach(r => {
+    map[r.type + '|' + (r.subtype || '')] = r
+    // Also keep bare type key for fallback (last one wins = default rule)
+    if (!r.subtype) map[r.type] = r
+  })
+  return map
+})
+
+function ruleStyle(rule) {
+  const color = rule?.color || '#6366F1'
+  return { color, bgColor: color + '18' }  // 18 = ~10% opacity hex
 }
 
-function typeEmoji(type) {
-  if (type === 'join_activity') return '🙌'
-  if (type === 'send_empathy')  return '💌'
-  if (type === 'birthday_wish') return '🎂'
-  return '⭐'
+function typeEmoji(type, subtype) {
+  return ruleMap.value[type + '|' + (subtype || '')]?.icon
+    || ruleMap.value[type]?.icon
+    || '⭐'
 }
-function typeLabel(type) {
-  if (type === 'join_activity') return 'เข้าร่วมกิจกรรม'
-  if (type === 'send_empathy')  return 'ส่ง Empathy'
-  if (type === 'birthday_wish') return 'อวยพรวันเกิด'
-  return type
+function typeLabel(type, subtype) {
+  const rule = ruleMap.value[type + '|' + (subtype || '')] || ruleMap.value[type]
+  if (!rule) return type
+  return rule.name + (subtype ? ` (${subtype})` : '')
 }
 function formatTime(raw) {
   if (!raw) return ''
@@ -237,6 +245,7 @@ function formatTime(raw) {
 .rw-earn-name { font-size: 13px; font-weight: 700; color: #050505; }
 .rw-earn-desc { font-size: 11px; color: #65676B; margin-top: 1px; }
 .rw-earn-badge { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 800; color: white; flex-shrink: 0; }
+.rw-subtype-tag { display: inline-block; font-size: 10px; font-weight: 600; color: #6B7280; background: #F3F4F6; border-radius: 6px; padding: 1px 6px; margin-left: 5px; font-family: monospace; vertical-align: middle; }
 
 @keyframes shimmer {
   0%   { background-position: 200% 0; }

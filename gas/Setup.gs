@@ -192,11 +192,11 @@ var ALL_SHEETS = [
   },
   {
     name: 'Points',
-    headers: ['id','employeeName','type','amount','desc','createdAt'],
+    headers: ['id','employeeName','type','subtype','amount','desc','createdAt'],
   },
   {
     name: 'PointRules',
-    headers: ['id','type','icon','name','desc','pts','active'],
+    headers: ['id','type','subtype','icon','name','desc','pts','color','active'],
   },
 ];
 
@@ -296,9 +296,9 @@ function seedPointRules() {
   if (sheet.getLastRow() > 1) { Logger.log('PointRules มีข้อมูลแล้ว (ข้าม seed)'); return; }
 
   var rows = [
-    ['rule_1', 'join_activity', '🙌', 'เข้าร่วมกิจกรรม',       'เข้าร่วม event / กิจกรรมองค์กร',        50,  'true'],
-    ['rule_2', 'send_empathy',  '💌', 'ส่ง Empathy ให้เพื่อน', 'ส่งกำลังใจ / ข้อความให้เพื่อนร่วมงาน', 10, 'true'],
-    ['rule_3', 'birthday_wish', '🎂', 'อวยพรวันเกิดเพื่อน',    'ส่งคำอวยพรวันเกิดให้เพื่อนร่วมงาน',     5,  'true'],
+    ['rule_1', 'join_activity', '',  '🙌', 'เข้าร่วมกิจกรรม (ทั่วไป)',    'เข้าร่วม event / กิจกรรมองค์กร',        50,  '#6366F1', 'true'],
+    ['rule_2', 'send_empathy',  '',  '💌', 'ส่ง Empathy (ทั่วไป)',         'ส่งกำลังใจ / ข้อความให้เพื่อนร่วมงาน', 10,  '#EC4899', 'true'],
+    ['rule_3', 'birthday_wish', '',  '🎂', 'อวยพรวันเกิด (ทั่วไป)',        'ส่งคำอวยพรวันเกิดให้เพื่อนร่วมงาน',    5,   '#A855F7', 'true'],
   ];
   rows.forEach(function(r) { sheet.appendRow(r); });
   Logger.log('✅ Seed PointRules: ' + rows.length + ' แถว');

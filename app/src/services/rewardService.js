@@ -10,7 +10,17 @@ export async function fetchRewardRules() {
   return res.data
 }
 
+export async function adminAddRewardRule(token, fields) {
+  const res = await gasGet('adminAddRewardRule', { token, ...fields })
+  return res.data
+}
+
 export async function adminUpdateRewardRule(token, id, fields) {
   const res = await gasGet('adminUpdateRewardRule', { token, id, ...fields })
+  return res.data
+}
+
+export async function adminDeleteRewardRule(token, id) {
+  const res = await gasGet('adminDeleteRewardRule', { token, id })
   return res.data
 }

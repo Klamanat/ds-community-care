@@ -13,6 +13,7 @@
 
       <div class="al-page-header">
         <h2 class="al-page-title">🏆 วิธีสะสมคะแนน</h2>
+        <button class="al-btn al-btn-primary" @click="openAdd">+ เพิ่มกฎ</button>
       </div>
 
       <div class="al-card">
@@ -26,7 +27,10 @@
 
         <div v-else>
           <div class="al-item rw-rule-item" v-for="r in rules" :key="r.id">
-            <div class="rw-rule-icon">{{ r.icon }}</div>
+            <!-- Color swatch + icon -->
+            <div class="rw-rule-swatch" :style="{ background: r.color || '#6366F1' }">
+              {{ r.icon }}
+            </div>
             <div class="al-item-body">
               <div class="al-item-title">{{ r.name }}</div>
               <div class="al-item-sub">{{ r.desc }}</div>
@@ -35,11 +39,13 @@
                   {{ r.active === 'false' ? 'ปิด' : 'เปิด' }}
                 </span>
                 <span class="al-badge al-badge-blue">+{{ r.pts }} pts</span>
-                <span class="al-badge al-badge-gray" style="font-size:10px;">{{ r.type }}</span>
+                <span class="al-badge al-badge-gray rw-type-badge">{{ r.type }}</span>
+                <span v-if="r.subtype" class="al-badge al-badge-purple rw-type-badge">{{ r.subtype }}</span>
               </div>
             </div>
             <div class="al-item-actions">
               <button class="al-btn al-btn-edit" @click="openEdit(r)">แก้ไข</button>
+              <button class="al-btn al-btn-delete" @click="confirmDelete(r)">ลบ</button>
             </div>
           </div>
         </div>
@@ -48,18 +54,53 @@
       <div class="al-info-box">
         <div style="font-size:12px;font-weight:800;color:#3730A3;margin-bottom:6px;">ℹ️ หมายเหตุ</div>
         <ul style="font-size:12px;color:#4338CA;line-height:2;padding-left:16px;margin:0;">
-          <li>แก้ไขจำนวนคะแนน, icon, ชื่อ และคำอธิบายของแต่ละกฎได้</li>
-          <li>ปิด/เปิด กฎ — ถ้าปิดจะไม่มอบคะแนนให้ผู้ใช้เมื่อทำกิจกรรมนั้น</li>
-          <li>เพิ่มกฎใหม่ได้โดยเพิ่มแถวใน Google Sheets (PointRules)</li>
+          <li>type + subtype ต้องไม่ซ้ำกัน (GAS จะตรวจสอบ)</li>
+          <li>subtype เว้นว่าง = กฎ default ของ type นั้น</li>
+          <li>เมื่อเลือกประเภท icon และสีจะถูก auto-fill ให้อัตโนมัติ</li>
+          <li>ปิด active จะหยุดมอบคะแนนทันที (GAS จะข้ามไป)</li>
         </ul>
       </div>
     </main>
 
-    <!-- Edit Modal -->
+    <!-- Add / Edit Modal -->
     <div v-if="modal.open" class="al-modal-overlay" @click.self="modal.open=false">
       <div class="al-modal">
         <div class="al-modal-handle"></div>
-        <div class="al-modal-title">✏️ แก้ไขกฎคะแนน</div>
+        <div class="al-modal-title">{{ modal.mode === 'add' ? '+ เพิ่มกฎใหม่' : '✏️ แก้ไขกฎคะแนน' }}</div>
+
+        <!-- type (add only) -->
+        <div v-if="modal.mode === 'add'" class="al-form-row">
+          <label class="al-form-label">ประเภท <span style="color:#EF4444;">*</span></label>
+          <select v-model="form.type" class="al-form-select" @change="onTypeChange">
+            <option value="" disabled>เลือกประเภท...</option>
+            <option
+              v-for="opt in TYPE_OPTIONS"
+              :key="opt.value"
+              :value="opt.value"
+            >{{ opt.label }}</option>
+          </select>
+        </div>
+        <div v-if="modal.mode === 'add'" class="al-form-row">
+          <label class="al-form-label">Subtype</label>
+          <select v-model="form.subtype" class="al-form-select" :disabled="!form.type">
+            <option v-if="!form.type" value="" disabled>เลือก type ก่อน</option>
+            <option
+              v-for="opt in availableSubtypes"
+              :key="opt.value"
+              :value="opt.value"
+            >{{ opt.label }}</option>
+          </select>
+          <div v-if="availableSubtypes.length === 0" style="font-size:10px;color:#EF4444;margin-top:3px;">
+            ⚠️ type นี้มีกฎครบทุก subtype แล้ว
+          </div>
+        </div>
+        <div v-else class="al-form-row">
+          <label class="al-form-label">ประเภท</label>
+          <div class="rw-type-readonly">
+            {{ TYPE_OPTIONS.find(t => t.value === form.type)?.label || form.type }}
+            <span v-if="form.subtype" style="margin-left:6px;font-size:11px;opacity:0.7;">/ {{ form.subtype }}</span>
+          </div>
+        </div>
 
         <div class="al-form-2col">
           <div class="al-form-row">
@@ -74,11 +115,31 @@
 
         <div class="al-form-row">
           <label class="al-form-label">ชื่อ</label>
-          <input v-model="form.name" class="al-form-input" maxlength="60" placeholder="ชื่อกิจกรรม" />
+          <input v-model="form.name" class="al-form-input" maxlength="60" placeholder="ชื่อกฎ" />
         </div>
         <div class="al-form-row">
           <label class="al-form-label">คำอธิบาย</label>
           <input v-model="form.desc" class="al-form-input" maxlength="120" placeholder="รายละเอียด..." />
+        </div>
+
+        <!-- Color picker -->
+        <div class="al-form-row">
+          <label class="al-form-label">สี</label>
+          <div class="rw-color-row">
+            <input type="color" v-model="form.color" class="rw-color-input" />
+            <input v-model="form.color" class="al-form-input rw-color-hex" maxlength="7" placeholder="#6366F1" />
+            <div class="rw-color-preview" :style="{ background: form.color }">{{ form.icon || '⭐' }}</div>
+          </div>
+          <!-- Presets -->
+          <div class="rw-color-presets">
+            <div
+              v-for="c in COLOR_PRESETS" :key="c"
+              class="rw-color-dot"
+              :class="{ active: form.color === c }"
+              :style="{ background: c }"
+              @click="form.color = c"
+            ></div>
+          </div>
         </div>
 
         <div class="al-form-row">
@@ -102,52 +163,126 @@
         </div>
       </div>
     </div>
+
+    <!-- Delete Confirm -->
+    <div v-if="delTarget" class="al-modal-overlay" @click.self="delTarget=null">
+      <div class="al-modal">
+        <div class="al-modal-handle"></div>
+        <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
+        <p style="font-size:13px;color:#374151;margin:0 0 16px;">
+          ลบกฎ "<strong>{{ delTarget.name }}</strong>" ({{ delTarget.type }}) ใช่หรือไม่?
+        </p>
+        <div class="al-modal-footer">
+          <button class="al-btn al-btn-cancel" @click="delTarget=null">ยกเลิก</button>
+          <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
+            {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAdminStore }  from '../../stores/admin.js'
 import { useRewardStore } from '../../stores/reward.js'
-import { adminUpdateRewardRule } from '../../services/rewardService.js'
+import {
+  adminAddRewardRule,
+  adminUpdateRewardRule,
+  adminDeleteRewardRule,
+} from '../../services/rewardService.js'
 
 const admin  = useAdminStore()
 const reward = useRewardStore()
 const router = useRouter()
 
-const loading = ref(true)
-const rules   = ref([])
+const loading   = ref(true)
+const rules     = ref([])
+const delTarget = ref(null)
+const deleting  = ref(false)
 
-const modal = reactive({ open: false, saving: false, error: '' })
-const form  = reactive({ id: '', icon: '', name: '', desc: '', pts: 0, active: 'true' })
+const modal = reactive({ open: false, mode: 'add', saving: false, error: '' })
+const form  = reactive({ id: '', type: '', subtype: '', icon: '', name: '', desc: '', pts: 0, color: '#6366F1', active: 'true' })
+
+const COLOR_PRESETS = ['#6366F1','#EC4899','#A855F7','#06C755','#F59E0B','#EF4444','#3B82F6','#14B8A6','#F97316','#8B5CF6']
+
+// Type options — wired in GAS addPoints() calls
+const TYPE_OPTIONS = [
+  { value: 'join_activity', label: '🙌 เข้าร่วมกิจกรรม',       defaultIcon: '🙌', defaultColor: '#6366F1' },
+  { value: 'send_empathy',  label: '💌 ส่ง Empathy ให้เพื่อน', defaultIcon: '💌', defaultColor: '#EC4899' },
+  { value: 'birthday_wish', label: '🎂 อวยพรวันเกิดเพื่อน',    defaultIcon: '🎂', defaultColor: '#A855F7' },
+]
+
+// Subtype options per type — '' = default rule for that type
+const SUBTYPE_OPTIONS = {
+  join_activity: [
+    { value: '',           label: '(ค่าเริ่มต้น) เข้าร่วมทั่วไป' },
+    { value: 'co_host',    label: 'co_host — ผู้ร่วมจัดงาน' },
+    { value: 'presenter',  label: 'presenter — วิทยากร/ผู้นำเสนอ' },
+    { value: 'organizer',  label: 'organizer — ผู้จัดงานหลัก' },
+  ],
+  send_empathy: [
+    { value: '', label: '(ค่าเริ่มต้น)' },
+  ],
+  birthday_wish: [
+    { value: '', label: '(ค่าเริ่มต้น)' },
+  ],
+}
+
+// Filter out subtypes already having a rule for the selected type
+const availableSubtypes = computed(() => {
+  const opts = SUBTYPE_OPTIONS[form.type] || [{ value: '', label: '(ค่าเริ่มต้น)' }]
+  return opts.filter(opt => !rules.value.some(r => r.type === form.type && r.subtype === opt.value))
+})
+
+// Auto-fill icon/color + reset subtype when type changes
+function onTypeChange() {
+  const opt = TYPE_OPTIONS.find(t => t.value === form.type)
+  if (opt) {
+    if (!form.icon || form.icon === '⭐') form.icon = opt.defaultIcon
+    form.color = opt.defaultColor
+  }
+  form.subtype = ''
+}
 
 onMounted(async () => {
   await reward.loadRules(true)
-  rules.value = reward.rules
+  rules.value   = [...reward.rules]
   loading.value = false
 })
 
+function openAdd() {
+  Object.assign(form, { id: '', type: '', subtype: '', icon: '⭐', name: '', desc: '', pts: 10, color: '#6366F1', active: 'true' })
+  modal.mode = 'add'; modal.error = ''; modal.open = true
+}
 function openEdit(r) {
-  Object.assign(form, { ...r })
-  modal.error = ''
-  modal.open  = true
+  Object.assign(form, { ...r, color: r.color || '#6366F1' })
+  modal.mode = 'edit'; modal.error = ''; modal.open = true
 }
 
 async function saveModal() {
   if (!form.name.trim()) { modal.error = 'กรุณากรอกชื่อ'; return }
+  if (modal.mode === 'add' && !form.type.trim()) { modal.error = 'กรุณาเลือก type'; return }
+  if (modal.mode === 'add' && availableSubtypes.value.length === 0) { modal.error = 'type นี้มีกฎครบทุก subtype แล้ว'; return }
   modal.saving = true; modal.error = ''
   try {
-    await adminUpdateRewardRule(admin.token, form.id, {
-      icon:   form.icon,
-      name:   form.name,
-      desc:   form.desc,
-      pts:    String(form.pts),
-      active: form.active,
-    })
-    // Update local list
-    const idx = rules.value.findIndex(r => r.id === form.id)
-    if (idx >= 0) Object.assign(rules.value[idx], { ...form })
+    if (modal.mode === 'add') {
+      const res = await adminAddRewardRule(admin.token, {
+        type: form.type.trim(), subtype: form.subtype.trim(),
+        icon: form.icon, name: form.name,
+        desc: form.desc, pts: String(form.pts), color: form.color, active: form.active,
+      })
+      rules.value.push({ ...form, id: res.id, type: form.type.trim(), subtype: form.subtype.trim() })
+    } else {
+      await adminUpdateRewardRule(admin.token, form.id, {
+        icon: form.icon, name: form.name, desc: form.desc,
+        pts: String(form.pts), color: form.color, active: form.active,
+      })
+      const idx = rules.value.findIndex(r => r.id === form.id)
+      if (idx >= 0) Object.assign(rules.value[idx], { ...form })
+    }
     reward.rules = [...rules.value]
     modal.open = false
   } catch (e) {
@@ -157,20 +292,95 @@ async function saveModal() {
   }
 }
 
+function confirmDelete(r) { delTarget.value = r }
+async function doDelete() {
+  deleting.value = true
+  try {
+    await adminDeleteRewardRule(admin.token, delTarget.value.id)
+    rules.value   = rules.value.filter(r => r.id !== delTarget.value.id)
+    reward.rules  = [...rules.value]
+    delTarget.value = null
+  } catch { } finally {
+    deleting.value = false
+  }
+}
+
 function doLogout() { admin.logout(); router.push('/admin/login') }
 </script>
 
 <style scoped>
 @import './admin.css';
 
-.rw-rule-icon {
-  font-size: 28px;
-  width: 40px;
-  text-align: center;
+/* Rule item */
+.rw-rule-swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
   flex-shrink: 0;
 }
 .rw-rule-item { align-items: center; }
+.rw-type-badge { font-size: 10px !important; font-family: monospace; }
+.rw-type-readonly {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: monospace;
+  color: #4338CA;
+  background: #EEF2FF;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
 
+/* Color picker row */
+.rw-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.rw-color-input {
+  width: 44px;
+  height: 40px;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 2px;
+  background: white;
+  flex-shrink: 0;
+}
+.rw-color-hex { flex: 1; font-family: monospace; }
+.rw-color-preview {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* Color presets */
+.rw-color-presets {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.rw-color-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.1s, border-color 0.1s;
+}
+.rw-color-dot:active { transform: scale(0.9); }
+.rw-color-dot.active { border-color: #1F2937; transform: scale(1.15); }
+
+/* Toggle */
 .rw-toggle-wrap {
   display: flex;
   align-items: center;

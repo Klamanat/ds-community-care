@@ -254,6 +254,7 @@
 .al-badge-month    { background: #EEF2FF; color: #4F46E5; }
 .al-badge-green    { background: #D1FAE5; color: #065F46; }
 .al-badge-red      { background: #FEE2E2; color: #991B1B; }
+.al-badge-purple   { background: #EDE9FE; color: #6D28D9; }
 
 /* ── Join label radio group ── */
 .join-label-options { display: flex; flex-direction: column; gap: 8px; }

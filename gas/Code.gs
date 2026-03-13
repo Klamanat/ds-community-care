@@ -80,9 +80,11 @@ function doGet(e) {
       getNotifications:   function() { return getNotifications(e.parameter); },
 
       // Rewards
-      getMyPoints:          function() { return getMyPoints(e.parameter); },
-      getRewardRules:       function() { return getRewardRules(); },
+      getMyPoints:           function() { return getMyPoints(e.parameter); },
+      getRewardRules:        function() { return getRewardRules(); },
+      adminAddRewardRule:    function() { return adminAddRewardRule(e.parameter); },
       adminUpdateRewardRule: function() { return adminUpdateRewardRule(e.parameter); },
+      adminDeleteRewardRule: function() { return adminDeleteRewardRule(e.parameter); },
 
       // Announcement
       getAnnouncement:    function() { return getAnnouncement(); },
