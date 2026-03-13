@@ -1,4 +1,5 @@
 import { gasGet, gasPost } from './api.js'
+import { fetchImages } from './imageService.js'
 
 export async function fetchMonth(monthIdx) {
   const r = await gasGet('getBirthdays', { monthIdx })
@@ -18,12 +19,21 @@ export async function fetchMonth(monthIdx) {
 
 export async function fetchWishes(birthdayKey) {
   const r = await gasGet('getBirthdayWishes', { birthdayKey })
-  return (r.data || []).map(w => ({
-    from:  w.fromName,
-    avIdx: w.fromAvIdx,
-    msg:   w.msg,
-    time:  w.time,
+  const wishes = (r.data || []).map(w => ({
+    from:      w.fromName,
+    avIdx:     w.fromAvIdx,
+    fromImgId: w.fromImgId || '',
+    photo:     '',
+    msg:       w.msg,
+    time:      w.time,
   }))
+  // Batch-fetch sender Drive photos
+  const ids = [...new Set(wishes.map(w => w.fromImgId).filter(Boolean))]
+  if (ids.length) {
+    const map = await fetchImages(ids).catch(() => ({}))
+    wishes.forEach(w => { if (w.fromImgId && map[w.fromImgId]) w.photo = map[w.fromImgId] })
+  }
+  return wishes
 }
 
 /**
@@ -40,12 +50,13 @@ export async function uploadPhoto(birthdayKey, imageBase64) {
   return r.data
 }
 
-export async function addWish(birthdayKey, msg, fromName, fromAvIdx) {
+export async function addWish(birthdayKey, msg, fromName, fromAvIdx, fromImgId = '') {
   const r = await gasGet('addBirthdayWish', {
     birthdayKey,
     msg: msg.slice(0, 500),
     fromName,
-    fromAvIdx
+    fromAvIdx,
+    fromImgId,
   })
   return r.data
 }

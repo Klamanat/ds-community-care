@@ -1,17 +1,29 @@
 <template>
   <BaseModal modal-id="modal-month" sheet-class="modal-sheet--full">
 
-    <!-- Detail overlay — steps -->
+    <!-- Detail overlay — info -->
     <Transition name="detail-slide">
       <div v-if="detailEv" class="month-detail-overlay" @click.self="detailEv = null">
         <div class="month-detail-panel">
           <button class="month-detail-close" @click="detailEv = null">✕</button>
           <div class="month-detail-body">
             <div class="month-detail-title">{{ detailEv.emoji }} {{ detailEv.name }}</div>
-            <div v-if="detailEv.steps" class="month-steps-list">
-              <div v-for="(step, i) in parseSteps(detailEv.steps)" :key="i" class="month-step-item">
-                <span class="month-step-num">📢</span>
-                <span class="month-step-text">{{ step }}</span>
+            <div class="month-info-list">
+              <div v-if="detailEv.date" class="month-info-row">
+                <span class="month-info-icon">📅</span>
+                <span>{{ detailEv.date }}{{ detailEv.dateEnd ? ' – ' + detailEv.dateEnd : '' }}</span>
+              </div>
+              <div v-if="detailEv.loc" class="month-info-row">
+                <span class="month-info-icon">📍</span>
+                <span>{{ detailEv.loc }}</span>
+              </div>
+              <div v-if="detailEv.desc" class="month-info-row">
+                <span class="month-info-icon">📝</span>
+                <span style="white-space:pre-line;">{{ detailEv.desc }}</span>
+              </div>
+              <div v-if="detailEv.steps" class="month-info-row">
+                <span class="month-info-icon">📋</span>
+                <span style="white-space:pre-line;">{{ detailEv.steps }}</span>
               </div>
             </div>
           </div>
@@ -63,14 +75,14 @@
           <div class="month-ev-body">
             <div class="month-ev-title">{{ ev.name }}</div>
             <div class="month-ev-meta">
-              <span v-if="ev.date">📅 {{ ev.date }}</span>
+              <span v-if="ev.date">📅 {{ ev.date }}{{ ev.dateEnd ? ' – ' + ev.dateEnd : '' }}</span>
               <span v-if="ev.loc">📍 {{ ev.loc }}</span>
             </div>
             <div v-if="ev.desc" class="month-ev-desc">{{ ev.desc }}</div>
 
             <div class="month-ev-actions">
               <!-- Steps detail -->
-              <button v-if="ev.steps" class="month-ev-detail" @click="detailEv = ev">รายละเอียด 📋</button>
+              <button v-if="ev.desc || ev.steps" class="month-ev-detail" @click="detailEv = ev">รายละเอียด 📋</button>
 
               <!-- External link -->
               <button v-if="ev.joinUrl" class="month-ev-extlink" @click="openLink(ev.joinUrl)">
@@ -94,16 +106,26 @@
                 {{ stamping[ev.id] ? '...' : joinBtnLabel(ev.joinLabel) }}
               </button>
 
-              <!-- Joined, reward not claimed -->
-              <template v-else-if="isJoined(ev.id) && !isClaimed(ev.id)">
+              <!-- Joined: checkin only -->
+              <template v-else-if="isJoined(ev.id) && ev.joinLabel === 'checkin'">
+                <span class="month-ev-stamped">✅ Check-in แล้ว</span>
+              </template>
+
+              <!-- Joined: stamp — reward not claimed -->
+              <template v-else-if="isJoined(ev.id) && ev.joinLabel === 'stamp' && !isClaimed(ev.id)">
                 <span class="month-ev-stamped">✅ Check-in แล้ว</span>
                 <button class="month-ev-egg" @click="openEgg(ev)">🥚 รับรางวัล</button>
               </template>
 
-              <!-- Joined + claimed -->
-              <template v-else-if="isJoined(ev.id)">
+              <!-- Joined: stamp — claimed -->
+              <template v-else-if="isJoined(ev.id) && ev.joinLabel === 'stamp'">
                 <span class="month-ev-stamped">✅ Check-in แล้ว</span>
                 <span class="month-ev-claimed">🎁 รับรางวัลแล้ว</span>
+              </template>
+
+              <!-- Joined: fallback (no label / other) -->
+              <template v-else-if="isJoined(ev.id)">
+                <span class="month-ev-stamped">✅ Check-in แล้ว</span>
               </template>
 
               <!-- Feedback (แสดงทุกกิจกรรมที่มี feedbackUrl) -->
@@ -279,7 +301,7 @@ async function stampJoin(ev) {
     })
   }
   stamping.value[ev.id] = false
-  openEgg(ev)
+  if (ev.joinLabel === 'stamp') openEgg(ev)
 
   // Sync to GAS in background
   const name = ui.currentUser?.name || 'ไม่ระบุชื่อ'
@@ -322,8 +344,7 @@ async function loadMyStamps() {
   finally { stampsLoaded.value = true }
 }
 
-const JOIN_LABELS = { stamp: '📍 Check-in กิจกรรม', checkin: '✅ Check-in', join: '🔗 Join' }
-function joinBtnLabel(val) { return JOIN_LABELS[val] || val || '' }
+function joinBtnLabel(val) { return '✅ Check-in' }
 
 function parseSteps(desc) {
   return desc
@@ -350,6 +371,11 @@ function parseSteps(desc) {
 }
 .stamp-chip-name { max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .stamp-dot-green { width:7px; height:7px; border-radius:50%; background:#10B981; flex-shrink:0; }
+
+/* Info list in detail overlay */
+.month-info-list { display:flex; flex-direction:column; gap:10px; margin-top:12px; }
+.month-info-row  { display:flex; gap:8px; font-size:13px; color:#374151; line-height:1.5; }
+.month-info-icon { flex-shrink:0; font-size:15px; margin-top:1px; }
 
 /* Action buttons */
 .month-ev-extlink {

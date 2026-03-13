@@ -120,21 +120,26 @@
 
           <!-- Wish feed -->
           <div style="display:flex;flex-direction:column;gap:8px;max-height:180px;overflow-y:auto;scrollbar-width:thin;margin-bottom:14px;">
-            <div v-if="!selectedPerson.wishes.length" class="text-center py-5 text-app-light text-[13px]">
+            <div v-if="wishesLoading" class="text-center py-5">
+              <div class="bday-spinner"></div>
+              <div class="text-[12px] font-bold mt-2 text-app-light">กำลังโหลดคำอวยพร...</div>
+            </div>
+            <div v-else-if="!selectedPerson.wishes.length" class="text-center py-5 text-app-light text-[13px]">
               ยังไม่มีคำอวยพรค่ะ<br>เป็นคนแรกที่อวยพรได้เลย! 🎉
             </div>
             <div
-              v-for="(w, i) in selectedPerson.wishes"
+              v-for="(w, i) in wishesLoading ? [] : selectedPerson.wishes"
               :key="i"
               class="wish-item"
               :class="{ 'wi-new': i === 0 && justSent }"
             >
               <div class="wi-header-row">
-                <div class="wi-av" :style="{ background: bday.getSenderAvatar(w.avIdx).bg }">
-                  {{ bday.getSenderAvatar(w.avIdx).av }}
+                <div class="wi-av" :style="w.photo ? 'overflow:hidden;' : { background: bday.getSenderAvatar(w.avIdx).bg }">
+                  <img v-if="w.photo" :src="w.photo" style="width:100%;height:100%;object-fit:cover;" @error="e => e.target.style.display='none'" />
+                  <span v-else>{{ bday.getSenderAvatar(w.avIdx).av }}</span>
                 </div>
                 <div class="wi-name">{{ w.from }}</div>
-                <div class="wi-time">{{ w.time }}</div>
+                <div class="wi-time">{{ formatWishTime(w.time) }}</div>
               </div>
               <div class="wi-msg">{{ w.msg }}</div>
             </div>
@@ -411,10 +416,28 @@ import { ref, computed, watch, onMounted } from 'vue'
 import BaseModal from '../shared/BaseModal.vue'
 import { useBirthdayStore } from '../../stores/birthday.js'
 import { useUiStore } from '../../stores/ui.js'
+import { useUserAuthStore } from '../../stores/userAuth.js'
 import { useConfetti } from '../../composables/useConfetti.js'
 
-const bday = useBirthdayStore()
-const ui = useUiStore()
+const bday     = useBirthdayStore()
+const ui       = useUiStore()
+const userAuth = useUserAuthStore()
+
+const _TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+function formatWishTime(raw) {
+  if (!raw || raw === 'เมื่อกี้') return raw || ''
+  // GAS formatDate returns "dd/MM/yyyy HH:mm"
+  const m = String(raw).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{2}):(\d{2})/)
+  if (m) return `${+m[1]} ${_TH_MONTHS[+m[2]-1]} ${+m[3]+543} ${m[4]}:${m[5]}`
+  // Fallback: ISO / Date object
+  const d = new Date(raw)
+  if (!isNaN(d)) {
+    const hh = String(d.getHours()).padStart(2,'0')
+    const mm = String(d.getMinutes()).padStart(2,'0')
+    return `${d.getDate()} ${_TH_MONTHS[d.getMonth()]} ${d.getFullYear()+543} ${hh}:${mm}`
+  }
+  return String(raw)
+}
 
 const currentMonth = new Date().getMonth() + 1
 
@@ -489,17 +512,21 @@ watch(selectedMonth, async (m) => {
   loading.value = false
 })
 
+const wishesLoading = ref(false)
+
 async function openPerson(emp) {
   selectedPerson.value = emp
   wishSent.value = false
   wishMsg.value = ''
   selectedChip.value = null
   justSent.value = false
+  wishesLoading.value = true
   const wishes = await bday.loadWishes(emp.key)
   // Set directly on selectedPerson in case store emp was replaced by background image fetch
   if (selectedPerson.value?.key === emp.key) {
     selectedPerson.value.wishes = wishes
   }
+  wishesLoading.value = false
 }
 
 function sendWish() {
@@ -510,7 +537,7 @@ function sendWish() {
   }
   const msg = wishMsg.value.trim()
   const name = ui.currentUser?.name || 'ทีมงาน'
-  bday.sendWish(selectedPerson.value.key, msg, name, 0)
+  bday.sendWish(selectedPerson.value.key, msg, name, 0, userAuth.userImgId || '')
   successMsg.value = `ส่งถึง <strong>${selectedPerson.value.name}</strong> แล้วค่ะ 💌<br>"${msg}"`
   wishSent.value = true
   justSent.value = true

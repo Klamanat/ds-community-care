@@ -3,7 +3,7 @@
 // Columns: key | employeeId | name | role | monthIdx | date | fallbackIdx | imgUrl
 //
 // Sheet: BirthdayWishes
-// Columns: id | birthdayKey | fromName | fromAvIdx | msg | time | year
+// Columns: id | birthdayKey | fromName | fromAvIdx | msg | time | year | fromImgId
 
 function getBirthdays(params) {
   var rows = cachedSheetRead('Birthdays', 300); // 5 min cache
@@ -61,6 +61,7 @@ function getBirthdayWishes(params) {
       birthdayKey: String(r.birthdayKey || ''),
       fromName:    String(r.fromName || ''),
       fromAvIdx:   parseInt(r.fromAvIdx, 10) || 0,
+      fromImgId:   String(r.fromImgId || ''),
       msg:         String(r.msg || ''),
       time:        String(r.time || ''),
       year:        parseInt(r.year, 10) || new Date().getFullYear(),
@@ -74,6 +75,7 @@ function addBirthdayWish(params) {
   var birthdayKey = params.birthdayKey;
   var fromName    = params.fromName;
   var fromAvIdx   = parseInt(params.fromAvIdx, 10) || 0;
+  var fromImgId   = String(params.fromImgId || '');
   var msg         = params.msg || '';
 
   if (!birthdayKey) return err('birthdayKey required');
@@ -83,7 +85,7 @@ function addBirthdayWish(params) {
   var time = formatDate(new Date());
   var year = new Date().getFullYear();
 
-  appendRow('BirthdayWishes', [id, birthdayKey, fromName, fromAvIdx, msg, time, year]);
+  appendRow('BirthdayWishes', [id, birthdayKey, fromName, fromAvIdx, msg, time, year, fromImgId]);
 
-  return ok({ id: id, birthdayKey: birthdayKey, fromName: fromName, fromAvIdx: fromAvIdx, msg: msg, time: time, year: year });
+  return ok({ id: id, birthdayKey: birthdayKey, fromName: fromName, fromAvIdx: fromAvIdx, fromImgId: fromImgId, msg: msg, time: time, year: year });
 }

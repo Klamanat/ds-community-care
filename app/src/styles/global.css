@@ -573,7 +573,7 @@
   }
   .month-ev-meta span { font-size: 12px; color: #64748B; font-weight: 600; }
   .month-ev-desc { font-size: 13px; color: #475569; line-height: 1.6; margin-bottom: 14px; }
-  .month-ev-actions { display: flex; gap: 10px; }
+  .month-ev-actions { display: flex; gap: 10px; align-items: center; }
   .month-ev-detail {
     flex: 1; border: 1.5px solid #E8E4F4; background: #fff; border-radius: 12px;
     padding: 10px 8px; font-size: 13px; font-weight: 700; color: #64748B; cursor: pointer;

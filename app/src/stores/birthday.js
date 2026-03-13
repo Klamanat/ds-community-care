@@ -77,14 +77,14 @@ export const useBirthdayStore = defineStore('birthday', () => {
     }
   }
 
-  async function sendWish(key, msg, fromName, avIdx) {
+  async function sendWish(key, msg, fromName, avIdx, fromImgId = '') {
     const ui  = useUiStore()
     const emp = getEmployee(key)
     if (!emp) return
-    const temp = { from: fromName, avIdx, msg, time: 'เมื่อกี้' }
+    const temp = { from: fromName, avIdx, fromImgId, photo: getCached(fromImgId) || '', msg, time: 'เมื่อกี้' }
     emp.wishes.unshift(temp)
     try {
-      await svc.addWish(key, msg, fromName, avIdx)
+      await svc.addWish(key, msg, fromName, avIdx, fromImgId)
       ui.showToast('ส่งคำอวยพรสำเร็จ! 🎉')
     } catch {
       emp.wishes = emp.wishes.filter(w => w !== temp)

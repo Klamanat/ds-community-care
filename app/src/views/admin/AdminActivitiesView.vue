@@ -46,21 +46,15 @@
             <div v-else class="al-item-avatar">{{ r.emoji || '📅' }}</div>
             <div class="al-item-body">
               <div class="al-item-title">{{ r.name }}</div>
-              <div class="al-item-sub">{{ r.date }} {{ r.loc ? '· ' + r.loc : '' }}</div>
+              <div class="al-item-sub">
+                {{ r.date }}{{ r.dateEnd ? ' – ' + r.dateEnd : '' }}
+                {{ r.loc ? '· ' + r.loc : '' }}
+              </div>
               <div class="al-item-meta">
                 <span class="al-badge al-badge-month">{{ monthName(r.monthIdx) }}</span>
-                <span class="al-badge" :class="r.joinOpen === false ? 'al-badge-red' : 'al-badge-green'">
-                  {{ r.joinOpen === false ? 'Join ปิด' : 'Join เปิด' }}
-                </span>
               </div>
             </div>
             <div class="al-item-actions">
-              <button
-                class="al-btn al-btn-join-toggle"
-                :class="r.joinOpen === false ? 'closed' : 'open'"
-                :disabled="!!togglingJoin[r.id]"
-                @click="toggleJoin(r)"
-              >{{ r.joinOpen === false ? '🔴 Join ปิด' : '🟢 Join เปิด' }}</button>
               <button class="al-btn al-btn-edit" @click="openEdit(r)">แก้ไข</button>
               <button class="al-btn al-btn-delete" @click="confirmDelete(r)">ลบ</button>
             </div>
@@ -98,6 +92,11 @@
           <div v-if="dateInput" style="font-size:11px;color:#6B7280;margin-top:4px;">{{ isoToThai(dateInput) }}</div>
         </div>
         <div class="al-form-row">
+          <label class="al-form-label">วันสิ้นสุด (ถ้าเป็นช่วงหลายวัน)</label>
+          <input v-model="dateEndInput" type="date" class="al-form-input" />
+          <div v-if="dateEndInput" style="font-size:11px;color:#6B7280;margin-top:4px;">{{ isoToThai(dateEndInput) }}</div>
+        </div>
+        <div class="al-form-row">
           <label class="al-form-label">สถานที่</label>
           <input v-model="form.loc" class="al-form-input" placeholder="ห้อง / Online" />
         </div>
@@ -114,11 +113,14 @@
           <input v-model="form.joinUrl" class="al-form-input" placeholder="https://..." />
         </div>
         <div class="al-form-row">
-          <label class="al-form-label">ปุ่ม Join (label)</label>
+          <label class="al-form-label">ปุ่ม Control</label>
           <div class="join-label-options">
             <label v-for="opt in JOIN_LABEL_OPTIONS" :key="opt.value" class="join-label-opt">
               <input type="radio" v-model="form.joinLabel" :value="opt.value" />
-              <span>{{ opt.label }}</span>
+              <div>
+                <div>{{ opt.label }}</div>
+                <div style="font-size:10px;color:#9CA3AF;margin-top:1px;">{{ opt.desc }}</div>
+              </div>
             </label>
           </div>
         </div>
@@ -190,15 +192,13 @@ const acts   = useActivitiesStore()
 
 const loading     = ref(true)
 const filterMonth = ref(0)
-const togglingJoin = ref({})
 const modal  = reactive({ open: false, mode: 'add', saving: false, error: '' })
 const form   = reactive({ id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', feedbackUrl:'', imgUrl:'', imgId:'' })
 
 const JOIN_LABEL_OPTIONS = [
-  { value: '',        label: '— ไม่แสดงปุ่ม' },
-  { value: 'stamp',   label: '🎯 เข้าร่วม + Stamp' },
-  { value: 'checkin', label: '✅ Check-in' },
-  { value: 'join',    label: '🔗 Join' },
+  { value: '',        label: '— ไม่แสดงปุ่ม',          desc: 'ซ่อนปุ่มทั้งหมด' },
+  { value: 'stamp',   label: '🎯 Check-in + Stamp',    desc: 'Stamp เข้าร่วม + ตีไข่ลุ้นรางวัล' },
+  { value: 'checkin', label: '✅ Check-in อย่างเดียว', desc: 'Stamp เข้าร่วมเท่านั้น ไม่มีรางวัล' },
 ]
 const delTarget = ref(null)
 const deleting  = ref(false)
@@ -223,9 +223,10 @@ function thaiToIso(thai) {
   return `${year}-${String(monthIdx + 1).padStart(2,'0')}-${String(parseInt(m[1])).padStart(2,'0')}`
 }
 
-const imgFileInput = ref(null)
-const imgPreview   = ref('')
-const imgUploading = ref(false)
+const imgFileInput  = ref(null)
+const imgPreview    = ref('')
+const imgUploading  = ref(false)
+const dateEndInput  = ref('')
 
 async function onImgChange(e) {
   const file = e.target.files?.[0]
@@ -282,8 +283,8 @@ onMounted(async () => {
 })
 
 function openAdd() {
-  Object.assign(form, { id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', feedbackUrl:'', imgUrl:'', imgId:'' })
-  dateInput.value = ''; imgPreview.value = ''; imgUploading.value = false
+  Object.assign(form, { id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', dateEnd:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', feedbackUrl:'', imgUrl:'', imgId:'' })
+  dateInput.value = ''; dateEndInput.value = ''; imgPreview.value = ''; imgUploading.value = false
   modal.mode = 'add'; modal.error = ''; modal.open = true
 }
 
@@ -291,15 +292,17 @@ function openEdit(r) {
   Object.assign(form, { ...r, monthIdx: String(r.monthIdx) })
   form.imgId = r.imgId || ''
   if (form.imgId) form.imgUrl = ''
-  dateInput.value = thaiToIso(r.date)
-  imgPreview.value = r.imgUrl || ''
+  dateInput.value    = thaiToIso(r.date)
+  dateEndInput.value = thaiToIso(r.dateEnd || '')
+  imgPreview.value   = r.imgUrl || ''
   imgUploading.value = false
   modal.mode = 'edit'; modal.error = ''; modal.open = true
 }
 
 async function saveModal() {
   if (!form.name.trim()) { modal.error = 'กรุณากรอกชื่อกิจกรรม'; return }
-  form.date = isoToThai(dateInput.value)
+  form.date    = isoToThai(dateInput.value)
+  form.dateEnd = isoToThai(dateEndInput.value)
   modal.saving = true; modal.error = ''
   try {
     if (modal.mode === 'add') {
@@ -324,18 +327,6 @@ async function saveModal() {
   }
 }
 
-async function toggleJoin(r) {
-  const newVal = r.joinOpen === false ? true : false
-  togglingJoin.value[r.id] = true
-  acts.localUpdate(r.id, { joinOpen: newVal })
-  try {
-    await svc.updateActivity(r.id, { ...r, joinOpen: newVal })
-  } catch {
-    acts.localUpdate(r.id, { joinOpen: r.joinOpen })
-  } finally {
-    togglingJoin.value[r.id] = false
-  }
-}
 
 function confirmDelete(r) { delTarget.value = r }
 async function doDelete() {
