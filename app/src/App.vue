@@ -94,7 +94,8 @@ function syncUser() {
   }
 }
 syncUser()
-watch(() => userAuth.userId, syncUser)
+watch(() => userAuth.userId,    syncUser)
+watch(() => userAuth.userImgUrl, img => { if (ui.currentUser) ui.currentUser.img = img })
 </script>
 
 <style scoped>
