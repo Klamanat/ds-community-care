@@ -1,5 +1,5 @@
 // Activities.gs — Monthly activities management
-// Sheet "Activities": id | monthIdx | name | emoji | date | dateEnd | loc | desc | steps | joinUrl | joinOpen | joinLabel | feedbackUrl | imgUrl | imgId | createdAt
+// Sheet "Activities": id | monthIdx | name | emoji | date | dateEnd | loc | desc | steps | joinUrl | joinOpen | joinLabel | joinOpenAt | joinCloseAt | feedbackUrl | imgUrl | imgId | createdAt
 
 // Use addMissingColumns() in Setup.gs to add missing columns
 
@@ -40,8 +40,10 @@ function adminAddActivity(params) {
     if (h === 'desc')      return params.desc      || '';
     if (h === 'steps')     return params.steps     || '';
     if (h === 'joinUrl')   return params.joinUrl   || '';
-    if (h === 'joinOpen')  return params.joinOpen  !== undefined ? params.joinOpen  : true;
-    if (h === 'joinLabel')    return params.joinLabel    || 'stamp';
+    if (h === 'joinOpen')    return params.joinOpen  !== undefined ? params.joinOpen : true;
+    if (h === 'joinLabel')   return params.joinLabel   || 'stamp';
+    if (h === 'joinOpenAt')  return params.joinOpenAt  || '';
+    if (h === 'joinCloseAt') return params.joinCloseAt || '';
     if (h === 'feedbackUrl')  return params.feedbackUrl  || '';
     if (h === 'imgUrl')    return params.imgId ? '' : (params.imgUrl || ''); // ถ้ามี imgId ไม่ต้องเก็บ base64
     if (h === 'imgId')     return params.imgId     || '';
@@ -71,7 +73,7 @@ function adminUpdateActivity(params) {
   }
   if (rowNum < 0) return err('ไม่พบ activity id: ' + params.id);
 
-  var EDITABLE = ['monthIdx','name','emoji','date','dateEnd','loc','desc','steps','joinUrl','joinOpen','joinLabel','feedbackUrl','imgUrl','imgId'];
+  var EDITABLE = ['monthIdx','name','emoji','date','dateEnd','loc','desc','steps','joinUrl','joinOpen','joinLabel','joinOpenAt','joinCloseAt','feedbackUrl','imgUrl','imgId'];
   EDITABLE.forEach(function(field) {
     if (params[field] !== undefined) {
       var col = headers.indexOf(field) + 1;

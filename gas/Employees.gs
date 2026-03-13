@@ -2,7 +2,7 @@
 // uploadImage() is defined in DriveUpload.gs
 
 // Sheet: Employees
-// Columns: id | name | role | dept | imgUrl | grad | inTeam | inStarGang | starGangName | starGangRole
+// Columns: id | name | role | dept | imgUrl | grad | inTeam | inStarGang | starGangName | starGangRole | starGangSlogan
 
 function getEmployees(params) {
   var rows = cachedSheetRead('Employees', 600); // 10 min — employees change rarely
@@ -38,8 +38,9 @@ function getEmployees(params) {
       grad:         String(r.grad    || ''),
       inTeam:       r.inTeam === true || r.inTeam === 'TRUE',
       inStarGang:   r.inStarGang === true || r.inStarGang === 'TRUE',
-      starGangName: String(r.starGangName || ''),
-      starGangRole: String(r.starGangRole || ''),
+      starGangName:   String(r.starGangName   || ''),
+      starGangRole:   String(r.starGangRole   || ''),
+      starGangSlogan: String(r.starGangSlogan || ''),
     };
   });
 
@@ -85,12 +86,13 @@ function addTeamMember(params) {
 }
 
 function updateEmployeeSelf(params) {
-  var id     = params.id;
-  var name   = (params.name   || '').trim();
-  var role   = (params.role   || '').trim();
-  var dept   = (params.dept   || '').trim();
-  var imgUrl = (params.imgUrl || '').trim();
-  var imgId  = (params.imgId  || '').trim();
+  var id             = params.id;
+  var name           = (params.name           || '').trim();
+  var role           = (params.role           || '').trim();
+  var dept           = (params.dept           || '').trim();
+  var imgUrl         = (params.imgUrl         || '').trim();
+  var imgId          = (params.imgId          || '').trim();
+  var starGangSlogan = (params.starGangSlogan || '').trim();
 
   if (!id) return err('id required');
 
@@ -114,6 +116,8 @@ function updateEmployeeSelf(params) {
       } else if (imgUrl && imgUrlIdx >= 0) {
         sheet.getRange(i + 1, imgUrlIdx + 1).setValue(imgUrl);
       }
+      var sloganIdx = headers.indexOf('starGangSlogan');
+      if (starGangSlogan !== '' && sloganIdx >= 0) sheet.getRange(i + 1, sloganIdx + 1).setValue(starGangSlogan);
       invalidateSheet('Employees');
       invalidateResult('people'); // profile image อาจเปลี่ยน
       return ok({ id: id, updated: true });

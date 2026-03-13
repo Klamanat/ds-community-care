@@ -89,8 +89,13 @@
                 🔗 เปิด Link
               </button>
 
-              <!-- Join ปิด / เลยเดือนแล้ว -->
-              <span v-if="ev.joinOpen === false" class="month-ev-join-closed">🔒 ปิดรับสมัคร</span>
+              <!-- ยังไม่ถึงเวลาเปิดรับ -->
+              <span v-if="!isJoined(ev.id) && ev.joinLabel && joinStatus(ev) === 'not_yet'" class="month-ev-join-closed">⏳ {{ ev.joinOpenAt ? 'เริ่ม ' + formatOpenAt(ev) : 'ยังไม่ถึงวันที่เริ่มกิจกรรม' }}</span>
+
+              <!-- ปิดรับสมัคร (admin กำหนด / เลยเวลา) -->
+              <span v-else-if="!isJoined(ev.id) && ev.joinLabel && joinStatus(ev) === 'closed'" class="month-ev-join-closed">🔒 สิ้นสุดกิจกรรมแล้ว</span>
+
+              <!-- เลยเดือนแล้ว -->
               <span v-else-if="isPastMonth && !isJoined(ev.id) && ev.joinLabel" class="month-ev-join-closed">🔒 สิ้นสุดกิจกรรม</span>
 
               <!-- รอโหลด stamp ก่อน — ป้องกัน flash ปุ่ม check-in -->
@@ -108,24 +113,24 @@
 
               <!-- Joined: checkin only -->
               <template v-else-if="isJoined(ev.id) && ev.joinLabel === 'checkin'">
-                <span class="month-ev-stamped">✅ Check-in แล้ว</span>
+                <span class="month-ev-stamped">✅ เข้าร่วมกิจกรรมแล้ว</span>
               </template>
 
               <!-- Joined: stamp — reward not claimed -->
               <template v-else-if="isJoined(ev.id) && ev.joinLabel === 'stamp' && !isClaimed(ev.id)">
-                <span class="month-ev-stamped">✅ Check-in แล้ว</span>
+                <span class="month-ev-stamped">✅ เข้าร่วมกิจกรรมแล้ว</span>
                 <button class="month-ev-egg" @click="openEgg(ev)">🥚 รับรางวัล</button>
               </template>
 
               <!-- Joined: stamp — claimed -->
               <template v-else-if="isJoined(ev.id) && ev.joinLabel === 'stamp'">
-                <span class="month-ev-stamped">✅ Check-in แล้ว</span>
+                <span class="month-ev-stamped">✅ เข้าร่วมกิจกรรมแล้ว</span>
                 <span class="month-ev-claimed">🎁 รับรางวัลแล้ว</span>
               </template>
 
               <!-- Joined: fallback (no label / other) -->
               <template v-else-if="isJoined(ev.id)">
-                <span class="month-ev-stamped">✅ Check-in แล้ว</span>
+                <span class="month-ev-stamped">✅ เข้าร่วมกิจกรรมแล้ว</span>
               </template>
 
               <!-- Feedback (แสดงทุกกิจกรรมที่มี feedbackUrl) -->
@@ -348,7 +353,37 @@ async function loadMyStamps() {
   finally { stampsLoaded.value = true }
 }
 
-function joinBtnLabel(val) { return '✅ Check-in' }
+function joinBtnLabel(val) { return '✅ เข้าร่วมกิจกรรม' }
+
+// 'not_yet' | 'open' | 'closed'
+function joinStatus(ev) {
+  const now     = Date.now()
+  const openAt  = ev.joinOpenAt  ? new Date(ev.joinOpenAt).getTime()  : null
+  const closeAt = ev.joinCloseAt ? new Date(ev.joinCloseAt).getTime() : null
+
+  // ตรวจ close ก่อนเสมอ
+  if (closeAt !== null && now > closeAt) return 'closed'
+  if (ev.joinOpen === false) return 'closed'
+
+  // ตรวจ open
+  if (openAt !== null) {
+    if (now < openAt) return 'not_yet'
+  } else {
+    // ไม่ได้ set joinOpenAt → ใช้เดือนของกิจกรรมเทียบเดือนปัจจุบัน
+    const currentMonth = new Date().getMonth() + 1
+    if (Number(ev.monthIdx) > currentMonth) return 'not_yet'
+  }
+
+  return 'open'
+}
+
+function formatOpenAt(ev) {
+  if (!ev.joinOpenAt) return ''
+  const d = new Date(ev.joinOpenAt)
+  if (isNaN(d)) return ''
+  const MONTHS_TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+  return `${d.getDate()} ${MONTHS_TH[d.getMonth()]} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} น.`
+}
 
 function parseSteps(desc) {
   return desc

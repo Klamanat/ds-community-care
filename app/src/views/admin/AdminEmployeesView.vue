@@ -125,6 +125,11 @@
           </div>
         </div>
 
+        <div class="al-form-row">
+          <label class="al-form-label">StarGang Slogan</label>
+          <input v-model="form.starGangSlogan" class="al-form-input" placeholder="สโลแกนประจำตัว..." maxlength="100" />
+        </div>
+
         <!-- Birthday section -->
         <div class="amg-section-label">🎂 ข้อมูลวันเกิด</div>
 
@@ -227,7 +232,7 @@ const modal     = reactive({ open: false, mode: 'add', saving: false, error: '' 
 
 const form = reactive({
   id:'', empCode:'', name:'', role:'', dept:'', grad:'',
-  inTeam:'true', inStarGang:'false', starGangName:'', starGangRole:'',
+  inTeam:'true', inStarGang:'false', starGangName:'', starGangRole:'', starGangSlogan:'',
   imgUrl:'', imgId:'',
 })
 
@@ -275,7 +280,7 @@ function bdayOf(empId) {
 }
 
 function openAdd() {
-  Object.assign(form, { id:'', empCode:'', name:'', role:'', dept:'', grad:'', inTeam:'true', inStarGang:'false', starGangName:'', starGangRole:'', imgUrl:'', imgId:'' })
+  Object.assign(form, { id:'', empCode:'', name:'', role:'', dept:'', grad:'', inTeam:'true', inStarGang:'false', starGangName:'', starGangRole:'', starGangSlogan:'', imgUrl:'', imgId:'' })
   Object.assign(bdayForm, { _key:'', monthIdx:'', fallbackIdx:'0', date:'' })
   bdayDay.value = ''; imgPreview.value = ''; imgPending.value = ''
   imgUploadDone.value = false
@@ -338,7 +343,7 @@ async function doSave() {
         empCode: form.empCode,
         name: form.name, role: form.role, dept: form.dept, grad: form.grad,
         inTeam: form.inTeam, inStarGang: form.inStarGang,
-        starGangName: form.starGangName, starGangRole: form.starGangRole,
+        starGangName: form.starGangName, starGangRole: form.starGangRole, starGangSlogan: form.starGangSlogan,
       })
       empId = res?.id || String(Date.now())
 
@@ -360,7 +365,7 @@ async function doSave() {
         empCode: form.empCode,
         name: form.name, role: form.role, dept: form.dept, grad: form.grad,
         inTeam: form.inTeam, inStarGang: form.inStarGang,
-        starGangName: form.starGangName, starGangRole: form.starGangRole,
+        starGangName: form.starGangName, starGangRole: form.starGangRole, starGangSlogan: form.starGangSlogan,
       })
 
       let imgUrl = form.imgUrl, imgId = form.imgId

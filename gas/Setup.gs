@@ -144,7 +144,7 @@ var ALL_SHEETS = [
   },
   {
     name: 'Employees',
-    headers: ['id','empCode','name','role','dept','imgUrl','imgId','grad','inTeam','inStarGang','starGangName','starGangRole'],
+    headers: ['id','empCode','name','role','dept','imgUrl','imgId','grad','inTeam','inStarGang','starGangName','starGangRole','starGangSlogan'],
   },
   {
     name: 'Birthdays',
@@ -180,7 +180,7 @@ var ALL_SHEETS = [
   },
   {
     name: 'Activities',
-    headers: ['id','monthIdx','name','emoji','date','dateEnd','loc','desc','steps','joinUrl','joinOpen','joinLabel','feedbackUrl','imgUrl','imgId','createdAt'],
+    headers: ['id','monthIdx','name','emoji','date','dateEnd','loc','desc','steps','joinUrl','joinOpen','joinLabel','joinOpenAt','joinCloseAt','feedbackUrl','imgUrl','imgId','createdAt'],
   },
   {
     name: 'ActivityJoins',
@@ -259,11 +259,11 @@ function seedEmployees() {
     return;
   }
 
-  // id | empCode | name | role | dept | imgUrl | imgId | grad | inTeam | inStarGang | starGangName | starGangRole
+  // id | empCode | name | role | dept | imgUrl | imgId | grad | inTeam | inStarGang | starGangName | starGangRole | starGangSlogan
   var rows = [
-    ['1','E001','นก','Marketing Manager','Marketing','','','','true','true','Star Marketing','Lead'],
-    ['2','E002','น้ำส้ม','Graphic Designer','Creative','','','','true','false','',''],
-    ['3','E003','วุฒิ','Developer','Tech','','','','true','false','',''],
+    ['1','E001','นก','Marketing Manager','Marketing','','','','true','true','Star Marketing','Lead','ทุกความพยายามมีความหมาย'],
+    ['2','E002','น้ำส้ม','Graphic Designer','Creative','','','','true','false','','',''],
+    ['3','E003','วุฒิ','Developer','Tech','','','','true','false','','',''],
   ];
 
   rows.forEach(function(r) { sheet.appendRow(r); });

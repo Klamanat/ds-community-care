@@ -79,6 +79,13 @@
               <div class="pf-info-val">{{ userAuth.userDept || '—' }}</div>
             </div>
           </div>
+          <div v-if="isStarGang" class="pf-info-row">
+            <span class="pf-info-icon">✨</span>
+            <div>
+              <div class="pf-info-label">สโลแกน Star Gang</div>
+              <div class="pf-info-val" style="font-style:italic;">{{ userAuth.userSlogan || '—' }}</div>
+            </div>
+          </div>
 
           <!-- Logout -->
           <div class="pf-divider" style="margin:16px 0 12px;"></div>
@@ -103,6 +110,10 @@
             <label class="pf-field-label">แผนก</label>
             <input v-model="editDept" maxlength="60" class="pf-input" placeholder="ชื่อแผนก" />
           </div>
+          <div v-if="isStarGang" class="pf-field">
+            <label class="pf-field-label">✨ สโลแกน Star Gang</label>
+            <input v-model="editSlogan" maxlength="100" class="pf-input" placeholder="ประโยคที่เป็นตัวเอง..." />
+          </div>
         </template>
 
       </div>
@@ -116,12 +127,20 @@ import { useRouter } from 'vue-router'
 import BaseModal from '../shared/BaseModal.vue'
 import { useUiStore }       from '../../stores/ui.js'
 import { useUserAuthStore } from '../../stores/userAuth.js'
+import { useTeamStore }     from '../../stores/team.js'
 import { gasGet }           from '../../services/api.js'
 import { uploadImage as driveUpload } from '../../services/activitiesService.js'
 
 const ui       = useUiStore()
 const userAuth = useUserAuthStore()
+const team     = useTeamStore()
 const router   = useRouter()
+
+const isStarGang = computed(() => {
+  const name = userAuth.userName
+  if (!name) return false
+  return team.sgMembers.some(m => (m.name || '').trim().toLowerCase() === name.trim().toLowerCase())
+})
 
 // ── Upload ──────────────────────────────────────────────────
 const fileInput   = ref(null)
@@ -162,17 +181,19 @@ async function onFileChange(e) {
 }
 
 // ── Edit ────────────────────────────────────────────────────
-const editing  = ref(false)
-const saving   = ref(false)
-const editName = ref('')
-const editRole = ref('')
-const editDept = ref('')
+const editing    = ref(false)
+const saving     = ref(false)
+const editName   = ref('')
+const editRole   = ref('')
+const editDept   = ref('')
+const editSlogan = ref('')
 
 function startEdit() {
-  editName.value = userAuth.userName
-  editRole.value = userAuth.userRole
-  editDept.value = userAuth.userDept
-  editing.value  = true
+  editName.value   = userAuth.userName
+  editRole.value   = userAuth.userRole
+  editDept.value   = userAuth.userDept
+  editSlogan.value = userAuth.userSlogan
+  editing.value    = true
 }
 function cancelEdit() { editing.value = false }
 
@@ -180,12 +201,16 @@ async function saveEdit() {
   const name = editName.value.trim()
   if (!name) { ui.showToast('กรุณากรอกชื่อ'); return }
   saving.value = true
-  userAuth.userName = name; userAuth.userRole = editRole.value.trim(); userAuth.userDept = editDept.value.trim()
-  localStorage.setItem('user_name', name)
-  localStorage.setItem('user_role', userAuth.userRole)
-  localStorage.setItem('user_dept', userAuth.userDept)
+  userAuth.userName   = name
+  userAuth.userRole   = editRole.value.trim()
+  userAuth.userDept   = editDept.value.trim()
+  userAuth.userSlogan = editSlogan.value.trim()
+  localStorage.setItem('user_name',   name)
+  localStorage.setItem('user_role',   userAuth.userRole)
+  localStorage.setItem('user_dept',   userAuth.userDept)
+  localStorage.setItem('user_slogan', userAuth.userSlogan)
   ui.currentUser.name = name; ui.currentUser.role = userAuth.userRole
-  try { await gasGet('updateEmployeeSelf', { id: userAuth.userId, name, role: userAuth.userRole, dept: userAuth.userDept }) } catch {}
+  try { await gasGet('updateEmployeeSelf', { id: userAuth.userId, name, role: userAuth.userRole, dept: userAuth.userDept, starGangSlogan: userAuth.userSlogan }) } catch {}
   saving.value = false; editing.value = false
   ui.showToast('บันทึกข้อมูลสำเร็จ ✅')
 }

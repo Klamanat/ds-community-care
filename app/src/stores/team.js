@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import * as svc from '../services/teamService.js'
 import { useUiStore } from './ui.js'
 import { lsGet, lsSet, stripBase64 } from '../utils/cache.js'
+import { fetchImages, getCached } from '../services/imageService.js'
 
 const TTL = 10 * 60 * 1000 // 10 min
 
@@ -40,9 +41,19 @@ export const useTeamStore = defineStore('team', () => {
   async function loadStarGang() {
     try {
       const data = await svc.fetchStarGang()
-      sgMembers.value = data || []
+      // Apply cached Drive images immediately
+      sgMembers.value = (data || []).map(m =>
+        m.imgId ? { ...m, imgUrl: m.imgUrl || getCached(m.imgId) || '' } : m
+      )
       joinCount.value = sgMembers.value.length
       lsSet('star_gang', stripBase64(data || [], 'imgUrl'), TTL)
+      // Lazy-fetch Drive images
+      const ids = [...new Set((data || []).map(m => m.imgId).filter(Boolean))]
+      if (ids.length) fetchImages(ids).then(map => {
+        sgMembers.value = sgMembers.value.map(m =>
+          (m.imgId && map[m.imgId]) ? { ...m, imgUrl: map[m.imgId] } : m
+        )
+      }).catch(() => {})
     } catch {}
   }
 

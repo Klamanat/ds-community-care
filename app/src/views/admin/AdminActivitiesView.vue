@@ -109,7 +109,7 @@
           <textarea v-model="form.steps" class="al-form-textarea" rows="4" placeholder="1. ลงทะเบียน&#10;2. รับเอกสาร&#10;3. เข้าร่วมกิจกรรม"></textarea>
         </div>
         <div class="al-form-row">
-          <label class="al-form-label">Join URL (ถ้ามี)</label>
+          <label class="al-form-label">Activity URL (ถ้ามี)</label>
           <input v-model="form.joinUrl" class="al-form-input" placeholder="https://..." />
         </div>
         <div class="al-form-row">
@@ -122,6 +122,25 @@
                 <div style="font-size:10px;color:#9CA3AF;margin-top:1px;">{{ opt.desc }}</div>
               </div>
             </label>
+          </div>
+        </div>
+
+        <div class="al-form-2col">
+          <div class="al-form-row">
+            <label class="al-form-label">วันที่เริ่มกิจกรรม</label>
+            <div style="display:flex;gap:6px;">
+              <input v-model="joinOpenDate" type="date" class="al-form-input" style="flex:1;" />
+              <input :value="joinOpenTime" type="text" class="al-form-input" style="width:80px;text-align:center;" placeholder="09:00" maxlength="5" @input="fmtTime($event,'joinOpenTime')" />
+            </div>
+            <div style="font-size:10px;color:#9CA3AF;margin-top:3px;">เว้นว่าง = เปิดทันที</div>
+          </div>
+          <div class="al-form-row">
+            <label class="al-form-label">วันสิ้นสุดกิจกรรม</label>
+            <div style="display:flex;gap:6px;">
+              <input v-model="joinCloseDate" type="date" class="al-form-input" style="flex:1;" />
+              <input :value="joinCloseTime" type="text" class="al-form-input" style="width:80px;text-align:center;" placeholder="17:00" maxlength="5" @input="fmtTime($event,'joinCloseTime')" />
+            </div>
+            <div style="font-size:10px;color:#9CA3AF;margin-top:3px;">เว้นว่าง = ไม่มีกำหนด</div>
           </div>
         </div>
 
@@ -193,12 +212,12 @@ const acts   = useActivitiesStore()
 const loading     = ref(true)
 const filterMonth = ref(0)
 const modal  = reactive({ open: false, mode: 'add', saving: false, error: '' })
-const form   = reactive({ id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', dateEnd:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', feedbackUrl:'', imgUrl:'', imgId:'' })
+const form   = reactive({ id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', dateEnd:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', joinOpenAt:'', joinCloseAt:'', feedbackUrl:'', imgUrl:'', imgId:'' })
 
 const JOIN_LABEL_OPTIONS = [
   { value: '',        label: '— ไม่แสดงปุ่ม',          desc: 'ซ่อนปุ่มทั้งหมด' },
-  { value: 'stamp',   label: '🎯 Check-in + Stamp',    desc: 'Stamp เข้าร่วม + ตีไข่ลุ้นรางวัล' },
-  { value: 'checkin', label: '✅ Check-in อย่างเดียว', desc: 'Stamp เข้าร่วมเท่านั้น ไม่มีรางวัล' },
+  { value: 'stamp',   label: '🎯 Check-In Bimonthly',   desc: 'Stamp เข้าร่วม + ตีไข่ลุ้นรางวัล' },
+  { value: 'checkin', label: '✅ เข้าร่วมกิจกรรม', desc: 'Stamp เข้าร่วมเท่านั้น ไม่มีรางวัล' },
 ]
 const delTarget = ref(null)
 const deleting  = ref(false)
@@ -227,6 +246,32 @@ const imgFileInput  = ref(null)
 const imgPreview    = ref('')
 const imgUploading  = ref(false)
 const dateEndInput  = ref('')
+
+// joinOpenAt / joinCloseAt — แยก date+time เพื่อให้ browser แสดง 24HR
+const joinOpenDate  = ref('')
+const joinOpenTime  = ref('')
+const joinCloseDate = ref('')
+const joinCloseTime = ref('')
+
+// auto-format HH:MM as user types
+function fmtTime(e, field) {
+  const digits = e.target.value.replace(/[^0-9]/g, '').slice(0, 4)
+  let v = digits
+  if (digits.length >= 3) v = digits.slice(0, 2) + ':' + digits.slice(2)
+  e.target.value = v
+  if (field === 'joinOpenTime')  joinOpenTime.value  = v
+  if (field === 'joinCloseTime') joinCloseTime.value = v
+}
+
+function splitDateTime(dt) {
+  if (!dt) return { d: '', t: '' }
+  const [d, t = ''] = dt.split('T')
+  return { d, t: t.slice(0, 5) }
+}
+function joinDateTime(d, t) {
+  if (!d) return ''
+  return t ? `${d}T${t}` : `${d}T00:00`
+}
 
 async function onImgChange(e) {
   const file = e.target.files?.[0]
@@ -283,8 +328,9 @@ onMounted(async () => {
 })
 
 function openAdd() {
-  Object.assign(form, { id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', dateEnd:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', feedbackUrl:'', imgUrl:'', imgId:'' })
+  Object.assign(form, { id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', dateEnd:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', joinOpenAt:'', joinCloseAt:'', feedbackUrl:'', imgUrl:'', imgId:'' })
   dateInput.value = ''; dateEndInput.value = ''; imgPreview.value = ''; imgUploading.value = false
+  joinOpenDate.value = ''; joinOpenTime.value = ''; joinCloseDate.value = ''; joinCloseTime.value = ''
   modal.mode = 'add'; modal.error = ''; modal.open = true
 }
 
@@ -296,13 +342,19 @@ function openEdit(r) {
   dateEndInput.value = thaiToIso(r.dateEnd || '')
   imgPreview.value   = r.imgUrl || ''
   imgUploading.value = false
+  const oa = splitDateTime(r.joinOpenAt  || '')
+  const ca = splitDateTime(r.joinCloseAt || '')
+  joinOpenDate.value = oa.d; joinOpenTime.value = oa.t
+  joinCloseDate.value = ca.d; joinCloseTime.value = ca.t
   modal.mode = 'edit'; modal.error = ''; modal.open = true
 }
 
 async function saveModal() {
   if (!form.name.trim()) { modal.error = 'กรุณากรอกชื่อกิจกรรม'; return }
-  form.date    = isoToThai(dateInput.value)
-  form.dateEnd = isoToThai(dateEndInput.value)
+  form.date       = isoToThai(dateInput.value)
+  form.dateEnd    = isoToThai(dateEndInput.value)
+  form.joinOpenAt  = joinDateTime(joinOpenDate.value, joinOpenTime.value)
+  form.joinCloseAt = joinDateTime(joinCloseDate.value, joinCloseTime.value)
   modal.saving = true; modal.error = ''
   try {
     if (modal.mode === 'add') {
