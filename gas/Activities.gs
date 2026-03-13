@@ -1,5 +1,5 @@
 // Activities.gs — Monthly activities management
-// Sheet "Activities": id | monthIdx | name | emoji | date | loc | desc | steps | joinUrl | imgUrl | imgId | createdAt
+// Sheet "Activities": id | monthIdx | name | emoji | date | loc | desc | steps | joinUrl | joinOpen | joinLabel | feedbackUrl | imgUrl | imgId | createdAt
 
 /**
  * GET: getActivities
@@ -38,7 +38,8 @@ function adminAddActivity(params) {
     if (h === 'steps')     return params.steps     || '';
     if (h === 'joinUrl')   return params.joinUrl   || '';
     if (h === 'joinOpen')  return params.joinOpen  !== undefined ? params.joinOpen  : true;
-    if (h === 'joinLabel') return params.joinLabel || 'stamp';
+    if (h === 'joinLabel')    return params.joinLabel    || 'stamp';
+    if (h === 'feedbackUrl')  return params.feedbackUrl  || '';
     if (h === 'imgUrl')    return params.imgId ? '' : (params.imgUrl || ''); // ถ้ามี imgId ไม่ต้องเก็บ base64
     if (h === 'imgId')     return params.imgId     || '';
     if (h === 'createdAt') return now;
@@ -67,7 +68,7 @@ function adminUpdateActivity(params) {
   }
   if (rowNum < 0) return err('ไม่พบ activity id: ' + params.id);
 
-  var EDITABLE = ['monthIdx','name','emoji','date','loc','desc','steps','joinUrl','joinOpen','joinLabel','imgUrl','imgId'];
+  var EDITABLE = ['monthIdx','name','emoji','date','loc','desc','steps','joinUrl','joinOpen','joinLabel','feedbackUrl','imgUrl','imgId'];
   EDITABLE.forEach(function(field) {
     if (params[field] !== undefined) {
       var col = headers.indexOf(field) + 1;

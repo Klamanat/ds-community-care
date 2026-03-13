@@ -38,17 +38,6 @@
     <!-- Body -->
     <div class="month-events-list">
 
-      <!-- My stamps banner -->
-      <div v-if="myStamps.length > 0" class="stamps-banner">
-        <div class="stamps-label">🏅 สแตมป์ของฉัน ({{ myStamps.length }})</div>
-        <div class="stamps-row">
-          <div v-for="s in myStamps" :key="s.id" class="stamp-chip">
-            <span>{{ getActEmoji(s.activityId) }}</span>
-            <span class="stamp-chip-name">{{ s.activityName }}</span>
-            <span v-if="s.rewardClaimed" class="stamp-dot-green"></span>
-          </div>
-        </div>
-      </div>
 
       <!-- Loading -->
       <div v-if="acts.isLoading" class="month-empty">
@@ -88,8 +77,12 @@
                 🔗 เปิด Link
               </button>
 
-              <!-- Join ปิด -->
+              <!-- Join ปิด / เลยเดือนแล้ว -->
               <span v-if="ev.joinOpen === false" class="month-ev-join-closed">🔒 ปิดรับสมัคร</span>
+              <span v-else-if="isPastMonth && !isJoined(ev.id) && ev.joinLabel" class="month-ev-join-closed">🔒 สิ้นสุดกิจกรรม</span>
+
+              <!-- รอโหลด stamp ก่อน — ป้องกัน flash ปุ่ม check-in -->
+              <span v-else-if="!stampsLoaded && ev.joinLabel"></span>
 
               <!-- Not joined -->
               <button
@@ -103,15 +96,20 @@
 
               <!-- Joined, reward not claimed -->
               <template v-else-if="isJoined(ev.id) && !isClaimed(ev.id)">
-                <span class="month-ev-stamped">✅ Stamped</span>
+                <span class="month-ev-stamped">✅ Check-in แล้ว</span>
                 <button class="month-ev-egg" @click="openEgg(ev)">🥚 รับรางวัล</button>
               </template>
 
               <!-- Joined + claimed -->
               <template v-else-if="isJoined(ev.id)">
-                <span class="month-ev-stamped">✅ Stamped</span>
+                <span class="month-ev-stamped">✅ Check-in แล้ว</span>
                 <span class="month-ev-claimed">🎁 รับรางวัลแล้ว</span>
               </template>
+
+              <!-- Feedback (แสดงทุกกิจกรรมที่มี feedbackUrl) -->
+              <button v-if="ev.feedbackUrl" class="month-ev-feedback" @click="openLink(ev.feedbackUrl)">
+                📝 Feedback
+              </button>
             </div>
           </div>
         </div>
@@ -208,8 +206,9 @@ const acts = useActivitiesStore()
 const { launchConfetti } = useConfetti()
 
 const selectedMonth = computed(() => ui.selectedMonthIdx ?? (new Date().getMonth() + 1))
-const myStamps  = ref([])
-const stamping  = ref({})
+const myStamps     = ref([])
+const stampsLoaded = ref(false)
+const stamping     = ref({})
 const detailEv  = ref(null)
 
 const PRIZES = [
@@ -240,8 +239,9 @@ const MONTH_META = [
   { title: 'December 🎄',  icon: '🎄', grad: 'linear-gradient(135deg,#FECACA,#F87171)' },
 ]
 
-const meta   = computed(() => MONTH_META[selectedMonth.value - 1] ?? MONTH_META[0])
-const events = computed(() => acts.getMonth(selectedMonth.value))
+const meta        = computed(() => MONTH_META[selectedMonth.value - 1] ?? MONTH_META[0])
+const events      = computed(() => acts.getMonth(selectedMonth.value))
+const isPastMonth = computed(() => selectedMonth.value < (new Date().getMonth() + 1))
 
 const joinedIds  = computed(() => new Set(myStamps.value.map(s => String(s.activityId))))
 const claimedIds = computed(() => new Set(myStamps.value.filter(s => s.rewardClaimed).map(s => String(s.activityId))))
@@ -316,12 +316,13 @@ function closeEgg() { egg.value.show = false }
 
 async function loadMyStamps() {
   const name = ui.currentUser?.name || ''
-  if (!name) { myStamps.value = []; return }
+  if (!name) { myStamps.value = []; stampsLoaded.value = true; return }
   try { myStamps.value = await svc.getMyStamps(name) }
   catch { myStamps.value = [] }
+  finally { stampsLoaded.value = true }
 }
 
-const JOIN_LABELS = { stamp: '🎯 เข้าร่วม + Stamp', checkin: '✅ Check-in', join: '🔗 Join' }
+const JOIN_LABELS = { stamp: '📍 Check-in กิจกรรม', checkin: '✅ Check-in', join: '🔗 Join' }
 function joinBtnLabel(val) { return JOIN_LABELS[val] || val || '' }
 
 function parseSteps(desc) {
@@ -361,6 +362,13 @@ function parseSteps(desc) {
 .month-ev-stamped    { font-size:12px; font-weight:700; color:#10B981; }
 .month-ev-claimed    { font-size:11px; font-weight:600; color:#9CA3AF; }
 .month-ev-join-closed { font-size:11px; font-weight:700; color:#DC2626; background:#FEE2E2; border-radius:12px; padding:4px 10px; }
+
+.month-ev-feedback {
+  padding:7px 12px; border-radius:16px; font-size:12px; font-weight:700;
+  background:#F0FDF4; color:#059669; border:1.5px solid #A7F3D0; cursor:pointer;
+  transition:transform 0.18s;
+}
+.month-ev-feedback:active { transform:scale(0.96); }
 
 .month-ev-egg {
   padding:6px 12px; border-radius:16px; font-size:12px; font-weight:700;

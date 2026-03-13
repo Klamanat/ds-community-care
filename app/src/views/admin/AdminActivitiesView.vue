@@ -123,6 +123,11 @@
           </div>
         </div>
 
+        <div class="al-form-row">
+          <label class="al-form-label">Feedback URL (ถ้ามี)</label>
+          <input v-model="form.feedbackUrl" class="al-form-input" placeholder="https://forms.google.com/..." />
+        </div>
+
         <!-- Image upload -->
         <div class="al-form-row">
           <label class="al-form-label">รูป Header (ถ้ามี)</label>
@@ -187,7 +192,7 @@ const loading     = ref(true)
 const filterMonth = ref(0)
 const togglingJoin = ref({})
 const modal  = reactive({ open: false, mode: 'add', saving: false, error: '' })
-const form   = reactive({ id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', imgUrl:'', imgId:'' })
+const form   = reactive({ id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', feedbackUrl:'', imgUrl:'', imgId:'' })
 
 const JOIN_LABEL_OPTIONS = [
   { value: '',        label: '— ไม่แสดงปุ่ม' },
@@ -277,7 +282,7 @@ onMounted(async () => {
 })
 
 function openAdd() {
-  Object.assign(form, { id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', imgUrl:'', imgId:'' })
+  Object.assign(form, { id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', feedbackUrl:'', imgUrl:'', imgId:'' })
   dateInput.value = ''; imgPreview.value = ''; imgUploading.value = false
   modal.mode = 'add'; modal.error = ''; modal.open = true
 }
