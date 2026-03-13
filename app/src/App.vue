@@ -1,6 +1,8 @@
 <template>
   <div id="app-shell">
-    <template v-if="!isAdmin && !isAuth">
+    <template v-if="!routerReady"></template>
+
+    <template v-else-if="!isAdmin && !isAuth">
       <AppHeader />
       <div class="body-area">
         <AppSidebar />
@@ -26,6 +28,7 @@
       <CultureModal   :key="ui.modalKeys['modal-culture']    || 0" />
       <TrainingModal  :key="ui.modalKeys['modal-training']   || 0" />
       <RewardModal       :key="ui.modalKeys['modal-reward']      || 0" />
+      <AnnouncementModal />
 
       <!-- Toast -->
       <div class="toast" :class="{ hidden: !ui.toast.visible }">{{ ui.toast.msg }}</div>
@@ -44,8 +47,8 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
-import { useRoute, RouterView } from 'vue-router'
+import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter, RouterView } from 'vue-router'
 import AppHeader from './components/layout/AppHeader.vue'
 import AppSidebar from './components/layout/AppSidebar.vue'
 import AppBottomNav from './components/layout/AppBottomNav.vue'
@@ -60,12 +63,20 @@ import MonthModal from './components/modals/MonthModal.vue'
 import CultureModal from './components/modals/CultureModal.vue'
 import TrainingModal from './components/modals/TrainingModal.vue'
 import RewardModal from './components/modals/RewardModal.vue'
+import AnnouncementModal from './components/modals/AnnouncementModal.vue'
 import { useUiStore } from './stores/ui.js'
 import { useUserAuthStore } from './stores/userAuth.js'
 
 const ui       = useUiStore()
 const userAuth = useUserAuthStore()
 const route    = useRoute()
+const router   = useRouter()
+
+// Wait for initial navigation to complete before rendering any layout.
+// Without this, route.meta is empty on first render and isAdmin flashes false.
+const routerReady = ref(false)
+router.isReady().then(() => { routerReady.value = true })
+
 const isAdmin  = computed(() => !!route.meta.adminLayout)
 const isAuth   = computed(() => !!route.meta.authLayout)
 

@@ -63,3 +63,19 @@ export async function deletePost(postId) {
   const r = await gasGet('adminDeletePost', { token: token(), postId })
   return r.data
 }
+
+// ── Announcement ──────────────────────────────────────────────────
+
+export async function saveAnnouncement(fields) {
+  const r = await gasGet('saveAnnouncement', { token: token(), ...fields })
+  if (!r.ok) throw new Error(r.error || 'บันทึกไม่สำเร็จ')
+  return r.data
+}
+
+export async function uploadAnnouncementVideo(base64, fileName, mimeType) {
+  const r = await gasPost('uploadAnnouncementVideo', {
+    token: token(), base64, fileName: fileName || 'announcement.mp4', mimeType: mimeType || 'video/mp4',
+  })
+  if (!r.ok) throw new Error(r.error || 'อัปโหลดไม่สำเร็จ')
+  return r.data
+}

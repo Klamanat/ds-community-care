@@ -18,8 +18,9 @@ var DRIVE_FOLDER_ID =
   "https://drive.google.com/drive/u/0/folders/1KcHRzC_H_-Vltz5YWqhox_ZCYq5pz05W";
 
 var SUBFOLDERS = {
-  activities: "Activities",
-  profiles:   "Profiles",
+  activities:    "Activities",
+  profiles:      "Profiles",
+  announcements: "Announcements",
 };
 
 function _getOrCreateSubfolder(parent, name) {
@@ -107,6 +108,40 @@ function adminUploadProfileImage(body) {
   } catch (e) { /* Birthdays sheet may not exist */ }
 
   return ok({ id: newId });
+}
+
+/**
+ * uploadAnnouncementVideo — upload a video file to Drive Announcements/ subfolder.
+ * Called from doPost with action: 'uploadAnnouncementVideo'
+ * body: { token, base64, fileName, mimeType }
+ * Returns: { url: 'https://drive.google.com/file/d/ID/view', id }
+ *
+ * Note: max practical size ~30 MB (base64 overhead ~33%, GAS POST limit 50 MB)
+ */
+function uploadAnnouncementVideo(body) {
+  verifyToken(body.token);
+
+  var base64Raw = (body.base64 || '').replace(/^data:[^;]+;base64,/, '');
+  var fileName  = body.fileName || ('announcement_' + new Date().getTime() + '.mp4');
+  var mimeType  = body.mimeType || 'video/mp4';
+
+  if (!base64Raw) return err('No video data');
+
+  var m          = DRIVE_FOLDER_ID.match(/folders\/([a-zA-Z0-9_-]+)/);
+  var folderId   = m ? m[1] : DRIVE_FOLDER_ID;
+  var mainFolder = DriveApp.getFolderById(folderId);
+  var subfolder  = _getOrCreateSubfolder(mainFolder, 'Announcements');
+
+  var decoded = Utilities.base64Decode(base64Raw);
+  var blob    = Utilities.newBlob(decoded, mimeType, fileName);
+  var file    = subfolder.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
+
+  var fileId = file.getId();
+  return ok({
+    url: 'https://drive.google.com/file/d/' + fileId + '/view',
+    id:  fileId,
+  });
 }
 
 function uploadImage(body) {

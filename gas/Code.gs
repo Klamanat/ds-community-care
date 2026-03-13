@@ -12,7 +12,8 @@ function doPost(e) {
     var action = body.action;
 
     var handlers = {
-      uploadImage:               function() { return uploadImage(body); },
+      uploadImage:                  function() { return uploadImage(body); },
+      uploadAnnouncementVideo:      function() { return uploadAnnouncementVideo(body); },
       adminUploadProfileImage:   function() { return adminUploadProfileImage(body); },
       login:                     function() { return login(body); },
       userLogin:            function() { return userLogin(body); },
@@ -74,6 +75,10 @@ function doGet(e) {
       adminAddActivity:      function() { return adminAddActivity(e.parameter); },
       adminUpdateActivity:   function() { return adminUpdateActivity(e.parameter); },
       adminDeleteActivity:   function() { return adminDeleteActivity(e.parameter); },
+
+      // Announcement
+      getAnnouncement:    function() { return getAnnouncement(); },
+      saveAnnouncement:   function() { return saveAnnouncement(e.parameter); },
 
       // Images (Drive proxy — called by frontend after page renders)
       getImages:          function() { return getImages(e.parameter); },

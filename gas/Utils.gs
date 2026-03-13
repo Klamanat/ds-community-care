@@ -136,6 +136,97 @@ function getImages(params) {
 }
 
 /**
+ * saveAnnouncement — upserts ann_* keys in the "Settings" sheet.
+ * Params (GET): token, enabled ('TRUE'/'FALSE'), id, title, video, desc
+ * Auto-creates the Settings sheet with key/value columns if missing.
+ */
+function saveAnnouncement(params) {
+  verifyToken(params.token);
+
+  var updates = {
+    ann_enabled: String(params.enabled || 'FALSE'),
+    ann_id:      String(params.id      || ''),
+    ann_title:   String(params.title   || ''),
+    ann_video:   String(params.video   || ''),
+    ann_desc:    String(params.desc    || ''),
+  };
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Settings');
+
+  // Auto-create sheet if missing
+  if (!sheet) {
+    sheet = ss.insertSheet('Settings');
+    sheet.appendRow(['key', 'value']);
+  }
+
+  var data    = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var keyIdx  = headers.indexOf('key');
+  var valIdx  = headers.indexOf('value');
+
+  // Ensure columns exist
+  if (keyIdx < 0) { sheet.getRange(1, 1).setValue('key');   keyIdx = 0; }
+  if (valIdx < 0) { sheet.getRange(1, 2).setValue('value'); valIdx = 1; }
+
+  var touched = {};
+  for (var i = 1; i < data.length; i++) {
+    var k = String(data[i][keyIdx] || '').trim();
+    if (k in updates) {
+      sheet.getRange(i + 1, valIdx + 1).setValue(updates[k]);
+      touched[k] = true;
+    }
+  }
+
+  // Append keys not yet in sheet
+  Object.keys(updates).forEach(function(k) {
+    if (!touched[k]) {
+      var row = [];
+      row[keyIdx] = k;
+      row[valIdx] = updates[k];
+      sheet.appendRow(row);
+    }
+  });
+
+  invalidateSheet('Settings');
+  return ok({ saved: true });
+}
+
+/**
+ * getAnnouncement — reads key-value rows from "Settings" sheet.
+ * Expected rows (column A = key, column B = value):
+ *   ann_enabled  | TRUE
+ *   ann_id       | ann_2026_03_13
+ *   ann_title    | หัวข้อประกาศ
+ *   ann_video    | https://youtu.be/xxxxx
+ *   ann_desc     | รายละเอียด...
+ *
+ * Returns null data if ann_enabled != TRUE or sheet missing.
+ */
+function getAnnouncement() {
+  try {
+    var rows = sheetToObjects('Settings');
+    var kv   = {};
+    rows.forEach(function(r) {
+      var k = String(r['key'] || r['Key'] || '').trim();
+      var v = String(r['value'] || r['Value'] || '').trim();
+      if (k) kv[k] = v;
+    });
+
+    if (String(kv['ann_enabled'] || '').toUpperCase() !== 'TRUE') return ok(null);
+
+    return ok({
+      id:       kv['ann_id']    || '',
+      title:    kv['ann_title'] || '',
+      videoUrl: kv['ann_video'] || '',
+      desc:     kv['ann_desc']  || '',
+    });
+  } catch(e) {
+    return ok(null); // Settings sheet not found → no announcement
+  }
+}
+
+/**
  * App version — update this string when deploying new GAS builds
  */
 var APP_VERSION = '2.1.0';
