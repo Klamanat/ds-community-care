@@ -13,8 +13,7 @@ const routes = [
   // App routes (require user login)
   { path: '/',         name: 'home',     component: () => import('../views/HomeView.vue'),     meta: { requiresUser: true } },
   { path: '/star',     name: 'star',     component: () => import('../views/StarView.vue'),     meta: { requiresUser: true } },
-  { path: '/notif',    name: 'notif',    component: () => import('../views/NotifView.vue'),    meta: { requiresUser: true } },
-  { path: '/settings', name: 'settings', component: () => import('../views/SettingsView.vue'), meta: { requiresUser: true } },
+{ path: '/settings', name: 'settings', component: () => import('../views/SettingsView.vue'), meta: { requiresUser: true } },
   { path: '/idea',     name: 'idea',     component: () => import('../views/IdeaView.vue'),     meta: { requiresUser: true } },
   { path: '/bday',     name: 'bday',     component: () => import('../views/BdayView.vue'),     meta: { requiresUser: true } },
   { path: '/culture',    name: 'culture',    component: () => import('../views/CultureView.vue'),    meta: { requiresUser: true } },

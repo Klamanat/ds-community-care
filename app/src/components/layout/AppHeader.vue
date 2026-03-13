@@ -11,7 +11,7 @@
     </div>
 
     <div class="hdr-right">
-      <div class="hdr-btn" @click="router.push('/notif')">
+      <div class="hdr-btn" @click="ui.openModal('modal-notif')">
         🔔
         <div v-if="ui.notifBadge > 0" class="hbadge">{{ ui.notifBadge }}</div>
       </div>
@@ -30,9 +30,6 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
 import { useUiStore } from '../../stores/ui.js'
-
-const router = useRouter()
 const ui = useUiStore()
 </script>

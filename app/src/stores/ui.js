@@ -4,7 +4,7 @@ import { ref, reactive } from 'vue'
 export const useUiStore = defineStore('ui', () => {
   const activeModal = ref(null)
   const selectedMonthIdx = ref(1)
-  const notifBadge = ref(3)
+  const notifBadge = ref(0)
   const currentUser = ref({ id: '', name: '', role: '', img: '', dept: '', emoji: '😊' })
   const toast = ref({ msg: '', visible: false })
   const modalKeys = reactive({})

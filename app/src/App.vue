@@ -29,6 +29,7 @@
       <TrainingModal  :key="ui.modalKeys['modal-training']   || 0" />
       <RewardModal       :key="ui.modalKeys['modal-reward']      || 0" />
       <AnnouncementModal />
+      <NotifModal :key="ui.modalKeys['modal-notif'] || 0" />
 
       <!-- Toast -->
       <div class="toast" :class="{ hidden: !ui.toast.visible }">{{ ui.toast.msg }}</div>
@@ -47,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter, RouterView } from 'vue-router'
 import AppHeader from './components/layout/AppHeader.vue'
 import AppSidebar from './components/layout/AppSidebar.vue'
@@ -64,11 +65,14 @@ import CultureModal from './components/modals/CultureModal.vue'
 import TrainingModal from './components/modals/TrainingModal.vue'
 import RewardModal from './components/modals/RewardModal.vue'
 import AnnouncementModal from './components/modals/AnnouncementModal.vue'
-import { useUiStore } from './stores/ui.js'
+import NotifModal       from './components/modals/NotifModal.vue'
+import { useUiStore }       from './stores/ui.js'
 import { useUserAuthStore } from './stores/userAuth.js'
+import { useNotifStore }    from './stores/notif.js'
 
 const ui       = useUiStore()
 const userAuth = useUserAuthStore()
+const notif    = useNotifStore()
 const route    = useRoute()
 const router   = useRouter()
 
@@ -96,6 +100,14 @@ function syncUser() {
 syncUser()
 watch(() => userAuth.userId,    syncUser)
 watch(() => userAuth.userImgUrl, img => { if (ui.currentUser) ui.currentUser.img = img })
+
+// Load notifications when user is known; sync unread count → badge
+function loadNotifs() {
+  if (userAuth.userName) notif.load(userAuth.userName)
+}
+onMounted(loadNotifs)
+watch(() => userAuth.userName, loadNotifs)
+watch(() => notif.unreadCount, count => { ui.notifBadge = count }, { immediate: true })
 </script>
 
 <style scoped>

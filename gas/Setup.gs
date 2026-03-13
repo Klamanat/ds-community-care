@@ -147,7 +147,7 @@ var ALL_SHEETS = [
   },
   {
     name: 'BirthdayWishes',
-    headers: ['id','birthdayKey','fromName','fromAvIdx','msg','time','year'],
+    headers: ['id','birthdayKey','fromName','fromAvIdx','msg','time','year','fromImgId'],
   },
   {
     name: 'EmpathyPosts',
@@ -175,7 +175,7 @@ var ALL_SHEETS = [
   },
   {
     name: 'Activities',
-    headers: ['id','monthIdx','name','emoji','date','loc','desc','steps','joinUrl','joinOpen','joinLabel','imgUrl','imgId','createdAt'],
+    headers: ['id','monthIdx','name','emoji','date','dateEnd','loc','desc','steps','joinUrl','joinOpen','joinLabel','feedbackUrl','imgUrl','imgId','createdAt'],
   },
   {
     name: 'ActivityJoins',

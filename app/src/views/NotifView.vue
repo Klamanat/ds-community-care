@@ -1,42 +1,101 @@
 <template>
   <div class="tab-page notif-page">
-    <div class="text-[15px] font-extrabold text-app-dark mb-4">🔔 แจ้งเตือน</div>
-    <div class="bg-white rounded-md border border-app-border overflow-hidden shadow-app-sm">
+
+    <!-- Header row -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div class="text-[15px] font-extrabold text-app-dark">🔔 แจ้งเตือน</div>
+      <button
+        v-if="unreadCount > 0"
+        class="text-[11px] font-bold"
+        style="background:none;border:none;color:#6366F1;cursor:pointer;padding:2px 6px;"
+        @click="notif.markAllRead()"
+      >อ่านทั้งหมด ✓</button>
+    </div>
+
+    <!-- Loading skeletons -->
+    <div v-if="notif.loading && !notif.items.length" style="display:flex;flex-direction:column;gap:10px;">
+      <div v-for="i in 4" :key="i" class="notif-skeleton"></div>
+    </div>
+
+    <!-- Empty state -->
+    <div v-else-if="!notif.items.length" class="text-center py-14 text-app-light">
+      <div class="text-[44px] mb-3">🔕</div>
+      <div class="text-[14px] font-bold">ยังไม่มีการแจ้งเตือน</div>
+      <div class="text-[12px] mt-1">ระบบจะแจ้งเตือนกิจกรรม วันเกิด และ kudos ที่นี่</div>
+    </div>
+
+    <!-- Notification list -->
+    <div v-else class="bg-white rounded-2xl border border-app-border overflow-hidden shadow-app-sm">
       <div
-        v-for="n in notifs"
+        v-for="n in notif.items"
         :key="n.id"
         class="notif-item ripple-host"
-        :class="{ unread: n.unread }"
-        @click="markRead(n)"
+        :class="{ unread: !notif.isRead(n.id) }"
+        @click="handleTap(n)"
       >
+        <!-- Color dot -->
         <div class="notif-dot" :style="{ background: n.color }"></div>
-        <div class="notif-body">
+
+        <!-- Body -->
+        <div class="notif-body" style="flex:1;min-width:0;">
           <div class="notif-title">{{ n.title }}</div>
-          <div class="notif-msg">{{ n.msg }}</div>
-          <div class="notif-time">{{ n.time }}</div>
+          <div v-if="n.msg" class="notif-msg">{{ n.msg }}</div>
+          <div v-if="n.time" class="notif-time">{{ n.time }}</div>
         </div>
+
+        <!-- Unread badge dot -->
+        <div
+          v-if="!notif.isRead(n.id)"
+          style="width:8px;height:8px;border-radius:50%;background:#6366F1;flex-shrink:0;margin-top:4px;"
+        ></div>
       </div>
     </div>
+
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useUiStore } from '../stores/ui.js'
+import { computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useNotifStore } from '../stores/notif.js'
+import { useUiStore }    from '../stores/ui.js'
+import { useUserAuthStore } from '../stores/userAuth.js'
 
-const ui = useUiStore()
-const notifs = ref([
-  { id:1, unread:true,  color:'#6366F1', title:'🎂 วันเกิดของ Somsak P. วันนี้!',    msg:'อย่าลืมส่งคำอวยพรให้เพื่อนร่วมงานนะคะ 🎉', time:'เมื่อกี้' },
-  { id:2, unread:true,  color:'#EC4899', title:'💝 มีคนส่งความรู้สึกดีๆ ให้คุณ!',   msg:'Nok S. ส่ง "ขอบคุณ 🙏" มาให้คุณ',           time:'10 นาทีที่แล้ว' },
-  { id:3, unread:true,  color:'#F59E0B', title:'⭐ คุณได้รับคะแนน DS Reward!',       msg:'เข้าร่วมกิจกรรม Hackathon ได้รับ +50 คะแนน', time:'1 ชั่วโมงที่แล้ว' },
-  { id:4, unread:false, color:'#9B8FBB', title:'📅 เตือนกิจกรรม: Songkran Festival', msg:'กิจกรรมสงกรานต์จะเริ่มในอีก 3 สัปดาห์',      time:'เมื่อวาน' },
-  { id:5, unread:false, color:'#9B8FBB', title:'🧠 Mental Health Week เริ่มแล้ว',    msg:'ลงทะเบียนเข้ารับการปรึกษาฟรี ตลอดเดือนนี้',  time:'2 วันที่แล้ว' },
-])
+const notif    = useNotifStore()
+const ui       = useUiStore()
+const userAuth = useUserAuthStore()
+const router   = useRouter()
 
-function markRead(n) {
-  if (n.unread) {
-    n.unread = false
-    ui.notifBadge = Math.max(0, ui.notifBadge - 1)
+const unreadCount = computed(() => notif.unreadCount)
+
+onMounted(() => {
+  notif.load(userAuth.userName || '', true)   // force-refresh when page opens
+})
+
+function handleTap(n) {
+  notif.markRead(n.id)
+  const t = n.target || ''
+
+  if (t === 'bday')         { ui.openModal('modal-bday'); return }
+  if (t === 'empathy')      { router.push('/'); return }
+  if (t.startsWith('month_')) {
+    const idx = parseInt(t.split('_')[1], 10)
+    if (idx) ui.openMonthModal(idx)
+    return
   }
 }
 </script>
+
+<style scoped>
+.notif-skeleton {
+  height: 68px;
+  background: linear-gradient(90deg, #F3F4F6 25%, #E9EAEC 50%, #F3F4F6 75%);
+  background-size: 200% 100%;
+  border-radius: 14px;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+</style>

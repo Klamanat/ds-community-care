@@ -76,6 +76,9 @@ function doGet(e) {
       adminUpdateActivity:   function() { return adminUpdateActivity(e.parameter); },
       adminDeleteActivity:   function() { return adminDeleteActivity(e.parameter); },
 
+      // Notifications
+      getNotifications:   function() { return getNotifications(e.parameter); },
+
       // Announcement
       getAnnouncement:    function() { return getAnnouncement(); },
       saveAnnouncement:   function() { return saveAnnouncement(e.parameter); },

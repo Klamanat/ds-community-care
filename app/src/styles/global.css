@@ -484,6 +484,57 @@
     max-width: 620px !important;
   }
 
+  /* === Notification popup — Facebook style === */
+
+  /* Mobile: full screen */
+  .modal-overlay:has(.modal-sheet--notif) {
+    background: white;
+    align-items: flex-start;
+    justify-content: stretch;
+    padding: 0;
+  }
+  .modal-sheet--notif {
+    border-radius: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    box-shadow: none !important;
+    transform-origin: top center !important;
+  }
+
+  /* Desktop: dropdown below bell */
+  @media (min-width: 768px) {
+    .modal-overlay:has(.modal-sheet--notif) {
+      background: transparent;
+      align-items: flex-start;
+      justify-content: flex-end;
+      padding: 68px 16px 0 0;
+    }
+    .modal-sheet--notif {
+      border-radius: 12px !important;
+      width: 380px !important;
+      max-width: 380px !important;
+      height: auto !important;
+      max-height: 72vh !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.06) !important;
+      transform-origin: top right !important;
+    }
+    .modal-sheet--notif::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      right: 20px;
+      width: 16px;
+      height: 16px;
+      background: white;
+      border-left: 1px solid rgba(0,0,0,0.06);
+      border-top: 1px solid rgba(0,0,0,0.06);
+      transform: rotate(45deg);
+      z-index: 1;
+    }
+  }
+
   /* === Month modal — full screen sheet === */
   .modal-sheet--full {
     width: calc(100vw - 32px) !important;
