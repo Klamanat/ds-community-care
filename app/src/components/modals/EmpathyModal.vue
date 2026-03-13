@@ -244,14 +244,16 @@
 import { ref, computed, nextTick, onMounted } from 'vue'
 import BaseModal from '../shared/BaseModal.vue'
 import { getCached } from '../../services/imageService.js'
-import { useEmpathyStore } from '../../stores/empathy.js'
-import { useTeamStore }    from '../../stores/team.js'
-import { useUiStore }      from '../../stores/ui.js'
+import { useEmpathyStore }   from '../../stores/empathy.js'
+import { useTeamStore }      from '../../stores/team.js'
+import { useUiStore }        from '../../stores/ui.js'
+import { useUserAuthStore }  from '../../stores/userAuth.js'
 import { formatThaiDatetime } from '../../utils/date.js'
 
-const empathy = useEmpathyStore()
-const team    = useTeamStore()
-const ui      = useUiStore()
+const empathy  = useEmpathyStore()
+const team     = useTeamStore()
+const ui       = useUiStore()
+const userAuth = useUserAuthStore()
 
 // ── View ──────────────────────────────────────────────────────────
 const view           = ref('grid')
@@ -403,7 +405,7 @@ async function submitReply(parentId) {
   if (!text || !activePostId.value) return
   replyingTo.value = null
   replyText.value  = ''
-  await empathy.addComment(activePostId.value, text, ui.currentUser?.name || 'ทีม', parentId)
+  await empathy.addComment(activePostId.value, text, userAuth.userName || 'ทีม', parentId)
   scrollBottom()
 }
 
@@ -418,7 +420,7 @@ async function submitCompose() {
   showTags.value    = false
   sending.value     = true
   try {
-    await empathy.addComment(activePostId.value, fullText, ui.currentUser?.name || 'ทีม', '')
+    await empathy.addComment(activePostId.value, fullText, userAuth.userName || 'ทีม', '')
     empathy.recordPraise(selectedMember.value, activePostId.value)
     ui.showToast('ส่งคำชื่นชมสำเร็จ! 💝')
     ui.closeModal()
