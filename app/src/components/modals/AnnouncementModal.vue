@@ -85,7 +85,7 @@
             <!-- Actions -->
             <div class="ann-actions">
               <button class="ann-btn-ghost" @click="closeDontShow">ไม่แสดงอีก 7 วัน</button>
-              <button class="ann-btn-primary" @click="close">รับทราบ ✓</button>
+              <button class="ann-btn-primary" @click="closeAck">รับทราบ ✓</button>
             </div>
           </div>
 
@@ -99,9 +99,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { fetchAnnouncement } from '../../services/announcementService.js'
 
-const show    = ref(false)
-const loading = ref(false)
-const ann     = ref({ title: '', videoUrl: '', desc: '', id: '' })
+const show      = ref(false)
+const loading   = ref(false)
+const dismissed = ref(false)   // ปิดแล้วใน session นี้ → ไม่เปิดซ้ำ
+const ann       = ref({ title: '', videoUrl: '', desc: '', id: '' })
 
 const embedUrl = computed(() => {
   const url = ann.value.videoUrl || ''
@@ -136,10 +137,17 @@ function setCached(data) {
 }
 
 function close() {
+  // ปิดชั่วคราว — ไม่บันทึก seen → refresh/login ใหม่จะแสดงอีก
+  dismissed.value = true
+  show.value = false
+}
+function closeAck() {
+  // กด "รับทราบ" → ไม่แสดงซ้ำ 1 วัน
   if (ann.value.id) setSeen(ann.value.id, 1)
   show.value = false
 }
 function closeDontShow() {
+  // กด "ไม่แสดงอีก 7 วัน"
   if (ann.value.id) setSeen(ann.value.id, 7)
   show.value = false
 }
@@ -169,7 +177,7 @@ onMounted(async () => {
     }
 
     ann.value  = data
-    show.value = true
+    if (!dismissed.value) show.value = true
   } catch {
     if (!cached) show.value = false
   } finally {

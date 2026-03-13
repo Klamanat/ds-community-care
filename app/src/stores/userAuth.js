@@ -50,7 +50,7 @@ export const useUserAuthStore = defineStore('userAuth', () => {
   function logout() {
     userId.value = ''; userName.value = ''; userRole.value = ''
     userImgUrl.value = ''; userDept.value = ''
-    ;['user_id','user_name','user_role','user_img','user_dept'].forEach(k => localStorage.removeItem(k))
+    ;['user_id','user_name','user_role','user_img','user_dept','dsc_ann_seen'].forEach(k => localStorage.removeItem(k))
   }
 
   return { userId, userName, userRole, userImgUrl, userDept, isLoading, error, isAuthenticated, loginWithEmployee, logout }
