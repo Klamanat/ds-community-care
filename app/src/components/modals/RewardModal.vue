@@ -138,7 +138,7 @@ const checkinDone = ref(false)  // true = just checked in this session (show con
 const checkinError = ref('')
 
 onMounted(() => {
-  reward.load(userAuth.userName || '')
+  reward.load(userAuth.userName || '', true)
 })
 
 // Thai date for display

@@ -5,25 +5,7 @@
 // Sheet: BirthdayWishes
 // Columns: id | birthdayKey | fromName | fromAvIdx | msg | time | year | fromImgId
 
-/**
- * RUN ONCE from GAS editor: adminInitBirthdayWishesSheet()
- * Adds missing fromImgId column to BirthdayWishes sheet.
- * Safe to run multiple times.
- */
-function adminInitBirthdayWishesSheet() {
-  var sheet   = getSheet('BirthdayWishes');
-  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  if (headers.indexOf('fromImgId') >= 0) {
-    Logger.log('fromImgId column already exists'); return;
-  }
-  // Append as last column
-  var newCol = headers.length + 1;
-  sheet.getRange(1, newCol).setValue('fromImgId');
-  var lastRow = sheet.getLastRow();
-  if (lastRow > 1) sheet.getRange(2, newCol, lastRow - 1, 1).setValue('');
-  Logger.log('Added fromImgId at column ' + newCol + '. Final headers: ' +
-    sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].join(' | '));
-}
+// Use addMissingColumns() in Setup.gs to add missing columns
 
 function getBirthdays(params) {
   var rows = cachedSheetRead('Birthdays', 300); // 5 min cache
@@ -130,7 +112,7 @@ function addBirthdayWish(params) {
   appendRow('BirthdayWishes', [id, birthdayKey, fromName, fromAvIdx, msg, time, year, fromImgId]);
 
   // Award points for sending a birthday wish
-  try { addPoints(fromName, 'birthday_wish', 'อวยพรวันเกิด'); } catch(ex) {}
+  try { addPoints(fromName, 'birthday_wish', '', 'อวยพรวันเกิด'); } catch(ex) {}
 
   return ok({ id: id, birthdayKey: birthdayKey, fromName: fromName, fromAvIdx: fromAvIdx, fromImgId: fromImgId, msg: msg, time: time, year: year });
 }

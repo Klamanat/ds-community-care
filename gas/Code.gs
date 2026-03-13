@@ -90,6 +90,7 @@ function doGet(e) {
       // Announcement
       getAnnouncement:    function() { return getAnnouncement(); },
       saveAnnouncement:   function() { return saveAnnouncement(e.parameter); },
+      getVideoUrl:        function() { return getVideoUrl(e.parameter); },
 
       // Images (Drive proxy — called by frontend after page renders)
       getImages:          function() { return getImages(e.parameter); },

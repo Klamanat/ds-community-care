@@ -8,39 +8,9 @@
       >
         <div class="ann-card">
 
-          <!-- ══ HEADER ══════════════════════════════════════════ -->
-          <div class="ann-header">
-            <!-- Decorative orbs -->
-            <div class="ann-orb ann-orb-1"></div>
-            <div class="ann-orb ann-orb-2"></div>
-            <div class="ann-orb ann-orb-3"></div>
-
-            <!-- Pull handle (mobile) -->
-            <div class="ann-handle"></div>
-
-            <!-- Top row: badge + close -->
-            <div class="ann-header-row">
-              <div class="ann-badge">
-                <span style="font-size:11px;">📢</span>
-                <span>ประกาศ</span>
-              </div>
-              <button class="ann-close-btn" @click="close">✕</button>
-            </div>
-
-            <!-- Icon circle -->
-            <div class="ann-icon-wrap">
-              <div class="ann-icon-ring">
-                <span style="font-size:28px;line-height:1;">📣</span>
-              </div>
-            </div>
-
-            <!-- Title -->
-            <div v-if="loading && !ann.title" class="ann-title-skeleton"></div>
-            <div v-else class="ann-title">{{ ann.title || 'กำลังโหลด...' }}</div>
-          </div>
-
-          <!-- ══ VIDEO ════════════════════════════════════════════ -->
+          <!-- ══ VIDEO (full card) ════════════════════════════════ -->
           <div class="ann-video-wrap">
+
             <!-- Skeleton spinner -->
             <div v-if="loading && !ann.videoUrl" class="ann-video-loading">
               <div class="ann-spinner"></div>
@@ -53,17 +23,22 @@
               class="ann-iframe"
               frameborder="0"
               allowfullscreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allow="autoplay; fullscreen; encrypted-media"
             ></iframe>
 
-            <!-- HTML5 video -->
+            <!-- HTML5 video (Drive / direct URL) -->
             <video
-              v-else-if="ann.videoUrl"
-              :src="ann.videoUrl"
+              v-else-if="videoSrc"
+              ref="videoRef"
+              :src="videoSrc"
               class="ann-iframe"
-              controls
+              autoplay
+              loop
+              muted
               playsinline
-              style="object-fit:contain;"
+              style="object-fit:cover;"
+              @canplay="playVideo"
+              @loadeddata="playVideo"
             ></video>
 
             <!-- No video placeholder -->
@@ -71,22 +46,16 @@
               <span style="font-size:36px;">🎬</span>
               <span style="font-size:12px;font-weight:600;opacity:0.6;">ไม่มีวิดีโอ</span>
             </div>
-          </div>
 
-          <!-- ══ BODY ═════════════════════════════════════════════ -->
-          <div class="ann-body">
-            <!-- Desc skeleton -->
-            <div v-if="loading && !ann.desc" class="ann-desc-skeleton">
-              <div class="ann-skel-line" style="width:100%"></div>
-              <div class="ann-skel-line" style="width:75%"></div>
-            </div>
-            <p v-else-if="ann.desc" class="ann-desc">{{ ann.desc }}</p>
+            <!-- Floating close button -->
+            <button class="ann-close-btn" @click="close">✕</button>
 
-            <!-- Actions -->
+            <!-- Floating actions at bottom -->
             <div class="ann-actions">
               <button class="ann-btn-ghost" @click="closeDontShow">ไม่แสดงอีก 7 วัน</button>
               <button class="ann-btn-primary" @click="closeAck">รับทราบ ✓</button>
             </div>
+
           </div>
 
         </div>
@@ -96,22 +65,46 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { fetchAnnouncement } from '../../services/announcementService.js'
 
 const show      = ref(false)
 const loading   = ref(false)
+const videoRef  = ref(null)
 const dismissed = ref(false)   // ปิดแล้วใน session นี้ → ไม่เปิดซ้ำ
 const ann       = ref({ title: '', videoUrl: '', desc: '', id: '' })
 
+function playVideo() {
+  const el = videoRef.value
+  if (!el) return
+  el.muted = true
+  el.loop  = true
+  el.play().catch(() => {})
+}
+
+// เมื่อ modal เปิด — รอ DOM แล้ว play
+watch(show, async (val) => {
+  if (!val) return
+  await nextTick()
+  playVideo()
+})
+
+// YouTube → iframe embed, Drive → '' (ใช้ HTML5 video), อื่นๆ → ''
 const embedUrl = computed(() => {
   const url = ann.value.videoUrl || ''
   if (!url) return ''
-  let m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/)
-  if (m) return `https://www.youtube.com/embed/${m[1]}?autoplay=1&rel=0`
-  m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/)
-  if (m) return `https://drive.google.com/file/d/${m[1]}/preview`
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/)
+  if (m) return `https://www.youtube.com/embed/${m[1]}?autoplay=1&loop=1&playlist=${m[1]}&mute=1&controls=0&rel=0&modestbranding=1`
   return ''
+})
+
+// Drive → ใช้ direct URL สำหรับ <video> tag (frame-ancestors CSP ใช้กับ iframe เท่านั้น)
+const videoSrc = computed(() => {
+  const url = ann.value.videoUrl || ''
+  if (!url || embedUrl.value) return ''
+  const m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/)
+  if (m) return `https://drive.google.com/uc?id=${m[1]}`
+  return url  // direct video URL
 })
 
 const LS_SEEN = 'dsc_ann_seen'
@@ -207,14 +200,12 @@ onMounted(async () => {
 .ann-card {
   width: 100%;
   max-width: 480px;
-  max-height: 92dvh;
-  display: flex;
-  flex-direction: column;
   border-radius: 28px 28px 0 0;
   overflow: hidden;
   box-shadow:
     0 -4px 40px rgba(124, 58, 237, 0.25),
     0 0 0 1px rgba(255,255,255,0.08);
+  background: #000;
 }
 @media (min-width: 600px) {
   .ann-card {
@@ -225,74 +216,17 @@ onMounted(async () => {
   }
 }
 
-/* ── Header ──────────────────────────────────────────── */
-.ann-header {
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(145deg, #4F46E5 0%, #7C3AED 45%, #C026D3 80%, #DB2777 100%);
-  padding: 0 16px 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Decorative orbs */
-.ann-orb {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  pointer-events: none;
-}
-.ann-orb-1 { width: 160px; height: 160px; top: -60px; right: -40px; filter: blur(30px); }
-.ann-orb-2 { width: 90px;  height: 90px;  bottom: -20px; left: -20px; filter: blur(20px); }
-.ann-orb-3 { width: 50px;  height: 50px;  top: 30px; left: 30%; filter: blur(12px); background: rgba(255,200,255,0.2); }
-
-/* Pull handle */
-.ann-handle {
-  width: 36px;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.35);
-  margin: 10px auto 4px;
-}
-@media (min-width: 600px) { .ann-handle { display: none; } }
-
-/* Top row */
-.ann-header-row {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-  z-index: 1;
-}
-
-/* Badge pill */
-.ann-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-}
-
-/* Close button */
+/* Close button — floating top-right */
 .ann-close-btn {
-  width: 32px;
-  height: 32px;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(8px);
   color: white;
   font-size: 13px;
@@ -304,56 +238,19 @@ onMounted(async () => {
   transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.ann-close-btn:hover { background: rgba(255, 255, 255, 0.3); }
+.ann-close-btn:hover { background: rgba(0, 0, 0, 0.65); }
 
-/* Icon circle */
-.ann-icon-wrap {
-  position: relative;
-  z-index: 1;
-  margin-top: 4px;
-}
-.ann-icon-ring {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow:
-    0 0 0 8px rgba(255,255,255,0.06),
-    0 4px 20px rgba(0,0,0,0.2);
-}
-
-/* Title */
-.ann-title {
-  position: relative;
-  z-index: 1;
-  color: white;
-  font-size: 18px;
-  font-weight: 900;
-  text-align: center;
-  line-height: 1.35;
-  text-shadow: 0 1px 8px rgba(0,0,0,0.25);
-  padding: 0 8px;
-}
-.ann-title-skeleton {
-  width: 180px;
-  height: 22px;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.2);
-  animation: ann-pulse 1.2s ease-in-out infinite;
-}
-
-/* ── Video ───────────────────────────────────────────── */
+/* ── Video (fills entire card) ───────────────────────── */
 .ann-video-wrap {
-  flex-shrink: 0;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 9 / 16;
+  max-height: 88dvh;
   background: #0a0a14;
   position: relative;
   overflow: hidden;
+}
+@media (min-width: 600px) {
+  .ann-video-wrap { aspect-ratio: 16 / 9; max-height: none; }
 }
 .ann-iframe {
   position: absolute;
@@ -388,54 +285,32 @@ onMounted(async () => {
   color: white;
 }
 
-/* ── Body ────────────────────────────────────────────── */
-.ann-body {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  background: white;
-  padding: 18px 18px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-/* Desc */
-.ann-desc {
-  font-size: 13px;
-  color: #4B5563;
-  line-height: 1.7;
-  margin: 0;
-}
-.ann-desc-skeleton { display: flex; flex-direction: column; gap: 8px; }
-.ann-skel-line {
-  height: 12px;
-  border-radius: 6px;
-  background: #F3F4F6;
-  animation: ann-pulse 1.2s ease-in-out infinite;
-}
-
-/* Actions */
+/* Actions — floating bottom */
 .ann-actions {
+  position: absolute;
+  bottom: 20px;
+  left: 16px;
+  right: 16px;
+  z-index: 10;
   display: flex;
   gap: 10px;
-  margin-top: auto;
 }
 .ann-btn-ghost {
   flex: 1;
   padding: 11px 8px;
   border-radius: 16px;
-  border: 1.5px solid #E5E7EB;
-  background: #F9FAFB;
-  color: #6B7280;
+  border: 1.5px solid rgba(255,255,255,0.3);
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(8px);
+  color: rgba(255,255,255,0.85);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   font-family: 'Sarabun', sans-serif;
-  transition: border-color 0.15s, color 0.15s;
+  transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.ann-btn-ghost:hover { border-color: #A78BFA; color: #7C3AED; }
+.ann-btn-ghost:hover { background: rgba(0,0,0,0.6); }
 
 .ann-btn-primary {
   flex: 2;

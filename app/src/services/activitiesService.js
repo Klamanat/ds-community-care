@@ -36,8 +36,8 @@ export async function deleteActivity(id) {
   return gasGet('adminDeleteActivity', { token: token(), id })
 }
 
-export async function joinActivity(activityId, activityName, employeeName) {
-  const r = await gasGet('joinActivity', { activityId, activityName, employeeName: employeeName || 'ไม่ระบุชื่อ' })
+export async function joinActivity(activityId, activityName, employeeName, joinLabel) {
+  const r = await gasGet('joinActivity', { activityId, activityName, employeeName: employeeName || 'ไม่ระบุชื่อ', joinLabel: joinLabel || '' })
   return r.data   // { alreadyJoined, joinCount }
 }
 

@@ -1,41 +1,7 @@
 // Activities.gs — Monthly activities management
 // Sheet "Activities": id | monthIdx | name | emoji | date | dateEnd | loc | desc | steps | joinUrl | joinOpen | joinLabel | feedbackUrl | imgUrl | imgId | createdAt
 
-/**
- * RUN ONCE from GAS editor: adminInitActivitiesSheet()
- * Adds missing columns to the Activities sheet in the correct order.
- * Safe to run multiple times — skips columns that already exist.
- */
-function adminInitActivitiesSheet() {
-  var sheet   = getSheet('Activities');
-  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-
-  // Columns to ensure exist, in order: [insertAfter, newCol]
-  var ensure = [
-    { after: 'date', col: 'dateEnd' },
-  ];
-
-  ensure.forEach(function(item) {
-    if (headers.indexOf(item.col) >= 0) {
-      Logger.log('Column already exists: ' + item.col);
-      return;
-    }
-    var afterIdx = headers.indexOf(item.after);
-    if (afterIdx < 0) { Logger.log('Cannot find anchor column: ' + item.after); return; }
-    var insertCol = afterIdx + 2; // 1-based, after the anchor
-    sheet.insertColumnAfter(afterIdx + 1);
-    sheet.getRange(1, insertCol).setValue(item.col);
-    // Fill existing rows with empty string
-    var lastRow = sheet.getLastRow();
-    if (lastRow > 1) {
-      sheet.getRange(2, insertCol, lastRow - 1, 1).setValue('');
-    }
-    Logger.log('Added column: ' + item.col + ' at position ' + insertCol);
-    headers.splice(afterIdx + 1, 0, item.col); // keep local headers in sync for next iteration
-  });
-
-  Logger.log('Done. Final headers: ' + sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].join(' | '));
-}
+// Use addMissingColumns() in Setup.gs to add missing columns
 
 /**
  * GET: getActivities
@@ -131,6 +97,7 @@ function joinActivity(params) {
   var activityId   = String(params.activityId   || '').trim();
   var activityName = String(params.activityName || '').trim();
   var employeeName = String(params.employeeName || 'ไม่ระบุชื่อ').trim();
+  var joinLabel    = String(params.joinLabel    || '').trim();
 
   if (!activityId) return err('activityId required');
 
@@ -152,8 +119,10 @@ function joinActivity(params) {
   sheet.appendRow([id, activityId, activityName, employeeName, stampedAt]);
   invalidateSheet('ActivityJoins');
 
-  // Award points for joining (not stamped yet)
-  try { addPoints(employeeName, 'join_activity', '', 'เข้าร่วม: ' + activityName); } catch(ex) {}
+  // Award join_activity only if NOT a stamp activity (stamp awards activity_checkin via claimActivityReward)
+  if (joinLabel !== 'stamp') {
+    try { addPoints(employeeName, 'join_activity', '', 'เข้าร่วม: ' + activityName); } catch(ex) {}
+  }
 
   return ok({ alreadyJoined: false, joinCount: countJoins(data, aidIdx, activityId) + 1 });
 }

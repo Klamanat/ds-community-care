@@ -93,7 +93,10 @@
 
             <!-- Top-level kudos comment -->
             <div class="cm-item">
-              <div class="cm-av bg-[linear-gradient(135deg,#FBCFE8,#EC4899)]">{{ cm.name?.[0] }}</div>
+              <div class="cm-av bg-[linear-gradient(135deg,#FBCFE8,#EC4899)]">
+                <img v-if="getCommentorImg(cm.name)" :src="getCommentorImg(cm.name)" class="w-full h-full object-cover rounded-full" @error="e => e.target.style.display='none'" />
+                <span v-else>{{ cm.name?.[0] }}</span>
+              </div>
               <div class="flex-1 min-w-0">
                 <div class="cm-bubble">
                   <span v-if="cm.tag" class="inline-block bg-pink/10 text-[#BE185D] text-[10px] font-extrabold px-2 py-0.5 rounded-full mb-1">{{ cm.tag }}</span>
@@ -132,7 +135,10 @@
                 <!-- Nested replies -->
                 <div v-if="cm.replies.length" class="mt-2 ml-4 flex flex-col gap-1.5">
                   <div v-for="r in cm.replies" :key="r.id" class="cm-item">
-                    <div class="cm-av !w-6 !h-6 !text-[10px] bg-[linear-gradient(135deg,#DDD6FE,#7C3AED)]">{{ r.name?.[0] }}</div>
+                    <div class="cm-av !w-6 !h-6 !text-[10px] bg-[linear-gradient(135deg,#DDD6FE,#7C3AED)]">
+                      <img v-if="getCommentorImg(r.name)" :src="getCommentorImg(r.name)" class="w-full h-full object-cover rounded-full" @error="e => e.target.style.display='none'" />
+                      <span v-else>{{ r.name?.[0] }}</span>
+                    </div>
                     <div class="cm-bubble !bg-[linear-gradient(135deg,#F5F3FF,#EDE9FE)] flex-1">
                       <div class="cm-name">{{ r.name }}</div>
                       <div class="cm-text">{{ r.text }}</div>
@@ -237,6 +243,7 @@
 <script setup>
 import { ref, computed, nextTick, onMounted } from 'vue'
 import BaseModal from '../shared/BaseModal.vue'
+import { getCached } from '../../services/imageService.js'
 import { useEmpathyStore } from '../../stores/empathy.js'
 import { useTeamStore }    from '../../stores/team.js'
 import { useUiStore }      from '../../stores/ui.js'
@@ -328,6 +335,13 @@ const threadComments = computed(() => {
 // ── Helpers ────────────────────────────────────────────────────────
 function initials(name) {
   return (name || '').trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase()).join('') || '?'
+}
+
+function getCommentorImg(name) {
+  const n = (name || '').trim().toLowerCase()
+  const emp = team.empDirectory.find(e => (e.name || '').trim().toLowerCase() === n)
+  if (!emp) return ''
+  return emp.imgUrl || getCached(emp.imgId) || ''
 }
 
 function scrollBottom() {

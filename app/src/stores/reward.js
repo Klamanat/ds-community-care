@@ -72,10 +72,10 @@ export const useRewardStore = defineStore('reward', () => {
     checkinLoading.value = true
     try {
       const res = await postDailyCheckin(employeeName)
+      // ไม่ว่าจะเพิ่งเช็คอิน หรือ GAS บอกว่าเช็คอินแล้ว → ล็อกปุ่มทันที
+      checkedInToday.value = true
+      localStorage.setItem(CHECKIN_KEY, todayStr())
       if (!res.alreadyCheckedIn) {
-        checkedInToday.value = true
-        localStorage.setItem(CHECKIN_KEY, todayStr())
-        // Reload points to reflect new total
         await load(employeeName, true)
       }
       return res

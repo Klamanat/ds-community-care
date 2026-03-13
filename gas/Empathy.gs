@@ -146,7 +146,7 @@ function addEmpathyPost(params) {
   invalidateResult('posts');
 
   // Award points for sending empathy
-  try { addPoints(sndName, 'send_empathy', 'ส่ง Empathy ให้ ' + recName); } catch(ex) {}
+  try { addPoints(sndName, 'send_empathy', '', 'ส่ง Empathy ให้ ' + recName); } catch(ex) {}
 
   return ok({ id: id, recEmployeeId: recEmployeeId, recName: recName, recRole: recRole, recImg: recImgUrl, sndName: sndName, msg: msg, tag: tag, likeCount: likeCount, createdAt: createdAt, comments: [] });
 }
@@ -298,6 +298,11 @@ function addComment(params) {
   appendRow('EmpathyComments', [id, postId, parentId, authorName, text, createdAt]);
   invalidateSheet('EmpathyComments');
   invalidateResult('people'); // comment count เปลี่ยน
+
+  // Award points for top-level empathy only (not replies)
+  if (!parentId) {
+    try { addPoints(authorName, 'send_empathy', '', 'ส่ง Empathy'); } catch(ex) {}
+  }
 
   return ok({ id: id, postId: postId, parentId: parentId, name: authorName, text: text, time: createdAt });
 }

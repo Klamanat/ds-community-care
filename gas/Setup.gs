@@ -139,6 +139,10 @@ function addMissingSheets() {
 
 var ALL_SHEETS = [
   {
+    name: 'Settings',
+    headers: ['key','value'],
+  },
+  {
     name: 'Employees',
     headers: ['id','empCode','name','role','dept','imgUrl','imgId','grad','inTeam','inStarGang','starGangName','starGangRole'],
   },
@@ -255,10 +259,11 @@ function seedEmployees() {
     return;
   }
 
+  // id | empCode | name | role | dept | imgUrl | imgId | grad | inTeam | inStarGang | starGangName | starGangRole
   var rows = [
-    ['1','นก','Marketing Manager','Marketing','images/nok.jpg','','true','true','Star Marketing','Lead'],
-    ['2','น้ำส้ม','Graphic Designer','Creative','images/namsom.jpg','','true','false','',''],
-    ['3','วุฒิ','Developer','Tech','images/wut.jpg','','true','false','',''],
+    ['1','E001','นก','Marketing Manager','Marketing','','','','true','true','Star Marketing','Lead'],
+    ['2','E002','น้ำส้ม','Graphic Designer','Creative','','','','true','false','',''],
+    ['3','E003','วุฒิ','Developer','Tech','','','','true','false','',''],
   ];
 
   rows.forEach(function(r) { sheet.appendRow(r); });

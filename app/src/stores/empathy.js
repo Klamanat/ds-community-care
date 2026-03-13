@@ -80,17 +80,30 @@ export const useEmpathyStore = defineStore('empathy', () => {
       const data = await svc.fetchPeople()
       if (!data?.length) return
       // Build merged items first, then dedup sessionOnly using the SAME id format
-      const merged = data.map(p => ({
-        id:           String(p.empCode || p.id),
-        empCode:      String(p.empCode || ''),
-        name:         p.name,
-        role:         p.role,
-        imgUrl:       p.imgUrl || getCached(p.imgId) || '',
-        imgId:        p.imgId  || '',
-        commentCount: p.commentCount || 0,
-      }))
-      const serverStoredIds = new Set(merged.map(p => p.id))
-      const sessionOnly = praisedPeople.value.filter(p => !serverStoredIds.has(String(p.id)))
+      // Deduplicate by empCode → name — one card per person
+      const seenKey = new Set()
+      const merged = []
+      data.forEach(p => {
+        const key = String(p.empCode || p.name || p.id).trim()
+        if (seenKey.has(key)) return
+        seenKey.add(key)
+        merged.push({
+          id:           String(p.id),
+          empCode:      String(p.empCode || ''),
+          name:         p.name,
+          role:         p.role,
+          imgUrl:       p.imgUrl || getCached(p.imgId) || '',
+          imgId:        p.imgId  || '',
+          commentCount: p.commentCount || 0,
+        })
+      })
+      const serverIds = new Set(merged.map(p => String(p.id)))
+      const serverKeys = new Set(merged.map(p => String(p.empCode || p.name).trim()))
+      const sessionOnly = praisedPeople.value.filter(p => {
+        if (serverIds.has(String(p.id))) return false
+        if (serverKeys.has(String(p.empCode || p.name).trim())) return false
+        return true
+      })
       praisedPeople.value = [...merged, ...sessionOnly]
       lsSet('empathy_people', stripBase64(merged, 'imgUrl'), 10 * 60 * 1000)
       // Lazy-fetch Drive images after page renders

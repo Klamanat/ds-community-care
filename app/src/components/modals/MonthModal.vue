@@ -292,7 +292,7 @@ async function stampJoin(ev) {
 
   const name = ui.currentUser?.name || 'ไม่ระบุชื่อ'
   try {
-    await svc.joinActivity(ev.id, ev.name, name)
+    await svc.joinActivity(ev.id, ev.name, name, ev.joinLabel)
 
     // Add stamp locally only after GAS confirms
     if (!myStamps.value.find(s => String(s.activityId) === String(ev.id))) {

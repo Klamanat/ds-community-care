@@ -10,23 +10,6 @@ function sha256hex(str) {
   }).join('');
 }
 
-/**
- * Run this ONCE in GAS editor to create the initial admin account.
- * Change username/password/name before running.
- */
-function setupAdmin() {
-  var sheet = getSheet('Admins');
-  var data  = sheet.getDataRange().getValues();
-  // If headers not set, write them first
-  if (!data[0] || data[0][0] !== 'username') {
-    sheet.clearContents();
-    sheet.appendRow(['username','passwordHash','name','token','tokenExpires']);
-  }
-  var hash = sha256hex('ds2026');
-  sheet.appendRow(['admin', hash, 'Administrator', '', '']);
-  Logger.log('Admin created. Hash of ds2026: ' + hash);
-}
-
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 /**

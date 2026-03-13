@@ -1,46 +1,5 @@
 // Employees.gs — Employees sheet handlers
-
-/**
- * uploadImage — store a base64 image string into any sheet's imgUrl column.
- *
- * params:
- *   sheetName   {string}  — target sheet, e.g. 'Employees' or 'Birthdays'
- *   keyCol      {string}  — column name used to find the row (default 'id')
- *   keyVal      {string}  — value to match in keyCol
- *   imgCol      {string}  — column to write into (default 'imgUrl')
- *   imageBase64 {string}  — data:image/jpeg;base64,... string (≤ 50 000 chars)
- */
-function uploadImage(params) {
-  var sheetName   = params.sheetName;
-  var keyCol      = params.keyCol  || 'id';
-  var keyVal      = String(params.keyVal || '');
-  var imgCol      = params.imgCol  || 'imgUrl';
-  var imageBase64 = params.imageBase64;
-
-  if (!sheetName)   return err('sheetName required');
-  if (!keyVal)      return err('keyVal required');
-  if (!imageBase64) return err('imageBase64 required');
-  if (imageBase64.length > 50000) return err('image too large (max 50 000 chars)');
-
-  var sheet   = getSheet(sheetName);
-  var data    = sheet.getDataRange().getValues();
-  var headers = data[0];
-  var keyIdx  = headers.indexOf(keyCol);
-  var imgIdx  = headers.indexOf(imgCol);
-
-  if (keyIdx < 0) return err('Column not found: ' + keyCol);
-  if (imgIdx < 0) return err('Column not found: ' + imgCol);
-
-  for (var i = 1; i < data.length; i++) {
-    if (String(data[i][keyIdx]) === keyVal) {
-      sheet.getRange(i + 1, imgIdx + 1).setValue(imageBase64);
-      return ok({ updated: true, sheet: sheetName, key: keyVal });
-    }
-  }
-
-  return err('Row not found: ' + keyVal + ' in ' + sheetName);
-}
-
+// uploadImage() is defined in DriveUpload.gs
 
 // Sheet: Employees
 // Columns: id | name | role | dept | imgUrl | grad | inTeam | inStarGang | starGangName | starGangRole

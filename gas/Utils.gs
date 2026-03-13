@@ -227,6 +227,23 @@ function getAnnouncement() {
 }
 
 /**
+ * getVideoUrl — แปลง Drive file ID เป็น direct download URL
+ * params: { fileId }
+ * Drive ออก URL ที่ browser โหลดได้โดยตรงโดยไม่ผ่านหน้า confirm
+ */
+function getVideoUrl(params) {
+  var fileId = String(params.fileId || '').trim();
+  if (!fileId) return err('fileId required');
+  try {
+    var file = DriveApp.getFileById(fileId);
+    var url  = 'https://drive.google.com/uc?id=' + fileId + '&export=download&confirm=t';
+    return ok({ url: url, name: file.getName(), mimeType: file.getMimeType() });
+  } catch(e) {
+    return err('ไม่สามารถเข้าถึงไฟล์: ' + e.message);
+  }
+}
+
+/**
  * App version — update this string when deploying new GAS builds
  */
 var APP_VERSION = '2.1.0';
