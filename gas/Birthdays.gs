@@ -129,5 +129,8 @@ function addBirthdayWish(params) {
 
   appendRow('BirthdayWishes', [id, birthdayKey, fromName, fromAvIdx, msg, time, year, fromImgId]);
 
+  // Award points for sending a birthday wish
+  try { addPoints(fromName, 'birthday_wish', 'อวยพรวันเกิด'); } catch(ex) {}
+
   return ok({ id: id, birthdayKey: birthdayKey, fromName: fromName, fromAvIdx: fromAvIdx, fromImgId: fromImgId, msg: msg, time: time, year: year });
 }

@@ -93,6 +93,7 @@ function setupAll() {
   setupAdmin();
   seedEmployees();
   seedBirthdays();
+  seedPointRules();
   Logger.log('✅ Setup เสร็จสมบูรณ์ — ดูผลใน Spreadsheet');
 }
 
@@ -189,6 +190,14 @@ var ALL_SHEETS = [
     name: 'UserAuth',
     headers: ['employeeId','passwordHash','token','tokenExpires'],
   },
+  {
+    name: 'Points',
+    headers: ['id','employeeName','type','amount','desc','createdAt'],
+  },
+  {
+    name: 'PointRules',
+    headers: ['id','type','icon','name','desc','pts','active'],
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -278,7 +287,25 @@ function seedBirthdays() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. Setup Admin account (admin / ds2026)
+// 4. Seed PointRules (default rules for reward system)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function seedPointRules() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('PointRules');
+  if (!sheet) { Logger.log('ไม่พบ sheet PointRules — รัน setupSheets ก่อน'); return; }
+  if (sheet.getLastRow() > 1) { Logger.log('PointRules มีข้อมูลแล้ว (ข้าม seed)'); return; }
+
+  var rows = [
+    ['rule_1', 'join_activity', '🙌', 'เข้าร่วมกิจกรรม',       'เข้าร่วม event / กิจกรรมองค์กร',        50,  'true'],
+    ['rule_2', 'send_empathy',  '💌', 'ส่ง Empathy ให้เพื่อน', 'ส่งกำลังใจ / ข้อความให้เพื่อนร่วมงาน', 10, 'true'],
+    ['rule_3', 'birthday_wish', '🎂', 'อวยพรวันเกิดเพื่อน',    'ส่งคำอวยพรวันเกิดให้เพื่อนร่วมงาน',     5,  'true'],
+  ];
+  rows.forEach(function(r) { sheet.appendRow(r); });
+  Logger.log('✅ Seed PointRules: ' + rows.length + ' แถว');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. Setup Admin account (admin / ds2026)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function setupAdmin() {

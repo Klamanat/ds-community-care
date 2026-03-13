@@ -145,6 +145,9 @@ function addEmpathyPost(params) {
   invalidateSheet('EmpathyPosts');
   invalidateResult('posts');
 
+  // Award points for sending empathy
+  try { addPoints(sndName, 'send_empathy', 'ส่ง Empathy ให้ ' + recName); } catch(ex) {}
+
   return ok({ id: id, recEmployeeId: recEmployeeId, recName: recName, recRole: recRole, recImg: recImgUrl, sndName: sndName, msg: msg, tag: tag, likeCount: likeCount, createdAt: createdAt, comments: [] });
 }
 

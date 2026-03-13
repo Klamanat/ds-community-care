@@ -65,6 +65,12 @@ const routes = [
     component: () => import('../views/admin/AdminAnnouncementView.vue'),
     meta: { adminLayout: true, requiresAdmin: true },
   },
+  {
+    path: '/admin/reward-rules',
+    name: 'admin-reward-rules',
+    component: () => import('../views/admin/AdminRewardRulesView.vue'),
+    meta: { adminLayout: true, requiresAdmin: true },
+  },
 ]
 
 const router = createRouter({

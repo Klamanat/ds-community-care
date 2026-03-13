@@ -9,8 +9,7 @@
     <div class="sidebar-divider"></div>
     <div class="sidebar-section-label">บัญชี</div>
 
-    <NavItem to="/notif" icon="🔔" label="แจ้งเตือน" :badge="ui.notifBadge" />
-    <NavItem to="/settings" icon="⚙️" label="ตั้งค่า" />
+<NavItem to="/settings" icon="⚙️" label="ตั้งค่า" />
   </nav>
 </template>
 

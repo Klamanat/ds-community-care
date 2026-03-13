@@ -79,6 +79,11 @@ function doGet(e) {
       // Notifications
       getNotifications:   function() { return getNotifications(e.parameter); },
 
+      // Rewards
+      getMyPoints:          function() { return getMyPoints(e.parameter); },
+      getRewardRules:       function() { return getRewardRules(); },
+      adminUpdateRewardRule: function() { return adminUpdateRewardRule(e.parameter); },
+
       // Announcement
       getAnnouncement:    function() { return getAnnouncement(); },
       saveAnnouncement:   function() { return saveAnnouncement(e.parameter); },

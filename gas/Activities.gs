@@ -152,6 +152,9 @@ function joinActivity(params) {
   sheet.appendRow([id, activityId, activityName, employeeName, stampedAt]);
   invalidateSheet('ActivityJoins');
 
+  // Award points for joining
+  try { addPoints(employeeName, 'join_activity', 'เข้าร่วม: ' + activityName); } catch(ex) {}
+
   return ok({ alreadyJoined: false, joinCount: countJoins(data, aidIdx, activityId) + 1 });
 }
 
