@@ -183,6 +183,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAdminStore } from '../../stores/admin.js'
 import * as svc from '../../services/adminService.js'
+import { fetchImages } from '../../services/imageService.js'
 
 const admin  = useAdminStore()
 const router = useRouter()
@@ -259,6 +260,13 @@ onMounted(async () => {
   empRows.value  = empRes.status  === 'fulfilled' && empRes.value.length  ? empRes.value  : EMP_SEED
   bdayRows.value = bdayRes.status === 'fulfilled' && bdayRes.value.length ? bdayRes.value : BDAY_SEED
   loading.value  = false
+  // Fetch Drive images for employees in background
+  const imgIds = empRows.value.map(e => e.imgId).filter(Boolean)
+  if (imgIds.length) {
+    fetchImages(imgIds).then(map => {
+      empRows.value = empRows.value.map(e => e.imgId && map[e.imgId] ? { ...e, imgUrl: map[e.imgId] } : e)
+    }).catch(() => {})
+  }
 })
 
 function bdayOf(empId) {
@@ -348,10 +356,7 @@ async function doSave() {
         bdayRows.value.push({ key: bRes?.key || 'bday_' + Date.now(), employeeId: empId, name: form.name, role: form.role, ...bdayForm })
       }
     } else {
-      // Prefer empCode as key (human-assigned, stable); fall back to id
-      const keyCol = form.empCode ? 'empCode' : 'id'
-      const keyVal = form.empCode || empId
-      await svc.updateRow('Employees', keyCol, keyVal, {
+      await svc.updateRow('Employees', 'id', empId, {
         empCode: form.empCode,
         name: form.name, role: form.role, dept: form.dept, grad: form.grad,
         inTeam: form.inTeam, inStarGang: form.inStarGang,

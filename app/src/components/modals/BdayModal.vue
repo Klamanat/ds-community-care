@@ -495,7 +495,11 @@ async function openPerson(emp) {
   wishMsg.value = ''
   selectedChip.value = null
   justSent.value = false
-  await bday.loadWishes(emp.key)
+  const wishes = await bday.loadWishes(emp.key)
+  // Set directly on selectedPerson in case store emp was replaced by background image fetch
+  if (selectedPerson.value?.key === emp.key) {
+    selectedPerson.value.wishes = wishes
+  }
 }
 
 function sendWish() {

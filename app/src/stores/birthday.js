@@ -93,9 +93,13 @@ export const useBirthdayStore = defineStore('birthday', () => {
   }
 
   async function loadWishes(key) {
-    const emp = getEmployee(key)
-    if (!emp) return
-    try { emp.wishes = await svc.fetchWishes(key) } catch {}
+    try {
+      const wishes = await svc.fetchWishes(key)
+      // Also update in-store emp for grid wish count
+      const emp = getEmployee(key)
+      if (emp) emp.wishes = wishes
+      return wishes
+    } catch { return [] }
   }
 
   async function uploadPhoto(key, dataUrl) {

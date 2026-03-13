@@ -304,10 +304,17 @@ async function saveModal() {
   try {
     if (modal.mode === 'add') {
       const res = await svc.addActivity({ ...form })
-      acts.localAdd({ ...form, id: res.data?.id || Date.now().toString() })
+      acts.localAdd({ ...form, id: res.data?.id || Date.now().toString(), imgUrl: imgPreview.value })
     } else {
       await svc.updateActivity(form.id, { ...form })
-      acts.localUpdate(form.id, { ...form })
+      // Preserve existing Drive image if no new preview (don't overwrite with empty)
+      let localImgUrl = imgPreview.value
+      if (!localImgUrl && form.imgId) {
+        localImgUrl = acts.all.find(a => a.id === form.id)?.imgUrl || ''
+      } else if (!localImgUrl) {
+        localImgUrl = form.imgUrl
+      }
+      acts.localUpdate(form.id, { ...form, imgUrl: localImgUrl })
     }
     modal.open = false
   } catch (e) {

@@ -79,21 +79,19 @@ export const useEmpathyStore = defineStore('empathy', () => {
     try {
       const data = await svc.fetchPeople()
       if (!data?.length) return
-      const serverIds = new Set(data.map(p => String(p.id)))
-      const sessionOnly = praisedPeople.value.filter(p => !serverIds.has(String(p.id)))
-      const merged = [
-        ...data.map(p => ({
-          id:           String(p.empCode || p.id),
-          empCode:      String(p.empCode || ''),
-          name:         p.name,
-          role:         p.role,
-          imgUrl:       p.imgUrl || getCached(p.imgId) || '',
-          imgId:        p.imgId  || '',
-          commentCount: p.commentCount || 0,
-        })),
-        ...sessionOnly,
-      ]
-      praisedPeople.value = merged
+      // Build merged items first, then dedup sessionOnly using the SAME id format
+      const merged = data.map(p => ({
+        id:           String(p.empCode || p.id),
+        empCode:      String(p.empCode || ''),
+        name:         p.name,
+        role:         p.role,
+        imgUrl:       p.imgUrl || getCached(p.imgId) || '',
+        imgId:        p.imgId  || '',
+        commentCount: p.commentCount || 0,
+      }))
+      const serverStoredIds = new Set(merged.map(p => p.id))
+      const sessionOnly = praisedPeople.value.filter(p => !serverStoredIds.has(String(p.id)))
+      praisedPeople.value = [...merged, ...sessionOnly]
       lsSet('empathy_people', stripBase64(merged, 'imgUrl'), 10 * 60 * 1000)
       // Lazy-fetch Drive images after page renders
       const ids = [...new Set(merged.map(p => p.imgId).filter(Boolean))]
