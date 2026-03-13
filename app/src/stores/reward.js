@@ -1,6 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { fetchMyPoints, fetchRewardRules } from '../services/rewardService.js'
+import { fetchMyPoints, fetchRewardRules, postDailyCheckin } from '../services/rewardService.js'
+
+const CHECKIN_KEY = 'ds_checkin_date'
+function todayStr() {
+  return new Date().toISOString().slice(0, 10)
+}
 
 const LEVELS = [
   { level: 0, name: '🌱 Newcomer', min: 0,    next: 100  },
@@ -17,9 +22,11 @@ export const useRewardStore = defineStore('reward', () => {
   const nextPts   = ref(100)
   const nextName  = ref('⭐ Member')
   const history   = ref([])
-  const rules     = ref([])
-  const loading   = ref(false)
-  const loaded    = ref(false)
+  const rules            = ref([])
+  const loading          = ref(false)
+  const loaded           = ref(false)
+  const checkedInToday   = ref(localStorage.getItem(CHECKIN_KEY) === todayStr())
+  const checkinLoading   = ref(false)
 
   const progress = computed(() => {
     const lv = LEVELS[level.value]
@@ -60,5 +67,24 @@ export const useRewardStore = defineStore('reward', () => {
     } catch {}
   }
 
-  return { total, level, levelName, nextPts, nextName, history, rules, loading, loaded, progress, load, loadRules }
+  async function doCheckin(employeeName) {
+    if (checkedInToday.value || checkinLoading.value || !employeeName) return { alreadyCheckedIn: true }
+    checkinLoading.value = true
+    try {
+      const res = await postDailyCheckin(employeeName)
+      if (!res.alreadyCheckedIn) {
+        checkedInToday.value = true
+        localStorage.setItem(CHECKIN_KEY, todayStr())
+        // Reload points to reflect new total
+        await load(employeeName, true)
+      }
+      return res
+    } catch {
+      return { alreadyCheckedIn: false, error: true }
+    } finally {
+      checkinLoading.value = false
+    }
+  }
+
+  return { total, level, levelName, nextPts, nextName, history, rules, loading, loaded, progress, checkedInToday, checkinLoading, load, loadRules, doCheckin }
 })

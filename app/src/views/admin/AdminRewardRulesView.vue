@@ -102,15 +102,22 @@
           </div>
         </div>
 
-        <div class="al-form-2col">
-          <div class="al-form-row">
-            <label class="al-form-label">Icon</label>
-            <input v-model="form.icon" class="al-form-input" maxlength="4" placeholder="🙌" />
+        <div class="al-form-row">
+          <label class="al-form-label">Icon</label>
+          <div class="rw-icon-picker">
+            <div
+              v-for="em in ICON_OPTIONS"
+              :key="em"
+              class="rw-icon-opt"
+              :class="{ active: form.icon === em }"
+              @click="form.icon = em"
+            >{{ em }}</div>
           </div>
-          <div class="al-form-row">
-            <label class="al-form-label">คะแนน (pts)</label>
-            <input v-model.number="form.pts" type="number" min="0" max="9999" class="al-form-input" />
-          </div>
+        </div>
+
+        <div class="al-form-row">
+          <label class="al-form-label">คะแนน (pts)</label>
+          <input v-model.number="form.pts" type="number" min="0" max="9999" class="al-form-input" />
         </div>
 
         <div class="al-form-row">
@@ -127,7 +134,6 @@
           <label class="al-form-label">สี</label>
           <div class="rw-color-row">
             <input type="color" v-model="form.color" class="rw-color-input" />
-            <input v-model="form.color" class="al-form-input rw-color-hex" maxlength="7" placeholder="#6366F1" />
             <div class="rw-color-preview" :style="{ background: form.color }">{{ form.icon || '⭐' }}</div>
           </div>
           <!-- Presets -->
@@ -208,11 +214,19 @@ const form  = reactive({ id: '', type: '', subtype: '', icon: '', name: '', desc
 
 const COLOR_PRESETS = ['#6366F1','#EC4899','#A855F7','#06C755','#F59E0B','#EF4444','#3B82F6','#14B8A6','#F97316','#8B5CF6']
 
+const ICON_OPTIONS = [
+  '🙌','📍','📅','💌','🎂','⭐','🏆','🎯','🔥','💎',
+  '👑','🎁','🎉','🎊','✅','🌟','💡','🚀','❤️','🤝',
+  '📣','🎤','🎨','📚','💪','🏅','🎖️','🌱','⚡','🦋',
+]
+
 // Type options — wired in GAS addPoints() calls
 const TYPE_OPTIONS = [
-  { value: 'join_activity', label: '🙌 เข้าร่วมกิจกรรม',       defaultIcon: '🙌', defaultColor: '#6366F1' },
-  { value: 'send_empathy',  label: '💌 ส่ง Empathy ให้เพื่อน', defaultIcon: '💌', defaultColor: '#EC4899' },
-  { value: 'birthday_wish', label: '🎂 อวยพรวันเกิดเพื่อน',    defaultIcon: '🎂', defaultColor: '#A855F7' },
+  { value: 'join_activity',    label: '🙌 เข้าร่วมกิจกรรม',       defaultIcon: '🙌', defaultColor: '#6366F1' },
+  { value: 'activity_checkin', label: '📍 Check-in กิจกรรม',      defaultIcon: '📍', defaultColor: '#3B82F6' },
+  { value: 'daily_checkin',    label: '📅 Check-in รายวัน',        defaultIcon: '📅', defaultColor: '#06C755' },
+  { value: 'send_empathy',     label: '💌 ส่ง Empathy ให้เพื่อน', defaultIcon: '💌', defaultColor: '#EC4899' },
+  { value: 'birthday_wish',    label: '🎂 อวยพรวันเกิดเพื่อน',    defaultIcon: '🎂', defaultColor: '#A855F7' },
 ]
 
 // Subtype options per type — '' = default rule for that type
@@ -222,6 +236,12 @@ const SUBTYPE_OPTIONS = {
     { value: 'co_host',    label: 'co_host — ผู้ร่วมจัดงาน' },
     { value: 'presenter',  label: 'presenter — วิทยากร/ผู้นำเสนอ' },
     { value: 'organizer',  label: 'organizer — ผู้จัดงานหลัก' },
+  ],
+  activity_checkin: [
+    { value: '', label: '(ค่าเริ่มต้น) check-in กิจกรรม' },
+  ],
+  daily_checkin: [
+    { value: '', label: '(ค่าเริ่มต้น) check-in รายวัน' },
   ],
   send_empathy: [
     { value: '', label: '(ค่าเริ่มต้น)' },
@@ -332,6 +352,33 @@ function doLogout() { admin.logout(); router.push('/admin/login') }
   background: #EEF2FF;
   padding: 8px 12px;
   border-radius: 8px;
+}
+
+/* Icon picker */
+.rw-icon-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.rw-icon-opt {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: #F3F4F6;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, transform 0.1s;
+}
+.rw-icon-opt:hover { background: #E5E7EB; }
+.rw-icon-opt:active { transform: scale(0.9); }
+.rw-icon-opt.active {
+  background: #EEF2FF;
+  border-color: #6366F1;
+  transform: scale(1.1);
 }
 
 /* Color picker row */

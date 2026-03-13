@@ -205,9 +205,12 @@ function claimActivityReward(params) {
     if (String(data[i][aidIdx]) === activityId && String(data[i][nameIdx]) === employeeName) {
       if (claimedIdx >= 0 && data[i][claimedIdx] === true) return ok({ alreadyClaimed: true });
       if (claimedIdx    >= 0) sheet.getRange(i + 1, claimedIdx    + 1).setValue(true);
-      if (rewardTypeIdx >= 0) sheet.getRange(i + 1, rewardTypeIdx + 1).setValue(rewardType);
+      if (rewardTypeIdx >= 0) sheet.getRange(i + 1, rewardTypeIdx + 1).setValue(rewardType || 'activity_checkin');
       invalidateSheet('ActivityJoins');
-      return ok({ claimed: true, rewardType: rewardType });
+      // Award points for checking in to activity
+      var actName = String(data[i][headers.indexOf('activityName')] || '');
+      try { addPoints(employeeName, 'activity_checkin', '', 'Check-in กิจกรรม: ' + actName); } catch(ex) {}
+      return ok({ claimed: true, rewardType: rewardType || 'activity_checkin' });
     }
   }
   return err('ยังไม่ได้ join กิจกรรมนี้');

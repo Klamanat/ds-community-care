@@ -174,6 +174,29 @@ function getMyPoints(params) {
   });
 }
 
+/**
+ * GET: dailyCheckin — ให้คะแนน daily_checkin (1 ครั้ง/วัน/คน)
+ * params: { employeeName }
+ */
+function dailyCheckin(params) {
+  var employeeName = String(params.employeeName || '').trim();
+  if (!employeeName) return err('employeeName required');
+
+  // เช็คว่าวันนี้ check-in แล้วหรือยัง โดยดูจาก Points sheet
+  var today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  var rows  = cachedSheetRead('Points', 0); // no cache — need fresh data
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (String(r.employeeName).trim() === employeeName && String(r.type) === 'daily_checkin') {
+      var rowDate = String(r.createdAt || '').substring(0, 10);
+      if (rowDate === today) return ok({ alreadyCheckedIn: true });
+    }
+  }
+
+  addPoints(employeeName, 'daily_checkin', '', 'Check-in รายวัน');
+  return ok({ alreadyCheckedIn: false, date: today });
+}
+
 // ── Internal helpers ─────────────────────────────────────────────────────────
 
 function _getRule(type, subtype) {
@@ -193,9 +216,11 @@ function _getRule(type, subtype) {
   } catch(e) {}
   // Hardcoded defaults if PointRules sheet is missing
   var DEFAULTS = {
-    join_activity: { pts: 50, name: 'เข้าร่วมกิจกรรม', active: 'true' },
-    send_empathy:  { pts: 10, name: 'ส่ง Empathy',       active: 'true' },
-    birthday_wish: { pts: 5,  name: 'อวยพรวันเกิด',       active: 'true' },
+    join_activity:    { pts: 50, name: 'เข้าร่วมกิจกรรม',  active: 'true' },
+    activity_checkin: { pts: 30, name: 'Check-in กิจกรรม', active: 'true' },
+    daily_checkin:    { pts: 5,  name: 'Check-in รายวัน',  active: 'true' },
+    send_empathy:     { pts: 10, name: 'ส่ง Empathy',       active: 'true' },
+    birthday_wish:    { pts: 5,  name: 'อวยพรวันเกิด',      active: 'true' },
   };
   return DEFAULTS[type] || null;
 }

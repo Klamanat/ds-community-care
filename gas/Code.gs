@@ -82,6 +82,7 @@ function doGet(e) {
       // Rewards
       getMyPoints:           function() { return getMyPoints(e.parameter); },
       getRewardRules:        function() { return getRewardRules(); },
+      dailyCheckin:          function() { return dailyCheckin(e.parameter); },
       adminAddRewardRule:    function() { return adminAddRewardRule(e.parameter); },
       adminUpdateRewardRule: function() { return adminUpdateRewardRule(e.parameter); },
       adminDeleteRewardRule: function() { return adminDeleteRewardRule(e.parameter); },

@@ -48,6 +48,32 @@
       <!-- ── Body ── -->
       <div class="modal-body-scroll rw-body">
 
+        <!-- ── Daily check-in card ── -->
+        <div class="rw-checkin-card" :class="{ done: reward.checkedInToday }">
+          <div class="rw-ci-left">
+            <div class="rw-ci-icon">{{ reward.checkedInToday ? '✅' : '📅' }}</div>
+            <div class="rw-ci-info">
+              <div class="rw-ci-title">Check-in รายวัน</div>
+              <div class="rw-ci-date">{{ todayThai }}</div>
+            </div>
+          </div>
+          <div class="rw-ci-right">
+            <div v-if="reward.checkedInToday" class="rw-ci-done-badge">
+              <span v-if="checkinDone">+{{ checkinPts }} pts รับแล้ว!</span>
+              <span v-else>เช็คอินแล้ววันนี้</span>
+            </div>
+            <button
+              v-else
+              class="rw-ci-btn"
+              :disabled="reward.checkinLoading"
+              @click="handleCheckin"
+            >
+              <span v-if="reward.checkinLoading" class="rw-ci-spinner"></span>
+              <span v-else>รับ +{{ checkinPts }} pts</span>
+            </button>
+          </div>
+        </div>
+
         <!-- ── History section ── -->
         <div v-if="reward.history.length > 0" class="rw-section">
           <div class="rw-section-title">ประวัติคะแนน</div>
@@ -81,14 +107,11 @@
               v-for="item in displayRules"
               :key="item.type"
               class="rw-earn-row"
-              :style="{ background: ruleStyle(item).bgColor, borderColor: ruleStyle(item).color + '50' }"
+              :style="{ background: ruleStyle(item).bgColor, borderColor: ruleStyle(item).color + '40' }"
             >
               <div class="rw-earn-icon">{{ item.icon }}</div>
               <div class="rw-earn-info">
-                <div class="rw-earn-name">
-                  {{ item.name }}
-                  <span v-if="item.subtype" class="rw-subtype-tag">{{ item.subtype }}</span>
-                </div>
+                <div class="rw-earn-name">{{ item.name }}</div>
                 <div class="rw-earn-desc">{{ item.desc }}</div>
               </div>
               <div class="rw-earn-badge" :style="{ background: ruleStyle(item).color }">+{{ item.pts }} pts</div>
@@ -102,7 +125,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import BaseModal from '../shared/BaseModal.vue'
 import { useRewardStore }   from '../../stores/reward.js'
 import { useUserAuthStore } from '../../stores/userAuth.js'
@@ -110,15 +133,38 @@ import { useUserAuthStore } from '../../stores/userAuth.js'
 const reward   = useRewardStore()
 const userAuth = useUserAuthStore()
 
+const checkinDone = ref(false)  // true = just checked in this session (show confetti state)
+
 onMounted(() => {
   reward.load(userAuth.userName || '')
 })
 
+// Thai date for display
+const todayThai = computed(() => {
+  const d   = new Date()
+  const days = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์']
+  const mons = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+  return `วัน${days[d.getDay()]}ที่ ${d.getDate()} ${mons[d.getMonth()]} ${d.getFullYear() + 543}`
+})
+
+const checkinPts = computed(() => {
+  const rule = (reward.rules.length ? reward.rules : FALLBACK_RULES)
+    .find(r => r.type === 'daily_checkin' && !r.subtype)
+  return rule?.pts ?? 5
+})
+
+async function handleCheckin() {
+  const res = await reward.doCheckin(userAuth.userName || '')
+  if (!res.alreadyCheckedIn && !res.error) checkinDone.value = true
+}
+
 // Fallback static rules if GAS not connected yet
 const FALLBACK_RULES = [
-  { type: 'join_activity', icon: '🙌', name: 'เข้าร่วมกิจกรรม',       desc: 'เข้าร่วม event / กิจกรรมองค์กร',           pts: 50, color: '#6366F1' },
-  { type: 'send_empathy',  icon: '💌', name: 'ส่ง Empathy ให้เพื่อน', desc: 'ส่งกำลังใจ / ข้อความให้เพื่อนร่วมงาน',    pts: 10, color: '#EC4899' },
-  { type: 'birthday_wish', icon: '🎂', name: 'อวยพรวันเกิดเพื่อน',    desc: 'ส่งคำอวยพรวันเกิดให้เพื่อนร่วมงาน',       pts: 5,  color: '#A855F7' },
+  { type: 'join_activity',    subtype: '', icon: '🙌', name: 'เข้าร่วมกิจกรรม',       desc: 'เข้าร่วม event / กิจกรรมองค์กร',           pts: 50, color: '#6366F1' },
+  { type: 'activity_checkin', subtype: '', icon: '📍', name: 'Check-in กิจกรรม',      desc: 'เช็คอินเข้างานเมื่อถึงสถานที่จัดงาน',       pts: 30, color: '#3B82F6' },
+  { type: 'daily_checkin',    subtype: '', icon: '📅', name: 'Check-in รายวัน',        desc: 'เช็คอินประจำวัน (1 ครั้ง/วัน)',              pts: 5,  color: '#06C755' },
+  { type: 'send_empathy',     subtype: '', icon: '💌', name: 'ส่ง Empathy ให้เพื่อน', desc: 'ส่งกำลังใจ / ข้อความให้เพื่อนร่วมงาน',    pts: 10, color: '#EC4899' },
+  { type: 'birthday_wish',    subtype: '', icon: '🎂', name: 'อวยพรวันเกิดเพื่อน',    desc: 'ส่งคำอวยพรวันเกิดให้เพื่อนร่วมงาน',       pts: 5,  color: '#A855F7' },
 ]
 
 const displayRules = computed(() => {
@@ -238,14 +284,91 @@ function formatTime(raw) {
 .rw-hist-skeleton { height: 52px; background: linear-gradient(90deg, #F0F2F5 25%, #E4E6EB 50%, #F0F2F5 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 12px; margin-bottom: 4px; }
 
 /* Earn rows */
-.rw-earn-list { display: flex; flex-direction: column; gap: 8px; }
-.rw-earn-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; border: 1.5px solid transparent; }
-.rw-earn-icon { font-size: 24px; flex-shrink: 0; }
+.rw-earn-list { display: flex; flex-direction: column; gap: 10px; }
+.rw-earn-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: white;
+  border: 2px solid #06C75530;
+  transition: border-color 0.2s;
+}
+.rw-earn-icon { font-size: 28px; flex-shrink: 0; width: 36px; text-align: center; }
 .rw-earn-info { flex: 1; min-width: 0; }
-.rw-earn-name { font-size: 13px; font-weight: 700; color: #050505; }
-.rw-earn-desc { font-size: 11px; color: #65676B; margin-top: 1px; }
-.rw-earn-badge { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 800; color: white; flex-shrink: 0; }
-.rw-subtype-tag { display: inline-block; font-size: 10px; font-weight: 600; color: #6B7280; background: #F3F4F6; border-radius: 6px; padding: 1px 6px; margin-left: 5px; font-family: monospace; vertical-align: middle; }
+.rw-earn-name { font-size: 14px; font-weight: 700; color: #111827; line-height: 1.3; }
+.rw-earn-desc { font-size: 12px; color: #4B5563; margin-top: 4px; line-height: 1.5; }
+.rw-earn-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 900;
+  color: white;
+  flex-shrink: 0;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+  letter-spacing: 0.3px;
+}
+
+/* ── Daily check-in card ── */
+.rw-checkin-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border: 2px solid #06C75530;
+  border-radius: 18px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  gap: 10px;
+  transition: border-color 0.2s;
+}
+.rw-checkin-card.done {
+  background: #F0FDF4;
+  border-color: #BBF7D0;
+}
+.rw-ci-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.rw-ci-icon { font-size: 28px; flex-shrink: 0; }
+.rw-ci-info { min-width: 0; }
+.rw-ci-title { font-size: 14px; font-weight: 800; color: #050505; }
+.rw-ci-date  { font-size: 11px; color: #6B7280; margin-top: 2px; }
+.rw-ci-right { flex-shrink: 0; }
+.rw-ci-btn {
+  background: linear-gradient(135deg, #06C755, #00A040);
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  border: none;
+  border-radius: 22px;
+  padding: 9px 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.15s, transform 0.1s;
+  box-shadow: 0 2px 8px rgba(6,199,85,0.35);
+}
+.rw-ci-btn:active { transform: scale(0.96); opacity: 0.85; }
+.rw-ci-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.rw-ci-done-badge {
+  font-size: 12px;
+  font-weight: 800;
+  color: #16A34A;
+  background: #DCFCE7;
+  border-radius: 20px;
+  padding: 7px 14px;
+}
+.rw-ci-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 @keyframes shimmer {
   0%   { background-position: 200% 0; }

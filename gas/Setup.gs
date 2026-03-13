@@ -296,9 +296,11 @@ function seedPointRules() {
   if (sheet.getLastRow() > 1) { Logger.log('PointRules มีข้อมูลแล้ว (ข้าม seed)'); return; }
 
   var rows = [
-    ['rule_1', 'join_activity', '',  '🙌', 'เข้าร่วมกิจกรรม (ทั่วไป)',    'เข้าร่วม event / กิจกรรมองค์กร',        50,  '#6366F1', 'true'],
-    ['rule_2', 'send_empathy',  '',  '💌', 'ส่ง Empathy (ทั่วไป)',         'ส่งกำลังใจ / ข้อความให้เพื่อนร่วมงาน', 10,  '#EC4899', 'true'],
-    ['rule_3', 'birthday_wish', '',  '🎂', 'อวยพรวันเกิด (ทั่วไป)',        'ส่งคำอวยพรวันเกิดให้เพื่อนร่วมงาน',    5,   '#A855F7', 'true'],
+    ['rule_1', 'join_activity',    '', '🙌', 'เข้าร่วมกิจกรรม (ทั่วไป)',    'เข้าร่วม event / กิจกรรมองค์กร',             50, '#6366F1', 'true'],
+    ['rule_2', 'activity_checkin', '', '📍', 'Check-in กิจกรรม',            'เช็คอินเข้างานเมื่อถึงสถานที่จัดงาน',         30, '#3B82F6', 'true'],
+    ['rule_3', 'daily_checkin',    '', '📅', 'Check-in รายวัน',              'เช็คอินประจำวัน (1 ครั้ง/วัน)',               5,  '#06C755', 'true'],
+    ['rule_4', 'send_empathy',     '', '💌', 'ส่ง Empathy (ทั่วไป)',         'ส่งกำลังใจ / ข้อความให้เพื่อนร่วมงาน',       10, '#EC4899', 'true'],
+    ['rule_5', 'birthday_wish',    '', '🎂', 'อวยพรวันเกิด (ทั่วไป)',        'ส่งคำอวยพรวันเกิดให้เพื่อนร่วมงาน',          5,  '#A855F7', 'true'],
   ];
   rows.forEach(function(r) { sheet.appendRow(r); });
   Logger.log('✅ Seed PointRules: ' + rows.length + ' แถว');

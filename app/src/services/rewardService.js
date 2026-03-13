@@ -24,3 +24,8 @@ export async function adminDeleteRewardRule(token, id) {
   const res = await gasGet('adminDeleteRewardRule', { token, id })
   return res.data
 }
+
+export async function postDailyCheckin(employeeName) {
+  const res = await gasGet('dailyCheckin', { employeeName })
+  return res.data
+}
