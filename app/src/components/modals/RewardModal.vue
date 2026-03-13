@@ -73,6 +73,7 @@
             </button>
           </div>
         </div>
+        <div v-if="checkinError" class="rw-checkin-error">⚠️ {{ checkinError }}</div>
 
         <!-- ── History section ── -->
         <div v-if="reward.history.length > 0" class="rw-section">
@@ -134,6 +135,7 @@ const reward   = useRewardStore()
 const userAuth = useUserAuthStore()
 
 const checkinDone = ref(false)  // true = just checked in this session (show confetti state)
+const checkinError = ref('')
 
 onMounted(() => {
   reward.load(userAuth.userName || '')
@@ -154,8 +156,11 @@ const checkinPts = computed(() => {
 })
 
 async function handleCheckin() {
-  const res = await reward.doCheckin(userAuth.userName || '')
-  if (!res.alreadyCheckedIn && !res.error) checkinDone.value = true
+  checkinError.value = ''
+  if (!userAuth.userName) { checkinError.value = 'กรุณาเข้าสู่ระบบก่อน'; return }
+  const res = await reward.doCheckin(userAuth.userName)
+  if (res.error) { checkinError.value = 'เกิดข้อผิดพลาด กรุณาลองใหม่'; return }
+  if (!res.alreadyCheckedIn) checkinDone.value = true
 }
 
 // Fallback static rules if GAS not connected yet
@@ -369,6 +374,9 @@ function formatTime(raw) {
   animation: spin 0.7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Check-in error */
+.rw-checkin-error { font-size: 12px; font-weight: 700; color: #DC2626; background: #FEF2F2; border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; }
 
 @keyframes shimmer {
   0%   { background-position: 200% 0; }

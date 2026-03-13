@@ -290,22 +290,26 @@ async function stampJoin(ev) {
   if (isJoined(ev.id) || stamping.value[ev.id]) return
   stamping.value[ev.id] = true
 
-  // Optimistic: stamp locally and open egg immediately
-  if (!myStamps.value.find(s => String(s.activityId) === String(ev.id))) {
-    myStamps.value.push({
-      id: Date.now().toString(),
-      activityId: ev.id,
-      activityName: ev.name,
-      stampedAt: new Date().toLocaleString('th-TH'),
-      rewardClaimed: false,
-    })
-  }
-  stamping.value[ev.id] = false
-  if (ev.joinLabel === 'stamp') openEgg(ev)
-
-  // Sync to GAS in background
   const name = ui.currentUser?.name || 'ไม่ระบุชื่อ'
-  svc.joinActivity(ev.id, ev.name, name).catch(() => {})
+  try {
+    await svc.joinActivity(ev.id, ev.name, name)
+
+    // Add stamp locally only after GAS confirms
+    if (!myStamps.value.find(s => String(s.activityId) === String(ev.id))) {
+      myStamps.value.push({
+        id: Date.now().toString(),
+        activityId: ev.id,
+        activityName: ev.name,
+        stampedAt: new Date().toLocaleString('th-TH'),
+        rewardClaimed: false,
+      })
+    }
+    if (ev.joinLabel === 'stamp') openEgg(ev)
+  } catch {
+    // GAS failed — ไม่เปิด egg, ปุ่มกลับมาใหม่
+  } finally {
+    stamping.value[ev.id] = false
+  }
 }
 
 function openEgg(ev) {

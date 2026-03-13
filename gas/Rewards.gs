@@ -29,7 +29,11 @@ function addPoints(employeeName, type, subtype, desc) {
     if (!amount) return;
     var id        = uuid();
     var createdAt = formatDate(new Date());
-    appendRow('Points', [id, employeeName, type, subtype || '', amount, desc || '', createdAt]);
+    var sheet     = getSheet('Points');
+    var headers   = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var values    = { id: id, employeeName: employeeName, type: type, subtype: subtype || '', amount: amount, desc: desc || '', createdAt: createdAt };
+    var row       = headers.map(function(h) { return values[h] !== undefined ? values[h] : ''; });
+    sheet.appendRow(row);
     invalidateSheet('Points');
   } catch(ex) {
     Logger.log('addPoints error: ' + ex.message);
@@ -183,12 +187,13 @@ function dailyCheckin(params) {
   if (!employeeName) return err('employeeName required');
 
   // เช็คว่าวันนี้ check-in แล้วหรือยัง โดยดูจาก Points sheet
-  var today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  // createdAt is stored as "dd/MM/yyyy HH:mm" — compare using same format
+  var today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy');
   var rows  = cachedSheetRead('Points', 0); // no cache — need fresh data
   for (var i = 0; i < rows.length; i++) {
     var r = rows[i];
     if (String(r.employeeName).trim() === employeeName && String(r.type) === 'daily_checkin') {
-      var rowDate = String(r.createdAt || '').substring(0, 10);
+      var rowDate = String(r.createdAt || '').substring(0, 10); // "dd/MM/yyyy"
       if (rowDate === today) return ok({ alreadyCheckedIn: true });
     }
   }

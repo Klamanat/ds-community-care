@@ -283,9 +283,12 @@ function openEdit(r) {
 }
 
 async function saveModal() {
-  if (!form.name.trim()) { modal.error = 'กรุณากรอกชื่อ'; return }
-  if (modal.mode === 'add' && !form.type.trim()) { modal.error = 'กรุณาเลือก type'; return }
+  if (modal.mode === 'add' && !form.type.trim()) { modal.error = 'กรุณาเลือกประเภท (type)'; return }
   if (modal.mode === 'add' && availableSubtypes.value.length === 0) { modal.error = 'type นี้มีกฎครบทุก subtype แล้ว'; return }
+  if (!form.name.trim()) { modal.error = 'กรุณากรอกชื่อกฎ'; return }
+  if (!form.icon) { modal.error = 'กรุณาเลือก icon'; return }
+  if (!Number.isInteger(form.pts) || form.pts < 1 || form.pts > 9999) { modal.error = 'คะแนนต้องเป็นตัวเลข 1–9999'; return }
+  if (!/^#[0-9A-Fa-f]{6}$/.test(form.color)) { modal.error = 'รูปแบบสีไม่ถูกต้อง (ต้องเป็น #RRGGBB)'; return }
   modal.saving = true; modal.error = ''
   try {
     if (modal.mode === 'add') {
