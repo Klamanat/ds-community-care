@@ -5,6 +5,26 @@
 // Sheet: BirthdayWishes
 // Columns: id | birthdayKey | fromName | fromAvIdx | msg | time | year | fromImgId
 
+/**
+ * RUN ONCE from GAS editor: adminInitBirthdayWishesSheet()
+ * Adds missing fromImgId column to BirthdayWishes sheet.
+ * Safe to run multiple times.
+ */
+function adminInitBirthdayWishesSheet() {
+  var sheet   = getSheet('BirthdayWishes');
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  if (headers.indexOf('fromImgId') >= 0) {
+    Logger.log('fromImgId column already exists'); return;
+  }
+  // Append as last column
+  var newCol = headers.length + 1;
+  sheet.getRange(1, newCol).setValue('fromImgId');
+  var lastRow = sheet.getLastRow();
+  if (lastRow > 1) sheet.getRange(2, newCol, lastRow - 1, 1).setValue('');
+  Logger.log('Added fromImgId at column ' + newCol + '. Final headers: ' +
+    sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].join(' | '));
+}
+
 function getBirthdays(params) {
   var rows = cachedSheetRead('Birthdays', 300); // 5 min cache
 
@@ -52,16 +72,38 @@ function getBirthdayWishes(params) {
   var birthdayKey = params.birthdayKey;
   if (!birthdayKey) return err('birthdayKey required');
 
+  // Build employee name → imgId map for fallback lookup
+  var empImgMap = {};
+  try {
+    cachedSheetRead('Employees', 600).forEach(function(e) {
+      var name = String(e.name || '').trim().toLowerCase();
+      if (name) {
+        var imgId = String(e.imgId || '');
+        // imgUrl may use "drive:XXXX" convention
+        if (!imgId && e.imgUrl && String(e.imgUrl).indexOf('drive:') === 0) {
+          imgId = String(e.imgUrl).slice(6);
+        }
+        if (imgId) empImgMap[name] = imgId;
+      }
+    });
+  } catch(ex) {}
+
   var rows = sheetToObjects('BirthdayWishes');
   var filtered = rows.filter(function(r) { return r.birthdayKey === birthdayKey; });
 
   var wishes = filtered.map(function(r) {
+    var fromImgId = String(r.fromImgId || '');
+    // Fallback: look up by sender name in Employees sheet
+    if (!fromImgId) {
+      var key = String(r.fromName || '').trim().toLowerCase();
+      fromImgId = empImgMap[key] || '';
+    }
     return {
       id:          String(r.id || ''),
       birthdayKey: String(r.birthdayKey || ''),
       fromName:    String(r.fromName || ''),
       fromAvIdx:   parseInt(r.fromAvIdx, 10) || 0,
-      fromImgId:   String(r.fromImgId || ''),
+      fromImgId:   fromImgId,
       msg:         String(r.msg || ''),
       time:        String(r.time || ''),
       year:        parseInt(r.year, 10) || new Date().getFullYear(),

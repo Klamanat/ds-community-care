@@ -193,7 +193,7 @@ const acts   = useActivitiesStore()
 const loading     = ref(true)
 const filterMonth = ref(0)
 const modal  = reactive({ open: false, mode: 'add', saving: false, error: '' })
-const form   = reactive({ id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', feedbackUrl:'', imgUrl:'', imgId:'' })
+const form   = reactive({ id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', dateEnd:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', feedbackUrl:'', imgUrl:'', imgId:'' })
 
 const JOIN_LABEL_OPTIONS = [
   { value: '',        label: '— ไม่แสดงปุ่ม',          desc: 'ซ่อนปุ่มทั้งหมด' },

@@ -537,7 +537,7 @@ function sendWish() {
   }
   const msg = wishMsg.value.trim()
   const name = ui.currentUser?.name || 'ทีมงาน'
-  bday.sendWish(selectedPerson.value.key, msg, name, 0, userAuth.userImgId || '')
+  bday.sendWish(selectedPerson.value.key, msg, name, 0, userAuth.userImgId || '', userAuth.userImgUrl || '')
   successMsg.value = `ส่งถึง <strong>${selectedPerson.value.name}</strong> แล้วค่ะ 💌<br>"${msg}"`
   wishSent.value = true
   justSent.value = true
