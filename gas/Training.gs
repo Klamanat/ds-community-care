@@ -1,9 +1,56 @@
 // Training.gs — Training courses + registrations
 // Sheet: Trainings
-// Columns: id | category | title | description | instructor | section | createdAt
+// Columns: id | category | title | description | instructor | section | capacity | color | createdAt
 //
 // Sheet: TrainingRegistrations
 // Columns: id | trainingId | employeeId | employeeName | registeredAt
+//
+// Sheet: TrainingReviews
+// Columns: id | trainingId | employeeId | employeeName | stars | comment | createdAt
+
+/**
+ * Run once from GAS editor to create all Training sheets.
+ * Safe to re-run — skips sheets that already exist.
+ */
+function setupTrainingSheets() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  var schemas = [
+    { name: 'Trainings',              headers: ['id','category','title','description','instructor','section','capacity','color','createdAt'] },
+    { name: 'TrainingRegistrations',  headers: ['id','trainingId','employeeId','employeeName','registeredAt'] },
+    { name: 'TrainingReviews',        headers: ['id','trainingId','employeeId','employeeName','stars','comment','createdAt'] },
+  ];
+
+  schemas.forEach(function(s) {
+    var sheet = ss.getSheetByName(s.name);
+    if (!sheet) {
+      sheet = ss.insertSheet(s.name);
+      sheet.appendRow(s.headers);
+      // Style header row
+      sheet.getRange(1, 1, 1, s.headers.length)
+        .setFontWeight('bold')
+        .setBackground('#E8F0FE');
+      sheet.setFrozenRows(1);
+      Logger.log('Created: ' + s.name);
+    } else {
+      // Ensure color column exists in Trainings
+      if (s.name === 'Trainings') {
+        var existing = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+        if (existing.indexOf('color') < 0) {
+          var capIdx = existing.indexOf('capacity');
+          if (capIdx >= 0) {
+            sheet.insertColumnAfter(capIdx + 1);
+            sheet.getRange(1, capIdx + 2).setValue('color').setFontWeight('bold');
+            Logger.log('Added color column to Trainings');
+          }
+        }
+      }
+      Logger.log('Already exists: ' + s.name);
+    }
+  });
+
+  Logger.log('setupTrainingSheets done');
+}
 
 function getTrainings(params) {
   var rows = sheetToObjects('Trainings');
@@ -21,6 +68,8 @@ function getTrainings(params) {
       description: String(r.description || ''),
       instructor:  String(r.instructor || ''),
       section:     String(r.section || ''),
+      capacity:    Number(r.capacity) || 0,
+      color:       String(r.color || ''),
       createdAt:   String(r.createdAt || ''),
     };
   }));
@@ -33,8 +82,16 @@ function registerTraining(params) {
 
   if (!trainingId || !employeeId) return err('trainingId and employeeId required');
 
-  var regs = [];
-  try { regs = sheetToObjects('TrainingRegistrations'); } catch(e) { return err('registration_unavailable'); }
+  var regSheet;
+  try {
+    regSheet = getSheet('TrainingRegistrations');
+  } catch(e) {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    regSheet = ss.insertSheet('TrainingRegistrations');
+    regSheet.appendRow(['id','trainingId','employeeId','employeeName','registeredAt']);
+  }
+
+  var regs = sheetToObjects('TrainingRegistrations');
   var already = regs.filter(function(r) {
     return String(r.trainingId) === String(trainingId) && String(r.employeeId) === String(employeeId);
   });
@@ -52,7 +109,7 @@ function registerTraining(params) {
 
   var id           = uuid();
   var registeredAt = formatDate(new Date());
-  try { appendRow('TrainingRegistrations', [id, trainingId, employeeId, employeeName, registeredAt]); } catch(e) { return err('registration_unavailable'); }
+  appendRow('TrainingRegistrations', [id, trainingId, employeeId, employeeName, registeredAt]);
 
   return ok({ id: id, trainingId: trainingId, employeeId: employeeId, registeredAt: registeredAt });
 }
@@ -106,6 +163,33 @@ function adminGetTrainingRegistrations(params) {
   return ok(result);
 }
 
+// ── Schema migration ─────────────────────────────────────────────────────────
+
+/**
+ * Run once from GAS editor: adds 'color' column after 'capacity' in Trainings sheet.
+ * Safe to run multiple times — skips if column already exists.
+ */
+function migrateTrainingsAddColor() {
+  var sheet   = getSheet('Trainings');
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+  if (headers.indexOf('color') >= 0) {
+    Logger.log('color column already exists — nothing to do');
+    return;
+  }
+
+  var capIdx = headers.indexOf('capacity'); // 0-based
+  if (capIdx < 0) {
+    Logger.log('capacity column not found — aborting');
+    return;
+  }
+
+  // Insert a blank column AFTER capacity (GAS insertColumnAfter is 1-based)
+  sheet.insertColumnAfter(capIdx + 1);
+  sheet.getRange(1, capIdx + 2).setValue('color');
+  Logger.log('Done: color column inserted at position ' + (capIdx + 2));
+}
+
 // ── Admin CRUD ───────────────────────────────────────────────────────────────
 
 function adminAddTraining(params) {
@@ -117,12 +201,14 @@ function adminAddTraining(params) {
   var description = (params.description || '').trim();
   var instructor  = (params.instructor  || '').trim();
   var section     = (params.section     || '').trim();
+  var capacity    = Number(params.capacity) || 0;
+  var color       = (params.color       || '').trim();
   var createdAt   = formatDate(new Date());
 
   if (!title) return err('title required');
 
-  appendRow('Trainings', [id, category, title, description, instructor, section, createdAt]);
-  return ok({ id: id, category: category, title: title, description: description, instructor: instructor, section: section, createdAt: createdAt });
+  appendRow('Trainings', [id, category, title, description, instructor, section, capacity, color, createdAt]);
+  return ok({ id: id, category: category, title: title, description: description, instructor: instructor, section: section, capacity: capacity, color: color, createdAt: createdAt });
 }
 
 function adminUpdateTraining(params) {
@@ -134,7 +220,7 @@ function adminUpdateTraining(params) {
   var sheet   = getSheet('Trainings');
   var data    = sheet.getDataRange().getValues();
   var headers = data[0];
-  var EDITABLE = ['category','title','description','instructor','section'];
+  var EDITABLE = ['category','title','description','instructor','section','capacity','color'];
 
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][headers.indexOf('id')]) === String(id)) {
@@ -167,6 +253,76 @@ function adminDeleteTraining(params) {
     }
   }
   return err('not found');
+}
+
+// ── Site Suggestions (อื่นๆ) ─────────────────────────────────────────────────
+// Sheet: SiteSuggestions
+// Columns: id | employeeId | employeeName | suggestion | createdAt
+
+/**
+ * Upsert: one suggestion per employee. Pass suggestion='' to clear (cancel).
+ */
+function submitSiteSuggestion(params) {
+  var employeeId   = String(params.employeeId   || '').trim();
+  var employeeName = String(params.employeeName || 'ไม่ระบุ').trim();
+  var suggestion   = String(params.suggestion   || '').trim();
+  if (!employeeId) return err('employeeId required');
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet;
+  try {
+    sheet = getSheet('SiteSuggestions');
+  } catch(e) {
+    sheet = ss.insertSheet('SiteSuggestions');
+    sheet.appendRow(['id','employeeId','employeeName','suggestion','createdAt']);
+  }
+
+  var data    = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var eidIdx  = headers.indexOf('employeeId');
+
+  // Update if exists
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][eidIdx]) === employeeId) {
+      if (!suggestion) {
+        sheet.deleteRow(i + 1);
+        return ok({ cancelled: true });
+      }
+      sheet.getRange(i + 1, headers.indexOf('suggestion') + 1).setValue(suggestion);
+      sheet.getRange(i + 1, headers.indexOf('employeeName') + 1).setValue(employeeName);
+      sheet.getRange(i + 1, headers.indexOf('createdAt') + 1).setValue(formatDate(new Date()));
+      return ok({ updated: true });
+    }
+  }
+
+  if (!suggestion) return ok({ cancelled: true });
+
+  sheet.appendRow([uuid(), employeeId, employeeName, suggestion, formatDate(new Date())]);
+  return ok({ created: true });
+}
+
+function getMySiteSuggestion(params) {
+  var employeeId = String(params.employeeId || '').trim();
+  if (!employeeId) return ok(null);
+  var rows = [];
+  try { rows = sheetToObjects('SiteSuggestions'); } catch(e) {}
+  var found = rows.find(function(r) { return String(r.employeeId) === employeeId; });
+  return ok(found ? { suggestion: String(found.suggestion || '') } : null);
+}
+
+function adminGetSiteSuggestions(params) {
+  if (!checkAdminToken(params.token)) return err('Unauthorized');
+  var rows = [];
+  try { rows = sheetToObjects('SiteSuggestions'); } catch(e) {}
+  return ok(rows.map(function(r) {
+    return {
+      id:           String(r.id           || ''),
+      employeeId:   String(r.employeeId   || ''),
+      employeeName: String(r.employeeName || ''),
+      suggestion:   String(r.suggestion   || ''),
+      createdAt:    String(r.createdAt    || ''),
+    };
+  }));
 }
 
 // ── Reviews ──────────────────────────────────────────────────────────────────

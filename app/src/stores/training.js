@@ -8,6 +8,7 @@ export const useTrainingStore = defineStore('training', () => {
   const myTrainingIds  = ref([])
   const isLoading      = ref(false)
   const lastFetched    = ref(null)
+  const mySuggestion   = ref(null)   // null | { suggestion: string }
 
   // reviews: { [trainingId]: { avg, count, myStars, myComment } }
   const reviews        = reactive({})
@@ -58,6 +59,15 @@ export const useTrainingStore = defineStore('training', () => {
       myTrainingIds.value = await svc.fetchMyTrainings(employeeId)
     } catch {
       myTrainingIds.value = []
+    }
+  }
+
+  async function loadMySuggestion(employeeId) {
+    if (!employeeId) return
+    try {
+      mySuggestion.value = await svc.fetchMySiteSuggestion(employeeId)
+    } catch {
+      mySuggestion.value = null
     }
   }
 
@@ -159,8 +169,8 @@ export const useTrainingStore = defineStore('training', () => {
   }
 
   return {
-    courses, myTrainingIds, isLoading, categories, reviews, allReviews,
-    loadCourses, loadMyTrainings, loadReviews, submitReview, register, cancel,
+    courses, myTrainingIds, isLoading, categories, reviews, allReviews, mySuggestion,
+    loadCourses, loadMyTrainings, loadMySuggestion, loadReviews, submitReview, register, cancel,
     coursesByCategory, isRegistered, getCategoryInfo, reviewsForCourse,
   }
 })

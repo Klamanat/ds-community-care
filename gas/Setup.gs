@@ -214,7 +214,15 @@ var ALL_SHEETS = [
   },
   {
     name: 'Trainings',
-    headers: ['id','category','title','description','instructor','location','date','capacity','status','courseUrl','createdAt'],
+    headers: ['id','category','title','description','instructor','section','capacity','color','createdAt'],
+  },
+  {
+    name: 'TrainingRegistrations',
+    headers: ['id','trainingId','employeeId','employeeName','registeredAt'],
+  },
+  {
+    name: 'TrainingReviews',
+    headers: ['id','trainingId','employeeId','employeeName','stars','comment','createdAt'],
   },
   {
     name: 'Admins',

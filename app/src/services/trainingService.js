@@ -33,6 +33,23 @@ export async function submitReview(trainingId, employeeId, employeeName, stars, 
   return r.data
 }
 
+export async function submitSiteSuggestion(employeeId, employeeName, suggestion) {
+  const r = await gasGet('submitSiteSuggestion', { employeeId, employeeName, suggestion })
+  if (!r.ok) throw new Error(r.error || 'error')
+  return r.data
+}
+
+export async function fetchMySiteSuggestion(employeeId) {
+  const r = await gasGet('getMySiteSuggestion', { employeeId })
+  return r.data || null   // { suggestion: '...' } or null
+}
+
+export async function cancelSiteSuggestion(employeeId) {
+  const r = await gasGet('submitSiteSuggestion', { employeeId, suggestion: '' })
+  if (!r.ok) throw new Error(r.error || 'error')
+  return r.data
+}
+
 function token() { return localStorage.getItem('admin_token') || '' }
 
 export async function adminFetchTrainings() {
@@ -62,4 +79,10 @@ export async function adminDeleteTraining(id) {
   const r = await gasGet('adminDeleteTraining', { token: token(), id })
   if (!r.ok) throw new Error(r.error || 'error')
   return r.data
+}
+
+export async function adminFetchSiteSuggestions() {
+  const r = await gasGet('adminGetSiteSuggestions', { token: token() })
+  if (!r.ok) throw new Error(r.error || 'error')
+  return r.data || []
 }

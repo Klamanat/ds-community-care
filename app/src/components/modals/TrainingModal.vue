@@ -24,7 +24,7 @@
         </div>
         <div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:3px;letter-spacing:0.5px;">
           <span v-if="view === 'review'">{{ reviewSelectedCourse?.title || 'เลือกหลักสูตร' }}</span>
-          <span v-else-if="view === 'courses'">{{ catCourses.length }} หลักสูตร</span>
+          <span v-else-if="view === 'courses'">{{ catCourses.length }} {{ selectedCat?.key === 'site' ? 'สถานที่' : 'หลักสูตร' }}</span>
           <span v-else>หลักสูตรพัฒนาทักษะ 2026 🌱</span>
         </div>
       </div>
@@ -48,7 +48,7 @@
             <div class="tr-cat-name">{{ cat.name }}</div>
             <div class="tr-cat-tag">{{ cat.tag }}</div>
             <div class="tr-cat-count">
-              {{ countByCategory(cat.key) }} หลักสูตร
+              {{ countByCategory(cat.key) }} {{ cat.key === 'site' ? 'สถานที่' : 'หลักสูตร' }}
             </div>
           </button>
         </div>
@@ -58,8 +58,96 @@
       <!-- ── View: Courses in category ── -->
       <div v-else-if="view === 'courses'">
 
+        <!-- Site Visit: voting UI -->
+        <template v-if="selectedCat?.key === 'site'">
+          <div v-if="!catCourses.length" class="tr-section-empty">ยังไม่มีข้อมูล</div>
+          <div v-else class="tr-site-list">
+            <div
+              v-for="site in catCourses" :key="site.id"
+              class="tr-site-card"
+              :class="training.isRegistered(site.id) ? 'tr-site-card--voted' : ''"
+            >
+              <!-- Hero -->
+              <div class="tr-site-hero" :style="siteHeroStyle(site)">
+                <div class="tr-site-hero-bg"></div>
+                <div class="tr-site-hero-content">
+                  <div class="tr-site-hero-icon">🏭</div>
+                  <div class="tr-site-hero-title">{{ site.title }}</div>
+                </div>
+                <div v-if="training.isRegistered(site.id)" class="tr-site-check">✓</div>
+              </div>
+
+              <!-- Body -->
+              <div class="tr-site-body">
+                <div v-if="site.description" class="tr-site-desc">{{ site.description }}</div>
+                <div v-if="site.instructor" class="tr-site-meta">
+                  <span class="tr-site-meta-pill">👤 {{ site.instructor }}</span>
+                </div>
+              </div>
+
+              <!-- Footer -->
+              <div class="tr-site-foot">
+                <div class="tr-site-vote-info">
+                  <span class="tr-site-vote-num"
+                    :style="{ color: (site.color?.startsWith('#') ? site.color : '#0EA5E9') }">
+                    {{ site.joinCount || 0 }}</span>
+                  <span class="tr-site-vote-label">คนโหวต</span>
+                </div>
+                <button
+                  class="tr-site-vote-btn"
+                  :class="training.isRegistered(site.id) ? 'tr-site-vote-btn--voted' : ''"
+                  :disabled="siteVotingId === site.id"
+                  @click="voteToggle(site)"
+                >
+                  <span v-if="siteVotingId === site.id">⏳</span>
+                  <span v-else-if="training.isRegistered(site.id)">✅ โหวตแล้ว</span>
+                  <span v-else>🗳️ โหวต</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Card: อื่นๆ -->
+            <div class="tr-site-card tr-site-card--other" :class="otherVoted ? 'tr-site-card--voted' : ''">
+              <div class="tr-site-hero tr-site-hero--other">
+                <div class="tr-site-hero-content">
+                  <div class="tr-site-hero-icon">✍️</div>
+                  <div class="tr-site-hero-title">อื่นๆ / ขอเสนอสถานที่</div>
+                </div>
+                <div v-if="otherVoted" class="tr-site-check">✓</div>
+              </div>
+              <div class="tr-site-body">
+                <textarea
+                  v-model="otherText"
+                  class="tr-other-input"
+                  :disabled="otherVoted"
+                  placeholder="ชื่อสถานที่ที่อยากไป (ไม่บังคับ)"
+                  rows="2"
+                  maxlength="200"
+                ></textarea>
+              </div>
+              <div class="tr-site-foot">
+                <div class="tr-site-vote-info">
+                  <span class="tr-site-vote-num" style="color:#94A3B8;">—</span>
+                  <span class="tr-site-vote-label">{{ otherVoted ? 'โหวตแล้ว' : 'เสนอเพิ่ม' }}</span>
+                </div>
+                <button
+                  class="tr-site-vote-btn"
+                  :class="otherVoted ? 'tr-site-vote-btn--voted' : ''"
+                  :disabled="otherSubmitting"
+                  @click="voteOther"
+                >
+                  <span v-if="otherSubmitting">⏳</span>
+                  <span v-else-if="otherVoted">✅ โหวตแล้ว</span>
+                  <span v-else>🗳️ โหวต</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </template>
+
         <!-- Annual: 3 sections -->
-        <template v-if="selectedCat?.key === 'annual'">
+        <template v-else-if="selectedCat?.key === 'annual'">
           <div v-for="sec in catSections" :key="sec.key" class="tr-section">
             <div class="tr-sec-hd">
               <div class="tr-sec-hd-left">
@@ -79,7 +167,11 @@
             </div>
             <div v-if="!sec.courses?.length" class="tr-section-empty">ยังไม่มีข้อมูล</div>
             <div v-else class="tr-course-list">
-              <div v-for="course in sec.courses" :key="course.id" class="tr-course-card2">
+              <div v-for="course in sec.courses" :key="course.id"
+                class="tr-course-card2"
+                :class="sec.key === 'top' ? 'tr-course-card2--click' : ''"
+                @click="sec.key === 'top' && openReviewPage(course, true)"
+              >
                 <div class="tr-card2-bar" :style="{ background: selectedCat.color }"></div>
                 <div class="tr-card2-body">
                   <div class="tr-card2-title">{{ course.title }}</div>
@@ -95,13 +187,14 @@
                     </span>
                   </div>
                 </div>
+                <span v-if="sec.key === 'top'" class="tr-card2-arrow" :style="{ color: selectedCat.color }">›</span>
               </div>
             </div>
           </div>
         </template>
 
         <!-- Other categories: flat list -->
-        <template v-else>
+        <template v-else-if="selectedCat?.key !== 'site' && selectedCat?.key !== 'annual'">
           <div v-if="!catCourses.length" class="tr-section-empty">ยังไม่มีข้อมูล</div>
           <div v-else class="tr-course-list">
             <div v-for="course in catCourses" :key="course.id" class="tr-course-card2">
@@ -162,7 +255,7 @@
           </div>
         </div>
 
-        <!-- Step 2: Rate selected course -->
+        <!-- Step 2: Rate / Read reviews -->
         <div v-else>
           <!-- Selected course chip -->
           <div class="tr-selected-chip" @click="reviewSelectedCourse = null">
@@ -171,41 +264,44 @@
             <span class="tr-chip-clear">✕</span>
           </div>
 
-          <div class="tr-rp-label" style="margin-top:20px;">ให้คะแนนหลักสูตรนี้</div>
-          <div class="tr-star-picker">
-            <span
-              v-for="s in 5" :key="s"
-              class="tr-star-pick"
-              :class="s <= (reviewHover || reviewStars) ? 'active' : ''"
-              @mouseenter="reviewHover = s"
-              @mouseleave="reviewHover = 0"
-              @touchstart.passive="reviewHover = s"
-              @click="reviewStars = s"
-            >★</span>
-          </div>
-          <div class="tr-rp-stars-label">{{ reviewStars ? starLabel(reviewStars) : 'แตะเพื่อให้คะแนน' }}</div>
+          <!-- Rating form (hidden in read-only mode) -->
+          <template v-if="!reviewReadOnly">
+            <div class="tr-rp-label" style="margin-top:20px;">ให้คะแนนหลักสูตรนี้</div>
+            <div class="tr-star-picker">
+              <span
+                v-for="s in 5" :key="s"
+                class="tr-star-pick"
+                :class="s <= (reviewHover || reviewStars) ? 'active' : ''"
+                @mouseenter="reviewHover = s"
+                @mouseleave="reviewHover = 0"
+                @touchstart.passive="reviewHover = s"
+                @click="reviewStars = s"
+              >★</span>
+            </div>
+            <div class="tr-rp-stars-label">{{ reviewStars ? starLabel(reviewStars) : 'แตะเพื่อให้คะแนน' }}</div>
 
-          <div class="tr-rp-label" style="margin-top:20px;">
-            ความคิดเห็น <span style="font-weight:400;color:#9CA3AF;">(ไม่บังคับ)</span>
-          </div>
-          <textarea
-            v-model="reviewComment"
-            class="tr-review-input"
-            placeholder="เล่าประสบการณ์การเรียน ข้อดี ข้อเสนอแนะ..."
-            rows="4"
-            maxlength="300"
-          ></textarea>
-          <div class="tr-rp-charcount">{{ reviewComment.length }}/300</div>
+            <div class="tr-rp-label" style="margin-top:20px;">
+              ความคิดเห็น <span style="font-weight:400;color:#9CA3AF;">(ไม่บังคับ)</span>
+            </div>
+            <textarea
+              v-model="reviewComment"
+              class="tr-review-input"
+              placeholder="เล่าประสบการณ์การเรียน ข้อดี ข้อเสนอแนะ..."
+              rows="4"
+              maxlength="300"
+            ></textarea>
+            <div class="tr-rp-charcount">{{ reviewComment.length }}/300</div>
 
-          <button
-            class="tr-submit-btn tr-submit-full"
-            :disabled="!reviewStars || reviewSaving"
-            @click="saveReviewPage"
-          >{{ reviewSaving ? '⏳ กำลังบันทึก...' : '✅ บันทึกคะแนน' }}</button>
+            <button
+              class="tr-submit-btn tr-submit-full"
+              :disabled="!reviewStars || reviewSaving"
+              @click="saveReviewPage"
+            >{{ reviewSaving ? '⏳ กำลังบันทึก...' : '✅ บันทึกคะแนน' }}</button>
+          </template>
 
-          <!-- Individual reviews list -->
-          <div v-if="courseReviews.length" class="tr-review-list">
-            <div class="tr-rp-label" style="margin-top:24px;margin-bottom:12px;">รีวิวจากผู้เรียน ({{ courseReviews.length }})</div>
+          <!-- Reviews list -->
+          <div v-if="courseReviews.length" class="tr-review-list" :style="reviewReadOnly ? 'margin-top:16px;' : ''">
+            <div class="tr-rp-label" style="margin-bottom:12px;">รีวิวจากผู้เรียน ({{ courseReviews.length }})</div>
             <div v-for="r in courseReviews" :key="r.id || r.employeeId" class="tr-review-item">
               <div class="tr-ri-top">
                 <span class="tr-ri-name">{{ r.employeeName || r.name || 'ไม่ระบุชื่อ' }}</span>
@@ -216,6 +312,7 @@
               <div v-if="r.comment" class="tr-ri-comment">{{ r.comment }}</div>
             </div>
           </div>
+          <div v-else-if="reviewReadOnly" class="tr-section-empty" style="margin-top:16px;">ยังไม่มีรีวิว</div>
         </div>
       </div>
 
@@ -228,6 +325,7 @@ import { ref, computed, onMounted } from 'vue'
 import BaseModal from '../shared/BaseModal.vue'
 import { useTrainingStore }  from '../../stores/training.js'
 import { useUserAuthStore }  from '../../stores/userAuth.js'
+import * as svc from '../../services/trainingService.js'
 
 const training  = useTrainingStore()
 const userAuth  = useUserAuthStore()
@@ -238,6 +336,7 @@ const isTopCat             = ref(false)
 
 const reviewSearch         = ref('')
 const reviewSelectedCourse = ref(null)
+const reviewReadOnly       = ref(false)
 const reviewStars          = ref(0)
 const reviewHover          = ref(0)
 const reviewComment        = ref('')
@@ -261,11 +360,11 @@ const catSections = computed(() => {
   const base = catCourses.value
   return [
     {
-      key: 'train2026', icon: '📅', label: 'เทรน 2026',
+      key: 'train2026', icon: '📅', label: 'Training trend 2026',
       courses: base.filter(c => c.section?.startsWith('train')),
     },
     {
-      key: 'new', icon: '✨', label: 'หลักสูตรใหม่',
+      key: 'new', icon: '✨', label: 'อัพเดตหลักสูตรใหม่',
       courses: base.filter(c => c.section === 'new'),
     },
     {
@@ -310,8 +409,9 @@ function selectReviewCourse(c) {
   reviewHover.value   = 0
 }
 
-function openReviewPage(course) {
+function openReviewPage(course, readOnly = false) {
   reviewSelectedCourse.value = course || null
+  reviewReadOnly.value = readOnly
   reviewSearch.value  = ''
   reviewHover.value   = 0
   if (course) {
@@ -351,9 +451,76 @@ function goBack() {
   }
 }
 
-onMounted(() => {
+function siteHeroStyle(site) {
+  const c = (site.color && site.color.startsWith('#')) ? site.color : '#0EA5E9'
+  return { background: `linear-gradient(140deg, ${c} 0%, ${c}cc 55%, ${c}88 100%)` }
+}
+
+const siteVotingId   = ref(null)   // track which site is being voted on
+const otherVoted     = ref(false)
+const otherText      = ref('')
+const otherSubmitting = ref(false)
+
+async function voteToggle(course) {
+  if (siteVotingId.value) return
+  siteVotingId.value = course.id
+  const empId   = userAuth.empCode || userAuth.userName
+  const empName = userAuth.userName || empId
+
+  if (training.isRegistered(course.id)) {
+    await training.cancel(course.id, empId)
+  } else {
+    // ยกเลิกสถานที่เดิมก่อน (โหวตได้แค่ 1)
+    const siteCourses = training.courses.filter(c => c.category === 'site')
+    const prevVoted = siteCourses.find(c => c.id !== course.id && training.isRegistered(c.id))
+    if (prevVoted) await training.cancel(prevVoted.id, empId)
+    // ยกเลิก "อื่นๆ" ถ้าเคยโหวต
+    if (otherVoted.value) {
+      otherVoted.value = false
+      otherText.value  = ''
+      try { await svc.cancelSiteSuggestion(empId) } catch {}
+    }
+    await training.register(course.id, empId, empName)
+  }
+  siteVotingId.value = null
+}
+
+async function voteOther() {
+  if (otherSubmitting.value) return
+  const empId   = userAuth.empCode || userAuth.userName
+  const empName = userAuth.userName || empId
+  otherSubmitting.value = true
+  try {
+    if (otherVoted.value) {
+      // ยกเลิก
+      await svc.cancelSiteSuggestion(empId)
+      otherVoted.value       = false
+      otherText.value        = ''
+      training.mySuggestion  = null
+    } else {
+      // ยกเลิกสถานที่จริงที่เคยโหวต
+      const siteCourses = training.courses.filter(c => c.category === 'site')
+      const prevVoted = siteCourses.find(c => training.isRegistered(c.id))
+      if (prevVoted) await training.cancel(prevVoted.id, empId)
+      const text = otherText.value || 'อื่นๆ'
+      await svc.submitSiteSuggestion(empId, empName, text)
+      otherVoted.value      = true
+      training.mySuggestion = { suggestion: text }
+    }
+  } catch {}
+  otherSubmitting.value = false
+}
+
+onMounted(async () => {
+  const empId = userAuth.empCode || userAuth.userName
   training.loadCourses()
-  training.loadReviews(userAuth.empCode || userAuth.userName)
+  training.loadReviews(empId)
+  training.loadMyTrainings(empId)
+  await training.loadMySuggestion(empId)
+  if (training.mySuggestion) {
+    otherVoted.value = true
+    otherText.value  = training.mySuggestion.suggestion
+  }
 })
 
 const headerStyle = computed(() => {
@@ -565,6 +732,117 @@ const headerStyle = computed(() => {
   transition: background 0.12s;
 }
 .tr-add-review-btn-sm:active { background: #E0E7FF; }
+
+/* ── Site Visit voting ── */
+.tr-site-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+@media (min-width: 600px) {
+  .tr-site-list { grid-template-columns: repeat(2, 1fr); }
+}
+
+.tr-site-card {
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  display: flex; flex-direction: column;
+  border: 2px solid transparent;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.tr-site-card--voted {
+  border-color: #38BDF8;
+  box-shadow: 0 4px 24px rgba(56,189,248,0.25);
+}
+.tr-site-card:active { transform: scale(0.97); }
+
+/* Hero (color set via inline style) */
+.tr-site-hero {
+  position: relative;
+  padding: 20px 16px 18px;
+  overflow: hidden;
+}
+.tr-site-hero-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.12) 0%, transparent 60%);
+}
+.tr-site-hero-content { position: relative; z-index: 1; }
+.tr-site-hero-icon {
+  font-size: 32px; line-height: 1;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+.tr-site-hero-title {
+  font-size: 15px; font-weight: 900;
+  color: #fff; line-height: 1.35;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.tr-site-check {
+  position: absolute; top: 12px; right: 14px;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(4px);
+  color: #fff; font-size: 14px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  border: 1.5px solid rgba(255,255,255,0.5);
+}
+
+/* Body */
+.tr-site-body { padding: 12px 16px 8px; flex: 1; }
+.tr-site-desc {
+  font-size: 12px; color: #4B5563;
+  line-height: 1.6; margin-bottom: 8px;
+}
+.tr-site-meta-pill {
+  display: inline-flex; align-items: center;
+  font-size: 11px; font-weight: 700;
+  color: #0369A1; background: #E0F2FE;
+  padding: 3px 10px; border-radius: 20px;
+}
+
+/* Footer */
+.tr-site-foot {
+  padding: 10px 16px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-top: 1px solid #F0F9FF;
+}
+.tr-site-vote-info { display: flex; align-items: baseline; gap: 4px; }
+.tr-site-vote-num  {
+  font-size: 24px; font-weight: 900; line-height: 1;
+}
+.tr-site-vote-label { font-size: 11px; color: #9CA3AF; font-weight: 600; }
+.tr-site-vote-btn {
+  font-size: 12px; font-weight: 800;
+  padding: 8px 18px; border-radius: 20px; cursor: pointer;
+  border: 2px solid #0EA5E9; color: #0EA5E9;
+  background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+  transition: all 0.15s;
+  box-shadow: 0 2px 8px rgba(14,165,233,0.2);
+}
+.tr-site-vote-btn--voted {
+  background: linear-gradient(135deg, #ECFDF5, #D1FAE5);
+  color: #059669; border-color: #6EE7B7;
+  box-shadow: 0 2px 8px rgba(5,150,105,0.15);
+}
+.tr-site-vote-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.tr-site-vote-btn:not(:disabled):active { transform: scale(0.94); }
+
+/* ── Site card: อื่นๆ ── */
+.tr-site-hero--other {
+  background: linear-gradient(140deg, #94A3B8 0%, #64748Bcc 55%, #47556988 100%);
+}
+.tr-other-input {
+  width: 100%; box-sizing: border-box;
+  border: 1.5px solid #E2E8F0; border-radius: 8px;
+  padding: 8px 10px; font-size: 13px; color: #374151;
+  font-family: inherit; resize: none; outline: none;
+  background: #F8FAFC;
+  transition: border-color 0.15s;
+}
+.tr-other-input:focus { border-color: #94A3B8; background: #fff; }
+.tr-other-input:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ── Course card v2 ── */
 .tr-course-list {

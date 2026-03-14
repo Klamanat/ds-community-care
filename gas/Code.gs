@@ -99,6 +99,9 @@ function doGet(e) {
       adminDeleteTraining:    function() { return adminDeleteTraining(e.parameter); },
       submitTrainingReview:   function() { return submitTrainingReview(e.parameter); },
       getTrainingReviews:     function() { return getTrainingReviews(e.parameter); },
+      submitSiteSuggestion:    function() { return submitSiteSuggestion(e.parameter); },
+      getMySiteSuggestion:     function() { return getMySiteSuggestion(e.parameter); },
+      adminGetSiteSuggestions: function() { return adminGetSiteSuggestions(e.parameter); },
 
       // Announcement
       getAnnouncement:    function() { return getAnnouncement(); },
