@@ -161,8 +161,10 @@ function getEmpathyPosts(params) {
     };
   });
 
-  cacheResult('posts', posts, 60); // 1 min — likes/comments เปลี่ยนบ่อย
-  return ok(posts);
+  // Limit to 200 most recent — prevents huge payloads at 10K+ posts
+  var page = posts.slice(0, 200);
+  cacheResult('posts', page, 60); // 1 min — likes/comments เปลี่ยนบ่อย
+  return ok(page);
 }
 
 function addEmpathyPost(params) {
@@ -197,9 +199,20 @@ function getEmpathyComments(params) {
   var userKey = params.userKey || '';
   if (!postId) return err('postId required');
 
-  var rows     = cachedSheetRead('EmpathyComments');
-  var filtered = rows.filter(function(r) { return String(r.postId) === String(postId); });
-  filtered.sort(function(a, b) { return new Date(a.createdAt) - new Date(b.createdAt); });
+  // Per-channel cache — avoids scanning 10K+ rows for every channel open
+  // Cache key excludes userKey (likes are applied per-user client-side from CommentLikes)
+  var channelKey = 'cm_' + postId;
+  var cachedRows = getCachedResult(channelKey);
+
+  var filtered;
+  if (cachedRows) {
+    filtered = cachedRows;
+  } else {
+    var allRows = cachedSheetRead('EmpathyComments'); // chunked — handles 10K+
+    filtered = allRows.filter(function(r) { return String(r.postId) === String(postId); });
+    filtered.sort(function(a, b) { return new Date(a.createdAt) - new Date(b.createdAt); });
+    cacheResult(channelKey, filtered, 60); // 1 min per channel
+  }
 
   // Build likeCount + userLiked map from CommentLikes sheet
   var likeMap = {};  // { commentId: { count, userLiked } }
@@ -338,7 +351,8 @@ function addComment(params) {
   // Column order: id | postId | parentId | authorName | text | createdAt
   appendRow('EmpathyComments', [id, postId, parentId, authorName, text, createdAt]);
   invalidateSheet('EmpathyComments');
-  invalidateResult('people'); // comment count เปลี่ยน
+  invalidateResult('cm_' + postId); // clear per-channel cache
+  invalidateResult('people');        // comment count เปลี่ยน
 
   // Award points for top-level empathy only (not replies)
   if (!parentId) {

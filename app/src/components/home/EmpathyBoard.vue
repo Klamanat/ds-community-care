@@ -12,7 +12,7 @@
     </div>
 
 <div v-if="loading" class="grid grid-cols-3 gap-3">
-      <SkeletonCard v-for="i in 3" :key="i" height="220px" radius="16px" />
+      <SkeletonCard v-for="i in 6" :key="i" height="220px" radius="16px" />
     </div>
     <div v-else-if="!empathy.praisedPeople.length" class="text-center py-6 text-app-light text-[13px]">
       ยังไม่มีคำชื่นชม 💌<br>
@@ -54,9 +54,9 @@ const GRADS = [
   'linear-gradient(135deg,#FDE68A,#F59E0B)',
 ]
 
-// Map praisedPeople → shape EmpathyCard expects (computed so channelLikes changes re-render)
+// Map praisedPeople → shape EmpathyCard expects (max 6, sorted by latest comment from GAS)
 const posts = computed(() =>
-  empathy.praisedPeople.map((person, idx) => {
+  empathy.praisedPeople.slice(0, 6).map((person, idx) => {
     const cl = empathy.channelLikes[person.id]
     return {
       id:        person.id,

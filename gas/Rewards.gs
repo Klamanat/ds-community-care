@@ -35,6 +35,7 @@ function addPoints(employeeName, type, subtype, desc) {
     var row       = headers.map(function(h) { return values[h] !== undefined ? values[h] : ''; });
     sheet.appendRow(row);
     invalidateSheet('Points');
+    invalidateResult('pts_' + employeeName); // clear per-user points cache
   } catch(ex) {
     Logger.log('addPoints error: ' + ex.message);
   }
@@ -145,6 +146,11 @@ function getMyPoints(params) {
   var employeeName = String(params.employeeName || '').trim();
   if (!employeeName) return ok({ total: 0, level: 0, levelName: '🌱 Newcomer', nextPts: 100, nextName: '⭐ Member', history: [] });
 
+  // Per-user cache — avoids full Points sheet scan on every request
+  var cacheKey = 'pts_' + employeeName;
+  var cached   = getCachedResult(cacheKey);
+  if (cached) return ok(cached);
+
   var rows = cachedSheetRead('Points', 60);
   var mine = rows.filter(function(r) {
     return String(r.employeeName || '').trim() === employeeName;
@@ -159,7 +165,7 @@ function getMyPoints(params) {
 
   var levelInfo = _getLevel(total);
 
-  return ok({
+  var result = {
     total:     total,
     level:     levelInfo.level,
     levelName: levelInfo.name,
@@ -175,31 +181,45 @@ function getMyPoints(params) {
         createdAt: String(r.createdAt || ''),
       };
     }),
-  });
+  };
+  cacheResult(cacheKey, result, 60); // 60s per-user cache
+  return ok(result);
 }
 
 /**
  * GET: dailyCheckin — ให้คะแนน daily_checkin (1 ครั้ง/วัน/คน)
  * params: { employeeName }
+ *
+ * Performance: ใช้ ScriptCache key "chk_DDMMYYYY_name" แทนการอ่าน Points ทั้ง sheet
+ * ทำให้ duplicate-check เป็น O(1) แทน O(n) scan 10K rows ทุก request
  */
 function dailyCheckin(params) {
   var employeeName = String(params.employeeName || '').trim();
   if (!employeeName) return err('employeeName required');
 
-  // เช็คว่าวันนี้ check-in แล้วหรือยัง โดยดูจาก Points sheet
-  // createdAt is stored as "dd/MM/yyyy HH:mm" — compare using same format
-  var today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy');
-  var rows  = cachedSheetRead('Points', 0); // no cache — need fresh data
+  var today    = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'ddMMyyyy');
+  var cache    = CacheService.getScriptCache();
+  var chkKey   = 'chk_' + today + '_' + employeeName;
+
+  // O(1) cache check — avoids full Points sheet scan
+  if (cache.get(chkKey)) return ok({ alreadyCheckedIn: true });
+
+  // First check-in today: verify against Points sheet (use shared cache)
+  var rows = cachedSheetRead('Points', 60);
+  var dateLabel = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy');
   for (var i = 0; i < rows.length; i++) {
     var r = rows[i];
     if (String(r.employeeName).trim() === employeeName && String(r.type) === 'daily_checkin') {
-      var rowDate = String(r.createdAt || '').substring(0, 10); // "dd/MM/yyyy"
-      if (rowDate === today) return ok({ alreadyCheckedIn: true });
+      if (String(r.createdAt || '').substring(0, 10) === dateLabel) {
+        cache.put(chkKey, '1', 86400); // cache until midnight (max 86400s)
+        return ok({ alreadyCheckedIn: true });
+      }
     }
   }
 
   addPoints(employeeName, 'daily_checkin', '', 'Check-in รายวัน');
-  return ok({ alreadyCheckedIn: false, date: today });
+  cache.put(chkKey, '1', 86400);
+  return ok({ alreadyCheckedIn: false, date: dateLabel });
 }
 
 // ── Internal helpers ─────────────────────────────────────────────────────────

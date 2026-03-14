@@ -103,22 +103,18 @@ function joinActivity(params) {
 
   if (!activityId) return err('activityId required');
 
-  var sheet   = getSheet('ActivityJoins');
-  var data    = sheet.getDataRange().getValues();
-  var headers = data[0] || ['id','activityId','activityName','employeeName','stampedAt'];
-  var aidIdx  = headers.indexOf('activityId');
-  var nameIdx = headers.indexOf('employeeName');
+  // Use cached read — avoids direct Sheets API call on every join attempt
+  var rows    = cachedSheetRead('ActivityJoins', 60);
+  var joined  = rows.some(function(r) {
+    return String(r.activityId) === activityId && String(r.employeeName) === employeeName;
+  });
+  var currentCount = rows.filter(function(r) { return String(r.activityId) === activityId; }).length;
 
-  // ตรวจว่า stamp แล้วหรือยัง
-  for (var i = 1; i < data.length; i++) {
-    if (String(data[i][aidIdx]) === activityId && String(data[i][nameIdx]) === employeeName) {
-      return ok({ alreadyJoined: true, joinCount: countJoins(data, aidIdx, activityId) });
-    }
-  }
+  if (joined) return ok({ alreadyJoined: true, joinCount: currentCount });
 
   var id        = uuid();
   var stampedAt = formatDate(new Date());
-  sheet.appendRow([id, activityId, activityName, employeeName, stampedAt]);
+  appendRow('ActivityJoins', [id, activityId, activityName, employeeName, stampedAt]);
   invalidateSheet('ActivityJoins');
 
   // Award join_activity only if NOT a stamp activity (stamp awards activity_checkin via claimActivityReward)
@@ -126,16 +122,9 @@ function joinActivity(params) {
     try { addPoints(employeeName, 'join_activity', '', 'เข้าร่วม: ' + activityName); } catch(ex) {}
   }
 
-  return ok({ alreadyJoined: false, joinCount: countJoins(data, aidIdx, activityId) + 1 });
+  return ok({ alreadyJoined: false, joinCount: currentCount + 1 });
 }
 
-function countJoins(data, aidIdx, activityId) {
-  var count = 0;
-  for (var i = 1; i < data.length; i++) {
-    if (String(data[i][aidIdx]) === activityId) count++;
-  }
-  return count;
-}
 
 /**
  * GET: getMyStamps

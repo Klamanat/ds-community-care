@@ -60,24 +60,59 @@ function safeJson(str) {
 // ─── CacheService helpers ─────────────────────────────────────────────────────
 // ScriptCache is SHARED across all GAS instances → 200 users share one cache.
 // First request warms the cache; subsequent users get ~10ms response.
+//
+// CacheService limit: 100KB per key, ~1MB total.
+// Chunked cache splits large JSON across multiple 90KB keys to handle 10K+ rows.
 // ─────────────────────────────────────────────────────────────────────────────
 
 var CACHE_TTL_SHEET = 300;   // 5 min  — read-heavy sheets
 var CACHE_TTL_IMAGE = 3600;  // 60 min — Drive images rarely change
+var CACHE_CHUNK_SIZE = 90000; // 90KB per chunk — below 100KB CacheService limit
 
 /**
- * Read sheet with shared script cache.
- * Falls back to direct sheetToObjects() on cache miss or parse error.
+ * Read sheet with chunked shared script cache.
+ * Splits JSON across multiple cache keys to handle 10K+ rows (>100KB).
  */
 function cachedSheetRead(sheetName, ttl) {
-  var cache = CacheService.getScriptCache();
-  var key   = 'sht_' + sheetName;
-  var hit   = cache.get(key);
-  if (hit) {
-    try { return JSON.parse(hit); } catch(e) {}
+  if (ttl === 0) return sheetToObjects(sheetName); // bypass cache explicitly
+
+  var cache   = CacheService.getScriptCache();
+  var metaKey = 'sht_' + sheetName;
+
+  // Try reading chunked cache
+  var meta = cache.get(metaKey);
+  if (meta) {
+    try {
+      var m = JSON.parse(meta);
+      if (m.n === 0) return []; // empty sheet cached
+      var parts = [];
+      var keys  = [];
+      for (var i = 0; i < m.n; i++) keys.push(metaKey + '_' + i);
+      var got = cache.getAll(keys);
+      var ok  = true;
+      for (var j = 0; j < keys.length; j++) {
+        if (!got[keys[j]]) { ok = false; break; }
+        parts.push(got[keys[j]]);
+      }
+      if (ok) return JSON.parse(parts.join(''));
+    } catch(e) {}
   }
+
+  // Cache miss — read from Sheets
   var data = sheetToObjects(sheetName);
-  try { cache.put(key, JSON.stringify(data), ttl || CACHE_TTL_SHEET); } catch(e) {}
+  var json = JSON.stringify(data);
+  var n    = Math.ceil(json.length / CACHE_CHUNK_SIZE) || 0;
+  var ttlVal = ttl || CACHE_TTL_SHEET;
+
+  try {
+    var toStore = {};
+    toStore[metaKey] = JSON.stringify({ n: n });
+    for (var k = 0; k < n; k++) {
+      toStore[metaKey + '_' + k] = json.slice(k * CACHE_CHUNK_SIZE, (k + 1) * CACHE_CHUNK_SIZE);
+    }
+    cache.putAll(toStore, ttlVal);
+  } catch(e) {}
+
   return data;
 }
 
@@ -85,24 +120,73 @@ function cachedSheetRead(sheetName, ttl) {
  * Invalidate sheet cache — call after any write to a cached sheet.
  */
 function invalidateSheet(sheetName) {
-  CacheService.getScriptCache().remove('sht_' + sheetName);
+  var cache   = CacheService.getScriptCache();
+  var metaKey = 'sht_' + sheetName;
+  var meta    = cache.get(metaKey);
+  var toRemove = [metaKey];
+  if (meta) {
+    try {
+      var m = JSON.parse(meta);
+      for (var i = 0; i < m.n; i++) toRemove.push(metaKey + '_' + i);
+    } catch(e) {}
+  }
+  cache.removeAll(toRemove);
 }
 
 /**
- * Cache a full computed result (e.g. getEmpathyPeople after joining sheets + images).
- * Avoids re-doing expensive multi-step computation on every request.
+ * Cache a computed result — chunked to handle results larger than 100KB.
+ * Uses same chunk strategy as cachedSheetRead.
  */
 function cacheResult(key, val, ttl) {
-  try { CacheService.getScriptCache().put('res_' + key, JSON.stringify(val), ttl || 600); } catch(e) {}
+  var cache    = CacheService.getScriptCache();
+  var metaKey  = 'res_' + key;
+  var json     = JSON.stringify(val);
+  var n        = Math.ceil(json.length / CACHE_CHUNK_SIZE) || 0;
+  var ttlVal   = ttl || 600;
+  try {
+    var toStore  = {};
+    toStore[metaKey] = JSON.stringify({ n: n });
+    for (var k = 0; k < n; k++) {
+      toStore[metaKey + '_' + k] = json.slice(k * CACHE_CHUNK_SIZE, (k + 1) * CACHE_CHUNK_SIZE);
+    }
+    cache.putAll(toStore, ttlVal);
+  } catch(e) {}
 }
+
 function getCachedResult(key) {
-  var hit = CacheService.getScriptCache().get('res_' + key);
-  if (!hit) return null;
-  try { return JSON.parse(hit); } catch(e) { return null; }
+  var cache   = CacheService.getScriptCache();
+  var metaKey = 'res_' + key;
+  var meta    = cache.get(metaKey);
+  if (!meta) return null;
+  try {
+    var m = JSON.parse(meta);
+    if (m.n === 0) return null;
+    var parts = [];
+    var keys  = [];
+    for (var i = 0; i < m.n; i++) keys.push(metaKey + '_' + i);
+    var got   = cache.getAll(keys);
+    for (var j = 0; j < keys.length; j++) {
+      if (!got[keys[j]]) return null;
+      parts.push(got[keys[j]]);
+    }
+    return JSON.parse(parts.join(''));
+  } catch(e) { return null; }
 }
+
 function invalidateResult(key) {
-  CacheService.getScriptCache().remove('res_' + key);
+  var cache   = CacheService.getScriptCache();
+  var metaKey = 'res_' + key;
+  var meta    = cache.get(metaKey);
+  var toRemove = [metaKey];
+  if (meta) {
+    try {
+      var m = JSON.parse(meta);
+      for (var i = 0; i < m.n; i++) toRemove.push(metaKey + '_' + i);
+    } catch(e) {}
+  }
+  cache.removeAll(toRemove);
 }
+
 
 /**
  * Fetch Drive image as base64, cached for 60 min per imgId.
