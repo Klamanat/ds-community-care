@@ -79,6 +79,8 @@ function doGet(e) {
 
       // Notifications
       getNotifications:   function() { return getNotifications(e.parameter); },
+      getNotifReads:      function() { return getNotifReads(e.parameter); },
+      markNotifsRead:     function() { return markNotifsRead(e.parameter); },
 
       // Rewards
       getMyPoints:           function() { return getMyPoints(e.parameter); },

@@ -24,20 +24,29 @@ export const useNotifStore = defineStore('notif', () => {
   function isRead(id) { return readIds.value.has(id) }
 
   function markRead(id) {
+    if (readIds.value.has(id)) return
     readIds.value.add(id)
     _persist()
+    _pushToServer([id])
   }
 
   function markAllRead() {
+    const newIds = items.value.filter(n => !readIds.value.has(n.id)).map(n => n.id)
     items.value.forEach(n => readIds.value.add(n.id))
     _persist()
+    if (newIds.length) _pushToServer(newIds)
   }
 
   function _persist() {
     localStorage.setItem(LS_READ, JSON.stringify([...readIds.value]))
   }
 
-  // Hydrate from localStorage immediately (show stale while fetching)
+  // Fire-and-forget — does not block UI
+  function _pushToServer(ids) {
+    if (!ids.length || !_lastEmp) return
+    gasGet('markNotifsRead', { employeeName: _lastEmp, ids: JSON.stringify(ids) }).catch(() => {})
+  }
+
   function _hydrate(emp) {
     try {
       const c = JSON.parse(localStorage.getItem(LS_DATA) || 'null')
@@ -55,21 +64,35 @@ export const useNotifStore = defineStore('notif', () => {
     const fresh = !force && Date.now() - _lastFetch < TTL && _lastEmp === employeeName
     if (fresh) return
 
-    _hydrate(employeeName)   // show stale immediately while network fetches
+    _lastEmp = employeeName
+    _hydrate(employeeName)
     loading.value = true
 
     try {
+      // Fetch notifications + server readIds in parallel
       const monthIdx = new Date().getMonth() + 1
-      const r = await gasGet('getNotifications', { employeeName, monthIdx })
-      if (Array.isArray(r.data)) {
-        items.value = r.data
+      const [notifRes, readsRes] = await Promise.all([
+        gasGet('getNotifications', { employeeName, monthIdx }),
+        employeeName
+          ? gasGet('getNotifReads', { employeeName }).catch(() => ({ data: [] }))
+          : Promise.resolve({ data: [] }),
+      ])
+
+      if (Array.isArray(notifRes.data)) {
+        items.value = notifRes.data
         _lastFetch  = Date.now()
-        _lastEmp    = employeeName
         localStorage.setItem(LS_DATA, JSON.stringify({
           exp: Date.now() + TTL,
           emp: employeeName,
-          items: r.data,
+          items: notifRes.data,
         }))
+      }
+
+      // Merge server readIds into local set
+      const serverIds = Array.isArray(readsRes.data) ? readsRes.data : []
+      if (serverIds.length) {
+        serverIds.forEach(id => readIds.value.add(id))
+        _persist()
       }
     } catch {}
     finally { loading.value = false }

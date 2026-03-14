@@ -166,3 +166,50 @@ function getNotifications(params) {
 
   return ok(notifs);
 }
+
+// ── NotifReads ────────────────────────────────────────────────────────────────
+// Sheet: NotifReads  Columns: employeeName | readIds | updatedAt
+
+function getNotifReads(params) {
+  var name = String(params.employeeName || '').trim();
+  if (!name) return ok([]);
+  var rows = [];
+  try { rows = sheetToObjects('NotifReads'); } catch(e) {}
+  var found = rows.find(function(r) { return String(r.employeeName) === name; });
+  if (!found) return ok([]);
+  try { return ok(JSON.parse(String(found.readIds || '[]'))); } catch(e) { return ok([]); }
+}
+
+function markNotifsRead(params) {
+  var name   = String(params.employeeName || '').trim();
+  var newIds = [];
+  try { newIds = JSON.parse(String(params.ids || '[]')); } catch(e) {}
+  if (!name || !newIds.length) return ok({ skipped: true });
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet;
+  try { sheet = getSheet('NotifReads'); }
+  catch(e) {
+    sheet = ss.insertSheet('NotifReads');
+    sheet.appendRow(['employeeName', 'readIds', 'updatedAt']);
+  }
+
+  var data    = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var nameIdx = headers.indexOf('employeeName');
+  var ridsIdx = headers.indexOf('readIds');
+  var updIdx  = headers.indexOf('updatedAt');
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][nameIdx]) === name) {
+      var existing = [];
+      try { existing = JSON.parse(String(data[i][ridsIdx] || '[]')); } catch(e) {}
+      var merged = existing.concat(newIds.filter(function(id) { return existing.indexOf(id) === -1; }));
+      sheet.getRange(i + 1, ridsIdx + 1).setValue(JSON.stringify(merged));
+      sheet.getRange(i + 1, updIdx  + 1).setValue(formatDate(new Date()));
+      return ok({ updated: true });
+    }
+  }
+  sheet.appendRow([name, JSON.stringify(newIds), formatDate(new Date())]);
+  return ok({ created: true });
+}
