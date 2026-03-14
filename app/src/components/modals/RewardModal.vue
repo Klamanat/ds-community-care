@@ -75,6 +75,326 @@
         </div>
         <div v-if="checkinError" class="rw-checkin-error">⚠️ {{ checkinError }}</div>
 
+        <!-- ── Tree growth card ── -->
+        <div class="rw-tree-card">
+          <div class="rw-tree-top-row">
+            <span class="rw-tree-label">🌳 ต้นไม้ของฉัน</span>
+            <span class="rw-tree-stage-tag" :style="{ background: treeData.color }">{{ treeData.name }}</span>
+          </div>
+
+          <div class="rw-tree-scene">
+            <svg class="rw-tree-svg" viewBox="0 0 120 130" xmlns="http://www.w3.org/2000/svg">
+              <!-- Ground (static) -->
+              <ellipse cx="60" cy="122" rx="46" ry="9" fill="#BBF7D0"/>
+              <ellipse cx="60" cy="119" rx="38" ry="5" fill="#86EFAC"/>
+
+              <!-- Animated tree wrapper -->
+              <g>
+                <animateTransform attributeName="transform" type="rotate"
+                  values="-1.2 60 119; 1.2 60 119; -1.2 60 119"
+                  keyTimes="0;0.5;1" dur="4s" repeatCount="indefinite"
+                  calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+
+                <!-- Stage 0: seed -->
+                <g v-if="treeData.stage === 0">
+                  <ellipse cx="60" cy="117" rx="6" ry="4" fill="#6EE7B7"/>
+                  <line x1="60" y1="115" x2="53" y2="108" stroke="#4ADE80" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="60" y1="115" x2="67" y2="108" stroke="#22C55E" stroke-width="2" stroke-linecap="round"/>
+                  <ellipse cx="51" cy="106" rx="5" ry="3.5" fill="#4ADE80" transform="rotate(-25,51,106)"/>
+                  <ellipse cx="69" cy="106" rx="5" ry="3.5" fill="#22C55E" transform="rotate(25,69,106)"/>
+                </g>
+
+                <!-- Trunk -->
+                <g v-if="treeData.stage >= 1">
+                  <rect x="56" :y="treeData.trunkTop" width="8"
+                        :height="115 - treeData.trunkTop" rx="3" fill="#92400E"/>
+                  <line x1="59" :y1="(treeData.trunkTop||90)+6" x2="59" y2="112"
+                        stroke="#78350F" stroke-width="1" opacity="0.4"/>
+                </g>
+
+                <!-- Stage 1: bush -->
+                <g v-if="treeData.stage === 1">
+                  <circle cx="47" cy="98" r="10" fill="#16A34A"/>
+                  <circle cx="73" cy="98" r="10" fill="#16A34A"/>
+                  <circle cx="60" cy="88" r="15" fill="#22C55E">
+                    <animate attributeName="r" values="15;16.5;15" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </circle>
+                  <circle cx="60" cy="77" r="11" fill="#4ADE80">
+                    <animate attributeName="r" values="11;12.5;11" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </circle>
+                </g>
+
+                <!-- Stage 2+: layered leaves -->
+                <g v-if="treeData.stage >= 2">
+                  <ellipse cx="60" cy="107" rx="30" ry="12" fill="#15803D"/>
+                  <ellipse cx="60" cy="99" rx="24" ry="11" fill="#16A34A">
+                    <animate attributeName="rx" values="24;26;24" dur="3.5s" repeatCount="indefinite" begin="0.2s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </ellipse>
+                  <ellipse cx="60" cy="90" rx="19" ry="10" fill="#22C55E">
+                    <animate attributeName="rx" values="19;21;19" dur="3s" repeatCount="indefinite" begin="0.5s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </ellipse>
+                  <circle cx="60" cy="79" r="13" fill="#22C55E">
+                    <animate attributeName="r" values="13;14.5;13" dur="2.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </circle>
+                  <circle cx="60" cy="69" r="10" fill="#4ADE80" v-if="treeData.stage === 2">
+                    <animate attributeName="r" values="10;11.5;10" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </circle>
+                </g>
+
+                <!-- Stage 3+ -->
+                <g v-if="treeData.stage >= 3">
+                  <ellipse cx="60" cy="69" rx="15" ry="9" fill="#22C55E">
+                    <animate attributeName="rx" values="15;17;15" dur="3.2s" repeatCount="indefinite" begin="0.3s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </ellipse>
+                  <circle cx="60" cy="59" r="11" :fill="treeData.stage === 3 ? '#4ADE80' : '#22C55E'">
+                    <animate attributeName="r" values="11;12.5;11" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </circle>
+                </g>
+
+                <!-- Stage 4+: fruits -->
+                <g v-if="treeData.stage >= 4">
+                  <circle cx="43" cy="102" r="3.5" fill="#EF4444"><animate attributeName="r" values="3.5;4.3;3.5" dur="2.1s" repeatCount="indefinite" begin="0s"/></circle>
+                  <circle cx="77" cy="100" r="3.5" fill="#F97316"><animate attributeName="r" values="3.5;4.3;3.5" dur="2.1s" repeatCount="indefinite" begin="0.5s"/></circle>
+                  <circle cx="47" cy="89"  r="3"   fill="#FBBF24"><animate attributeName="r" values="3;3.8;3"     dur="2.4s" repeatCount="indefinite" begin="0.9s"/></circle>
+                  <circle cx="73" cy="87"  r="3"   fill="#EF4444"><animate attributeName="r" values="3;3.8;3"     dur="2.4s" repeatCount="indefinite" begin="1.3s"/></circle>
+                  <circle cx="52" cy="77"  r="2.5" fill="#F97316"><animate attributeName="r" values="2.5;3.2;2.5" dur="2.2s" repeatCount="indefinite" begin="0.4s"/></circle>
+                  <circle cx="68" cy="75"  r="2.5" fill="#FBBF24"><animate attributeName="r" values="2.5;3.2;2.5" dur="2.2s" repeatCount="indefinite" begin="1s"/></circle>
+                  <ellipse cx="60" cy="50" rx="13" ry="8" fill="#22C55E">
+                    <animate attributeName="rx" values="13;15;13" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </ellipse>
+                  <circle cx="60" cy="41" r="9" fill="#4ADE80">
+                    <animate attributeName="r" values="9;10.5;9" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </circle>
+                </g>
+
+                <!-- Stage 5: ancient + twinkling stars -->
+                <g v-if="treeData.stage >= 5">
+                  <ellipse cx="33" cy="76" rx="11" ry="8" fill="#4ADE80" opacity="0.85" transform="rotate(-20,33,76)"/>
+                  <ellipse cx="87" cy="73" rx="11" ry="8" fill="#4ADE80" opacity="0.85" transform="rotate(20,87,73)"/>
+                  <circle cx="60" cy="31" r="7" fill="#86EFAC">
+                    <animate attributeName="r" values="7;9;7" dur="2s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </circle>
+                  <g>
+                    <line x1="14" y1="57" x2="22" y2="65" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
+                    <line x1="22" y1="57" x2="14" y2="65" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
+                    <circle cx="18" cy="61" r="2.5" fill="#FEF08A">
+                      <animate attributeName="r"       values="2.5;4;2.5" dur="1.8s" repeatCount="indefinite"/>
+                      <animate attributeName="opacity" values="1;0.2;1"   dur="1.8s" repeatCount="indefinite"/>
+                    </circle>
+                  </g>
+                  <g>
+                    <line x1="96" y1="50" x2="104" y2="58" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.8s" repeatCount="indefinite"/></line>
+                    <line x1="104" y1="50" x2="96" y2="58" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.8s" repeatCount="indefinite"/></line>
+                    <circle cx="100" cy="54" r="2" fill="#FEF08A">
+                      <animate attributeName="r"       values="2;3.5;2" dur="1.8s" repeatCount="indefinite" begin="0.9s"/>
+                      <animate attributeName="opacity" values="0.2;1;0.2" dur="1.8s" repeatCount="indefinite" begin="0.9s"/>
+                    </circle>
+                  </g>
+                </g>
+
+                <!-- Floating particles (stage 2+) -->
+                <g v-if="treeData.stage >= 2">
+                  <circle cx="52" cy="78" r="2" fill="#4ADE80" opacity="0">
+                    <animate attributeName="cy"      values="78;52;28"   dur="4s"   repeatCount="indefinite" begin="0s"/>
+                    <animate attributeName="cx"      values="52;48;44"   dur="4s"   repeatCount="indefinite" begin="0s"/>
+                    <animate attributeName="opacity" values="0;0.85;0"   dur="4s"   repeatCount="indefinite" begin="0s"/>
+                  </circle>
+                  <circle cx="68" cy="82" r="1.5" fill="#86EFAC" opacity="0">
+                    <animate attributeName="cy"      values="82;58;34"   dur="3.6s" repeatCount="indefinite" begin="1.4s"/>
+                    <animate attributeName="cx"      values="68;72;76"   dur="3.6s" repeatCount="indefinite" begin="1.4s"/>
+                    <animate attributeName="opacity" values="0;0.7;0"    dur="3.6s" repeatCount="indefinite" begin="1.4s"/>
+                  </circle>
+                  <circle cx="60" cy="72" r="1.5" fill="#A7F3D0" opacity="0">
+                    <animate attributeName="cy"      values="72;48;24"   dur="5s"   repeatCount="indefinite" begin="0.8s"/>
+                    <animate attributeName="opacity" values="0;0.65;0"   dur="5s"   repeatCount="indefinite" begin="0.8s"/>
+                  </circle>
+                </g>
+              </g>
+            </svg>
+
+            <div v-if="treeData.stage >= 3" class="rw-float-leaf rw-fl-1">🍃</div>
+            <div v-if="treeData.stage >= 4" class="rw-float-leaf rw-fl-2">🍃</div>
+            <div v-if="treeData.stage >= 5" class="rw-float-leaf rw-fl-3">✨</div>
+          </div>
+
+          <div class="rw-tree-prog-bar">
+            <div class="rw-tree-prog-fill" :style="{ width: treeData.progress + '%', background: treeData.color }"></div>
+          </div>
+          <div class="rw-tree-prog-labels">
+            <span>{{ reward.total }} pts</span>
+            <span v-if="treeData.nextPts">อีก {{ treeData.ptsToNext }} pts → {{ treeData.nextName }}</span>
+            <span v-else>🎉 ระดับสูงสุด!</span>
+          </div>
+
+          <button class="rw-tree-share-btn" @click="shareOpen = true">📸 แชร์ต้นไม้</button>
+        </div>
+
+        <!-- ── Share card overlay ── -->
+        <Teleport to="body">
+          <div v-if="shareOpen" class="rw-share-overlay" @click.self="shareOpen = false">
+            <div class="rw-share-wrapper">
+              <!-- Card (the element html2canvas captures) -->
+              <div ref="cardRef" class="rw-sc">
+                <!-- bg decorations -->
+                <div class="rw-sc-orb rw-sc-orb1"></div>
+                <div class="rw-sc-orb rw-sc-orb2"></div>
+
+                <!-- header -->
+                <div class="rw-sc-header">
+                  <span class="rw-sc-brand">🌿 DS Community Care</span>
+                  <span class="rw-sc-year">{{ new Date().getFullYear() }}</span>
+                </div>
+
+                <!-- tree -->
+                <div class="rw-sc-tree-area">
+                  <svg class="rw-sc-tree-svg" viewBox="0 0 120 130" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="60" cy="122" rx="46" ry="9" fill="#BBF7D0"/>
+                    <ellipse cx="60" cy="119" rx="38" ry="5" fill="#86EFAC"/>
+                    <g>
+                      <animateTransform attributeName="transform" type="rotate"
+                        values="-1.2 60 119; 1.2 60 119; -1.2 60 119"
+                        keyTimes="0;0.5;1" dur="4s" repeatCount="indefinite"
+                        calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                      <g v-if="treeData.stage === 0">
+                        <ellipse cx="60" cy="117" rx="6" ry="4" fill="#6EE7B7"/>
+                        <line x1="60" y1="115" x2="53" y2="108" stroke="#4ADE80" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="60" y1="115" x2="67" y2="108" stroke="#22C55E" stroke-width="2" stroke-linecap="round"/>
+                        <ellipse cx="51" cy="106" rx="5" ry="3.5" fill="#4ADE80" transform="rotate(-25,51,106)"/>
+                        <ellipse cx="69" cy="106" rx="5" ry="3.5" fill="#22C55E" transform="rotate(25,69,106)"/>
+                      </g>
+                      <g v-if="treeData.stage >= 1">
+                        <rect x="56" :y="treeData.trunkTop" width="8" :height="115 - treeData.trunkTop" rx="3" fill="#92400E"/>
+                        <line x1="59" :y1="(treeData.trunkTop||90)+6" x2="59" y2="112" stroke="#78350F" stroke-width="1" opacity="0.4"/>
+                      </g>
+                      <g v-if="treeData.stage === 1">
+                        <circle cx="47" cy="98" r="10" fill="#16A34A"/>
+                        <circle cx="73" cy="98" r="10" fill="#16A34A"/>
+                        <circle cx="60" cy="88" r="15" fill="#22C55E">
+                          <animate attributeName="r" values="15;16.5;15" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                        </circle>
+                        <circle cx="60" cy="77" r="11" fill="#4ADE80">
+                          <animate attributeName="r" values="11;12.5;11" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                        </circle>
+                      </g>
+                      <g v-if="treeData.stage >= 2">
+                        <ellipse cx="60" cy="107" rx="30" ry="12" fill="#15803D"/>
+                        <ellipse cx="60" cy="99" rx="24" ry="11" fill="#16A34A">
+                          <animate attributeName="rx" values="24;26;24" dur="3.5s" repeatCount="indefinite" begin="0.2s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                        </ellipse>
+                        <ellipse cx="60" cy="90" rx="19" ry="10" fill="#22C55E">
+                          <animate attributeName="rx" values="19;21;19" dur="3s" repeatCount="indefinite" begin="0.5s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                        </ellipse>
+                        <circle cx="60" cy="79" r="13" fill="#22C55E">
+                          <animate attributeName="r" values="13;14.5;13" dur="2.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                        </circle>
+                        <circle cx="60" cy="69" r="10" fill="#4ADE80" v-if="treeData.stage === 2">
+                          <animate attributeName="r" values="10;11.5;10" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                        </circle>
+                      </g>
+                      <g v-if="treeData.stage >= 3">
+                        <ellipse cx="60" cy="69" rx="15" ry="9" fill="#22C55E">
+                          <animate attributeName="rx" values="15;17;15" dur="3.2s" repeatCount="indefinite" begin="0.3s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                        </ellipse>
+                        <circle cx="60" cy="59" r="11" :fill="treeData.stage === 3 ? '#4ADE80' : '#22C55E'">
+                          <animate attributeName="r" values="11;12.5;11" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                        </circle>
+                      </g>
+                      <g v-if="treeData.stage >= 4">
+                        <circle cx="43" cy="102" r="3.5" fill="#EF4444"><animate attributeName="r" values="3.5;4.3;3.5" dur="2.1s" repeatCount="indefinite" begin="0s"/></circle>
+                        <circle cx="77" cy="100" r="3.5" fill="#F97316"><animate attributeName="r" values="3.5;4.3;3.5" dur="2.1s" repeatCount="indefinite" begin="0.5s"/></circle>
+                        <circle cx="47" cy="89"  r="3"   fill="#FBBF24"><animate attributeName="r" values="3;3.8;3"     dur="2.4s" repeatCount="indefinite" begin="0.9s"/></circle>
+                        <circle cx="73" cy="87"  r="3"   fill="#EF4444"><animate attributeName="r" values="3;3.8;3"     dur="2.4s" repeatCount="indefinite" begin="1.3s"/></circle>
+                        <circle cx="52" cy="77"  r="2.5" fill="#F97316"><animate attributeName="r" values="2.5;3.2;2.5" dur="2.2s" repeatCount="indefinite" begin="0.4s"/></circle>
+                        <circle cx="68" cy="75"  r="2.5" fill="#FBBF24"><animate attributeName="r" values="2.5;3.2;2.5" dur="2.2s" repeatCount="indefinite" begin="1s"/></circle>
+                        <ellipse cx="60" cy="50" rx="13" ry="8" fill="#22C55E">
+                          <animate attributeName="rx" values="13;15;13" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                        </ellipse>
+                        <circle cx="60" cy="41" r="9" fill="#4ADE80">
+                          <animate attributeName="r" values="9;10.5;9" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                        </circle>
+                      </g>
+                      <g v-if="treeData.stage >= 5">
+                        <ellipse cx="33" cy="76" rx="11" ry="8" fill="#4ADE80" opacity="0.85" transform="rotate(-20,33,76)"/>
+                        <ellipse cx="87" cy="73" rx="11" ry="8" fill="#4ADE80" opacity="0.85" transform="rotate(20,87,73)"/>
+                        <circle cx="60" cy="31" r="7" fill="#86EFAC">
+                          <animate attributeName="r" values="7;9;7" dur="2s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                        </circle>
+                        <g>
+                          <line x1="14" y1="57" x2="22" y2="65" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
+                          <line x1="22" y1="57" x2="14" y2="65" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
+                          <circle cx="18" cy="61" r="2.5" fill="#FEF08A">
+                            <animate attributeName="r"       values="2.5;4;2.5" dur="1.8s" repeatCount="indefinite"/>
+                            <animate attributeName="opacity" values="1;0.2;1"   dur="1.8s" repeatCount="indefinite"/>
+                          </circle>
+                        </g>
+                        <g>
+                          <line x1="96" y1="50" x2="104" y2="58" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.8s" repeatCount="indefinite"/></line>
+                          <line x1="104" y1="50" x2="96" y2="58" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.8s" repeatCount="indefinite"/></line>
+                          <circle cx="100" cy="54" r="2" fill="#FEF08A">
+                            <animate attributeName="r"       values="2;3.5;2"   dur="1.8s" repeatCount="indefinite" begin="0.9s"/>
+                            <animate attributeName="opacity" values="0.2;1;0.2" dur="1.8s" repeatCount="indefinite" begin="0.9s"/>
+                          </circle>
+                        </g>
+                      </g>
+                      <g v-if="treeData.stage >= 2">
+                        <circle cx="52" cy="78" r="2" fill="#4ADE80" opacity="0">
+                          <animate attributeName="cy" values="78;52;28" dur="4s" repeatCount="indefinite" begin="0s"/>
+                          <animate attributeName="cx" values="52;48;44" dur="4s" repeatCount="indefinite" begin="0s"/>
+                          <animate attributeName="opacity" values="0;0.85;0" dur="4s" repeatCount="indefinite" begin="0s"/>
+                        </circle>
+                        <circle cx="68" cy="82" r="1.5" fill="#86EFAC" opacity="0">
+                          <animate attributeName="cy" values="82;58;34" dur="3.6s" repeatCount="indefinite" begin="1.4s"/>
+                          <animate attributeName="cx" values="68;72;76" dur="3.6s" repeatCount="indefinite" begin="1.4s"/>
+                          <animate attributeName="opacity" values="0;0.7;0" dur="3.6s" repeatCount="indefinite" begin="1.4s"/>
+                        </circle>
+                        <circle cx="60" cy="72" r="1.5" fill="#A7F3D0" opacity="0">
+                          <animate attributeName="cy" values="72;48;24" dur="5s" repeatCount="indefinite" begin="0.8s"/>
+                          <animate attributeName="opacity" values="0;0.65;0" dur="5s" repeatCount="indefinite" begin="0.8s"/>
+                        </circle>
+                      </g>
+                    </g>
+                  </svg>
+                </div>
+
+                <!-- stage badge -->
+                <div class="rw-sc-stage-badge" :style="{ background: treeData.color }">
+                  {{ treeData.name }}
+                </div>
+
+                <!-- name -->
+                <div class="rw-sc-name">{{ userAuth.userName }}</div>
+
+                <!-- points -->
+                <div class="rw-sc-pts">{{ reward.total.toLocaleString() }}</div>
+                <div class="rw-sc-pts-sub">คะแนนสะสม</div>
+
+                <!-- progress -->
+                <div class="rw-sc-prog-wrap">
+                  <div class="rw-sc-prog-bar">
+                    <div class="rw-sc-prog-fill" :style="{ width: treeData.progress + '%', background: treeData.color }"></div>
+                  </div>
+                  <div class="rw-sc-prog-label">
+                    <span v-if="treeData.nextPts">{{ treeData.ptsToNext }} pts → {{ treeData.nextName }}</span>
+                    <span v-else>🏆 ระดับสูงสุดแล้ว!</span>
+                  </div>
+                </div>
+
+                <!-- footer -->
+                <div class="rw-sc-footer">ร่วมเติบโตกับ DS Community 🌱</div>
+              </div>
+
+              <!-- actions -->
+              <div class="rw-share-actions">
+                <button class="rw-share-dl-btn" :disabled="capturing" @click="captureCard">
+                  <span v-if="capturing">⏳ กำลังสร้าง...</span>
+                  <span v-else>💾 บันทึกรูป</span>
+                </button>
+                <button class="rw-share-close-btn" @click="shareOpen = false">ปิด</button>
+              </div>
+            </div>
+          </div>
+        </Teleport>
+
         <!-- ── History section ── -->
         <div v-if="reward.history.length > 0" class="rw-section">
           <div class="rw-section-title">ประวัติคะแนน</div>
@@ -145,6 +465,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import html2canvas from 'html2canvas'
 import BaseModal from '../shared/BaseModal.vue'
 import { useRewardStore }   from '../../stores/reward.js'
 import { useUserAuthStore } from '../../stores/userAuth.js'
@@ -155,6 +476,9 @@ const userAuth = useUserAuthStore()
 const checkinDone  = ref(false)
 const checkinError = ref('')
 const showMore     = ref(false)
+const shareOpen    = ref(false)
+const cardRef      = ref(null)
+const capturing    = ref(false)
 
 onMounted(() => {
   reward.load(userAuth.userName || '', true)
@@ -168,11 +492,59 @@ const todayThai = computed(() => {
   return `วัน${days[d.getDay()]}ที่ ${d.getDate()} ${mons[d.getMonth()]} ${d.getFullYear() + 543}`
 })
 
+const TREE_STAGES = [
+  { stage: 0, min: 0,    max: 49,       name: 'เมล็ดพันธุ์',        color: '#6EE7B7', trunkTop: null },
+  { stage: 1, min: 50,   max: 149,      name: 'ต้นกล้า',            color: '#4ADE80', trunkTop: 90   },
+  { stage: 2, min: 150,  max: 349,      name: 'ต้นไม้น้อย',         color: '#22C55E', trunkTop: 75   },
+  { stage: 3, min: 350,  max: 699,      name: 'ต้นไม้กลาง',         color: '#16A34A', trunkTop: 60   },
+  { stage: 4, min: 700,  max: 1199,     name: 'ต้นไม้ใหญ่',         color: '#15803D', trunkTop: 45   },
+  { stage: 5, min: 1200, max: Infinity, name: 'ต้นไม้แห่งปัญญา ✨', color: '#047857', trunkTop: 35   },
+]
+
+const treeData = computed(() => {
+  const pts = reward.total || 0
+  let current = TREE_STAGES[0]
+  for (const s of TREE_STAGES) { if (pts >= s.min) current = s }
+  const next = current.stage < TREE_STAGES.length - 1 ? TREE_STAGES[current.stage + 1] : null
+  let progress = 100
+  if (next) {
+    const done = pts - current.min
+    progress = Math.min(100, Math.max(2, Math.round((done / (next.min - current.min)) * 100)))
+  }
+  return {
+    ...current,
+    nextName:  next?.name ?? null,
+    nextPts:   next?.min  ?? null,
+    ptsToNext: next ? next.min - pts : 0,
+    progress,
+  }
+})
+
 const checkinPts = computed(() => {
   const rule = (reward.rules.length ? reward.rules : FALLBACK_RULES)
     .find(r => r.type === 'daily_checkin' && !r.subtype)
   return rule?.pts ?? 5
 })
+
+async function captureCard() {
+  if (!cardRef.value || capturing.value) return
+  capturing.value = true
+  try {
+    const canvas = await html2canvas(cardRef.value, {
+      scale: 2, useCORS: true, backgroundColor: null, logging: false,
+    })
+    const url = canvas.toDataURL('image/png')
+    canvas.toBlob(async blob => {
+      const file = new File([blob], 'ds-tree.png', { type: 'image/png' })
+      if (navigator.canShare?.({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: 'ต้นไม้ DS Community' }); return } catch {}
+      }
+      const a = document.createElement('a')
+      a.href = url; a.download = `ds-tree-${Date.now()}.png`; a.click()
+    })
+  } catch (e) { console.error(e) }
+  finally { capturing.value = false }
+}
 
 async function handleCheckin() {
   checkinError.value = ''
@@ -440,6 +812,177 @@ function formatTime(raw) {
 
 /* Check-in error */
 .rw-checkin-error { font-size: 12px; font-weight: 700; color: #DC2626; background: #FEF2F2; border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; }
+
+/* ── Share button ── */
+.rw-tree-share-btn {
+  display: block; width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  background: linear-gradient(135deg, #059669, #047857);
+  color: white; font-size: 13px; font-weight: 800;
+  border: none; border-radius: 14px; cursor: pointer;
+  box-shadow: 0 3px 10px rgba(5,150,105,0.3);
+  transition: opacity 0.15s, transform 0.1s;
+}
+.rw-tree-share-btn:active { transform: scale(0.97); opacity: 0.85; }
+
+/* ── Share overlay ── */
+.rw-share-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.rw-share-wrapper {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  max-height: 90vh; overflow-y: auto;
+}
+
+/* ── Share card (the captured element) ── */
+.rw-sc {
+  width: 300px;
+  background: linear-gradient(160deg, #064e3b 0%, #065f46 45%, #047857 100%);
+  border-radius: 24px;
+  padding: 22px 20px 18px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  flex-shrink: 0;
+}
+.rw-sc-orb {
+  position: absolute; border-radius: 50%; pointer-events: none;
+}
+.rw-sc-orb1 {
+  top: -40px; right: -30px; width: 150px; height: 150px;
+  background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 70%);
+}
+.rw-sc-orb2 {
+  bottom: -30px; left: -20px; width: 110px; height: 110px;
+  background: radial-gradient(circle, rgba(255,255,255,0.06), transparent 70%);
+}
+.rw-sc-header {
+  display: flex; align-items: center; justify-content: space-between;
+  position: relative; z-index: 1; margin-bottom: 12px;
+}
+.rw-sc-brand { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.9); }
+.rw-sc-year  { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 600; }
+
+.rw-sc-tree-area {
+  display: flex; justify-content: center;
+  position: relative; z-index: 1; margin-bottom: 10px;
+}
+.rw-sc-tree-svg {
+  width: 160px; height: 173px;
+  filter: drop-shadow(0 6px 16px rgba(0,0,0,0.25));
+}
+
+.rw-sc-stage-badge {
+  display: inline-block;
+  font-size: 11px; font-weight: 800; color: white;
+  padding: 4px 16px; border-radius: 20px;
+  position: relative; z-index: 1;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.rw-sc-name {
+  font-size: 20px; font-weight: 900; color: white;
+  position: relative; z-index: 1;
+  margin-bottom: 14px;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.rw-sc-pts {
+  font-size: 42px; font-weight: 900; color: #FEF08A; line-height: 1;
+  position: relative; z-index: 1;
+  text-shadow: 0 3px 10px rgba(0,0,0,0.3);
+}
+.rw-sc-pts-sub {
+  font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 700;
+  position: relative; z-index: 1; margin-bottom: 14px; margin-top: 2px;
+}
+.rw-sc-prog-wrap { position: relative; z-index: 1; margin-bottom: 14px; }
+.rw-sc-prog-bar  {
+  height: 7px; background: rgba(255,255,255,0.2);
+  border-radius: 8px; overflow: hidden; margin-bottom: 4px;
+}
+.rw-sc-prog-fill { height: 100%; border-radius: 8px; }
+.rw-sc-prog-label { font-size: 10px; color: rgba(255,255,255,0.65); font-weight: 700; }
+.rw-sc-footer {
+  position: relative; z-index: 1;
+  font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 600;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+
+/* ── Share action buttons ── */
+.rw-share-actions { display: flex; gap: 10px; width: 300px; }
+.rw-share-dl-btn {
+  flex: 1; padding: 13px;
+  background: linear-gradient(135deg, #06C755, #059669);
+  color: white; font-size: 14px; font-weight: 800;
+  border: none; border-radius: 14px; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(6,199,85,0.4);
+  transition: opacity 0.15s;
+}
+.rw-share-dl-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.rw-share-close-btn {
+  padding: 13px 20px;
+  background: rgba(255,255,255,0.15); color: white;
+  font-size: 13px; font-weight: 700;
+  border: 1.5px solid rgba(255,255,255,0.25); border-radius: 14px; cursor: pointer;
+  transition: background 0.15s;
+}
+.rw-share-close-btn:active { background: rgba(255,255,255,0.25); }
+
+/* ── Tree growth card ── */
+.rw-tree-card {
+  background: linear-gradient(135deg, #F0FDF4, #DCFCE7);
+  border: 2px solid #BBF7D0;
+  border-radius: 20px;
+  padding: 14px 16px 12px;
+  margin-bottom: 16px;
+}
+.rw-tree-top-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.rw-tree-label { font-size: 13px; font-weight: 800; color: #14532D; }
+.rw-tree-stage-tag {
+  font-size: 11px; font-weight: 800; color: white;
+  padding: 3px 12px; border-radius: 20px;
+  transition: background 0.4s;
+}
+.rw-tree-scene {
+  position: relative;
+  display: flex; justify-content: center; align-items: flex-end;
+  height: 134px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.rw-tree-svg {
+  width: 120px; height: 130px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.10));
+}
+.rw-float-leaf {
+  position: absolute; font-size: 14px; pointer-events: none;
+  animation: leafFloat 3s ease-in-out infinite;
+}
+.rw-fl-1 { top: 18px; left: 16px;  animation-delay: 0s;   animation-duration: 3.3s; }
+.rw-fl-2 { top: 38px; right: 16px; animation-delay: 0.9s; animation-duration: 2.9s; }
+.rw-fl-3 { top: 8px;  right: 28px; animation-delay: 0.4s; animation-duration: 3.6s; }
+@keyframes leafFloat {
+  0%, 100% { transform: translateY(0)    rotate(0deg);  opacity: 0.8; }
+  50%       { transform: translateY(-9px) rotate(14deg); opacity: 1;   }
+}
+.rw-tree-prog-bar {
+  height: 7px; background: #BBF7D0; border-radius: 8px; overflow: hidden; margin-bottom: 5px;
+}
+.rw-tree-prog-fill {
+  height: 100%; border-radius: 8px; transition: width 0.8s ease, background 0.4s;
+}
+.rw-tree-prog-labels {
+  display: flex; justify-content: space-between;
+  font-size: 10px; font-weight: 700; color: #6B7280;
+}
 
 @keyframes shimmer {
   0%   { background-position: 200% 0; }
