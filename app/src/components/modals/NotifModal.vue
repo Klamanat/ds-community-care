@@ -78,13 +78,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseModal         from '../shared/BaseModal.vue'
-import { useNotifStore } from '../../stores/notif.js'
-import { useUiStore }    from '../../stores/ui.js'
+import { useNotifStore }   from '../../stores/notif.js'
+import { useUiStore }      from '../../stores/ui.js'
 import { useUserAuthStore } from '../../stores/userAuth.js'
+import { useEmpathyStore }  from '../../stores/empathy.js'
 
 const notif    = useNotifStore()
 const ui       = useUiStore()
 const userAuth = useUserAuthStore()
+const empathy  = useEmpathyStore()
 const router   = useRouter()
 
 const tab = ref('all')
@@ -138,12 +140,42 @@ function handleTap(n) {
   notif.markRead(n.id)
   ui.closeModal()
   const t = n.target || ''
-  if (t === 'bday')           { setTimeout(() => ui.openModal('modal-bday'),   120); return }
-  if (t === 'empathy')        { router.push('/'); return }
+
+  // Birthday / wish → birthday modal
+  if (t === 'bday') {
+    setTimeout(() => ui.openModal('modal-bday'), 120)
+    return
+  }
+
+  // Activity → month modal
   if (t.startsWith('month_')) {
     const idx = parseInt(t.split('_')[1], 10)
     if (idx) setTimeout(() => ui.openMonthModal(idx), 120)
+    return
   }
+
+  // Kudos → open empathy modal on the person's channel
+  if (t.startsWith('empathy_')) {
+    const channelId = t.slice(8).trim()
+    if (channelId) {
+      const person = empathy.praisedPeople?.find(p => (p.empCode || p.id) === channelId)
+                     || { empCode: channelId }
+      ui._empPreselect = person
+      setTimeout(() => ui.openModal('modal-emp'), 120)
+    } else {
+      router.push('/')
+    }
+    return
+  }
+
+  // Points → reward modal
+  if (t === 'reward') {
+    setTimeout(() => ui.openModal('modal-reward'), 120)
+    return
+  }
+
+  // Stamp / home → home page
+  router.push('/')
 }
 </script>
 

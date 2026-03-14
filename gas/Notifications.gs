@@ -60,7 +60,11 @@ function getNotifications(params) {
       if (channelId) {
         var allCmts = cachedSheetRead('EmpathyComments', 120);
         allCmts
-          .filter(function(c) { return String(c.postId) === channelId && !c.parentId; })
+          .filter(function(c) {
+            return String(c.postId) === channelId &&
+                   !c.parentId &&
+                   String(c.authorName || '').trim() !== employeeName;
+          })
           .slice(0, 10)
           .forEach(function(c) {
             var snippet = String(c.text || '').substring(0, 60);
@@ -72,7 +76,7 @@ function getNotifications(params) {
               title:  '💝 ' + String(c.authorName || 'เพื่อนร่วมงาน') + ' ส่งความรู้สึกดีๆ ให้คุณ!',
               msg:    snippet,
               time:   String(c.createdAt || ''),
-              target: 'empathy',
+              target: 'empathy_' + channelId,
             });
           });
       }
@@ -128,7 +132,7 @@ function getNotifications(params) {
             title:  '🏆 ได้รับ +' + Number(p.amount) + ' คะแนน',
             msg:    String(p.desc || p.type || ''),
             time:   String(p.createdAt || ''),
-            target: 'home',
+            target: 'reward',
           });
         });
     } catch(ex) {}

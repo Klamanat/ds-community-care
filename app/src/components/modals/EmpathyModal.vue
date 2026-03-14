@@ -318,14 +318,25 @@ const tags = ['เก่งมาก ⭐', 'ขอบคุณ 🙏', 'สู้
 
 // ── Lifecycle ──────────────────────────────────────────────────────
 onMounted(async () => {
-  empathy.loadPeople()
   team.loadDirectory()
-  // Pre-select person from EmpathyBoard card click
-  if (ui._empPreselect) {
-    const person = ui._empPreselect
-    ui._empPreselect = null
+  const preselect = ui._empPreselect
+  ui._empPreselect = null
+
+  if (preselect?.name) {
+    // Full person object (from EmpathyBoard) — select immediately, no wait
+    empathy.loadPeople()
+    await nextTick()
+    selectPerson(preselect)
+  } else if (preselect?.empCode) {
+    // Only empCode (from notification) — need to load people first for imgUrl
+    await empathy.loadPeople()
+    const person = empathy.praisedPeople.find(
+      p => (p.empCode || p.id) === preselect.empCode
+    ) || preselect
     await nextTick()
     selectPerson(person)
+  } else {
+    empathy.loadPeople()
   }
 })
 
