@@ -187,6 +187,14 @@ var ALL_SHEETS = [
     headers: ['id','activityId','activityName','employeeName','stampedAt','rewardClaimed','rewardType'],
   },
   {
+    name: 'Trainings',
+    headers: ['id','category','title','description','instructor','location','date','capacity','status','courseUrl','createdAt'],
+  },
+  {
+    name: 'TrainingRegistrations',
+    headers: ['id','trainingId','employeeId','employeeName','registeredAt'],
+  },
+  {
     name: 'Admins',
     headers: ['username','passwordHash','name','token','tokenExpires'],
   },

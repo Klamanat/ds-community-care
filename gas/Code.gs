@@ -87,6 +87,16 @@ function doGet(e) {
       adminUpdateRewardRule: function() { return adminUpdateRewardRule(e.parameter); },
       adminDeleteRewardRule: function() { return adminDeleteRewardRule(e.parameter); },
 
+      // Training
+      getTrainings:           function() { return getTrainings(e.parameter); },
+      registerTraining:       function() { return registerTraining(e.parameter); },
+      cancelRegistration:     function() { return cancelRegistration(e.parameter); },
+      getMyTrainings:         function() { return getMyTrainings(e.parameter); },
+      adminGetTrainingRegistrations: function() { return adminGetTrainingRegistrations(e.parameter); },
+      adminAddTraining:       function() { return adminAddTraining(e.parameter); },
+      adminUpdateTraining:    function() { return adminUpdateTraining(e.parameter); },
+      adminDeleteTraining:    function() { return adminDeleteTraining(e.parameter); },
+
       // Announcement
       getAnnouncement:    function() { return getAnnouncement(); },
       saveAnnouncement:   function() { return saveAnnouncement(e.parameter); },

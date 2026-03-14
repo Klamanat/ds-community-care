@@ -52,6 +52,7 @@ const navCards = [
   { to: '/admin/activities',   icon: '📅', label: 'กิจกรรม',            sub: 'Activities sheet' },
   { to: '/admin/announcement', icon: '📢', label: 'ประกาศ / Popup',     sub: 'Announcement settings' },
   { to: '/admin/reward-rules', icon: '🏆', label: 'วิธีสะสมคะแนน',     sub: 'PointRules sheet' },
+  { to: '/admin/training',     icon: '📚', label: 'Training',           sub: 'หลักสูตรพัฒนาทักษะ' },
 ]
 
 function doLogout() {
