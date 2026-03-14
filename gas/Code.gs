@@ -97,6 +97,8 @@ function doGet(e) {
       adminAddTraining:       function() { return adminAddTraining(e.parameter); },
       adminUpdateTraining:    function() { return adminUpdateTraining(e.parameter); },
       adminDeleteTraining:    function() { return adminDeleteTraining(e.parameter); },
+      submitTrainingReview:   function() { return submitTrainingReview(e.parameter); },
+      getTrainingReviews:     function() { return getTrainingReviews(e.parameter); },
 
       // Announcement
       getAnnouncement:    function() { return getAnnouncement(); },

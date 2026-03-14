@@ -1,6 +1,6 @@
 // Training.gs — Training courses + registrations
 // Sheet: Trainings
-// Columns: id | category | title | description | instructor | location | date | capacity | status | createdAt
+// Columns: id | category | title | description | instructor | section | createdAt
 //
 // Sheet: TrainingRegistrations
 // Columns: id | trainingId | employeeId | employeeName | registeredAt
@@ -13,26 +13,14 @@ function getTrainings(params) {
     rows = rows.filter(function(r) { return r.category === category; });
   }
 
-  rows = rows.filter(function(r) { return r.status !== 'cancelled'; });
-  rows.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
-
-  var regs = [];
-  try { regs = sheetToObjects('TrainingRegistrations'); } catch(e) {}
-
   return ok(rows.map(function(r) {
-    var count = regs.filter(function(reg) { return String(reg.trainingId) === String(r.id); }).length;
     return {
       id:          String(r.id || ''),
       category:    String(r.category || ''),
       title:       String(r.title || ''),
       description: String(r.description || ''),
       instructor:  String(r.instructor || ''),
-      location:    String(r.location || ''),
-      date:        String(r.date || ''),
-      capacity:    Number(r.capacity || 0),
-      joinCount:   count,
-      status:      String(r.status || 'open'),
-      courseUrl:   String(r.courseUrl || ''),
+      section:     String(r.section || ''),
       createdAt:   String(r.createdAt || ''),
     };
   }));
@@ -128,17 +116,13 @@ function adminAddTraining(params) {
   var title       = (params.title       || '').trim();
   var description = (params.description || '').trim();
   var instructor  = (params.instructor  || '').trim();
-  var location    = (params.location    || '').trim();
-  var date        = (params.date        || '').trim();
-  var capacity    = Number(params.capacity || 0);
-  var status      = (params.status      || 'open').trim();
-  var courseUrl   = (params.courseUrl   || '').trim();
+  var section     = (params.section     || '').trim();
   var createdAt   = formatDate(new Date());
 
   if (!title) return err('title required');
 
-  appendRow('Trainings', [id, category, title, description, instructor, location, date, capacity, status, courseUrl, createdAt]);
-  return ok({ id: id, category: category, title: title, description: description, instructor: instructor, location: location, date: date, capacity: capacity, status: status, courseUrl: courseUrl, createdAt: createdAt });
+  appendRow('Trainings', [id, category, title, description, instructor, section, createdAt]);
+  return ok({ id: id, category: category, title: title, description: description, instructor: instructor, section: section, createdAt: createdAt });
 }
 
 function adminUpdateTraining(params) {
@@ -150,7 +134,7 @@ function adminUpdateTraining(params) {
   var sheet   = getSheet('Trainings');
   var data    = sheet.getDataRange().getValues();
   var headers = data[0];
-  var EDITABLE = ['category','title','description','instructor','location','date','capacity','status','courseUrl'];
+  var EDITABLE = ['category','title','description','instructor','section'];
 
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][headers.indexOf('id')]) === String(id)) {
@@ -183,6 +167,82 @@ function adminDeleteTraining(params) {
     }
   }
   return err('not found');
+}
+
+// ── Reviews ──────────────────────────────────────────────────────────────────
+// Sheet: TrainingReviews
+// Columns: id | trainingId | employeeId | employeeName | stars | comment | createdAt
+
+/**
+ * GET: submitTrainingReview
+ * params: { trainingId, employeeId, employeeName, stars, comment }
+ * Upserts — one review per employee per course.
+ */
+function submitTrainingReview(params) {
+  var trainingId   = String(params.trainingId   || '').trim();
+  var employeeId   = String(params.employeeId   || '').trim();
+  var employeeName = String(params.employeeName || 'ไม่ระบุ').trim();
+  var stars        = parseInt(params.stars, 10);
+  var comment      = String(params.comment || '').trim();
+
+  if (!trainingId || !employeeId)   return err('trainingId and employeeId required');
+  if (isNaN(stars) || stars < 1 || stars > 5) return err('stars must be 1–5');
+
+  var sheet;
+  try { sheet = getSheet('TrainingReviews'); } catch(e) {
+    // Auto-create sheet with headers
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    sheet  = ss.insertSheet('TrainingReviews');
+    sheet.appendRow(['id','trainingId','employeeId','employeeName','stars','comment','createdAt']);
+  }
+
+  var data    = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var tidIdx  = headers.indexOf('trainingId');
+  var eidIdx  = headers.indexOf('employeeId');
+
+  // Update if exists
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][tidIdx]) === trainingId && String(data[i][eidIdx]) === employeeId) {
+      var sIdx  = headers.indexOf('stars');
+      var cIdx  = headers.indexOf('comment');
+      var tsIdx = headers.indexOf('createdAt');
+      if (sIdx  >= 0) sheet.getRange(i + 1, sIdx  + 1).setValue(stars);
+      if (cIdx  >= 0) sheet.getRange(i + 1, cIdx  + 1).setValue(comment);
+      if (tsIdx >= 0) sheet.getRange(i + 1, tsIdx + 1).setValue(formatDate(new Date()));
+      invalidateSheet('TrainingReviews');
+      return ok({ updated: true, stars: stars });
+    }
+  }
+
+  // Insert new
+  var id = uuid();
+  sheet.appendRow([id, trainingId, employeeId, employeeName, stars, comment, formatDate(new Date())]);
+  invalidateSheet('TrainingReviews');
+  return ok({ id: id, stars: stars, created: true });
+}
+
+/**
+ * GET: getTrainingReviews
+ * params: { trainingId? } — omit to get all
+ */
+function getTrainingReviews(params) {
+  try {
+    var rows = cachedSheetRead('TrainingReviews', 120);
+    var tid  = String(params.trainingId || '').trim();
+    if (tid) rows = rows.filter(function(r) { return String(r.trainingId) === tid; });
+    return ok(rows.map(function(r) {
+      return {
+        id:           String(r.id           || ''),
+        trainingId:   String(r.trainingId   || ''),
+        employeeId:   String(r.employeeId   || ''),
+        employeeName: String(r.employeeName || ''),
+        stars:        parseInt(r.stars, 10) || 0,
+        comment:      String(r.comment      || ''),
+        createdAt:    String(r.createdAt    || ''),
+      };
+    }));
+  } catch(e) { return ok([]); }
 }
 
 // ── Helper ───────────────────────────────────────────────────────────────────

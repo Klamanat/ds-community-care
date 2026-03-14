@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import * as svc from '../services/trainingService.js'
 import { useUiStore } from './ui.js'
 
@@ -8,6 +8,11 @@ export const useTrainingStore = defineStore('training', () => {
   const myTrainingIds  = ref([])
   const isLoading      = ref(false)
   const lastFetched    = ref(null)
+
+  // reviews: { [trainingId]: { avg, count, myStars, myComment } }
+  const reviews        = reactive({})
+  // allReviews: raw list for showing individual reviews inside detail
+  const allReviews     = ref([])
 
   const categories = [
     { key: 'annual',      icon: '📅', name: 'Annual Training',           tag: 'ประจำปี',          color: '#0EA5E9', bgColor: '#E0F2FE' },
@@ -20,14 +25,28 @@ export const useTrainingStore = defineStore('training', () => {
     { key: 'leadership',  icon: '👑', name: 'Talent & Leadership',        tag: 'ผู้นำรุ่นใหม่',   color: '#8B5CF6', bgColor: '#F5F3FF' },
   ]
 
+  const SEED_COURSES = [
+    { id: 's1',  category: 'idp',        title: 'การสื่อสารอย่างมีประสิทธิภาพ',      description: 'เทคนิคการสื่อสารในองค์กร',           instructor: 'อ.วิภาดา สุขใจ',  section: 'train2026' },
+    { id: 's2',  category: 'superskills', title: 'Excel Advanced & Power BI',          description: 'วิเคราะห์ข้อมูลด้วย Power BI',         instructor: 'อ.ณัฐพล มีสุข',   section: 'train2026' },
+    { id: 's3',  category: 'leadership',  title: 'Talent Leadership Program',          description: 'พัฒนาทักษะผู้นำรุ่นใหม่',             instructor: 'อ.ศิริพร แก้วใส', section: 'train2026' },
+    { id: 's4',  category: 'external',    title: 'Design Thinking Workshop',           description: 'กระบวนการคิดเชิงออกแบบ',              instructor: 'อ.ปิยะ รัตนชัย',  section: 'train2026' },
+    { id: 's5',  category: 'compulsory',  title: 'ความปลอดภัยในการทำงาน',             description: 'กฎระเบียบและแนวปฏิบัติความปลอดภัย', instructor: 'อ.สมชาย ดีงาม',   section: 'train2026' },
+    { id: 's6',  category: 'superskills', title: 'AI & Prompt Engineering',            description: 'ใช้ AI ช่วยงานอย่างมีประสิทธิภาพ',     instructor: 'อ.กานต์ ใจดี',    section: 'new' },
+    { id: 's7',  category: 'idp',         title: 'Presentation & Public Speaking',     description: 'นำเสนองานอย่างมั่นใจ',                instructor: 'อ.นภา พรมมา',     section: 'new' },
+    { id: 's8',  category: 'external',    title: 'Project Management Professional',    description: 'บริหารโครงการแบบ PMP',                 instructor: 'อ.ธนา วิชัย',     section: 'new' },
+    { id: 's9',  category: 'site',        title: 'Site Visit — โรงงานอมตะซิตี้',      description: 'เยี่ยมชมกระบวนการผลิต',               instructor: 'ทีม HR',          section: 'new' },
+    { id: 's10', category: 'blog',        title: 'เขียน Internal Blog อย่างไรให้ปัง', description: 'เทคนิคการเขียนบทความภายใน',           instructor: 'อ.พิมพ์ใจ สดใส', section: 'new' },
+  ]
+
   async function loadCourses(force = false) {
     if (!force && lastFetched.value && Date.now() - lastFetched.value < 60000) return
     isLoading.value = true
     try {
-      courses.value     = await svc.fetchTrainings()
+      const data = await svc.fetchTrainings()
+      courses.value     = data.length ? data : SEED_COURSES
       lastFetched.value = Date.now()
     } catch {
-      courses.value = []
+      courses.value = SEED_COURSES
     } finally {
       isLoading.value = false
     }
@@ -71,6 +90,58 @@ export const useTrainingStore = defineStore('training', () => {
     }
   }
 
+  async function loadReviews(employeeId) {
+    try {
+      const data = await svc.fetchReviews()
+      allReviews.value = data
+      // Group by trainingId
+      const map = {}
+      data.forEach(r => {
+        if (!map[r.trainingId]) map[r.trainingId] = { total: 0, count: 0, myStars: 0, myComment: '' }
+        map[r.trainingId].total += r.stars
+        map[r.trainingId].count++
+        if (employeeId && String(r.employeeId) === String(employeeId)) {
+          map[r.trainingId].myStars   = r.stars
+          map[r.trainingId].myComment = r.comment
+        }
+      })
+      Object.keys(map).forEach(tid => {
+        const m = map[tid]
+        reviews[tid] = {
+          avg:       m.count ? Math.round((m.total / m.count) * 10) / 10 : 0,
+          count:     m.count,
+          myStars:   m.myStars,
+          myComment: m.myComment,
+        }
+      })
+    } catch {}
+  }
+
+  async function submitReview(trainingId, employeeId, employeeName, stars, comment) {
+    const ui = useUiStore()
+    try {
+      await svc.submitReview(trainingId, employeeId, employeeName, stars, comment)
+      // Update local state optimistically
+      const cur = reviews[trainingId]
+      if (cur) {
+        const wasRated = cur.myStars > 0
+        const newTotal = cur.avg * cur.count - (wasRated ? cur.myStars : 0) + stars
+        const newCount = wasRated ? cur.count : cur.count + 1
+        reviews[trainingId] = {
+          avg:       Math.round((newTotal / newCount) * 10) / 10,
+          count:     newCount,
+          myStars:   stars,
+          myComment: comment,
+        }
+      } else {
+        reviews[trainingId] = { avg: stars, count: 1, myStars: stars, myComment: comment }
+      }
+      ui.showToast('ให้คะแนนสำเร็จ ⭐')
+    } catch {
+      ui.showToast('เกิดข้อผิดพลาด กรุณาลองใหม่')
+    }
+  }
+
   function coursesByCategory(catKey) {
     return courses.value.filter(c => c.category === catKey)
   }
@@ -83,9 +154,13 @@ export const useTrainingStore = defineStore('training', () => {
     return categories.find(c => c.key === catKey) || { icon: '📚', name: catKey, color: '#6366f1', bgColor: '#EEF2FF' }
   }
 
+  function reviewsForCourse(trainingId) {
+    return allReviews.value.filter(r => String(r.trainingId) === String(trainingId))
+  }
+
   return {
-    courses, myTrainingIds, isLoading, categories,
-    loadCourses, loadMyTrainings, register, cancel,
-    coursesByCategory, isRegistered, getCategoryInfo,
+    courses, myTrainingIds, isLoading, categories, reviews, allReviews,
+    loadCourses, loadMyTrainings, loadReviews, submitReview, register, cancel,
+    coursesByCategory, isRegistered, getCategoryInfo, reviewsForCourse,
   }
 })

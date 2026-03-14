@@ -22,6 +22,17 @@ export async function cancelRegistration(trainingId, employeeId) {
   return r.data
 }
 
+export async function fetchReviews() {
+  const r = await gasGet('getTrainingReviews', {})
+  return r.data || []
+}
+
+export async function submitReview(trainingId, employeeId, employeeName, stars, comment) {
+  const r = await gasGet('submitTrainingReview', { trainingId, employeeId, employeeName, stars, comment })
+  if (!r.ok) throw new Error(r.error || 'error')
+  return r.data
+}
+
 function token() { return localStorage.getItem('admin_token') || '' }
 
 export async function adminFetchTrainings() {

@@ -35,11 +35,13 @@
           <div class="al-item" v-for="r in filtered" :key="r.id">
             <div class="al-item-body">
               <div class="al-item-title">{{ r.title }}</div>
-              <div class="al-item-sub">{{ catLabel(r.category) }} · {{ r.instructor || '-' }} · {{ r.location || '-' }}</div>
+              <div class="al-item-sub">
+                {{ catLabel(r.category) }}<span v-if="r.instructor"> · {{ r.instructor }}</span>
+              </div>
               <div class="al-item-meta">
-                <span class="al-badge" :class="statusBadge(r.status)">{{ statusLabel(r.status) }}</span>
-                <span v-if="r.date">📅 {{ fmtDate(r.date) }}</span>
-                <span v-if="r.courseUrl" class="al-badge al-badge-blue">🔗 มีลิงค์</span>
+                <span class="al-badge" :class="r.section ? 'al-badge-blue' : 'al-badge-pending'">
+                  {{ r.section?.startsWith('train') ? `📅 เทรน ${r.section.replace('train','')}` : r.section === 'new' ? '✨ หลักสูตรใหม่' : 'ไม่มีข้อมูล' }}
+                </span>
               </div>
             </div>
             <div class="al-item-actions">
@@ -75,33 +77,20 @@
           <textarea class="al-form-input" v-model="form.description" rows="3" placeholder="รายละเอียดหลักสูตร" maxlength="500" style="resize:none;"></textarea>
         </div>
 
-        <div class="al-form-row">
-          <label class="al-form-label">วิทยากร</label>
-          <input class="al-form-input" v-model="form.instructor" placeholder="ชื่อวิทยากร" maxlength="100" />
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">สถานที่</label>
-          <input class="al-form-input" v-model="form.location" placeholder="สถานที่จัดอบรม" maxlength="200" />
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">วันที่อบรม</label>
-          <input class="al-form-input" type="date" v-model="form.date" />
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">ลิงค์หลักสูตร (URL)</label>
-          <input class="al-form-input" v-model="form.courseUrl" placeholder="https://..." type="url" />
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">สถานะ</label>
-          <select class="al-form-select" v-model="form.status">
-            <option value="open">🟢 เปิด</option>
-            <option value="closed">🔒 ปิด</option>
-            <option value="cancelled">❌ ยกเลิก</option>
-          </select>
+        <div class="al-form-2col">
+          <div class="al-form-row">
+            <label class="al-form-label">วิทยากร</label>
+            <input class="al-form-input" v-model="form.instructor" placeholder="ชื่อวิทยากร" maxlength="100" />
+          </div>
+          <div class="al-form-row">
+            <label class="al-form-label">จัดอยู่ใน</label>
+            <select class="al-form-select" v-model="form.section">
+              <option value="">-- ไม่ระบุ --</option>
+              <option value="train2026">📅 เทรน 2026</option>
+              <option value="train2027">📅 เทรน 2027</option>
+              <option value="new">✨ หลักสูตรใหม่</option>
+            </select>
+          </div>
         </div>
 
         <div class="al-modal-footer">
@@ -164,9 +153,7 @@ const CATEGORIES = [
 const CATEGORY_FILTERS = ['all', ...CATEGORIES.map(c => c.key)]
 
 const form = reactive({
-  category: '', title: '', description: '',
-  instructor: '', location: '', date: '',
-  status: 'open', courseUrl: '',
+  category: '', title: '', description: '', instructor: '', section: '',
 })
 
 const filtered = computed(() =>
@@ -178,25 +165,6 @@ function catLabel(key) {
   return c ? `${c.icon} ${c.name}` : key
 }
 
-function statusBadge(s) {
-  if (s === 'open')      return 'al-badge-approved'
-  if (s === 'closed')    return 'al-badge-pending'
-  if (s === 'cancelled') return 'al-badge-rejected'
-  return ''
-}
-function statusLabel(s) {
-  if (s === 'open')      return '🟢 เปิด'
-  if (s === 'closed')    return '🔒 ปิด'
-  if (s === 'cancelled') return '❌ ยกเลิก'
-  return s
-}
-
-function fmtDate(d) {
-  if (!d) return '-'
-  const dt = new Date(d)
-  if (isNaN(dt)) return d
-  return dt.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })
-}
 
 onMounted(async () => {
   try { rows.value = await svc.adminFetchTrainings() }
@@ -205,9 +173,7 @@ onMounted(async () => {
 })
 
 function resetForm() {
-  form.category = ''; form.title = ''; form.description = ''
-  form.instructor = ''; form.location = ''; form.date = ''
-  form.status = 'open'; form.courseUrl = ''
+  form.category = ''; form.title = ''; form.description = ''; form.instructor = ''; form.section = ''
 }
 
 function openAdd() {
@@ -222,10 +188,7 @@ function openEdit(r) {
   form.title       = r.title       || ''
   form.description = r.description || ''
   form.instructor  = r.instructor  || ''
-  form.location    = r.location    || ''
-  form.date        = r.date        || ''
-  form.status      = r.status      || 'open'
-  form.courseUrl   = r.courseUrl   || ''
+  form.section     = r.section     || ''
   formOpen.value   = true
 }
 
