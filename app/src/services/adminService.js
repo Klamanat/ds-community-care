@@ -64,6 +64,16 @@ export async function deletePost(postId) {
   return r.data
 }
 
+export async function deleteComment(commentId, postId) {
+  const r = await gasGet('adminDeleteComment', { token: token(), commentId, postId: postId || '' })
+  return r.data
+}
+
+export async function deleteChannel(channelId) {
+  const r = await gasGet('adminDeleteChannel', { token: token(), channelId })
+  return r.data
+}
+
 // ── Announcement ──────────────────────────────────────────────────
 
 export async function saveAnnouncement(fields) {

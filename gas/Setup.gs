@@ -5,11 +5,37 @@
 //   setupAll()                    — ครั้งแรก: สร้างทุก sheet + seed + admin (safe to re-run)
 //   addMissingSheets()            — เพิ่มเฉพาะ sheet ที่ยังไม่มี (ใช้เมื่อเพิ่ม feature ใหม่)
 //   addMissingColumns()           — เพิ่ม column ที่ขาดใน sheet ที่มีอยู่แล้ว (safe to re-run)
+//   deleteUnusedSheets()          — ลบ EmpathyPosts + TrainingRegistrations ⚠️ ลบถาวร
 //   cleanUnusedSheetsAndColumns() — ลบ sheet + column ที่ไม่ได้ใช้ออก ⚠️ ลบข้อมูลจริง
 //   setupSheets()                 — สร้าง/อัปเดต header ทุก sheet (idempotent)
 //   setupAdmin()                  — สร้าง admin account (ข้ามถ้ามีแล้ว)
 //   seedEmployees()               — seed พนักงานตัวอย่าง (ข้ามถ้ามีแล้ว)
 //   seedBirthdays()               — seed วันเกิดตัวอย่าง (ข้ามถ้ามีแล้ว)
+
+/**
+ * deleteUnusedSheets() — ลบ EmpathyPosts และ TrainingRegistrations ที่ไม่ได้ใช้แล้ว
+ * ⚠️ ลบข้อมูลถาวร — รันครั้งเดียว
+ */
+function deleteUnusedSheets() {
+  var ss      = SpreadsheetApp.getActiveSpreadsheet();
+  var targets = ['EmpathyPosts', 'TrainingRegistrations'];
+
+  targets.forEach(function(name) {
+    var sheet = ss.getSheetByName(name);
+    if (!sheet) {
+      Logger.log('ไม่พบ sheet: ' + name + ' (ข้าม)');
+      return;
+    }
+    if (ss.getNumSheets() <= 1) {
+      Logger.log('⚠️ ข้าม ' + name + ' — ต้องมีอย่างน้อย 1 sheet');
+      return;
+    }
+    ss.deleteSheet(sheet);
+    Logger.log('🗑️ ลบแล้ว: ' + name);
+  });
+
+  Logger.log('✅ deleteUnusedSheets เสร็จ');
+}
 
 /**
  * cleanUnusedSheetsAndColumns() — ลบ sheet และ column ที่ไม่ได้นิยามใน ALL_SHEETS
@@ -155,10 +181,6 @@ var ALL_SHEETS = [
     headers: ['id','birthdayKey','fromName','fromAvIdx','msg','time','year','fromImgId'],
   },
   {
-    name: 'EmpathyPosts',
-    headers: ['id','recEmployeeId','recName','recRole','recImgUrl','sndName','msg','tag','likeCount','createdAt'],
-  },
-  {
     name: 'EmpathyComments',
     headers: ['id','postId','parentId','authorName','text','createdAt'],
   },
@@ -193,10 +215,6 @@ var ALL_SHEETS = [
   {
     name: 'Trainings',
     headers: ['id','category','title','description','instructor','location','date','capacity','status','courseUrl','createdAt'],
-  },
-  {
-    name: 'TrainingRegistrations',
-    headers: ['id','trainingId','employeeId','employeeName','registeredAt'],
   },
   {
     name: 'Admins',

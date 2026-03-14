@@ -78,12 +78,10 @@
         <!-- ── History section ── -->
         <div v-if="reward.history.length > 0" class="rw-section">
           <div class="rw-section-title">ประวัติคะแนน</div>
+
+          <!-- Top 5 -->
           <div class="rw-history-list">
-            <div
-              v-for="h in reward.history"
-              :key="h.id"
-              class="rw-hist-row"
-            >
+            <div v-for="h in reward.history.slice(0, 5)" :key="h.id" class="rw-hist-row">
               <div class="rw-hist-icon">{{ typeEmoji(h.type, h.subtype) }}</div>
               <div class="rw-hist-info">
                 <div class="rw-hist-desc">{{ h.desc || typeLabel(h.type, h.subtype) }}</div>
@@ -92,6 +90,26 @@
               <div class="rw-hist-pts">+{{ h.amount }}</div>
             </div>
           </div>
+
+          <!-- Load more -->
+          <template v-if="reward.history.length > 5">
+            <button v-if="!showMore" class="rw-load-more-btn" @click="showMore = true">
+              ดูเพิ่มเติม {{ reward.history.length - 5 }} รายการ ↓
+            </button>
+            <template v-else>
+              <div class="rw-more-label">รายการก่อนหน้า ({{ reward.history.length - 5 }} รายการ)</div>
+              <div class="rw-history-scroll">
+                <div v-for="h in reward.history.slice(5)" :key="h.id" class="rw-hist-row rw-hist-row--old">
+                  <div class="rw-hist-icon">{{ typeEmoji(h.type, h.subtype) }}</div>
+                  <div class="rw-hist-info">
+                    <div class="rw-hist-desc">{{ h.desc || typeLabel(h.type, h.subtype) }}</div>
+                    <div class="rw-hist-time">{{ formatTime(h.createdAt) }}</div>
+                  </div>
+                  <div class="rw-hist-pts rw-hist-pts--old">+{{ h.amount }}</div>
+                </div>
+              </div>
+            </template>
+          </template>
         </div>
 
         <!-- Loading skeleton for history -->
@@ -134,8 +152,9 @@ import { useUserAuthStore } from '../../stores/userAuth.js'
 const reward   = useRewardStore()
 const userAuth = useUserAuthStore()
 
-const checkinDone = ref(false)  // true = just checked in this session (show confetti state)
+const checkinDone  = ref(false)
 const checkinError = ref('')
+const showMore     = ref(false)
 
 onMounted(() => {
   reward.load(userAuth.userName || '', true)
@@ -208,12 +227,14 @@ function formatTime(raw) {
   const m = String(raw).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{2}):(\d{2})/)
   if (m) {
     const TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
-    return `${+m[1]} ${TH[+m[2] - 1]} ${+m[3] + 543}`
+    return `${+m[1]} ${TH[+m[2] - 1]} ${+m[3] + 543} · ${m[4]}:${m[5]}`
   }
   const d = new Date(raw)
   if (isNaN(d)) return raw
   const TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
-  return `${d.getDate()} ${TH[d.getMonth()]} ${d.getFullYear() + 543}`
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return `${d.getDate()} ${TH[d.getMonth()]} ${d.getFullYear() + 543} · ${hh}:${mm}`
 }
 </script>
 
@@ -284,6 +305,48 @@ function formatTime(raw) {
 .rw-hist-desc { font-size: 13px; font-weight: 600; color: #050505; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rw-hist-time { font-size: 11px; color: #65676B; margin-top: 1px; }
 .rw-hist-pts { font-size: 15px; font-weight: 800; color: #06C755; flex-shrink: 0; }
+
+/* Load more button */
+.rw-load-more-btn {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px;
+  background: none;
+  border: 1.5px dashed #D1D5DB;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6B7280;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.rw-load-more-btn:active { background: #F3F4F6; color: #374151; }
+
+/* More label */
+.rw-more-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9CA3AF;
+  text-align: center;
+  padding: 8px 0 4px;
+  letter-spacing: 0.4px;
+}
+
+/* Virtual scroll container */
+.rw-history-scroll {
+  background: white;
+  border-radius: 16px;
+  overflow-y: auto;
+  max-height: 220px;
+}
+.rw-history-scroll::-webkit-scrollbar { width: 4px; }
+.rw-history-scroll::-webkit-scrollbar-track { background: transparent; }
+.rw-history-scroll::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 4px; }
+
+/* Dimmed style for older items */
+.rw-hist-row--old { opacity: 0.75; }
+.rw-hist-pts--old { color: #9CA3AF !important; }
 
 /* Skeleton */
 .rw-hist-skeleton { height: 52px; background: linear-gradient(90deg, #F0F2F5 25%, #E4E6EB 50%, #F0F2F5 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 12px; margin-bottom: 4px; }

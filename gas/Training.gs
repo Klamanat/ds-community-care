@@ -16,7 +16,8 @@ function getTrainings(params) {
   rows = rows.filter(function(r) { return r.status !== 'cancelled'; });
   rows.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
 
-  var regs = sheetToObjects('TrainingRegistrations');
+  var regs = [];
+  try { regs = sheetToObjects('TrainingRegistrations'); } catch(e) {}
 
   return ok(rows.map(function(r) {
     var count = regs.filter(function(reg) { return String(reg.trainingId) === String(r.id); }).length;
@@ -44,7 +45,8 @@ function registerTraining(params) {
 
   if (!trainingId || !employeeId) return err('trainingId and employeeId required');
 
-  var regs = sheetToObjects('TrainingRegistrations');
+  var regs = [];
+  try { regs = sheetToObjects('TrainingRegistrations'); } catch(e) { return err('registration_unavailable'); }
   var already = regs.filter(function(r) {
     return String(r.trainingId) === String(trainingId) && String(r.employeeId) === String(employeeId);
   });
@@ -62,7 +64,7 @@ function registerTraining(params) {
 
   var id           = uuid();
   var registeredAt = formatDate(new Date());
-  appendRow('TrainingRegistrations', [id, trainingId, employeeId, employeeName, registeredAt]);
+  try { appendRow('TrainingRegistrations', [id, trainingId, employeeId, employeeName, registeredAt]); } catch(e) { return err('registration_unavailable'); }
 
   return ok({ id: id, trainingId: trainingId, employeeId: employeeId, registeredAt: registeredAt });
 }
@@ -72,7 +74,8 @@ function cancelRegistration(params) {
   var employeeId = params.employeeId;
   if (!trainingId || !employeeId) return err('trainingId and employeeId required');
 
-  var sheet = getSheet('TrainingRegistrations');
+  var sheet;
+  try { sheet = getSheet('TrainingRegistrations'); } catch(e) { return ok({ cancelled: true }); }
   var data  = sheet.getDataRange().getValues();
   var headers = data[0];
   var tidIdx = headers.indexOf('trainingId');
@@ -90,7 +93,8 @@ function cancelRegistration(params) {
 function getMyTrainings(params) {
   var employeeId = params.employeeId;
   if (!employeeId) return err('employeeId required');
-  var regs = sheetToObjects('TrainingRegistrations');
+  var regs = [];
+  try { regs = sheetToObjects('TrainingRegistrations'); } catch(e) {}
   var ids = regs
     .filter(function(r) { return String(r.employeeId) === String(employeeId); })
     .map(function(r) { return String(r.trainingId); });
@@ -101,7 +105,8 @@ function adminGetTrainingRegistrations(params) {
   if (!checkAdminToken(params.token)) return err('Unauthorized');
   var trainingId = params.trainingId;
   if (!trainingId) return err('trainingId required');
-  var regs = sheetToObjects('TrainingRegistrations');
+  var regs = [];
+  try { regs = sheetToObjects('TrainingRegistrations'); } catch(e) {}
   var result = regs
     .filter(function(r) { return String(r.trainingId) === String(trainingId); })
     .map(function(r) { return {

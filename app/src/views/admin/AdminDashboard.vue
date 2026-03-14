@@ -48,6 +48,7 @@ const router = useRouter()
 
 const navCards = [
   { to: '/admin/employees',    icon: '👥', label: 'พนักงาน & วันเกิด', sub: 'Employees · Birthdays' },
+  { to: '/admin/empathy',      icon: '💌', label: 'Empathy',            sub: 'Posts · Kudos' },
   { to: '/admin/ideas',        icon: '💡', label: 'ไอเดีย',             sub: 'Ideas sheet' },
   { to: '/admin/activities',   icon: '📅', label: 'กิจกรรม',            sub: 'Activities sheet' },
   { to: '/admin/announcement', icon: '📢', label: 'ประกาศ / Popup',     sub: 'Announcement settings' },

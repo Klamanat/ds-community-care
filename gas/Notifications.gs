@@ -48,27 +48,34 @@ function getNotifications(params) {
       });
   } catch(ex) {}
 
-  // ── 3. Kudos received (empathy posts) ───────────────────────────────
+  // ── 3. Kudos received (EmpathyComments where postId = user's empCode) ──
   if (employeeName) {
     try {
-      var posts = cachedSheetRead('EmpathyPosts', 120);
-      posts
-        .filter(function(p) { return String(p.recName || '').trim() === employeeName; })
-        .slice(0, 10)
-        .forEach(function(p) {
-          var snippet = String(p.msg || '').substring(0, 60);
-          if (String(p.msg || '').length > 60) snippet += '...';
-          var tagLabel = p.tag ? '[' + String(p.tag) + '] ' : '';
-          notifs.push({
-            id:     'kudos_' + String(p.id),
-            type:   'kudos',
-            color:  '#F59E0B',
-            title:  '💝 ' + String(p.sndName || 'เพื่อนร่วมงาน') + ' ส่งความรู้สึกดีๆ ให้คุณ!',
-            msg:    tagLabel + snippet,
-            time:   String(p.createdAt || ''),
-            target: 'empathy',
+      var employees = cachedSheetRead('Employees', 600);
+      var myEmp = null;
+      for (var ei = 0; ei < employees.length; ei++) {
+        if (String(employees[ei].name || '').trim() === employeeName) { myEmp = employees[ei]; break; }
+      }
+      var channelId = myEmp ? String(myEmp.empCode || myEmp.id || '') : '';
+      if (channelId) {
+        var allCmts = cachedSheetRead('EmpathyComments', 120);
+        allCmts
+          .filter(function(c) { return String(c.postId) === channelId && !c.parentId; })
+          .slice(0, 10)
+          .forEach(function(c) {
+            var snippet = String(c.text || '').substring(0, 60);
+            if (String(c.text || '').length > 60) snippet += '...';
+            notifs.push({
+              id:     'kudos_' + String(c.id),
+              type:   'kudos',
+              color:  '#F59E0B',
+              title:  '💝 ' + String(c.authorName || 'เพื่อนร่วมงาน') + ' ส่งความรู้สึกดีๆ ให้คุณ!',
+              msg:    snippet,
+              time:   String(c.createdAt || ''),
+              target: 'empathy',
+            });
           });
-        });
+      }
     } catch(ex) {}
   }
 
@@ -100,6 +107,58 @@ function getNotifications(params) {
       }
     } catch(ex) {}
   }
+
+  // ── 5. Points earned (last 30 days) ─────────────────────────────────
+  if (employeeName) {
+    try {
+      var pts     = cachedSheetRead('Points', 60);
+      var cutoff  = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      pts
+        .filter(function(p) {
+          return String(p.employeeName || '').trim() === employeeName &&
+                 new Date(p.createdAt) > cutoff &&
+                 Number(p.amount || 0) > 0;
+        })
+        .slice(0, 10)
+        .forEach(function(p) {
+          notifs.push({
+            id:     'pts_' + String(p.id),
+            type:   'points',
+            color:  '#F59E0B',
+            title:  '🏆 ได้รับ +' + Number(p.amount) + ' คะแนน',
+            msg:    String(p.desc || p.type || ''),
+            time:   String(p.createdAt || ''),
+            target: 'home',
+          });
+        });
+    } catch(ex) {}
+  }
+
+  // ── 6. Activity stamps (joined activities) ───────────────────────────
+  if (employeeName) {
+    try {
+      var joins = cachedSheetRead('ActivityJoins', 120);
+      joins
+        .filter(function(j) { return String(j.employeeName || '').trim() === employeeName; })
+        .slice(0, 5)
+        .forEach(function(j) {
+          notifs.push({
+            id:     'stamp_' + String(j.id),
+            type:   'stamp',
+            color:  '#6366F1',
+            title:  '📍 เข้าร่วม ' + String(j.activityName || 'กิจกรรม') + ' สำเร็จ!',
+            msg:    j.rewardClaimed ? 'รับรางวัลแล้ว ✅' : 'สะสมแสตมป์แล้ว',
+            time:   String(j.stampedAt || ''),
+            target: 'home',
+          });
+        });
+    } catch(ex) {}
+  }
+
+  // Sort all notifs by time descending
+  notifs.sort(function(a, b) {
+    return new Date(b.time || 0) - new Date(a.time || 0);
+  });
 
   return ok(notifs);
 }

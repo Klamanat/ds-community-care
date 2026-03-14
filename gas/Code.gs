@@ -114,6 +114,8 @@ function doGet(e) {
       adminAddBirthday:   function() { return adminAddBirthday(e.parameter); },
       adminUpdateIdea:    function() { return adminUpdateIdea(e.parameter); },
       adminDeletePost:    function() { return adminDeletePost(e.parameter); },
+      adminDeleteComment: function() { return adminDeleteComment(e.parameter); },
+      adminDeleteChannel: function() { return adminDeleteChannel(e.parameter); },
     };
 
     if (!handlers[action]) {

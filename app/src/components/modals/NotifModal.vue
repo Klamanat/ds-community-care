@@ -105,6 +105,8 @@ function typeEmoji(type) {
   if (type === 'activity') return '🎊'
   if (type === 'kudos')    return '💝'
   if (type === 'wish')     return '💌'
+  if (type === 'points')   return '🏆'
+  if (type === 'stamp')    return '📍'
   return '🔔'
 }
 

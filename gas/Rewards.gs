@@ -156,7 +156,14 @@ function getMyPoints(params) {
     return String(r.employeeName || '').trim() === employeeName;
   });
   mine.sort(function(a, b) {
-    return String(b.createdAt) > String(a.createdAt) ? 1 : -1;
+    // Parse "dd/MM/yyyy HH:mm" → comparable date
+    function parseDate(s) {
+      var m = String(s || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+      if (m) return new Date(+m[3], +m[2]-1, +m[1], +m[4], +m[5]).getTime();
+      var d = new Date(s);
+      return isNaN(d) ? 0 : d.getTime();
+    }
+    return parseDate(b.createdAt) - parseDate(a.createdAt);
   });
 
   var total = mine.reduce(function(sum, r) {
@@ -171,7 +178,7 @@ function getMyPoints(params) {
     levelName: levelInfo.name,
     nextPts:   levelInfo.nextPts,
     nextName:  levelInfo.nextName,
-    history:   mine.slice(0, 30).map(function(r) {
+    history:   mine.slice(0, 50).map(function(r) {
       return {
         id:        String(r.id        || ''),
         type:      String(r.type      || ''),

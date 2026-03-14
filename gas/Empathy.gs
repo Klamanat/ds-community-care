@@ -112,7 +112,8 @@ function getEmpathyPosts(params) {
   var hit = getCachedResult('posts');
   if (hit) return ok(hit);
 
-  var rows = cachedSheetRead('EmpathyPosts');
+  var rows = [];
+  try { rows = cachedSheetRead('EmpathyPosts'); } catch(e) { return ok([]); }
 
   rows.sort(function(a, b) {
     return new Date(b.createdAt) - new Date(a.createdAt);
@@ -184,8 +185,8 @@ function addEmpathyPost(params) {
   var likeCount = 0;
   var createdAt = formatDate(new Date());
 
-  appendRow('EmpathyPosts', [id, recEmployeeId, recName, recRole, recImgUrl, sndName, msg, tag, likeCount, createdAt]);
-  invalidateSheet('EmpathyPosts');
+  try { appendRow('EmpathyPosts', [id, recEmployeeId, recName, recRole, recImgUrl, sndName, msg, tag, likeCount, createdAt]); } catch(e) {}
+  try { invalidateSheet('EmpathyPosts'); } catch(e) {}
   invalidateResult('posts');
 
   // Award points for sending empathy
@@ -371,7 +372,8 @@ function ensurePost(params) {
 
   if (!recName) return err('recName required');
 
-  var rows = cachedSheetRead('EmpathyPosts');
+  var rows = [];
+  try { rows = cachedSheetRead('EmpathyPosts'); } catch(e) {}
 
   // Find by empCode first (stored in recEmployeeId column), then by name
   var existing = null;
@@ -393,8 +395,8 @@ function ensurePost(params) {
   if (recImgUrl.length > 500) recImgUrl = '';
   var id = uuid();
   var createdAt = formatDate(new Date());
-  appendRow('EmpathyPosts', [id, recEmployeeId, recName, recRole, recImgUrl, sndName, '', '', 0, createdAt]);
-  invalidateSheet('EmpathyPosts');
+  try { appendRow('EmpathyPosts', [id, recEmployeeId, recName, recRole, recImgUrl, sndName, '', '', 0, createdAt]); } catch(e) {}
+  try { invalidateSheet('EmpathyPosts'); } catch(e) {}
 
   return ok({ id: id, recName: recName, recRole: recRole, recImg: recImgUrl, isNew: true });
 }
@@ -406,7 +408,8 @@ function toggleLike(params) {
   if (!postId) return err('postId required');
 
   // Check existing like
-  var likesSheet = getSheet('EmpathyLikes');
+  var likesSheet;
+  try { likesSheet = getSheet('EmpathyLikes'); } catch(e) { return err('EmpathyLikes sheet not found'); }
   var data       = likesSheet.getDataRange().getValues();
   var headers    = data[0] || ['postId', 'userKey'];
   var pidIdx     = headers.indexOf('postId');
@@ -421,7 +424,8 @@ function toggleLike(params) {
   }
 
   // Find post row and update likeCount
-  var postsSheet = getSheet('EmpathyPosts');
+  var postsSheet;
+  try { postsSheet = getSheet('EmpathyPosts'); } catch(e) { return err('EmpathyPosts sheet not found'); }
   var postsData  = postsSheet.getDataRange().getValues();
   var pHeaders   = postsData[0];
   var pIdIdx     = pHeaders.indexOf('id');

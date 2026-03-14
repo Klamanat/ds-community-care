@@ -264,6 +264,56 @@ function adminDeletePost(params) {
   return ok({ deleted: true, postId: postId });
 }
 
+/**
+ * adminDeleteComment — delete a single EmpathyComment and its CommentLikes.
+ * params: token, commentId, postId (postId used to invalidate per-channel cache)
+ */
+function adminDeleteComment(params) {
+  verifyToken(params.token);
+  var commentId = String(params.commentId || '');
+  var postId    = String(params.postId    || '');
+  if (!commentId) return err('commentId required');
+
+  _deleteRowsByCol('EmpathyComments', 'id',        commentId);
+  _deleteRowsByCol('EmpathyComments', 'parentId',  commentId); // cascade replies
+  _deleteRowsByCol('CommentLikes',    'commentId', commentId);
+  invalidateSheet('EmpathyComments');
+  invalidateSheet('CommentLikes');
+  if (postId) invalidateResult('cm_' + postId);
+  invalidateResult('people');
+
+  return ok({ deleted: true, commentId: commentId });
+}
+
+/**
+ * adminDeleteChannel — delete all EmpathyComments for a channel (postId = channelId)
+ * and cascade-delete their CommentLikes + ChannelLikes.
+ * params: token, channelId
+ */
+function adminDeleteChannel(params) {
+  verifyToken(params.token);
+  var channelId = String(params.channelId || '');
+  if (!channelId) return err('channelId required');
+
+  // Collect comment IDs first, then delete their CommentLikes
+  try {
+    var cmts = sheetToObjects('EmpathyComments');
+    cmts.filter(function(c) { return String(c.postId) === channelId; })
+        .forEach(function(c) { _deleteRowsByCol('CommentLikes', 'commentId', String(c.id)); });
+  } catch(e) {}
+
+  _deleteRowsByCol('EmpathyComments', 'postId',    channelId);
+  _deleteRowsByCol('ChannelLikes',    'channelId', channelId);
+
+  invalidateSheet('EmpathyComments');
+  invalidateSheet('CommentLikes');
+  invalidateSheet('ChannelLikes');
+  invalidateResult('cm_' + channelId);
+  invalidateResult('people');
+
+  return ok({ deleted: true, channelId: channelId });
+}
+
 /** Internal: delete all rows where col === val (reverse order to avoid index shift) */
 function _deleteRowsByCol(sheetName, col, val) {
   try {
