@@ -21,6 +21,7 @@ var SUBFOLDERS = {
   activities:    "Activities",
   profiles:      "Profiles",
   announcements: "Announcements",
+  empathy:       "Empathy",
 };
 
 function _getOrCreateSubfolder(parent, name) {

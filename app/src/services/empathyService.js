@@ -1,4 +1,4 @@
-import { gasGet } from './api.js'
+import { gasGet, gasPost } from './api.js'
 
 export async function fetchPeople() {
   const r = await gasGet('getEmpathyPeople')
@@ -74,4 +74,18 @@ export async function toggleChannelLike(channelId, userKey) {
 export async function fetchChannelLike(channelId, userKey) {
   const r = await gasGet('getChannelLike', { channelId, userKey: userKey || 'anonymous' })
   return r.data   // { channelId, liked, likeCount }
+}
+
+export async function uploadEmpathyPhoto(base64, fileName) {
+  const r = await gasPost('uploadImage', {
+    base64,
+    folderType: 'empathy',
+    fileName: fileName || ('empathy_' + Date.now() + '.jpg'),
+  })
+  return r.data   // { url, id }
+}
+
+export async function setEmpathyPhoto(empCode, imgUrl) {
+  const r = await gasGet('setEmpathyPhoto', { empCode, imgUrl })
+  return r.data
 }

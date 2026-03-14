@@ -281,6 +281,14 @@ export const useEmpathyStore = defineStore('empathy', () => {
     }
   }
 
+  // ── updatePersonImg — update a person's imgUrl in praisedPeople ─
+  function updatePersonImg(id, imgUrl) {
+    const p = praisedPeople.value.find(p =>
+      String(p.id) === String(id) || String(p.empCode) === String(id)
+    )
+    if (p) p.imgUrl = imgUrl
+  }
+
   // ── addPost (legacy — kept for EmpathyBoard backward compat) ───
   async function addPost(payload) {
     const ui   = useUiStore()
@@ -302,6 +310,6 @@ export const useEmpathyStore = defineStore('empathy', () => {
   return {
     posts, isLoading, postComments, praisedPeople, channelLikes,
     loadPosts, loadPeople, addPost, recordPraise, loadComments, loadChannelLike, addComment,
-    toggleLike, toggleCommentLike, toggleChannelLike, togglePostCommentLike,
+    toggleLike, toggleCommentLike, toggleChannelLike, togglePostCommentLike, updatePersonImg,
   }
 })

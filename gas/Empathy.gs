@@ -8,6 +8,36 @@
 // Sheet: EmpathyLikes
 // Columns: postId | userKey (track unique likes)
 
+// setEmpathyPhoto — upsert empathy-specific photo (separate from employee profile)
+function setEmpathyPhoto(params) {
+  var empCode = String(params.empCode || '').trim();
+  var imgUrl  = String(params.imgUrl  || '').trim();
+  if (!empCode) return err('empCode required');
+  if (!imgUrl)  return err('imgUrl required');
+
+  var sheet   = getSheet('EmpathyPhotos');
+  var data    = sheet.getDataRange().getValues();
+  var headers = data[0] || ['empCode','imgUrl','updatedAt'];
+  var codeIdx = headers.indexOf('empCode');
+  var urlIdx  = headers.indexOf('imgUrl');
+  var tsIdx   = headers.indexOf('updatedAt');
+  var now     = formatDate(new Date());
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][codeIdx]) === empCode) {
+      if (urlIdx >= 0) sheet.getRange(i + 1, urlIdx + 1).setValue(imgUrl);
+      if (tsIdx  >= 0) sheet.getRange(i + 1, tsIdx  + 1).setValue(now);
+      invalidateSheet('EmpathyPhotos');
+      invalidateResult('people');
+      return ok({ empCode: empCode, updated: true });
+    }
+  }
+  sheet.appendRow([empCode, imgUrl, now]);
+  invalidateSheet('EmpathyPhotos');
+  invalidateResult('people');
+  return ok({ empCode: empCode, updated: false });
+}
+
 // getEmpathyPeople — unique people from EmpathyComments (keyed by channelId = empCode)
 function getEmpathyPeople(params) {
   // Full-result cache: avoids re-joining sheets + re-fetching Drive images
@@ -22,6 +52,14 @@ function getEmpathyPeople(params) {
     cachedSheetRead('Employees', 600).forEach(function(e) {
       if (e.empCode) empByCode[String(e.empCode)] = e;
       if (e.id)      empById[String(e.id)]         = e;
+    });
+  } catch(e) {}
+
+  // Load empathy-specific photo overrides (separate from employee profile)
+  var empathyPhotos = {};
+  try {
+    cachedSheetRead('EmpathyPhotos').forEach(function(r) {
+      if (r.empCode) empathyPhotos[String(r.empCode)] = String(r.imgUrl || '');
     });
   } catch(e) {}
 
@@ -40,7 +78,10 @@ function getEmpathyPeople(params) {
     var emp = empByCode[cid] || empById[cid];
     var imgUrl = '';
     var imgId  = '';
-    if (emp && emp.imgUrl) {
+    // Empathy-specific photo takes priority over employee profile photo
+    if (empathyPhotos[cid]) {
+      imgUrl = empathyPhotos[cid];
+    } else if (emp && emp.imgUrl) {
       var raw = String(emp.imgUrl);
       if (raw.indexOf('drive:') === 0) {
         imgId = raw.slice(6); // frontend batch-fetches via getImages

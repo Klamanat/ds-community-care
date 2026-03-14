@@ -175,6 +175,10 @@ var ALL_SHEETS = [
     headers: ['channelId','userKey'],
   },
   {
+    name: 'EmpathyPhotos',
+    headers: ['empCode','imgUrl','updatedAt'],
+  },
+  {
     name: 'Ideas',
     headers: ['id','category','title','detail','submitterName','createdAt','status'],
   },

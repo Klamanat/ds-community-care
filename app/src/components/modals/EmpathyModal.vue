@@ -11,6 +11,9 @@
 
     <!-- ── GRID view ──────────────────────────────────────────────── -->
     <div v-if="view === 'grid'" class="flex-1 overflow-y-auto px-5 pt-4 pb-6 flex flex-col gap-2.5">
+      <!-- Hidden file input for editing grid card photo -->
+      <input ref="gridFileInput" type="file" accept="image/*" class="hidden" @change="onGridPhotoChange" />
+
       <input
         v-model="searchQ"
         placeholder="🔍 ค้นหาชื่อหรือตำแหน่ง..."
@@ -24,9 +27,15 @@
           class="rounded-2xl overflow-hidden cursor-pointer border-[2.5px] border-pink/15 transition-all duration-200 bg-white"
           @click="selectPerson(m)"
         >
-          <div :style="{ background: m.grad }" class="overflow-hidden">
+          <div :style="{ background: m.grad }" class="relative overflow-hidden">
             <img v-if="m.imgUrl" :src="m.imgUrl" class="w-full block object-cover object-top" @error="e => e.target.style.display='none'" />
             <div v-else class="w-full aspect-[3/4] min-h-[80px] flex items-center justify-center text-[28px] font-black text-white">{{ initials(m.name) }}</div>
+            <!-- Edit photo overlay -->
+            <button
+              class="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-white/80 flex items-center justify-center text-[11px] shadow-sm border border-pink/20"
+              @click.stop="editPersonPhoto(m)"
+              title="เปลี่ยนรูป"
+            >📷</button>
           </div>
           <div class="px-1.5 pt-1.5 pb-2 text-center">
             <div class="text-[11px] font-black text-[#7C2D8C] overflow-hidden text-ellipsis whitespace-nowrap">{{ m.name }}</div>
@@ -210,6 +219,25 @@
     <!-- ── ADD PERSON view ────────────────────────────────────────── -->
     <template v-else-if="view === 'add'">
       <div class="flex-1 overflow-y-auto px-5 pt-5 pb-6 flex flex-col gap-3.5">
+
+        <!-- Photo upload area -->
+        <input ref="addFileInput" type="file" accept="image/*" class="hidden" @change="onAddPhotoChange" />
+        <div class="flex flex-col items-center gap-2">
+          <button
+            @click="triggerAddPhoto"
+            class="w-20 h-20 rounded-full border-[2.5px] border-dashed border-pink/35 overflow-hidden flex items-center justify-center bg-[linear-gradient(135deg,#FFF5FB,#F5F0FF)] transition-opacity"
+            :class="addPhotoUploading ? 'opacity-50' : ''"
+          >
+            <img v-if="addPhotoUrl" :src="addPhotoUrl" class="w-full h-full object-cover" />
+            <div v-else-if="addPhotoUploading" class="text-[22px] animate-spin">⏳</div>
+            <div v-else class="flex flex-col items-center gap-0.5">
+              <span class="text-[24px]">📷</span>
+              <span class="text-[9px] font-bold text-[#BE185D]">เพิ่มรูป</span>
+            </div>
+          </button>
+          <div class="text-[10px] text-[#C084C0] font-semibold">กดเพื่อเพิ่มรูปโปรไฟล์ (ไม่บังคับ)</div>
+        </div>
+
         <input
           v-model="dirSearch"
           @input="filterDir"
@@ -231,7 +259,7 @@
           </div>
         </div>
         <div class="flex gap-2 mt-auto">
-          <button @click="view = 'grid'" class="flex-1 bg-pink/[0.08] border border-pink/25 rounded-xl py-[11px] text-[13px] font-bold text-[#BE185D] cursor-pointer">ยกเลิก</button>
+          <button @click="view = 'grid'; addPhotoUrl = ''" class="flex-1 bg-pink/[0.08] border border-pink/25 rounded-xl py-[11px] text-[13px] font-bold text-[#BE185D] cursor-pointer">ยกเลิก</button>
           <button @click="addAndPraise" class="flex-[2] bg-[linear-gradient(135deg,#EC4899,#7C3AED)] text-white border-none rounded-xl py-[11px] text-[13px] font-black cursor-pointer">เพิ่มและชื่นชม ✨</button>
         </div>
       </div>
@@ -249,6 +277,7 @@ import { useTeamStore }      from '../../stores/team.js'
 import { useUiStore }        from '../../stores/ui.js'
 import { useUserAuthStore }  from '../../stores/userAuth.js'
 import { formatThaiDatetime } from '../../utils/date.js'
+import { uploadEmpathyPhoto, setEmpathyPhoto } from '../../services/empathyService.js'
 
 const empathy  = useEmpathyStore()
 const team     = useTeamStore()
@@ -277,6 +306,13 @@ const composeEl      = ref(null)
 const dirSearch  = ref('')
 const dirResults = ref([])
 const pickedDir  = ref(null)
+
+// Photo upload
+const addPhotoUrl       = ref('')
+const addPhotoUploading = ref(false)
+const addFileInput      = ref(null)
+const gridFileInput     = ref(null)
+const editingPersonId   = ref(null)
 
 const tags = ['เก่งมาก ⭐', 'ขอบคุณ 🙏', 'สู้ๆ 💪', 'ประทับใจ 💫', 'ช่วยเหลือ 🤝']
 
@@ -430,6 +466,61 @@ async function submitCompose() {
   }
 }
 
+// ── Photo upload helpers ────────────────────────────────────────────
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = e => resolve(e.target.result)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+async function onAddPhotoChange(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  addPhotoUploading.value = true
+  try {
+    const base64 = await readFileAsBase64(file)
+    const result = await uploadEmpathyPhoto(base64, file.name)
+    addPhotoUrl.value = result.url
+  } catch {
+    ui.showToast('อัปโหลดรูปไม่สำเร็จ')
+  } finally {
+    addPhotoUploading.value = false
+    if (addFileInput.value) addFileInput.value.value = ''
+  }
+}
+
+function triggerAddPhoto() {
+  addFileInput.value?.click()
+}
+
+function editPersonPhoto(person) {
+  editingPersonId.value = String(person.empCode || person.id || person.name).trim()
+  gridFileInput.value?.click()
+}
+
+async function onGridPhotoChange(e) {
+  const file = e.target.files?.[0]
+  if (!file || !editingPersonId.value) return
+  const empCode = editingPersonId.value
+  try {
+    const base64 = await readFileAsBase64(file)
+    const result = await uploadEmpathyPhoto(base64, file.name)
+    // Update local display immediately
+    empathy.updatePersonImg(empCode, result.url)
+    // Save to EmpathyPhotos sheet (separate from employee profile)
+    setEmpathyPhoto(empCode, result.url).catch(() => {})
+    ui.showToast('อัปเดตรูปสำเร็จ ✨')
+  } catch {
+    ui.showToast('อัปโหลดรูปไม่สำเร็จ')
+  } finally {
+    editingPersonId.value = null
+    if (gridFileInput.value) gridFileInput.value.value = ''
+  }
+}
+
 // ── Add person ─────────────────────────────────────────────────────
 function filterDir() {
   const q = dirSearch.value.trim().toLowerCase()
@@ -447,10 +538,18 @@ function pickFromDir(e) {
 
 async function addAndPraise() {
   if (!pickedDir.value) { ui.showToast('กรุณาค้นหาพนักงาน'); return }
-  const m = pickedDir.value
+  const m = { ...pickedDir.value }
+  if (addPhotoUrl.value) m.imgUrl = addPhotoUrl.value
   team.addToTeam({ ...m, grad: team.getGrad(team.empTeam.length) })
-  dirSearch.value = ''
-  pickedDir.value = null
+  const empCode = String(m.empCode || m.id || m.name).trim()
+  if (addPhotoUrl.value) {
+    empathy.updatePersonImg(empCode, addPhotoUrl.value)
+    // Save to EmpathyPhotos sheet (separate from employee profile)
+    setEmpathyPhoto(empCode, addPhotoUrl.value).catch(() => {})
+  }
+  dirSearch.value  = ''
+  pickedDir.value  = null
+  addPhotoUrl.value = ''
   await selectPerson({ ...m, grad: team.getGrad(team.empTeam.length - 1) })
 }
 </script>

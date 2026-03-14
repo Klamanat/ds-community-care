@@ -59,6 +59,7 @@ function doGet(e) {
       toggleCommentLike:  function() { return toggleCommentLike(e.parameter); },
       toggleChannelLike:  function() { return toggleChannelLike(e.parameter); },
       getChannelLike:     function() { return getChannelLike(e.parameter); },
+      setEmpathyPhoto:    function() { return setEmpathyPhoto(e.parameter); },
 
       // Ideas
       getIdeas:           function() { return getIdeas(e.parameter); },
