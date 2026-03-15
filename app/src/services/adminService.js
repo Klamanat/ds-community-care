@@ -11,7 +11,7 @@ export async function uploadProfileImage(employeeId, base64, fileName) {
 
 // Use public endpoints so drive:fileId → base64 conversion is applied
 export async function getEmployees() {
-  const r = await gasGet('getEmployees')
+  const r = await gasGet('getEmployees', { noCache: 'true' })
   return r.data || []
 }
 

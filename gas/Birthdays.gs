@@ -7,6 +7,24 @@
 
 // Use addMissingColumns() in Setup.gs to add missing columns
 
+/** Run in GAS editor to verify birthday data before deploying */
+function testGetBirthdays() {
+  var rows = sheetToObjects('Employees');
+  Logger.log('Total employees: ' + rows.length);
+  var hasBday = 0;
+  rows.forEach(function(r) {
+    var m = _bdayMonthIdx(r);
+    if (m >= 0) {
+      hasBday++;
+      Logger.log('✓ ' + r.name + ' | bdDate=[' + r.bdDate + '] | monthIdx col=[' + r.monthIdx + '] | derived=' + m);
+    }
+  });
+  Logger.log('Employees with birthday: ' + hasBday);
+  Logger.log('--- getBirthdays() result ---');
+  var result = getBirthdays({});
+  Logger.log(JSON.stringify(result));
+}
+
 // Thai month abbreviations — index = 0-based month (0=Jan … 11=Dec)
 var BDAY_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 

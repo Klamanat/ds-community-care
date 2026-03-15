@@ -5,7 +5,8 @@
 // Columns: id | name | role | dept | imgUrl | grad | inTeam | inStarGang | starGangName | starGangRole | starGangSlogan
 
 function getEmployees(params) {
-  var rows = cachedSheetRead('Employees', 600); // 10 min — employees change rarely
+  var ttl  = (params.noCache === 'true') ? 0 : 600; // admin passes noCache=true → bypass cache
+  var rows = cachedSheetRead('Employees', ttl);
 
   var inTeam     = params.inTeam;
   var inStarGang = params.inStarGang;

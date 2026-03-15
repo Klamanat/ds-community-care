@@ -19,32 +19,49 @@
       <div class="al-card">
         <div class="al-card-header">
           <span class="al-card-title">รายชื่อพนักงาน</span>
-          <span class="al-badge al-badge-blue">{{ empRows.length }} คน</span>
+          <span class="al-badge al-badge-blue">
+            {{ search ? filteredRows.length + '/' : '' }}{{ empRows.length }} คน
+          </span>
+        </div>
+
+        <!-- Search -->
+        <div class="emp-search-row">
+          <input
+            v-model="search"
+            class="emp-search-input"
+            placeholder="🔍 ค้นหา ชื่อ / รหัส / ตำแหน่ง / แผนก..."
+          />
         </div>
 
         <div v-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
         <div v-else-if="!empRows.length" class="al-empty">📭 ไม่มีข้อมูล</div>
+        <div v-else-if="!filteredRows.length" class="al-empty">🔍 ไม่พบ "{{ search }}"</div>
 
-        <div v-else>
-          <div class="al-item" v-for="r in empRows" :key="r.id">
-            <div class="al-item-avatar" :style="!r.imgUrl ? `background:${r.grad||'#EEF2FF'}` : ''">
-              <img v-if="r.imgUrl" :src="r.imgUrl" />
-              <span v-else style="font-size:20px;">👤</span>
-            </div>
-            <div class="al-item-body">
-              <div class="al-item-title">{{ r.name }}</div>
-              <div class="al-item-sub">{{ r.empCode || '—' }} · {{ r.role }}</div>
-              <div class="al-item-meta">
-                <span v-if="r.dept" style="color:#6B7280;">{{ r.dept }}</span>
-                <span v-if="bdayOf(r.id)">🎂 {{ bdayOf(r.id) }}</span>
-                <span class="al-badge" :class="isTrue(r.inTeam) ? 'al-badge-yes' : 'al-badge-no'">
-                  {{ isTrue(r.inTeam) ? '✓ Team' : 'ไม่อยู่ใน Team' }}
-                </span>
+        <!-- Virtual scroll list -->
+        <div v-else class="emp-vs-wrap" ref="vsRef" @scroll="onVsScroll">
+          <div :style="{ height: filteredRows.length * ITEM_H + 'px', position: 'relative' }">
+            <div :style="{ position: 'absolute', top: vsOffset + 'px', width: '100%' }">
+              <div class="al-item emp-vs-item" v-for="r in vsVisible" :key="r.id || r.name">
+                <div class="al-item-avatar" :style="!r.imgUrl ? `background:${r.grad||'#EEF2FF'}` : ''">
+                  <img v-if="r.imgUrl" :src="r.imgUrl" />
+                  <span v-else style="font-size:20px;">👤</span>
+                </div>
+                <div class="al-item-body">
+                  <div class="al-item-title">{{ r.name }}</div>
+                  <div class="al-item-sub">{{ r.empCode || '—' }} · {{ r.role }}</div>
+                  <div class="al-item-meta">
+                    <span v-if="r.dept" style="color:#6B7280;">{{ r.dept }}</span>
+                    <span v-if="bdayOf(r.id)">🎂 {{ bdayOf(r.id) }}</span>
+                    <span class="al-badge" :class="isTrue(r.inTeam) ? 'al-badge-yes' : 'al-badge-no'">
+                      {{ isTrue(r.inTeam) ? '✓ Team' : 'ไม่อยู่ใน Team' }}
+                    </span>
+                  </div>
+                </div>
+                <div class="al-item-actions">
+                  <button class="al-btn al-btn-edit" @click="openEdit(r)">แก้ไข</button>
+                  <button class="al-btn al-btn-delete" @click="confirmDelete(r)">ลบ</button>
+                </div>
               </div>
-            </div>
-            <div class="al-item-actions">
-              <button class="al-btn al-btn-edit" @click="openEdit(r)">แก้ไข</button>
-              <button class="al-btn al-btn-delete" @click="confirmDelete(r)">ลบ</button>
             </div>
           </div>
         </div>
@@ -184,7 +201,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAdminStore } from '../../stores/admin.js'
 import * as svc from '../../services/adminService.js'
@@ -229,6 +246,42 @@ const empRows   = ref([])
 const bdayRows  = ref([])
 const loading   = ref(true)
 const modal     = reactive({ open: false, mode: 'add', saving: false, error: '' })
+
+// ── Search ────────────────────────────────────────────────────────────────────
+const search = ref('')
+const filteredRows = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  if (!q) return empRows.value
+  return empRows.value.filter(r =>
+    (r.name    || '').toLowerCase().includes(q) ||
+    (r.empCode || '').toLowerCase().includes(q) ||
+    (r.role    || '').toLowerCase().includes(q) ||
+    (r.dept    || '').toLowerCase().includes(q)
+  )
+})
+
+// ── Virtual scroll ────────────────────────────────────────────────────────────
+const ITEM_H     = 72          // px — must match emp-vs-item height in CSS
+const OVERSCAN   = 4
+const vsRef      = ref(null)
+const vsScrollTop = ref(0)
+
+watch(search, () => {
+  vsScrollTop.value = 0
+  if (vsRef.value) vsRef.value.scrollTop = 0
+})
+
+function onVsScroll() {
+  vsScrollTop.value = vsRef.value?.scrollTop || 0
+}
+
+const vsStart  = computed(() => Math.max(0, Math.floor(vsScrollTop.value / ITEM_H) - OVERSCAN))
+const vsEnd    = computed(() => {
+  const containerH = vsRef.value?.clientHeight || 520
+  return Math.min(filteredRows.value.length, Math.ceil((vsScrollTop.value + containerH) / ITEM_H) + OVERSCAN)
+})
+const vsOffset  = computed(() => vsStart.value * ITEM_H)
+const vsVisible = computed(() => filteredRows.value.slice(vsStart.value, vsEnd.value))
 
 const form = reactive({
   id:'', empCode:'', name:'', role:'', dept:'', grad:'',
@@ -428,4 +481,38 @@ function doLogout() { admin.logout(); router.push('/admin/login') }
 
 <style scoped>
 @import './admin.css';
+
+/* ── Employee search ── */
+.emp-search-row {
+  padding: 10px 16px;
+  border-bottom: 1px solid #F3F4F6;
+}
+.emp-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 14px;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 10px;
+  font-size: 13px;
+  outline: none;
+  background: #FAFAFA;
+  transition: border 0.15s, background 0.15s;
+}
+.emp-search-input:focus {
+  border-color: #6366F1;
+  background: #fff;
+}
+
+/* ── Virtual scroll ── */
+.emp-vs-wrap {
+  overflow-y: auto;
+  max-height: min(calc(100vh - 320px), 580px);
+}
+.emp-vs-item {
+  height: 72px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-bottom: 1px solid #F7F7FF;
+}
+.emp-vs-item:last-child { border-bottom: none; }
 </style>

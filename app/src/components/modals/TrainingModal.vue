@@ -28,7 +28,7 @@
           <span v-if="view === 'review'">{{ reviewCourseTitle || 'เลือกหลักสูตร' }}</span>
           <span v-else-if="view === 'blog-post'">✍️ {{ blogSelectedPost?.authorName }} · {{ formatBlogDate(blogSelectedPost?.createdAt) }}</span>
           <span v-else-if="view === 'courses' && selectedCat?.key === 'blog'">{{ blog.posts.length }} โพสต์</span>
-          <span v-else-if="view === 'courses'">{{ selectedCatCount }} {{ selectedCat?.key === 'site' ? 'สถานที่' : 'หลักสูตร' }}</span>
+          <span v-else-if="view === 'courses'">{{ selectedCatCount }} {{ selectedCat?.key === 'site' ? 'สถานที่' : selectedCat?.key === 'idp' ? 'วิดีโอ' : 'หลักสูตร' }}</span>
           <span v-else>หลักสูตรพัฒนาทักษะ 2026 🌱</span>
         </div>
       </div>
@@ -116,6 +116,8 @@ const reviewRef        = ref(null)
 
 const selectedCatCount = computed(() => {
   if (!selectedCat.value) return 0
+  if (selectedCat.value.key === 'site') return training.siteVisits.length
+  if (selectedCat.value.key === 'idp')  return training.idpVideos.length
   return (training.courses || []).filter(c => c.category === selectedCat.value.key).length
 })
 
