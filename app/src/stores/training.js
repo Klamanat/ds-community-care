@@ -10,6 +10,10 @@ export const useTrainingStore = defineStore('training', () => {
   const lastFetched    = ref(null)
   const mySuggestion   = ref(null)   // null | { suggestion: string }
 
+  // Site Visit (แยกออกจาก courses)
+  const siteVisits     = ref([])      // [{ id, title, description, instructor, color, voteCount }]
+  const mySiteVoteIds  = ref([])      // [siteId, ...]
+
   // reviews: { [trainingId]: { avg, count, myStars, myComment } }
   const reviews        = reactive({})
   // allReviews: raw list for showing individual reviews inside detail
@@ -35,8 +39,11 @@ export const useTrainingStore = defineStore('training', () => {
     { id: 's6',  category: 'superskills', title: 'AI & Prompt Engineering',            description: 'ใช้ AI ช่วยงานอย่างมีประสิทธิภาพ',     instructor: 'อ.กานต์ ใจดี',    section: 'new' },
     { id: 's7',  category: 'idp',         title: 'Presentation & Public Speaking',     description: 'นำเสนองานอย่างมั่นใจ',                instructor: 'อ.นภา พรมมา',     section: 'new' },
     { id: 's8',  category: 'external',    title: 'Project Management Professional',    description: 'บริหารโครงการแบบ PMP',                 instructor: 'อ.ธนา วิชัย',     section: 'new' },
-    { id: 's9',  category: 'site',        title: 'Site Visit — โรงงานอมตะซิตี้',      description: 'เยี่ยมชมกระบวนการผลิต',               instructor: 'ทีม HR',          section: 'new' },
     { id: 's10', category: 'blog',        title: 'เขียน Internal Blog อย่างไรให้ปัง', description: 'เทคนิคการเขียนบทความภายใน',           instructor: 'อ.พิมพ์ใจ สดใส', section: 'new' },
+  ]
+
+  const SEED_SITE_VISITS = [
+    { id: 'sv1', title: 'Site Visit — โรงงานอมตะซิตี้', description: 'เยี่ยมชมกระบวนการผลิต', instructor: 'ทีม HR', color: '#0EA5E9', voteCount: 0 },
   ]
 
   async function loadCourses(force = false) {
@@ -60,6 +67,56 @@ export const useTrainingStore = defineStore('training', () => {
     } catch {
       myTrainingIds.value = []
     }
+  }
+
+  async function loadSiteVisits() {
+    try {
+      const data = await svc.fetchSiteVisits()
+      siteVisits.value = data.length ? data : SEED_SITE_VISITS
+    } catch {
+      siteVisits.value = SEED_SITE_VISITS
+    }
+  }
+
+  async function loadMySiteVotes(employeeId) {
+    if (!employeeId) return
+    try {
+      mySiteVoteIds.value = await svc.fetchMySiteVotes(employeeId)
+    } catch {
+      mySiteVoteIds.value = []
+    }
+  }
+
+  async function voteSiteAction(siteId, employeeId, employeeName) {
+    const ui = useUiStore()
+    try {
+      await svc.voteSite(siteId, employeeId, employeeName)
+      if (!mySiteVoteIds.value.includes(siteId)) mySiteVoteIds.value.push(siteId)
+      const s = siteVisits.value.find(v => v.id === siteId)
+      if (s) s.voteCount = (s.voteCount || 0) + 1
+      ui.showToast('โหวตสำเร็จ! 🗳️')
+    } catch (e) {
+      const msg = e?.message || ''
+      if (msg.includes('already_voted')) ui.showToast('โหวตไปแล้ว')
+      else ui.showToast('เกิดข้อผิดพลาด กรุณาลองใหม่')
+    }
+  }
+
+  async function cancelSiteVoteAction(siteId, employeeId) {
+    const ui = useUiStore()
+    try {
+      await svc.cancelSiteVote(siteId, employeeId)
+      mySiteVoteIds.value = mySiteVoteIds.value.filter(id => id !== siteId)
+      const s = siteVisits.value.find(v => v.id === siteId)
+      if (s && s.voteCount > 0) s.voteCount--
+      ui.showToast('ยกเลิกโหวตแล้ว')
+    } catch {
+      ui.showToast('เกิดข้อผิดพลาด')
+    }
+  }
+
+  function isSiteVoted(siteId) {
+    return mySiteVoteIds.value.includes(String(siteId))
   }
 
   async function loadMySuggestion(employeeId) {
@@ -170,7 +227,9 @@ export const useTrainingStore = defineStore('training', () => {
 
   return {
     courses, myTrainingIds, isLoading, categories, reviews, allReviews, mySuggestion,
+    siteVisits, mySiteVoteIds,
     loadCourses, loadMyTrainings, loadMySuggestion, loadReviews, submitReview, register, cancel,
+    loadSiteVisits, loadMySiteVotes, voteSite: voteSiteAction, cancelSiteVote: cancelSiteVoteAction, isSiteVoted,
     coursesByCategory, isRegistered, getCategoryInfo, reviewsForCourse,
   }
 })

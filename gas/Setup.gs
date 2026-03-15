@@ -5,20 +5,96 @@
 //   setupAll()                    — ครั้งแรก: สร้างทุก sheet + seed + admin (safe to re-run)
 //   addMissingSheets()            — เพิ่มเฉพาะ sheet ที่ยังไม่มี (ใช้เมื่อเพิ่ม feature ใหม่)
 //   addMissingColumns()           — เพิ่ม column ที่ขาดใน sheet ที่มีอยู่แล้ว (safe to re-run)
-//   deleteUnusedSheets()          — ลบ EmpathyPosts + TrainingRegistrations ⚠️ ลบถาวร
+//   deleteOldSheets()             — ลบ sheet เก่าที่ไม่ใช้แล้ว (Trainings, EmpathyPosts) ⚠️ ลบถาวร
 //   cleanUnusedSheetsAndColumns() — ลบ sheet + column ที่ไม่ได้ใช้ออก ⚠️ ลบข้อมูลจริง
+//   forceResetSheet(name)         — ลบ sheet แล้วสร้างใหม่พร้อม header ⚠️ ลบข้อมูลทั้งหมด
 //   setupSheets()                 — สร้าง/อัปเดต header ทุก sheet (idempotent)
 //   setupAdmin()                  — สร้าง admin account (ข้ามถ้ามีแล้ว)
 //   seedEmployees()               — seed พนักงานตัวอย่าง (ข้ามถ้ามีแล้ว)
 //   seedBirthdays()               — seed วันเกิดตัวอย่าง (ข้ามถ้ามีแล้ว)
 
 /**
- * deleteUnusedSheets() — ลบ EmpathyPosts และ TrainingRegistrations ที่ไม่ได้ใช้แล้ว
- * ⚠️ ลบข้อมูลถาวร — รันครั้งเดียว
+ * forceResetSheet(name) — ลบ sheet แล้วสร้างใหม่พร้อม header จาก ALL_SHEETS
+ * ⚠️ ลบข้อมูลทั้งหมดใน sheet นั้น
+ * วิธีใช้: เรียกจาก GAS editor เช่น forceResetSheet('SiteVisits')
+ *           หรือสร้าง wrapper function แล้วกด Run
  */
-function deleteUnusedSheets() {
+function forceResetSheet(name) {
+  var ss  = SpreadsheetApp.getActiveSpreadsheet();
+  var def = ALL_SHEETS.find(function(d) { return d.name === name; });
+  if (!def) {
+    Logger.log('❌ ไม่พบ definition ของ "' + name + '" ใน ALL_SHEETS');
+    return;
+  }
+
+  // ลบ sheet ที่มีอยู่
+  var existing = ss.getSheetByName(name);
+  if (existing) {
+    // ถ้าเป็น sheet สุดท้าย ต้องสร้าง temp ก่อนลบ
+    if (ss.getNumSheets() <= 1) {
+      var temp = ss.insertSheet('_temp_reset_');
+      ss.deleteSheet(existing);
+      existing = temp; // จะถูก rename ด้านล่าง — จริงๆ เราสร้างใหม่แทน
+      temp.setName(name);
+      // clear temp content ถ้ามี
+      temp.clearContents();
+    } else {
+      ss.deleteSheet(existing);
+    }
+    Logger.log('🗑️ ลบแล้ว: ' + name);
+  }
+
+  // สร้างใหม่ (เฉพาะกรณีที่ยังไม่มี sheet ชื่อ name อยู่)
+  if (!ss.getSheetByName(name)) {
+    var sheet = ss.insertSheet(name);
+    sheet.appendRow(def.headers);
+    var headerRange = sheet.getRange(1, 1, 1, def.headers.length);
+    headerRange.setFontWeight('bold');
+    headerRange.setBackground('#4F46E5');
+    headerRange.setFontColor('#FFFFFF');
+    sheet.setFrozenRows(1);
+    for (var i = 1; i <= def.headers.length; i++) sheet.setColumnWidth(i, 140);
+    Logger.log('✅ สร้างใหม่: ' + name + ' — ' + def.headers.length + ' columns');
+  } else {
+    // กรณี temp renamed แล้ว ให้ใส่ header
+    var sheet = ss.getSheetByName(name);
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(def.headers);
+      var headerRange = sheet.getRange(1, 1, 1, def.headers.length);
+      headerRange.setFontWeight('bold');
+      headerRange.setBackground('#4F46E5');
+      headerRange.setFontColor('#FFFFFF');
+      sheet.setFrozenRows(1);
+      for (var i = 1; i <= def.headers.length; i++) sheet.setColumnWidth(i, 140);
+      Logger.log('✅ สร้างใหม่ (temp): ' + name + ' — ' + def.headers.length + ' columns');
+    }
+  }
+}
+
+// Convenience wrappers — เรียกจาก GAS editor ได้เลย (เลือก function แล้วกด Run)
+function forceResetSiteVisits()           { forceResetSheet('SiteVisits'); }
+function forceResetSiteVotes()            { forceResetSheet('SiteVotes'); }
+function forceResetAnnualTrainings()      { forceResetSheet('AnnualTrainings'); }
+function forceResetIdpTrainings()         { forceResetSheet('IdpTrainings'); }
+function forceResetExternalTrainings()    { forceResetSheet('ExternalTrainings'); }
+function forceResetCompulsoryTrainings()  { forceResetSheet('CompulsoryTrainings'); }
+function forceResetSuperskillsTrainings() { forceResetSheet('SuperskillsTrainings'); }
+function forceResetLeadershipTrainings()  { forceResetSheet('LeadershipTrainings'); }
+function forceResetBlogTrainings()        { forceResetSheet('BlogTrainings'); }
+function forceResetTrainingRegistrations(){ forceResetSheet('TrainingRegistrations'); }
+function forceResetTrainingReviews()      { forceResetSheet('TrainingReviews'); }
+
+/**
+ * deleteOldSheets() — ลบ sheet เก่าที่ถูกแทนที่โดย schema ใหม่
+ * ⚠️ ลบข้อมูลถาวร — รันครั้งเดียวหลัง migrate เสร็จ
+ *
+ * รายการที่ลบ:
+ *   Trainings       — แทนที่ด้วย AnnualTrainings / IdpTrainings / ... (7 sheets)
+ *   EmpathyPosts    — ย้ายเป็น EmpathyComments + EmpathyLikes
+ */
+function deleteOldSheets() {
   var ss      = SpreadsheetApp.getActiveSpreadsheet();
-  var targets = ['EmpathyPosts', 'TrainingRegistrations'];
+  var targets = ['Trainings', 'EmpathyPosts'];
 
   targets.forEach(function(name) {
     var sheet = ss.getSheetByName(name);
@@ -34,8 +110,11 @@ function deleteUnusedSheets() {
     Logger.log('🗑️ ลบแล้ว: ' + name);
   });
 
-  Logger.log('✅ deleteUnusedSheets เสร็จ');
+  Logger.log('✅ deleteOldSheets เสร็จ');
 }
+
+// compat alias สำหรับชื่อเดิม
+function deleteUnusedSheets() { deleteOldSheets(); }
 
 /**
  * cleanUnusedSheetsAndColumns() — ลบ sheet และ column ที่ไม่ได้นิยามใน ALL_SHEETS
@@ -212,9 +291,20 @@ var ALL_SHEETS = [
     name: 'ActivityJoins',
     headers: ['id','activityId','activityName','employeeName','stampedAt','rewardClaimed','rewardType'],
   },
+  { name: 'AnnualTrainings',      headers: ['id','title','description','instructor','section','createdAt'] },
+  { name: 'IdpTrainings',         headers: ['id','title','description','instructor','section','createdAt'] },
+  { name: 'ExternalTrainings',    headers: ['id','title','description','instructor','section','createdAt'] },
+  { name: 'CompulsoryTrainings',  headers: ['id','title','description','instructor','section','createdAt'] },
+  { name: 'SuperskillsTrainings', headers: ['id','title','description','instructor','section','createdAt'] },
+  { name: 'LeadershipTrainings',  headers: ['id','title','description','instructor','section','createdAt'] },
+  { name: 'BlogTrainings',        headers: ['id','title','description','instructor','section','createdAt'] },
   {
-    name: 'Trainings',
-    headers: ['id','category','title','description','instructor','section','capacity','color','createdAt'],
+    name: 'SiteVisits',
+    headers: ['id','title','description','instructor','color','createdAt'],
+  },
+  {
+    name: 'SiteVotes',
+    headers: ['id','siteId','employeeId','employeeName','votedAt'],
   },
   {
     name: 'TrainingRegistrations',

@@ -60,12 +60,12 @@
 
         <!-- Site Visit: voting UI -->
         <template v-if="selectedCat?.key === 'site'">
-          <div v-if="!catCourses.length" class="tr-section-empty">ยังไม่มีข้อมูล</div>
+          <div v-if="!training.siteVisits.length" class="tr-section-empty">ยังไม่มีข้อมูล</div>
           <div v-else class="tr-site-list">
             <div
-              v-for="site in catCourses" :key="site.id"
+              v-for="site in training.siteVisits" :key="site.id"
               class="tr-site-card"
-              :class="training.isRegistered(site.id) ? 'tr-site-card--voted' : ''"
+              :class="training.isSiteVoted(site.id) ? 'tr-site-card--voted' : ''"
             >
               <!-- Hero -->
               <div class="tr-site-hero" :style="siteHeroStyle(site)">
@@ -74,7 +74,7 @@
                   <div class="tr-site-hero-icon">🏭</div>
                   <div class="tr-site-hero-title">{{ site.title }}</div>
                 </div>
-                <div v-if="training.isRegistered(site.id)" class="tr-site-check">✓</div>
+                <div v-if="training.isSiteVoted(site.id)" class="tr-site-check">✓</div>
               </div>
 
               <!-- Body -->
@@ -90,17 +90,17 @@
                 <div class="tr-site-vote-info">
                   <span class="tr-site-vote-num"
                     :style="{ color: (site.color?.startsWith('#') ? site.color : '#0EA5E9') }">
-                    {{ site.joinCount || 0 }}</span>
+                    {{ site.voteCount || 0 }}</span>
                   <span class="tr-site-vote-label">คนโหวต</span>
                 </div>
                 <button
                   class="tr-site-vote-btn"
-                  :class="training.isRegistered(site.id) ? 'tr-site-vote-btn--voted' : ''"
+                  :class="training.isSiteVoted(site.id) ? 'tr-site-vote-btn--voted' : ''"
                   :disabled="siteVotingId === site.id"
                   @click="voteToggle(site)"
                 >
                   <span v-if="siteVotingId === site.id">⏳</span>
-                  <span v-else-if="training.isRegistered(site.id)">✅ โหวตแล้ว</span>
+                  <span v-else-if="training.isSiteVoted(site.id)">✅ โหวตแล้ว</span>
                   <span v-else>🗳️ โหวต</span>
                 </button>
               </div>
@@ -377,6 +377,7 @@ const catSections = computed(() => {
 })
 
 function countByCategory(key) {
+  if (key === 'site') return training.siteVisits.length
   return (training.courses || []).filter(c => c.category === key).length
 }
 
@@ -461,26 +462,25 @@ const otherVoted     = ref(false)
 const otherText      = ref('')
 const otherSubmitting = ref(false)
 
-async function voteToggle(course) {
+async function voteToggle(site) {
   if (siteVotingId.value) return
-  siteVotingId.value = course.id
+  siteVotingId.value = site.id
   const empId   = userAuth.empCode || userAuth.userName
   const empName = userAuth.userName || empId
 
-  if (training.isRegistered(course.id)) {
-    await training.cancel(course.id, empId)
+  if (training.isSiteVoted(site.id)) {
+    await training.cancelSiteVote(site.id, empId)
   } else {
     // ยกเลิกสถานที่เดิมก่อน (โหวตได้แค่ 1)
-    const siteCourses = training.courses.filter(c => c.category === 'site')
-    const prevVoted = siteCourses.find(c => c.id !== course.id && training.isRegistered(c.id))
-    if (prevVoted) await training.cancel(prevVoted.id, empId)
+    const prevVoted = training.siteVisits.find(s => s.id !== site.id && training.isSiteVoted(s.id))
+    if (prevVoted) await training.cancelSiteVote(prevVoted.id, empId)
     // ยกเลิก "อื่นๆ" ถ้าเคยโหวต
     if (otherVoted.value) {
       otherVoted.value = false
       otherText.value  = ''
       try { await svc.cancelSiteSuggestion(empId) } catch {}
     }
-    await training.register(course.id, empId, empName)
+    await training.voteSite(site.id, empId, empName)
   }
   siteVotingId.value = null
 }
@@ -499,9 +499,8 @@ async function voteOther() {
       training.mySuggestion  = null
     } else {
       // ยกเลิกสถานที่จริงที่เคยโหวต
-      const siteCourses = training.courses.filter(c => c.category === 'site')
-      const prevVoted = siteCourses.find(c => training.isRegistered(c.id))
-      if (prevVoted) await training.cancel(prevVoted.id, empId)
+      const prevVoted = training.siteVisits.find(s => training.isSiteVoted(s.id))
+      if (prevVoted) await training.cancelSiteVote(prevVoted.id, empId)
       const text = otherText.value || 'อื่นๆ'
       await svc.submitSiteSuggestion(empId, empName, text)
       otherVoted.value      = true
@@ -514,8 +513,10 @@ async function voteOther() {
 onMounted(async () => {
   const empId = userAuth.empCode || userAuth.userName
   training.loadCourses()
+  training.loadSiteVisits()
   training.loadReviews(empId)
   training.loadMyTrainings(empId)
+  training.loadMySiteVotes(empId)
   await training.loadMySuggestion(empId)
   if (training.mySuggestion) {
     otherVoted.value = true

@@ -90,7 +90,7 @@ function doGet(e) {
       adminUpdateRewardRule: function() { return adminUpdateRewardRule(e.parameter); },
       adminDeleteRewardRule: function() { return adminDeleteRewardRule(e.parameter); },
 
-      // Training
+      // Training (annual / idp / external / etc)
       getTrainings:           function() { return getTrainings(e.parameter); },
       registerTraining:       function() { return registerTraining(e.parameter); },
       cancelRegistration:     function() { return cancelRegistration(e.parameter); },
@@ -101,6 +101,18 @@ function doGet(e) {
       adminDeleteTraining:    function() { return adminDeleteTraining(e.parameter); },
       submitTrainingReview:   function() { return submitTrainingReview(e.parameter); },
       getTrainingReviews:     function() { return getTrainingReviews(e.parameter); },
+
+      // Site Visit (แยก sheet ออกจาก Trainings)
+      getSiteVisits:          function() { return getSiteVisits(); },
+      voteSite:               function() { return voteSite(e.parameter); },
+      cancelSiteVote:         function() { return cancelSiteVote(e.parameter); },
+      getMySiteVotes:         function() { return getMySiteVotes(e.parameter); },
+      adminAddSiteVisit:      function() { return adminAddSiteVisit(e.parameter); },
+      adminUpdateSiteVisit:   function() { return adminUpdateSiteVisit(e.parameter); },
+      adminDeleteSiteVisit:   function() { return adminDeleteSiteVisit(e.parameter); },
+      adminGetSiteVotes:      function() { return adminGetSiteVotes(e.parameter); },
+
+      // Site Suggestions (อื่นๆ)
       submitSiteSuggestion:    function() { return submitSiteSuggestion(e.parameter); },
       getMySiteSuggestion:     function() { return getMySiteSuggestion(e.parameter); },
       adminGetSiteSuggestions: function() { return adminGetSiteSuggestions(e.parameter); },

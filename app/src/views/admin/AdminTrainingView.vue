@@ -13,127 +13,131 @@
 
       <div class="al-page-header">
         <h2 class="al-page-title">📚 Training & Development</h2>
-        <span class="al-badge al-badge-blue">{{ rows.length }} รายการ</span>
       </div>
 
-      <!-- Filter + Add -->
-      <div class="al-filters">
-        <button
-          v-for="f in CATEGORY_FILTERS" :key="f"
-          class="al-chip"
-          :class="{ active: filterCat === f }"
-          @click="filterCat = f"
-        >{{ f === 'all' ? 'ทั้งหมด' : catLabel(f) }}</button>
-        <button class="al-btn al-btn-save" style="margin-left:auto;" @click="openAdd">+ เพิ่ม</button>
+      <!-- ── Tab bar ── -->
+      <div class="atr-tabbar-wrap">
+        <div class="atr-tabbar">
+          <button
+            v-for="t in ALL_TABS" :key="t.key"
+            class="atr-tab"
+            :class="{ active: activeTab === t.key }"
+            @click="switchTab(t.key)"
+          >
+            <span class="atr-tab-icon">{{ t.icon }}</span>
+            <span class="atr-tab-label">{{ t.label }}</span>
+            <span v-if="tabCount(t.key)" class="atr-tab-count">{{ tabCount(t.key) }}</span>
+          </button>
+        </div>
       </div>
 
-      <div class="al-card">
-        <div v-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
-        <div v-else-if="!filtered.length" class="al-empty">📭 ไม่มีข้อมูล</div>
+      <!-- ── Toolbar ── -->
+      <div class="atr-toolbar">
+        <span class="atr-toolbar-desc">{{ activeDef?.desc || '' }}</span>
+        <button class="al-btn al-btn-save" @click="openAdd">
+          + {{ activeTab === 'site' ? 'เพิ่มสถานที่' : 'เพิ่มหลักสูตร' }}
+        </button>
+      </div>
 
-        <div v-else>
-          <div class="al-item" v-for="r in filtered" :key="r.id">
-            <div class="al-item-body">
-              <div class="al-item-title">{{ r.title }}</div>
-              <div class="al-item-sub">
-                {{ catLabel(r.category) }}<span v-if="r.instructor"> · {{ r.instructor }}</span>
+      <!-- Loading -->
+      <div v-if="tabLoading" class="al-card"><div class="al-loading">⏳ กำลังโหลด...</div></div>
+
+      <!-- ── Site Visit ── -->
+      <template v-else-if="activeTab === 'site'">
+        <div class="al-card">
+          <div v-if="!siteRows.length" class="al-empty">📭 ยังไม่มีสถานที่</div>
+          <div v-else>
+            <div class="al-item" v-for="s in siteRows" :key="s.id">
+              <div class="atr-dot" :style="{ background: s.color || '#0EA5E9' }"></div>
+              <div class="al-item-body">
+                <div class="al-item-title">{{ s.title }}</div>
+                <div v-if="s.instructor" class="al-item-sub">👤 {{ s.instructor }}</div>
+                <div class="al-item-meta">
+                  <span class="al-badge al-badge-blue">🗳️ {{ s.voteCount || 0 }} โหวต</span>
+                </div>
               </div>
-              <div class="al-item-meta">
-                <!-- Site Visit badge -->
-                <template v-if="r.category === 'site'">
-                  <span class="al-badge al-badge-blue">🏭 Site Visit</span>
-                  <span v-if="r.capacity" class="al-badge al-badge-pending">👥 จำกัด {{ r.capacity }} คน</span>
-                </template>
-                <!-- Training badge -->
-                <template v-else>
+              <div class="al-item-actions">
+                <button class="al-btn al-btn-edit" @click="openVoters(s)">👥 ผู้โหวต</button>
+                <button class="al-btn al-btn-edit" @click="openEdit(s)">แก้ไข</button>
+                <button class="al-btn al-btn-delete" @click="confirmDel(s)">ลบ</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Suggestions -->
+        <div class="atr-sug-hd">
+          <span>💡 ข้อเสนอแนะจากพนักงาน</span>
+          <span class="al-badge al-badge-pending">{{ suggestions.length }}</span>
+        </div>
+        <div v-if="sugLoading" class="al-loading" style="padding:12px 0;">⏳</div>
+        <div v-else-if="!suggestions.length" class="atr-sug-empty">ยังไม่มีข้อเสนอแนะ</div>
+        <div v-else class="al-card">
+          <div v-for="s in suggestions" :key="s.id" class="atr-sug-row">
+            <div class="atr-sug-av">{{ (s.employeeName || '?').charAt(0) }}</div>
+            <div style="flex:1;min-width:0;">
+              <div class="atr-sug-top">
+                <span class="atr-sug-name">{{ s.employeeName }}</span>
+                <span class="atr-sug-date">{{ fmtDate(s.createdAt) }}</span>
+              </div>
+              <div class="atr-sug-text">{{ s.suggestion }}</div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ── Course list ── -->
+      <template v-else>
+        <div class="al-card">
+          <div v-if="!tabRows.length" class="al-empty">📭 ไม่มีหลักสูตรในหมวดนี้</div>
+          <div v-else>
+            <div class="al-item" v-for="r in tabRows" :key="r.id">
+              <div class="al-item-body">
+                <div class="al-item-title">{{ r.title }}</div>
+                <div v-if="r.instructor" class="al-item-sub">👩‍🏫 {{ r.instructor }}</div>
+                <div class="al-item-meta">
                   <span class="al-badge" :class="r.section ? 'al-badge-blue' : 'al-badge-pending'">
-                    {{ r.section?.startsWith('train') ? `📅 เทรน ${r.section.replace('train','')}` : r.section === 'new' ? '✨ หลักสูตรใหม่' : 'ไม่มีข้อมูล' }}
+                    {{ sectionLabel(r.section) }}
                   </span>
-                </template>
+                </div>
               </div>
-            </div>
-            <div class="al-item-actions">
-              <button v-if="r.category === 'site'" class="al-btn al-btn-edit" @click="openVoters(r)">👥 ผู้โหวต</button>
-              <button class="al-btn al-btn-edit" @click="openEdit(r)">แก้ไข</button>
-              <button class="al-btn al-btn-delete" @click="confirmDelete(r)">ลบ</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Suggestions section: shown only under Site Visit filter -->
-      <template v-if="filterCat === 'site'">
-        <div class="al-sug-section-hd">
-          <div class="al-sug-section-hd-left">
-            <span class="al-sug-icon">💡</span>
-            <span class="al-sug-section-title">ข้อเสนอแนะสถานที่จากพนักงาน</span>
-          </div>
-          <span v-if="!suggestionsLoading" class="al-sug-count-pill">{{ suggestions.length }} รายการ</span>
-        </div>
-
-        <div v-if="suggestionsLoading" class="al-loading" style="padding:24px 0;">⏳ กำลังโหลด...</div>
-        <div v-else-if="!suggestions.length" class="al-sug-empty">
-          <div style="font-size:28px;margin-bottom:6px;">🏭</div>
-          <div>ยังไม่มีข้อเสนอแนะจากพนักงาน</div>
-        </div>
-        <div v-else class="al-sug-list">
-          <div v-for="(s, i) in suggestions" :key="s.id" class="al-sug-card">
-            <div class="al-sug-avatar">{{ (s.employeeName || '?').charAt(0) }}</div>
-            <div class="al-sug-content">
-              <div class="al-sug-card-top">
-                <span class="al-sug-name">{{ s.employeeName }}</span>
-                <span class="al-sug-date">{{ fmtDate(s.createdAt) }}</span>
+              <div class="al-item-actions">
+                <button class="al-btn al-btn-edit" @click="openEdit(r)">แก้ไข</button>
+                <button class="al-btn al-btn-delete" @click="confirmDel(r)">ลบ</button>
               </div>
-              <div class="al-sug-text">{{ s.suggestion }}</div>
             </div>
           </div>
         </div>
       </template>
     </main>
 
-    <!-- Add/Edit Modal -->
+    <!-- ── Add/Edit Modal ── -->
     <div v-if="formOpen" class="al-modal-overlay" @click.self="formOpen=false">
       <div class="al-modal" style="max-height:90vh;overflow-y:auto;">
         <div class="al-modal-handle"></div>
-        <div class="al-modal-title">{{ editTarget ? '✏️ แก้ไข' : '+ เพิ่ม' }} {{ form.category === 'site' ? 'Site Visit' : 'หลักสูตร' }}</div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">หมวดหมู่ *</label>
-          <select class="al-form-select" v-model="form.category">
-            <option value="">-- เลือกหมวดหมู่ --</option>
-            <option v-for="c in CATEGORIES" :key="c.key" :value="c.key">{{ c.icon }} {{ c.name }}</option>
-          </select>
+        <div class="al-modal-title">
+          {{ editTarget ? '✏️ แก้ไข' : '+ เพิ่ม' }} {{ activeTab === 'site' ? 'Site Visit' : activeDef?.label }}
         </div>
 
-        <div class="al-form-row">
-          <label class="al-form-label">{{ form.category === 'site' ? 'ชื่อสถานที่ *' : 'ชื่อหลักสูตร *' }}</label>
-          <input class="al-form-input" v-model="form.title" :placeholder="form.category === 'site' ? 'ชื่อสถานที่ / บริษัท' : 'ชื่อหลักสูตร'" maxlength="200" />
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">รายละเอียด</label>
-          <textarea class="al-form-input" v-model="form.description" rows="3"
-            :placeholder="form.category === 'site' ? 'รายละเอียด เช่น ที่อยู่ กิจกรรม' : 'รายละเอียดหลักสูตร'"
-            maxlength="500" style="resize:none;"></textarea>
-        </div>
-
-        <!-- Site Visit fields -->
-        <template v-if="form.category === 'site'">
-          <div class="al-form-2col">
-            <div class="al-form-row">
-              <label class="al-form-label">ผู้ดูแล / ติดต่อ</label>
-              <input class="al-form-input" v-model="form.instructor" placeholder="ชื่อผู้ดูแล" maxlength="100" />
-            </div>
-            <div class="al-form-row">
-              <label class="al-form-label">จำนวนที่รับ (0 = ไม่จำกัด)</label>
-              <input class="al-form-input" type="number" v-model.number="form.capacity" min="0" placeholder="0" />
-            </div>
+        <!-- Site Visit form -->
+        <template v-if="activeTab === 'site'">
+          <div class="al-form-row">
+            <label class="al-form-label">ชื่อสถานที่ *</label>
+            <input class="al-form-input" v-model="form.title" placeholder="ชื่อสถานที่ / บริษัท" maxlength="200" />
+          </div>
+          <div class="al-form-row">
+            <label class="al-form-label">รายละเอียด</label>
+            <textarea class="al-form-input" v-model="form.description" rows="3"
+              placeholder="รายละเอียด เช่น ที่อยู่ กิจกรรม" maxlength="500" style="resize:none;"></textarea>
+          </div>
+          <div class="al-form-row">
+            <label class="al-form-label">ผู้ดูแล / ติดต่อ</label>
+            <input class="al-form-input" v-model="form.instructor" placeholder="ชื่อผู้ดูแล" maxlength="100" />
           </div>
           <div class="al-form-row">
             <label class="al-form-label">สีธีม</label>
             <div class="al-color-swatches">
-              <button
-                v-for="c in SITE_COLORS" :key="c.value"
+              <button v-for="c in SITE_COLORS" :key="c.value"
                 class="al-color-swatch"
                 :style="{ background: c.value }"
                 :class="{ active: form.color === c.value }"
@@ -144,8 +148,17 @@
           </div>
         </template>
 
-        <!-- Training fields -->
+        <!-- Course form -->
         <template v-else>
+          <div class="al-form-row">
+            <label class="al-form-label">ชื่อหลักสูตร *</label>
+            <input class="al-form-input" v-model="form.title" placeholder="ชื่อหลักสูตร" maxlength="200" />
+          </div>
+          <div class="al-form-row">
+            <label class="al-form-label">รายละเอียด</label>
+            <textarea class="al-form-input" v-model="form.description" rows="3"
+              placeholder="รายละเอียดหลักสูตร" maxlength="500" style="resize:none;"></textarea>
+          </div>
           <div class="al-form-2col">
             <div class="al-form-row">
               <label class="al-form-label">วิทยากร</label>
@@ -165,23 +178,23 @@
 
         <div class="al-modal-footer">
           <button class="al-btn al-btn-cancel" @click="formOpen=false">ยกเลิก</button>
-          <button class="al-btn al-btn-save" :disabled="saving || !form.title || !form.category" @click="doSave">
+          <button class="al-btn al-btn-save" :disabled="saving || !form.title" @click="doSave">
             {{ saving ? 'กำลังบันทึก...' : '✅ บันทึก' }}
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Delete Confirm -->
-    <div v-if="delTarget" class="al-modal-overlay" @click.self="delTarget=null">
+    <!-- ── Delete Confirm ── -->
+    <div v-if="delRow" class="al-modal-overlay" @click.self="delRow=null">
       <div class="al-modal">
         <div class="al-modal-handle"></div>
         <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
         <p style="font-size:13px;color:#374151;margin:0 0 16px;">
-          ลบ "<strong>{{ delTarget.title }}</strong>" ใช่หรือไม่?
+          ลบ "<strong>{{ delRow.title }}</strong>" ใช่หรือไม่?
         </p>
         <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="delTarget=null">ยกเลิก</button>
+          <button class="al-btn al-btn-cancel" @click="delRow=null">ยกเลิก</button>
           <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
             {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
           </button>
@@ -189,7 +202,7 @@
       </div>
     </div>
 
-    <!-- Voters Modal (Site Visit) -->
+    <!-- ── Voters Modal ── -->
     <div v-if="votersOpen" class="al-modal-overlay" @click.self="votersOpen=false">
       <div class="al-modal" style="max-height:80vh;overflow-y:auto;">
         <div class="al-modal-handle"></div>
@@ -198,10 +211,10 @@
         <div v-else-if="!voters.length" class="al-empty">ยังไม่มีผู้โหวต</div>
         <div v-else>
           <div style="font-size:12px;color:#6B7280;margin-bottom:10px;">{{ voters.length }} คน</div>
-          <div v-for="(v, i) in voters" :key="v.id" class="al-voter-row">
-            <span class="al-voter-num">{{ i + 1 }}</span>
-            <span class="al-voter-name">{{ v.employeeName || v.employeeId }}</span>
-            <span class="al-voter-date">{{ fmtDate(v.registeredAt) }}</span>
+          <div v-for="(v, i) in voters" :key="v.id" class="atr-voter-row">
+            <span class="atr-voter-num">{{ i + 1 }}</span>
+            <span class="atr-voter-name">{{ v.employeeName || v.employeeId }}</span>
+            <span class="atr-voter-date">{{ fmtDate(v.votedAt) }}</span>
           </div>
         </div>
         <div class="al-modal-footer">
@@ -213,7 +226,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive, watch } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAdminStore } from '../../stores/admin.js'
 import * as svc from '../../services/trainingService.js'
@@ -221,36 +234,89 @@ import * as svc from '../../services/trainingService.js'
 const admin  = useAdminStore()
 const router = useRouter()
 
-const rows      = ref([])
-const loading   = ref(true)
-const filterCat = ref('all')
-const formOpen  = ref(false)
-const saving    = ref(false)
-const editTarget = ref(null)
-const delTarget  = ref(null)
-const deleting   = ref(false)
-
-const votersOpen    = ref(false)
-const votersSite    = ref(null)
-const voters        = ref([])
-const votersLoading = ref(false)
-
-const suggestions        = ref([])
-const suggestionsLoading = ref(false)
-const suggestionsFetched = ref(false)
-
-const CATEGORIES = [
-  { key: 'annual',      icon: '📅', name: 'Annual Training' },
-  { key: 'idp',         icon: '🎯', name: 'IDP' },
-  { key: 'blog',        icon: '✍️',  name: 'Internal Blog' },
-  { key: 'external',    icon: '🌐', name: 'External Training' },
-  { key: 'compulsory',  icon: '📋', name: 'Compulsory Program' },
-  { key: 'superskills', icon: '⭐', name: 'SuperSkills 2026' },
-  { key: 'site',        icon: '🏭', name: 'Site Visit' },
-  { key: 'leadership',  icon: '👑', name: 'Talent & Leadership' },
+// ── Tab definitions ───────────────────────────────────────────────────────────
+const ALL_TABS = [
+  { key: 'annual',      icon: '📅', label: 'Annual',      desc: 'หลักสูตรฝึกอบรมประจำปี' },
+  { key: 'idp',         icon: '🎯', label: 'IDP',          desc: 'แผนพัฒนาตนเองรายบุคคล' },
+  { key: 'external',    icon: '🌐', label: 'External',     desc: 'อบรมภายนอก / สัมมนา' },
+  { key: 'compulsory',  icon: '📋', label: 'Compulsory',   desc: 'หลักสูตรบังคับตามกฎหมาย' },
+  { key: 'superskills', icon: '⭐', label: 'SuperSkills',  desc: 'คอร์สแนะนำพิเศษ 2026' },
+  { key: 'leadership',  icon: '👑', label: 'Leadership',   desc: 'พัฒนาทักษะผู้นำรุ่นใหม่' },
+  { key: 'blog',        icon: '✍️',  label: 'Blog',         desc: 'บทความและองค์ความรู้ภายใน' },
+  { key: 'site',        icon: '🏭', label: 'Site Visit',   desc: 'สถานที่เยี่ยมชม + ระบบโหวต' },
 ]
 
-const CATEGORY_FILTERS = ['all', ...CATEGORIES.map(c => c.key)]
+const activeTab = ref('annual')
+const activeDef = computed(() => ALL_TABS.find(t => t.key === activeTab.value))
+
+// ── Per-tab cache ─────────────────────────────────────────────────────────────
+// courseCache[category] = array of rows
+const courseCache = reactive({})
+const tabLoading  = ref(false)
+
+const tabRows = computed(() => courseCache[activeTab.value] || [])
+
+function tabCount(key) {
+  if (key === 'site') return siteRows.value.length || 0
+  return (courseCache[key] || []).length || 0
+}
+
+async function loadTab(key) {
+  if (key === 'site') { await loadSite(); return }
+  if (courseCache[key] !== undefined) return   // already cached
+  tabLoading.value = true
+  try {
+    const data = await svc.adminFetchTrainings(key)
+    courseCache[key] = data
+  } catch {
+    courseCache[key] = []
+  } finally {
+    tabLoading.value = false
+  }
+}
+
+function switchTab(key) {
+  activeTab.value = key
+  loadTab(key)
+}
+
+onMounted(() => loadTab('annual'))
+
+// ── Site Visit ────────────────────────────────────────────────────────────────
+const siteRows   = ref([])
+const siteReady  = ref(false)
+const suggestions   = ref([])
+const sugLoading    = ref(false)
+
+async function loadSite() {
+  if (siteReady.value) return
+  tabLoading.value = true
+  sugLoading.value = true
+  try {
+    const [sites, sugs] = await Promise.all([
+      svc.adminFetchSiteVisits(),
+      svc.adminFetchSiteSuggestions(),
+    ])
+    siteRows.value    = sites
+    suggestions.value = sugs
+  } catch {
+    siteRows.value    = []
+    suggestions.value = []
+  } finally {
+    tabLoading.value = false
+    sugLoading.value = false
+    siteReady.value  = true
+  }
+}
+
+// ── Form state ────────────────────────────────────────────────────────────────
+const formOpen   = ref(false)
+const saving     = ref(false)
+const editTarget = ref(null)
+const delRow     = ref(null)
+const deleting   = ref(false)
+
+const form = reactive({ title: '', description: '', instructor: '', section: '', color: '' })
 
 const SITE_COLORS = [
   { value: '#0EA5E9', label: 'ฟ้า' },
@@ -263,34 +329,8 @@ const SITE_COLORS = [
   { value: '#F97316', label: 'ส้ม' },
 ]
 
-const form = reactive({
-  category: '', title: '', description: '', instructor: '', section: '', capacity: 0, color: '',
-})
-
-const filtered = computed(() =>
-  filterCat.value === 'all' ? rows.value : rows.value.filter(r => r.category === filterCat.value)
-)
-
-function catLabel(key) {
-  const c = CATEGORIES.find(c => c.key === key)
-  return c ? `${c.icon} ${c.name}` : key
-}
-
-function fmtDate(d) {
-  if (!d) return ''
-  const dt = new Date(d)
-  return isNaN(dt) ? d : dt.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
-}
-
-onMounted(async () => {
-  try { rows.value = await svc.adminFetchTrainings() }
-  catch { rows.value = [] }
-  finally { loading.value = false }
-})
-
 function resetForm() {
-  form.category = ''; form.title = ''; form.description = ''
-  form.instructor = ''; form.section = ''; form.capacity = 0; form.color = ''
+  form.title = ''; form.description = ''; form.instructor = ''; form.section = ''; form.color = ''
 }
 
 function openAdd() {
@@ -299,48 +339,42 @@ function openAdd() {
   formOpen.value = true
 }
 
-function openEdit(r) {
-  editTarget.value = r
-  form.category    = r.category    || ''
-  form.title       = r.title       || ''
-  form.description = r.description || ''
-  form.instructor  = r.instructor  || ''
-  form.section     = r.section     || ''
-  form.capacity    = Number(r.capacity) || 0
-  form.color       = r.color       || ''
+function openEdit(row) {
+  editTarget.value = row
+  form.title       = row.title       || ''
+  form.description = row.description || ''
+  form.instructor  = row.instructor  || ''
+  form.section     = row.section     || ''
+  form.color       = row.color       || ''
   formOpen.value   = true
 }
 
-watch(filterCat, async (val) => {
-  if (val !== 'site' || suggestionsFetched.value) return
-  suggestionsLoading.value = true
-  try { suggestions.value = await svc.adminFetchSiteSuggestions() }
-  catch { suggestions.value = [] }
-  finally { suggestionsLoading.value = false; suggestionsFetched.value = true }
-})
-
-async function openVoters(site) {
-  votersSite.value    = site
-  votersOpen.value    = true
-  votersLoading.value = true
-  voters.value        = []
-  try { voters.value = await svc.adminGetTrainingRegistrations(site.id) }
-  catch { voters.value = [] }
-  finally { votersLoading.value = false }
-}
+function confirmDel(row) { delRow.value = row }
 
 async function doSave() {
-  if (!form.title.trim() || !form.category) return
+  if (!form.title.trim()) return
   saving.value = true
   try {
-    const payload = { ...form }
-    if (form.category !== 'site') delete payload.capacity
-    if (editTarget.value) {
-      await svc.adminUpdateTraining(editTarget.value.id, payload)
-      Object.assign(editTarget.value, payload)
+    if (activeTab.value === 'site') {
+      const p = { title: form.title, description: form.description, instructor: form.instructor, color: form.color }
+      if (editTarget.value) {
+        await svc.adminUpdateSiteVisit(editTarget.value.id, p)
+        Object.assign(editTarget.value, p)
+      } else {
+        const created = await svc.adminAddSiteVisit(p)
+        siteRows.value.unshift({ ...created, voteCount: 0 })
+      }
     } else {
-      const created = await svc.adminAddTraining(payload)
-      rows.value.unshift({ ...created })
+      const cat = activeTab.value
+      const p = { category: cat, title: form.title, description: form.description, instructor: form.instructor, section: form.section }
+      if (editTarget.value) {
+        await svc.adminUpdateTraining(editTarget.value.id, p)
+        Object.assign(editTarget.value, p)
+      } else {
+        const created = await svc.adminAddTraining(p)
+        if (!courseCache[cat]) courseCache[cat] = []
+        courseCache[cat].unshift({ ...created })
+      }
     }
     formOpen.value = false
   } catch (e) {
@@ -350,17 +384,52 @@ async function doSave() {
   }
 }
 
-function confirmDelete(r) { delTarget.value = r }
-
 async function doDelete() {
   deleting.value = true
   try {
-    await svc.adminDeleteTraining(delTarget.value.id)
-    rows.value = rows.value.filter(r => r.id !== delTarget.value.id)
-    delTarget.value = null
-  } catch { } finally {
-    deleting.value = false
-  }
+    if (activeTab.value === 'site') {
+      await svc.adminDeleteSiteVisit(delRow.value.id)
+      siteRows.value = siteRows.value.filter(r => r.id !== delRow.value.id)
+    } else {
+      const cat = activeTab.value
+      await svc.adminDeleteTraining(delRow.value.id, cat)
+      courseCache[cat] = (courseCache[cat] || []).filter(r => r.id !== delRow.value.id)
+    }
+    delRow.value = null
+  } catch { }
+  finally { deleting.value = false }
+}
+
+// ── Voters ────────────────────────────────────────────────────────────────────
+const votersOpen    = ref(false)
+const votersSite    = ref(null)
+const voters        = ref([])
+const votersLoading = ref(false)
+
+async function openVoters(site) {
+  votersSite.value    = site
+  votersOpen.value    = true
+  votersLoading.value = true
+  voters.value        = []
+  try {
+    const all = await svc.adminFetchSiteVotes()
+    voters.value = all.filter(v => v.siteId === site.id)
+  } catch { voters.value = [] }
+  finally { votersLoading.value = false }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function sectionLabel(sec) {
+  if (!sec) return 'ไม่ระบุ section'
+  if (sec.startsWith('train')) return `📅 เทรน ${sec.replace('train', '')}`
+  if (sec === 'new') return '✨ ใหม่'
+  return sec
+}
+
+function fmtDate(d) {
+  if (!d) return ''
+  const dt = new Date(d)
+  return isNaN(dt) ? d : dt.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
 }
 
 function doLogout() { admin.logout(); router.push('/admin/login') }
@@ -369,89 +438,118 @@ function doLogout() { admin.logout(); router.push('/admin/login') }
 <style scoped>
 @import './admin.css';
 
-.al-color-swatches {
-  display: flex; gap: 8px; flex-wrap: wrap; padding: 4px 0;
+/* ── Tab bar ── */
+.atr-tabbar-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  margin: 0 -16px;
+  padding: 0 16px;
 }
-.al-color-swatch {
-  width: 32px; height: 32px; border-radius: 50%;
-  border: 3px solid transparent; cursor: pointer;
-  transition: transform 0.15s, border-color 0.15s;
-  flex-shrink: 0;
-}
-.al-color-swatch:hover { transform: scale(1.15); }
-.al-color-swatch.active {
-  border-color: #1F2937;
-  transform: scale(1.2);
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px currentColor;
+.atr-tabbar-wrap::-webkit-scrollbar { display: none; }
+
+.atr-tabbar {
+  display: flex;
+  gap: 6px;
+  padding-bottom: 4px;
+  width: max-content;
+  min-width: 100%;
 }
 
-/* ── Suggestions section ── */
-.al-sug-section-hd {
+.atr-tab {
+  display: flex; align-items: center; gap: 5px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1.5px solid #E5E7EB;
+  background: white;
+  font-size: 12px; font-weight: 700;
+  font-family: 'Sarabun', sans-serif;
+  color: #6B7280; cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap; flex-shrink: 0;
+}
+.atr-tab:hover { border-color: #6366F1; color: #4F46E5; }
+.atr-tab.active {
+  background: linear-gradient(135deg, #6366F1, #4F46E5);
+  border-color: #4F46E5; color: white;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.3);
+}
+.atr-tab-icon  { font-size: 14px; line-height: 1; }
+.atr-tab-label { font-size: 12px; }
+.atr-tab-count {
+  font-size: 10px; font-weight: 800;
+  background: rgba(0,0,0,0.1);
+  padding: 1px 6px; border-radius: 10px;
+  min-width: 16px; text-align: center;
+}
+.atr-tab.active .atr-tab-count { background: rgba(255,255,255,0.25); }
+
+/* ── Toolbar ── */
+.atr-toolbar {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 10px;
+}
+.atr-toolbar-desc { font-size: 12px; color: #9CA3AF; font-weight: 600; }
+
+/* ── Color dot ── */
+.atr-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%; flex-shrink: 0; margin-right: 2px;
+}
+
+/* ── Suggestions ── */
+.atr-sug-hd {
   display: flex; align-items: center; justify-content: space-between;
-  margin: 22px 0 12px;
-  padding: 12px 16px;
+  padding: 10px 14px;
   background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
-  border: 1.5px solid #FCD34D;
-  border-radius: 14px;
+  border: 1.5px solid #FCD34D; border-radius: 14px;
+  font-size: 13px; font-weight: 800; color: #92400E;
 }
-.al-sug-section-hd-left { display: flex; align-items: center; gap: 8px; }
-.al-sug-icon { font-size: 18px; line-height: 1; }
-.al-sug-section-title { font-size: 14px; font-weight: 800; color: #92400E; }
-.al-sug-count-pill {
-  font-size: 11px; font-weight: 700;
-  background: #F59E0B; color: #fff;
-  padding: 3px 10px; border-radius: 20px;
-}
-
-.al-sug-empty {
-  text-align: center; padding: 28px 16px;
+.atr-sug-empty {
+  text-align: center; padding: 20px;
   font-size: 13px; color: #9CA3AF;
   background: #FFFBEB; border-radius: 12px;
   border: 1.5px dashed #FCD34D;
-  margin-bottom: 16px;
 }
-
-.al-sug-list {
-  display: flex; flex-direction: column; gap: 8px;
-  margin-bottom: 20px;
-}
-.al-sug-card {
+.atr-sug-row {
   display: flex; align-items: flex-start; gap: 12px;
-  padding: 12px 14px;
-  background: #fff;
-  border: 1.5px solid #FEF3C7;
-  border-radius: 14px;
-  box-shadow: 0 2px 8px rgba(245,158,11,0.07);
-  transition: box-shadow 0.15s;
+  padding: 12px 16px; border-bottom: 1px solid #F7F7FF;
 }
-.al-sug-card:hover { box-shadow: 0 4px 14px rgba(245,158,11,0.14); }
-.al-sug-avatar {
-  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+.atr-sug-row:last-child { border-bottom: none; }
+.atr-sug-av {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
   background: linear-gradient(135deg, #FCD34D, #F59E0B);
-  color: #fff; font-size: 15px; font-weight: 900;
+  color: #fff; font-size: 13px; font-weight: 900;
   display: flex; align-items: center; justify-content: center;
   text-transform: uppercase;
 }
-.al-sug-content { flex: 1; min-width: 0; }
-.al-sug-card-top {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 4px; gap: 8px;
+.atr-sug-top {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px;
 }
-.al-sug-name { font-size: 13px; font-weight: 700; color: #111827; }
-.al-sug-date { font-size: 11px; color: #9CA3AF; flex-shrink: 0; }
-.al-sug-text {
-  font-size: 13px; color: #374151;
-  line-height: 1.5; white-space: pre-wrap;
-}
+.atr-sug-name { font-size: 13px; font-weight: 700; color: #111827; }
+.atr-sug-date { font-size: 11px; color: #9CA3AF; }
+.atr-sug-text { font-size: 13px; color: #374151; line-height: 1.5; }
 
-.al-voter-row {
+/* ── Voters ── */
+.atr-voter-row {
   display: flex; align-items: center; gap: 10px;
-  padding: 8px 4px;
-  border-bottom: 1px solid #F3F4F6;
-  font-size: 13px;
+  padding: 8px 4px; border-bottom: 1px solid #F3F4F6; font-size: 13px;
 }
-.al-voter-row:last-child { border-bottom: none; }
-.al-voter-num  { width: 22px; font-size: 11px; color: #9CA3AF; font-weight: 700; flex-shrink: 0; }
-.al-voter-name { flex: 1; font-weight: 600; color: #111827; }
-.al-voter-date { font-size: 11px; color: #9CA3AF; flex-shrink: 0; }
+.atr-voter-row:last-child { border-bottom: none; }
+.atr-voter-num  { width: 22px; font-size: 11px; color: #9CA3AF; font-weight: 700; flex-shrink: 0; }
+.atr-voter-name { flex: 1; font-weight: 600; color: #111827; }
+.atr-voter-date { font-size: 11px; color: #9CA3AF; flex-shrink: 0; }
+
+/* ── Color swatches ── */
+.al-color-swatches { display: flex; gap: 8px; flex-wrap: wrap; padding: 4px 0; }
+.al-color-swatch {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 3px solid transparent; cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s; flex-shrink: 0;
+}
+.al-color-swatch:hover { transform: scale(1.15); }
+.al-color-swatch.active {
+  border-color: #1F2937; transform: scale(1.2);
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px currentColor;
+}
 </style>

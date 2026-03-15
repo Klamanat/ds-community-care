@@ -1,78 +1,76 @@
 // Training.gs — Training courses + registrations
-// Sheet: Trainings
-// Columns: id | category | title | description | instructor | section | capacity | color | createdAt
 //
-// Sheet: TrainingRegistrations
-// Columns: id | trainingId | employeeId | employeeName | registeredAt
+// แต่ละ category มี sheet ของตัวเอง:
+//   AnnualTrainings      id | title | description | instructor | section | createdAt
+//   IdpTrainings         id | title | description | instructor | section | createdAt
+//   ExternalTrainings    id | title | description | instructor | section | createdAt
+//   CompulsoryTrainings  id | title | description | instructor | section | createdAt
+//   SuperskillsTrainings id | title | description | instructor | section | createdAt
+//   LeadershipTrainings  id | title | description | instructor | section | createdAt
+//   BlogTrainings        id | title | description | instructor | section | createdAt
 //
-// Sheet: TrainingReviews
-// Columns: id | trainingId | employeeId | employeeName | stars | comment | createdAt
+// Site Visit (แยกต่างหาก):
+//   SiteVisits  id | title | description | instructor | color | createdAt
+//   SiteVotes   id | siteId | employeeId | employeeName | votedAt
+//
+// ลงทะเบียน / รีวิว (ใช้ trainingId UUID ข้ามทุก sheet ได้):
+//   TrainingRegistrations  id | trainingId | employeeId | employeeName | registeredAt
+//   TrainingReviews        id | trainingId | employeeId | employeeName | stars | comment | createdAt
 
-/**
- * Run once from GAS editor to create all Training sheets.
- * Safe to re-run — skips sheets that already exist.
- */
-function setupTrainingSheets() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+// ── Category ↔ Sheet mapping ──────────────────────────────────────────────────
+var CAT_TO_SHEET = {
+  annual:      'AnnualTrainings',
+  idp:         'IdpTrainings',
+  external:    'ExternalTrainings',
+  compulsory:  'CompulsoryTrainings',
+  superskills: 'SuperskillsTrainings',
+  leadership:  'LeadershipTrainings',
+  blog:        'BlogTrainings',
+};
 
-  var schemas = [
-    { name: 'Trainings',              headers: ['id','category','title','description','instructor','section','capacity','color','createdAt'] },
-    { name: 'TrainingRegistrations',  headers: ['id','trainingId','employeeId','employeeName','registeredAt'] },
-    { name: 'TrainingReviews',        headers: ['id','trainingId','employeeId','employeeName','stars','comment','createdAt'] },
-  ];
+var SHEET_TO_CAT = (function() {
+  var m = {};
+  Object.keys(CAT_TO_SHEET).forEach(function(k) { m[CAT_TO_SHEET[k]] = k; });
+  return m;
+})();
 
-  schemas.forEach(function(s) {
-    var sheet = ss.getSheetByName(s.name);
-    if (!sheet) {
-      sheet = ss.insertSheet(s.name);
-      sheet.appendRow(s.headers);
-      // Style header row
-      sheet.getRange(1, 1, 1, s.headers.length)
-        .setFontWeight('bold')
-        .setBackground('#E8F0FE');
-      sheet.setFrozenRows(1);
-      Logger.log('Created: ' + s.name);
-    } else {
-      // Ensure color column exists in Trainings
-      if (s.name === 'Trainings') {
-        var existing = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-        if (existing.indexOf('color') < 0) {
-          var capIdx = existing.indexOf('capacity');
-          if (capIdx >= 0) {
-            sheet.insertColumnAfter(capIdx + 1);
-            sheet.getRange(1, capIdx + 2).setValue('color').setFontWeight('bold');
-            Logger.log('Added color column to Trainings');
-          }
-        }
-      }
-      Logger.log('Already exists: ' + s.name);
-    }
-  });
+var TRAINING_HEADERS = ['id','title','description','instructor','section','createdAt'];
 
-  Logger.log('setupTrainingSheets done');
+function _mapRow(r, category) {
+  return {
+    id:          String(r.id          || ''),
+    category:    category,
+    title:       String(r.title       || ''),
+    description: String(r.description || ''),
+    instructor:  String(r.instructor  || ''),
+    section:     String(r.section     || ''),
+    createdAt:   String(r.createdAt   || ''),
+  };
 }
 
+/**
+ * getTrainings — อ่านหลักสูตร
+ * params.category (optional) = 'annual'|'idp'|... → อ่านเฉพาะ sheet นั้น
+ * ไม่ส่ง category = merge ทุก sheet
+ */
 function getTrainings(params) {
-  var rows = sheetToObjects('Trainings');
+  var cat = ((params && params.category) || '').trim();
 
-  var category = (params && params.category) || '';
-  if (category && category !== 'all') {
-    rows = rows.filter(function(r) { return r.category === category; });
+  if (cat && CAT_TO_SHEET[cat]) {
+    // อ่าน sheet เดียว
+    var rows = [];
+    try { rows = sheetToObjects(CAT_TO_SHEET[cat]); } catch(e) {}
+    return ok(rows.map(function(r) { return _mapRow(r, cat); }));
   }
 
-  return ok(rows.map(function(r) {
-    return {
-      id:          String(r.id || ''),
-      category:    String(r.category || ''),
-      title:       String(r.title || ''),
-      description: String(r.description || ''),
-      instructor:  String(r.instructor || ''),
-      section:     String(r.section || ''),
-      capacity:    Number(r.capacity) || 0,
-      color:       String(r.color || ''),
-      createdAt:   String(r.createdAt || ''),
-    };
-  }));
+  // ไม่ระบุ category → merge ทุก sheet
+  var all = [];
+  Object.keys(CAT_TO_SHEET).forEach(function(c) {
+    var rows = [];
+    try { rows = sheetToObjects(CAT_TO_SHEET[c]); } catch(e) {}
+    rows.forEach(function(r) { all.push(_mapRow(r, c)); });
+  });
+  return ok(all);
 }
 
 function registerTraining(params) {
@@ -92,20 +90,10 @@ function registerTraining(params) {
   }
 
   var regs = sheetToObjects('TrainingRegistrations');
-  var already = regs.filter(function(r) {
+  var already = regs.some(function(r) {
     return String(r.trainingId) === String(trainingId) && String(r.employeeId) === String(employeeId);
   });
-  if (already.length > 0) return err('already_registered');
-
-  var trainings = sheetToObjects('Trainings');
-  var course = null;
-  for (var i = 0; i < trainings.length; i++) {
-    if (String(trainings[i].id) === String(trainingId)) { course = trainings[i]; break; }
-  }
-  if (!course) return err('training not found');
-
-  var count = regs.filter(function(r) { return String(r.trainingId) === String(trainingId); }).length;
-  if (Number(course.capacity) > 0 && count >= Number(course.capacity)) return err('full');
+  if (already) return err('already_registered');
 
   var id           = uuid();
   var registeredAt = formatDate(new Date());
@@ -163,72 +151,48 @@ function adminGetTrainingRegistrations(params) {
   return ok(result);
 }
 
-// ── Schema migration ─────────────────────────────────────────────────────────
-
-/**
- * Run once from GAS editor: adds 'color' column after 'capacity' in Trainings sheet.
- * Safe to run multiple times — skips if column already exists.
- */
-function migrateTrainingsAddColor() {
-  var sheet   = getSheet('Trainings');
-  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-
-  if (headers.indexOf('color') >= 0) {
-    Logger.log('color column already exists — nothing to do');
-    return;
-  }
-
-  var capIdx = headers.indexOf('capacity'); // 0-based
-  if (capIdx < 0) {
-    Logger.log('capacity column not found — aborting');
-    return;
-  }
-
-  // Insert a blank column AFTER capacity (GAS insertColumnAfter is 1-based)
-  sheet.insertColumnAfter(capIdx + 1);
-  sheet.getRange(1, capIdx + 2).setValue('color');
-  Logger.log('Done: color column inserted at position ' + (capIdx + 2));
-}
-
-// ── Admin CRUD ───────────────────────────────────────────────────────────────
+// ── Admin CRUD (category-aware) ───────────────────────────────────────────────
 
 function adminAddTraining(params) {
   if (!checkAdminToken(params.token)) return err('Unauthorized');
 
-  var id = uuid();
-  var category    = (params.category    || '').trim();
+  var category = (params.category || '').trim();
+  var sheetName = CAT_TO_SHEET[category];
+  if (!sheetName) return err('Invalid category: ' + category);
+
+  var id          = uuid();
   var title       = (params.title       || '').trim();
   var description = (params.description || '').trim();
   var instructor  = (params.instructor  || '').trim();
   var section     = (params.section     || '').trim();
-  var capacity    = Number(params.capacity) || 0;
-  var color       = (params.color       || '').trim();
   var createdAt   = formatDate(new Date());
 
   if (!title) return err('title required');
 
-  appendRow('Trainings', [id, category, title, description, instructor, section, capacity, color, createdAt]);
-  return ok({ id: id, category: category, title: title, description: description, instructor: instructor, section: section, capacity: capacity, color: color, createdAt: createdAt });
+  appendRow(sheetName, [id, title, description, instructor, section, createdAt]);
+  return ok({ id: id, category: category, title: title, description: description, instructor: instructor, section: section, createdAt: createdAt });
 }
 
 function adminUpdateTraining(params) {
   if (!checkAdminToken(params.token)) return err('Unauthorized');
 
+  var category  = (params.category || '').trim();
+  var sheetName = CAT_TO_SHEET[category];
+  if (!sheetName) return err('Invalid category: ' + category);
+
   var id = params.id;
   if (!id) return err('id required');
 
-  var sheet   = getSheet('Trainings');
+  var sheet   = getSheet(sheetName);
   var data    = sheet.getDataRange().getValues();
   var headers = data[0];
-  var EDITABLE = ['category','title','description','instructor','section','capacity','color'];
+  var EDITABLE = ['title','description','instructor','section'];
 
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][headers.indexOf('id')]) === String(id)) {
       EDITABLE.forEach(function(col) {
         var idx = headers.indexOf(col);
-        if (idx >= 0 && params[col] !== undefined) {
-          sheet.getRange(i + 1, idx + 1).setValue(params[col]);
-        }
+        if (idx >= 0 && params[col] !== undefined) sheet.getRange(i + 1, idx + 1).setValue(params[col]);
       });
       return ok({ updated: true });
     }
@@ -239,10 +203,14 @@ function adminUpdateTraining(params) {
 function adminDeleteTraining(params) {
   if (!checkAdminToken(params.token)) return err('Unauthorized');
 
+  var category  = (params.category || '').trim();
+  var sheetName = CAT_TO_SHEET[category];
+  if (!sheetName) return err('Invalid category: ' + category);
+
   var id = params.id;
   if (!id) return err('id required');
 
-  var sheet   = getSheet('Trainings');
+  var sheet   = getSheet(sheetName);
   var data    = sheet.getDataRange().getValues();
   var headers = data[0];
 
@@ -253,6 +221,164 @@ function adminDeleteTraining(params) {
     }
   }
   return err('not found');
+}
+
+// ── Site Visits ───────────────────────────────────────────────────────────────
+// Sheet: SiteVisits | Columns: id | title | description | instructor | color | createdAt
+// Sheet: SiteVotes  | Columns: id | siteId | employeeId | employeeName | votedAt
+
+function getSiteVisits() {
+  var sites = [];
+  try { sites = sheetToObjects('SiteVisits'); } catch(e) { return ok([]); }
+
+  var votes = [];
+  try { votes = sheetToObjects('SiteVotes'); } catch(e) {}
+
+  // นับคะแนนโหวตต่อ site
+  var voteCounts = {};
+  votes.forEach(function(v) {
+    var sid = String(v.siteId || '');
+    voteCounts[sid] = (voteCounts[sid] || 0) + 1;
+  });
+
+  return ok(sites.map(function(s) {
+    return {
+      id:          String(s.id          || ''),
+      title:       String(s.title       || ''),
+      description: String(s.description || ''),
+      instructor:  String(s.instructor  || ''),
+      color:       String(s.color       || ''),
+      createdAt:   String(s.createdAt   || ''),
+      voteCount:   voteCounts[String(s.id)] || 0,
+    };
+  }));
+}
+
+function voteSite(params) {
+  var siteId       = String(params.siteId       || '').trim();
+  var employeeId   = String(params.employeeId   || '').trim();
+  var employeeName = String(params.employeeName || 'ไม่ระบุ').trim();
+  if (!siteId || !employeeId) return err('siteId and employeeId required');
+
+  var sheet;
+  try { sheet = getSheet('SiteVotes'); } catch(e) {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    sheet  = ss.insertSheet('SiteVotes');
+    sheet.appendRow(['id','siteId','employeeId','employeeName','votedAt']);
+  }
+
+  var data    = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var sidIdx  = headers.indexOf('siteId');
+  var eidIdx  = headers.indexOf('employeeId');
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][sidIdx]) === siteId && String(data[i][eidIdx]) === employeeId) {
+      return err('already_voted');
+    }
+  }
+
+  var id      = uuid();
+  var votedAt = formatDate(new Date());
+  sheet.appendRow([id, siteId, employeeId, employeeName, votedAt]);
+  return ok({ id: id, siteId: siteId, employeeId: employeeId, votedAt: votedAt });
+}
+
+function cancelSiteVote(params) {
+  var siteId     = String(params.siteId     || '').trim();
+  var employeeId = String(params.employeeId || '').trim();
+  if (!siteId || !employeeId) return err('siteId and employeeId required');
+
+  var sheet;
+  try { sheet = getSheet('SiteVotes'); } catch(e) { return ok({ cancelled: true }); }
+
+  var data    = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var sidIdx  = headers.indexOf('siteId');
+  var eidIdx  = headers.indexOf('employeeId');
+
+  for (var i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][sidIdx]) === siteId && String(data[i][eidIdx]) === employeeId) {
+      sheet.deleteRow(i + 1);
+      return ok({ cancelled: true });
+    }
+  }
+  return err('vote not found');
+}
+
+function getMySiteVotes(params) {
+  var employeeId = String(params.employeeId || '').trim();
+  if (!employeeId) return ok([]);
+  var votes = [];
+  try { votes = sheetToObjects('SiteVotes'); } catch(e) {}
+  var ids = votes
+    .filter(function(v) { return String(v.employeeId) === employeeId; })
+    .map(function(v) { return String(v.siteId); });
+  return ok(ids);
+}
+
+function adminAddSiteVisit(params) {
+  if (!checkAdminToken(params.token)) return err('Unauthorized');
+  var id          = uuid();
+  var title       = (params.title       || '').trim();
+  var description = (params.description || '').trim();
+  var instructor  = (params.instructor  || '').trim();
+  var color       = (params.color       || '').trim();
+  var createdAt   = formatDate(new Date());
+  if (!title) return err('title required');
+  appendRow('SiteVisits', [id, title, description, instructor, color, createdAt]);
+  return ok({ id: id, title: title, description: description, instructor: instructor, color: color, createdAt: createdAt });
+}
+
+function adminUpdateSiteVisit(params) {
+  if (!checkAdminToken(params.token)) return err('Unauthorized');
+  var id = params.id;
+  if (!id) return err('id required');
+  var sheet   = getSheet('SiteVisits');
+  var data    = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var EDITABLE = ['title','description','instructor','color'];
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][headers.indexOf('id')]) === String(id)) {
+      EDITABLE.forEach(function(col) {
+        var idx = headers.indexOf(col);
+        if (idx >= 0 && params[col] !== undefined) sheet.getRange(i + 1, idx + 1).setValue(params[col]);
+      });
+      return ok({ updated: true });
+    }
+  }
+  return err('not found');
+}
+
+function adminDeleteSiteVisit(params) {
+  if (!checkAdminToken(params.token)) return err('Unauthorized');
+  var id = params.id;
+  if (!id) return err('id required');
+  var sheet   = getSheet('SiteVisits');
+  var data    = sheet.getDataRange().getValues();
+  var headers = data[0];
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][headers.indexOf('id')]) === String(id)) {
+      sheet.deleteRow(i + 1);
+      return ok({ deleted: true });
+    }
+  }
+  return err('not found');
+}
+
+function adminGetSiteVotes(params) {
+  if (!checkAdminToken(params.token)) return err('Unauthorized');
+  var votes = [];
+  try { votes = sheetToObjects('SiteVotes'); } catch(e) {}
+  return ok(votes.map(function(v) {
+    return {
+      id:           String(v.id           || ''),
+      siteId:       String(v.siteId       || ''),
+      employeeId:   String(v.employeeId   || ''),
+      employeeName: String(v.employeeName || ''),
+      votedAt:      String(v.votedAt      || ''),
+    };
+  }));
 }
 
 // ── Site Suggestions (อื่นๆ) ─────────────────────────────────────────────────
