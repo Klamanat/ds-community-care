@@ -122,7 +122,7 @@ function getConsultRequests(params) {
     var ss    = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName('ConsultationRequests');
     if (!sheet) return ok([]);
-    var rows        = sheetToObjects(sheet);
+    var rows        = sheetToObjects('ConsultationRequests');
     var counselorId = String(params.counselorEmployeeId || '');
     var filtered    = rows.filter(function(r) {
       return String(r.counselorEmployeeId || '') === counselorId;
@@ -130,7 +130,7 @@ function getConsultRequests(params) {
     filtered.sort(function(a, b) { return a.createdAt > b.createdAt ? -1 : 1; });
     return ok(filtered);
   } catch(e) {
-    return ok([]);
+    return err(e.message);
   }
 }
 
@@ -140,16 +140,15 @@ function adminGetAllConsultRequests(params) {
     var ss    = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName('ConsultationRequests');
     if (!sheet) return ok([]);
-    var rows = sheetToObjects(sheet);
+    var rows = sheetToObjects('ConsultationRequests');
     rows.sort(function(a, b) { return a.createdAt > b.createdAt ? -1 : 1; });
     // Enrich with advisor name
-    var advisorSheet = ss.getSheetByName('MentalAdvisors');
-    var advisorMap   = {};
-    if (advisorSheet) {
-      sheetToObjects(advisorSheet).forEach(function(a) {
+    var advisorMap = {};
+    try {
+      sheetToObjects('MentalAdvisors').forEach(function(a) {
         if (a.employeeId) advisorMap[String(a.employeeId)] = String(a.name || '');
       });
-    }
+    } catch(e) {}
     return ok(rows.map(function(r) {
       return {
         id:                  String(r.id                  || ''),
@@ -161,7 +160,7 @@ function adminGetAllConsultRequests(params) {
       };
     }));
   } catch(e) {
-    return ok([]);
+    return err(e.message);
   }
 }
 
