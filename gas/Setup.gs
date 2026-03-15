@@ -12,6 +12,8 @@
 //   setupAdmin()                  — สร้าง admin account (ข้ามถ้ามีแล้ว)
 //   seedEmployees()               — seed พนักงานตัวอย่าง (ข้ามถ้ามีแล้ว)
 //   seedBirthdays()               — seed วันเกิดตัวอย่าง (ข้ามถ้ามีแล้ว)
+//   migrateBirthdaysToEmployees() — ย้ายข้อมูล Birthdays → Employees (รันครั้งเดียว)
+//   cleanBdKeyColumn()            — ลบ column bdKey ออกจาก Employees ⚠️ ลบถาวร
 
 /**
  * forceResetSheet(name) — ลบ sheet แล้วสร้างใหม่พร้อม header จาก ALL_SHEETS
@@ -188,7 +190,11 @@ function addMissingColumns() {
     });
   });
 
-  Logger.log('✅ addMissingColumns เสร็จ');
+  // Invalidate cached reads so next request gets fresh column list
+  try {
+    ALL_SHEETS.forEach(function(def) { invalidateSheet(def.name); });
+  } catch(e) {}
+  Logger.log('✅ addMissingColumns เสร็จ (cache cleared)');
 }
 
 /**
@@ -250,7 +256,7 @@ var ALL_SHEETS = [
   },
   {
     name: 'Employees',
-    headers: ['id','empCode','name','role','dept','imgUrl','imgId','grad','inTeam','inStarGang','starGangName','starGangRole','starGangSlogan'],
+    headers: ['id','empCode','name','role','dept','imgUrl','imgId','grad','inTeam','inStarGang','starGangName','starGangRole','starGangSlogan','monthIdx','bdDate','fallbackIdx'],
   },
   {
     name: 'Birthdays',
@@ -423,6 +429,109 @@ function seedBirthdays() {
 
   rows.forEach(function(r) { sheet.appendRow(r); });
   Logger.log('✅ Seed Birthdays: ' + rows.length + ' แถว');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Migration: คัดลอกข้อมูลจาก Birthdays → Employees (รันครั้งเดียว)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * migrateBirthdaysToEmployees()
+ * คัดลอก bdKey, monthIdx, bdDate, fallbackIdx จาก Birthdays sheet → Employees sheet
+ * จับคู่ด้วย employeeId ก่อน ถ้าไม่มีให้ใช้ name (case-insensitive)
+ * ⚠️ ไม่ลบ Birthdays sheet — ลบเองภายหลังถ้าต้องการ
+ */
+function migrateBirthdaysToEmployees() {
+  var ss       = SpreadsheetApp.getActiveSpreadsheet();
+  var bdSheet  = ss.getSheetByName('Birthdays');
+  var empSheet = ss.getSheetByName('Employees');
+
+  if (!bdSheet)  { Logger.log('❌ ไม่พบ sheet Birthdays');  return; }
+  if (!empSheet) { Logger.log('❌ ไม่พบ sheet Employees'); return; }
+
+  // ── อ่าน Birthdays ───────────────────────────────────────────────────────
+  var bdData    = bdSheet.getDataRange().getValues();
+  var bdHeaders = bdData[0];
+  var bdKeyIdx      = bdHeaders.indexOf('key');
+  var bdEmpIdIdx    = bdHeaders.indexOf('employeeId');
+  var bdNameIdx     = bdHeaders.indexOf('name');
+  var bdMonthIdx    = bdHeaders.indexOf('monthIdx');
+  var bdDateIdx     = bdHeaders.indexOf('date');
+  var bdFallbackIdx = bdHeaders.indexOf('fallbackIdx');
+
+  // ── อ่าน Employees ───────────────────────────────────────────────────────
+  var empData    = empSheet.getDataRange().getValues();
+  var empHeaders = empData[0];
+  var eIdIdx         = empHeaders.indexOf('id');
+  var eNameIdx       = empHeaders.indexOf('name');
+  var eMonthIdxCol   = empHeaders.indexOf('monthIdx');
+  var eBdDateCol     = empHeaders.indexOf('bdDate');
+  var eFallbackCol   = empHeaders.indexOf('fallbackIdx');
+
+  if (eMonthIdxCol < 0) {
+    Logger.log('❌ ไม่พบ column monthIdx ใน Employees — รัน addMissingColumns() ก่อน');
+    return;
+  }
+
+  var matched = 0, skipped = 0;
+
+  for (var bi = 1; bi < bdData.length; bi++) {
+    var bdRow      = bdData[bi];
+    var bdKey      = String(bdRow[bdKeyIdx]      || '');
+    var empId      = String(bdRow[bdEmpIdIdx]    || '').trim();
+    var bdName     = String(bdRow[bdNameIdx]     || '').trim().toLowerCase();
+    var monthIdx   = bdRow[bdMonthIdx];
+    var bdDate     = String(bdRow[bdDateIdx]     || '');
+    var fallback   = bdRow[bdFallbackIdx];
+
+    // หาแถวใน Employees
+    var empRowIdx = -1;
+    for (var ei = 1; ei < empData.length; ei++) {
+      var eid  = String(empData[ei][eIdIdx]   || '').trim();
+      var ename = String(empData[ei][eNameIdx] || '').trim().toLowerCase();
+      if (empId && eid === empId)      { empRowIdx = ei + 1; break; }
+      if (!empId && bdName && ename === bdName) { empRowIdx = ei + 1; break; }
+    }
+
+    if (empRowIdx < 0) {
+      Logger.log('⚠️ ไม่พบพนักงาน: "' + bdRow[bdNameIdx] + '" (id=' + empId + ') — ข้าม');
+      skipped++;
+      continue;
+    }
+
+    // เขียน birthday fields ลง Employees (key คือ employee id แล้ว ไม่ต้อง bdKey)
+    empSheet.getRange(empRowIdx, eMonthIdxCol + 1).setValue(monthIdx);
+    empSheet.getRange(empRowIdx, eBdDateCol   + 1).setValue(bdDate);
+    empSheet.getRange(empRowIdx, eFallbackCol + 1).setValue(fallback);
+
+    Logger.log('✅ migrate: ' + bdRow[bdNameIdx] + ' → row ' + empRowIdx);
+    matched++;
+  }
+
+  invalidateSheet('Employees');
+  Logger.log('─── สรุป: migrate ' + matched + ' รายการ, ข้าม ' + skipped + ' รายการ ───');
+  Logger.log('💡 Birthdays sheet ยังไม่ถูกลบ — ตรวจสอบข้อมูลก่อนแล้วค่อยลบทีหลัง');
+}
+
+/**
+ * cleanBdKeyColumn() — ลบ column bdKey ออกจาก Employees sheet
+ * ⚠️ ลบข้อมูลถาวร — รันหลัง migrateBirthdaysToEmployees() แล้วเท่านั้น
+ */
+function cleanBdKeyColumn() {
+  var sheet   = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Employees');
+  if (!sheet) { Logger.log('❌ ไม่พบ sheet Employees'); return; }
+
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var colIdx  = headers.indexOf('bdKey');
+
+  if (colIdx < 0) {
+    Logger.log('✅ ไม่พบ column bdKey — ไม่ต้องทำอะไร');
+    return;
+  }
+
+  sheet.deleteColumn(colIdx + 1);
+  invalidateSheet('Employees');
+  Logger.log('✅ ลบ column bdKey (col ' + (colIdx + 1) + ') ออกจาก Employees แล้ว');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

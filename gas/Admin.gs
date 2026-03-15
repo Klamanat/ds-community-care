@@ -197,24 +197,38 @@ function adminAddEmployee(params) {
  */
 function adminAddBirthday(params) {
   verifyToken(params.token);
-  var sheet   = getSheet('Birthdays');
-  var headers = sheet.getDataRange().getValues()[0];
+  var employeeId  = (params.employeeId || '').trim();
+  var name        = (params.name       || '').trim();
+  var monthIdx    = parseInt(params.monthIdx,    10) || 0;
+  var bdDate      = (params.date       || '').trim();
+  var fallbackIdx = parseInt(params.fallbackIdx, 10) || 0;
 
-  var key = 'bday_' + uuid();
-  var row = headers.map(function(h) {
-    if (h === 'key')         return key;
-    if (h === 'employeeId')  return params.employeeId  || '';
-    if (h === 'name')        return params.name        || '';
-    if (h === 'role')        return params.role        || '';
-    if (h === 'monthIdx')    return parseInt(params.monthIdx,    10) || 0;
-    if (h === 'date')        return params.date        || '';
-    if (h === 'fallbackIdx') return parseInt(params.fallbackIdx, 10) || 0;
-    if (h === 'imgUrl')      return params.imgUrl      || '';
-    return '';
-  });
-  sheet.appendRow(row);
-  invalidateSheet('Birthdays');
-  return ok({ created: true, key: key });
+  var sheet   = getSheet('Employees');
+  var data    = sheet.getDataRange().getValues();
+  var headers = data[0];
+
+  var idIdx   = headers.indexOf('id');
+  var nameIdx = headers.indexOf('name');
+  var monthIdxCol    = headers.indexOf('monthIdx');
+  var bdDateCol      = headers.indexOf('bdDate');
+  var fallbackIdxCol = headers.indexOf('fallbackIdx');
+
+  // Find employee row by id, then by name
+  var rowIdx = -1;
+  for (var i = 1; i < data.length; i++) {
+    if (employeeId && String(data[i][idIdx]) === employeeId) { rowIdx = i + 1; break; }
+    if (!employeeId && name && String(data[i][nameIdx]).toLowerCase() === name.toLowerCase()) { rowIdx = i + 1; break; }
+  }
+
+  if (rowIdx < 0) return err('Employee not found');
+
+  if (monthIdxCol    >= 0) sheet.getRange(rowIdx, monthIdxCol    + 1).setValue(monthIdx);
+  if (bdDateCol      >= 0) sheet.getRange(rowIdx, bdDateCol      + 1).setValue(bdDate);
+  if (fallbackIdxCol >= 0) sheet.getRange(rowIdx, fallbackIdxCol + 1).setValue(fallbackIdx);
+
+  var key = employeeId || String(data[rowIdx - 1][idIdx]);
+  invalidateSheet('Employees');
+  return ok({ updated: true, key: key, employeeId: key });
 }
 
 /**

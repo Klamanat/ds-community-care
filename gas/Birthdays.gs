@@ -7,43 +7,51 @@
 
 // Use addMissingColumns() in Setup.gs to add missing columns
 
-function getBirthdays(params) {
-  var rows = cachedSheetRead('Birthdays', 300); // 5 min cache
+// Thai month abbreviations — index = 0-based month (0=Jan … 11=Dec)
+var BDAY_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
-  var monthIdx = params.monthIdx;
-  if (monthIdx !== undefined && monthIdx !== '') {
-    var m = parseInt(monthIdx, 10);
-    rows = rows.filter(function(r) { return parseInt(r.monthIdx, 10) === m; });
+/**
+ * Derive 0-based month index from an employee row.
+ * Primary source: bdDate string (e.g. "14 ก.ค." → 6)  ← always correct
+ * Fallback:       monthIdx column                       ← may be out of sync
+ * Returns -1 if no birthday data found.
+ */
+function _bdayMonthIdx(r) {
+  var bdDate = String(r.bdDate || '').trim();
+  for (var i = 0; i < BDAY_MONTHS.length; i++) {
+    if (bdDate.indexOf(BDAY_MONTHS[i]) >= 0) return i;
   }
+  var m = parseInt(r.monthIdx, 10);
+  return isNaN(m) ? -1 : m;
+}
 
-  // Pre-load employees for imgUrl fallback
-  var empMap = {};
-  try {
-    cachedSheetRead('Employees', 600).forEach(function(e) { empMap[String(e.id)] = e; });
-  } catch(e) {}
+function getBirthdays(params) {
+  // Birthday data lives on the Employees sheet (columns: monthIdx, bdDate, fallbackIdx)
+  var rows = sheetToObjects('Employees');
 
-  function resolveImg(rawUrl, employeeId) {
-    var raw = String(rawUrl || '');
-    if (!raw && employeeId) {
-      var emp = empMap[String(employeeId)];
-      if (emp) raw = String(emp.imgUrl || '');
-    }
-    if (raw.indexOf('drive:') === 0) return { imgUrl: '', imgId: raw.slice(6) };
-    return { imgUrl: raw, imgId: '' };
+  // Keep only employees that have birthday data (bdDate or valid monthIdx)
+  rows = rows.filter(function(r) { return _bdayMonthIdx(r) >= 0; });
+
+  // Filter by specific month when requested (0-based: 0=Jan … 11=Dec)
+  if (params.monthIdx !== undefined && params.monthIdx !== '') {
+    var target = parseInt(params.monthIdx, 10);
+    rows = rows.filter(function(r) { return _bdayMonthIdx(r) === target; });
   }
 
   var result = rows.map(function(r) {
-    var img = resolveImg(r.imgUrl, r.employeeId);
+    var imgUrl = String(r.imgUrl || '');
+    var imgId  = String(r.imgId  || '');
+    if (imgUrl.indexOf('drive:') === 0) { imgId = imgUrl.slice(6); imgUrl = ''; }
     return {
-      key:         String(r.key || ''),
-      employeeId:  String(r.employeeId || ''),
+      key:         String(r.id   || ''),
+      employeeId:  String(r.id   || ''),
       name:        String(r.name || ''),
       role:        String(r.role || ''),
-      monthIdx:    parseInt(r.monthIdx, 10) || 0,
-      date:        String(r.date || ''),
+      monthIdx:    _bdayMonthIdx(r),   // derived from bdDate (always correct)
+      date:        String(r.bdDate || ''),
       fallbackIdx: parseInt(r.fallbackIdx, 10) || 0,
-      imgUrl:      img.imgUrl,
-      imgId:       img.imgId,
+      imgUrl:      imgUrl,
+      imgId:       imgId,
     };
   });
 

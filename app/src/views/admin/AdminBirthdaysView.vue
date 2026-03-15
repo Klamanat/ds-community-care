@@ -159,7 +159,7 @@ const SEED = [
 
 onMounted(async () => {
   try {
-    const data = await svc.getAll('Birthdays')
+    const data = await svc.getBirthdays()
     rows.value = data.length ? data : SEED
   } catch {
     rows.value = SEED
@@ -179,9 +179,9 @@ async function saveModal() {
   form.date = isoToThaiShort(dateInput.value) || form.date
   modal.saving = true; modal.error = ''
   try {
-    await svc.updateRow('Birthdays', 'key', form.key, {
-      name: form.name, role: form.role, date: form.date,
-      monthIdx: form.monthIdx, fallbackIdx: form.fallbackIdx
+    // Birthday fields live on Employees sheet now (key = employee id)
+    await svc.updateRow('Employees', 'id', form.key, {
+      monthIdx: form.monthIdx, bdDate: form.date, fallbackIdx: form.fallbackIdx
     })
     const idx = rows.value.findIndex(r => r.key === form.key)
     if (idx >= 0) Object.assign(rows.value[idx], form)
@@ -197,7 +197,10 @@ function confirmDelete(r) { delTarget.value = r }
 async function doDelete() {
   deleting.value = true
   try {
-    await svc.deleteRow('Birthdays', 'key', delTarget.value.key)
+    // Clear birthday fields on Employees (don't delete the employee row)
+    await svc.updateRow('Employees', 'id', delTarget.value.key, {
+      monthIdx: '', bdDate: '', fallbackIdx: ''
+    })
     rows.value = rows.value.filter(r => r.key !== delTarget.value.key)
     delTarget.value = null
   } catch { } finally {
