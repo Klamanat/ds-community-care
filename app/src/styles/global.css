@@ -486,9 +486,14 @@
 
   /* === Training modal — wide sheet with 3-col grid === */
   .modal-sheet--training {
-    max-width: 600px !important;
-    width: calc(100vw - 48px) !important;
-    max-height: calc(100vh - 48px) !important;
+    max-height: calc(100dvh - 16px) !important;
+  }
+  @media (min-width: 640px) {
+    .modal-sheet--training {
+      max-width: 600px !important;
+      width: calc(100vw - 48px) !important;
+      max-height: calc(100vh - 48px) !important;
+    }
   }
 
   /* === Notification popup — Facebook style === */

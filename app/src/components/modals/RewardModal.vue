@@ -79,151 +79,370 @@
         <div class="rw-tree-card">
           <div class="rw-tree-top-row">
             <span class="rw-tree-label">🌳 ต้นไม้ของฉัน</span>
-            <span class="rw-tree-stage-tag" :style="{ background: treeData.color }">{{ treeData.name }}</span>
+            <span class="rw-tree-stage-tag" :style="{ background: viewData.color }">
+              <span v-if="viewData.isPreview" style="opacity:0.8;font-size:10px;">👁 </span>Lv.{{ viewData.stage + 1 }} · {{ viewData.name }}
+            </span>
           </div>
 
           <div class="rw-tree-scene">
             <svg class="rw-tree-svg" viewBox="0 0 120 130" xmlns="http://www.w3.org/2000/svg">
-              <!-- Ground (static) -->
-              <ellipse cx="60" cy="122" rx="46" ry="9" fill="#BBF7D0"/>
-              <ellipse cx="60" cy="119" rx="38" ry="5" fill="#86EFAC"/>
+              <defs>
+                <!-- Chibi trunk: radial, warm amber highlight center → dark brown edge -->
+                <radialGradient id="rw3-trunk" cx="35%" cy="30%" r="65%">
+                  <stop offset="0%"   stop-color="#FCD34D"/>
+                  <stop offset="45%"  stop-color="#D97706"/>
+                  <stop offset="100%" stop-color="#78350F"/>
+                </radialGradient>
+                <!-- Chibi foliage: bright candy-ball (light center → medium edge, NO dark) -->
+                <radialGradient id="rw3-f0" cx="36%" cy="30%" r="64%">
+                  <stop offset="0%"   stop-color="#ECFDF5"/>
+                  <stop offset="100%" stop-color="#86EFAC"/>
+                </radialGradient>
+                <radialGradient id="rw3-f1" cx="36%" cy="30%" r="64%">
+                  <stop offset="0%"   stop-color="#D1FAE5"/>
+                  <stop offset="100%" stop-color="#4ADE80"/>
+                </radialGradient>
+                <radialGradient id="rw3-f2" cx="36%" cy="30%" r="64%">
+                  <stop offset="0%"   stop-color="#A7F3D0"/>
+                  <stop offset="100%" stop-color="#22C55E"/>
+                </radialGradient>
+                <radialGradient id="rw3-f3" cx="36%" cy="30%" r="64%">
+                  <stop offset="0%"   stop-color="#86EFAC"/>
+                  <stop offset="100%" stop-color="#16A34A"/>
+                </radialGradient>
+                <radialGradient id="rw3-f4" cx="36%" cy="30%" r="64%">
+                  <stop offset="0%"   stop-color="#6EE7B7"/>
+                  <stop offset="100%" stop-color="#15803D"/>
+                </radialGradient>
+                <radialGradient id="rw3-f5" cx="36%" cy="30%" r="64%">
+                  <stop offset="0%"   stop-color="#A7F3D0"/>
+                  <stop offset="100%" stop-color="#059669"/>
+                </radialGradient>
+                <!-- Fruits: bright cute gradients -->
+                <radialGradient id="rw3-fr" cx="36%" cy="28%" r="62%">
+                  <stop offset="0%"   stop-color="#FCA5A5"/>
+                  <stop offset="100%" stop-color="#DC2626"/>
+                </radialGradient>
+                <radialGradient id="rw3-fo" cx="36%" cy="28%" r="62%">
+                  <stop offset="0%"   stop-color="#FED7AA"/>
+                  <stop offset="100%" stop-color="#EA580C"/>
+                </radialGradient>
+                <radialGradient id="rw3-fy" cx="36%" cy="28%" r="62%">
+                  <stop offset="0%"   stop-color="#FEF9C3"/>
+                  <stop offset="100%" stop-color="#CA8A04"/>
+                </radialGradient>
+                <radialGradient id="rw3-gs" cx="50%" cy="40%" r="50%">
+                  <stop offset="0%"   stop-color="rgba(0,0,0,0.22)"/>
+                  <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+                </radialGradient>
+              </defs>
 
-              <!-- Animated tree wrapper -->
+              <ellipse cx="60" cy="126" rx="38" ry="5.5" fill="url(#rw3-gs)"/>
+
               <g>
                 <animateTransform attributeName="transform" type="rotate"
-                  values="-1.2 60 119; 1.2 60 119; -1.2 60 119"
-                  keyTimes="0;0.5;1" dur="4s" repeatCount="indefinite"
+                  values="-2 60 119; 2 60 119; -2 60 119"
+                  keyTimes="0;0.5;1" dur="3s" repeatCount="indefinite"
                   calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
 
-                <!-- Stage 0: seed -->
-                <g v-if="treeData.stage === 0">
-                  <ellipse cx="60" cy="117" rx="6" ry="4" fill="#6EE7B7"/>
-                  <line x1="60" y1="115" x2="53" y2="108" stroke="#4ADE80" stroke-width="2" stroke-linecap="round"/>
-                  <line x1="60" y1="115" x2="67" y2="108" stroke="#22C55E" stroke-width="2" stroke-linecap="round"/>
-                  <ellipse cx="51" cy="106" rx="5" ry="3.5" fill="#4ADE80" transform="rotate(-25,51,106)"/>
-                  <ellipse cx="69" cy="106" rx="5" ry="3.5" fill="#22C55E" transform="rotate(25,69,106)"/>
+                <!-- ── Stage 0: chibi sprout ── -->
+                <g v-if="viewData.stage === 0">
+                  <ellipse cx="60" cy="121" rx="14" ry="5.5" fill="#B45309" stroke="#78350F" stroke-width="1.5"/>
+                  <path d="M60 121 Q59 115 61 108" stroke="#22C55E" stroke-width="3" fill="none" stroke-linecap="round"/>
+                  <!-- Left leaf -->
+                  <ellipse cx="51" cy="114" rx="9" ry="6" fill="url(#rw3-f1)" stroke="#22C55E" stroke-width="1.5" transform="rotate(-35 51 114)"/>
+                  <circle cx="48.5" cy="111" r="2" fill="rgba(255,255,255,0.65)"/>
+                  <!-- Right leaf -->
+                  <ellipse cx="69" cy="112" rx="9" ry="6" fill="url(#rw3-f0)" stroke="#22C55E" stroke-width="1.5" transform="rotate(35 69 112)"/>
+                  <circle cx="66.5" cy="109" r="2" fill="rgba(255,255,255,0.65)"/>
+                  <!-- Top bud -->
+                  <circle cx="60" cy="104" r="6.5" fill="url(#rw3-f0)" stroke="#22C55E" stroke-width="1.5"/>
+                  <circle cx="57.5" cy="101.5" r="2.2" fill="rgba(255,255,255,0.7)"/>
                 </g>
 
-                <!-- Trunk -->
-                <g v-if="treeData.stage >= 1">
-                  <rect x="56" :y="treeData.trunkTop" width="8"
-                        :height="115 - treeData.trunkTop" rx="3" fill="#92400E"/>
-                  <line x1="59" :y1="(treeData.trunkTop||90)+6" x2="59" y2="112"
-                        stroke="#78350F" stroke-width="1" opacity="0.4"/>
+                <!-- ── Trunk (stage 1+): chibi rounded rect ── -->
+                <g v-if="viewData.stage >= 1">
+                  <!-- Shadow -->
+                  <rect :x="58" :y="viewData.trunkTop+2" width="7" :height="119-viewData.trunkTop" rx="3.5" fill="#78350F" opacity="0.35"/>
+                  <!-- Main trunk -->
+                  <rect :x="56" :y="viewData.trunkTop" width="8" :height="119-viewData.trunkTop" rx="4" fill="url(#rw3-trunk)" stroke="#78350F" stroke-width="1.5"/>
+                  <!-- Shine streak -->
+                  <rect :x="58" :y="viewData.trunkTop+5" width="2.5" :height="Math.max(4, Math.round((119-viewData.trunkTop)*0.38))" rx="1.5" fill="rgba(255,255,255,0.32)"/>
                 </g>
 
-                <!-- Stage 1: bush -->
-                <g v-if="treeData.stage === 1">
-                  <circle cx="47" cy="98" r="10" fill="#16A34A"/>
-                  <circle cx="73" cy="98" r="10" fill="#16A34A"/>
-                  <circle cx="60" cy="88" r="15" fill="#22C55E">
-                    <animate attributeName="r" values="15;16.5;15" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                  </circle>
-                  <circle cx="60" cy="77" r="11" fill="#4ADE80">
-                    <animate attributeName="r" values="11;12.5;11" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                  </circle>
+                <!-- ── Roots (stage 2+): cute rounded ── -->
+                <g v-if="viewData.stage >= 2">
+                  <path d="M56 118 Q44 118 35 123" stroke="#78350F" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+                  <path d="M64 118 Q76 118 85 123" stroke="#78350F" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+                  <path d="M55 119 Q47 121 40 125" stroke="#92400E" stroke-width="3"   fill="none" stroke-linecap="round"/>
+                  <path d="M65 119 Q73 121 80 125" stroke="#92400E" stroke-width="3"   fill="none" stroke-linecap="round"/>
                 </g>
 
-                <!-- Stage 2+: layered leaves -->
-                <g v-if="treeData.stage >= 2">
-                  <ellipse cx="60" cy="107" rx="30" ry="12" fill="#15803D"/>
-                  <ellipse cx="60" cy="99" rx="24" ry="11" fill="#16A34A">
-                    <animate attributeName="rx" values="24;26;24" dur="3.5s" repeatCount="indefinite" begin="0.2s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                  </ellipse>
-                  <ellipse cx="60" cy="90" rx="19" ry="10" fill="#22C55E">
-                    <animate attributeName="rx" values="19;21;19" dur="3s" repeatCount="indefinite" begin="0.5s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                  </ellipse>
-                  <circle cx="60" cy="79" r="13" fill="#22C55E">
-                    <animate attributeName="r" values="13;14.5;13" dur="2.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                <!-- ── Stage 1: chibi sapling ── -->
+                <g v-if="viewData.stage === 1">
+                  <!-- Side balls -->
+                  <circle cx="43" cy="96" r="14" fill="url(#rw3-f3)" stroke="#15803D" stroke-width="2"/>
+                  <circle cx="40" cy="93"  r="4.5" fill="rgba(255,255,255,0.6)"/>
+                  <circle cx="77" cy="95" r="14" fill="url(#rw3-f3)" stroke="#15803D" stroke-width="2"/>
+                  <circle cx="74" cy="92"  r="4.5" fill="rgba(255,255,255,0.6)"/>
+                  <!-- Main crown -->
+                  <circle cx="60" cy="84" r="20" fill="url(#rw3-f2)" stroke="#16A34A" stroke-width="2">
+                    <animate attributeName="r" values="20;21.5;20" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
                   </circle>
-                  <circle cx="60" cy="69" r="10" fill="#4ADE80" v-if="treeData.stage === 2">
-                    <animate attributeName="r" values="10;11.5;10" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  <circle cx="53" cy="77" r="6.5" fill="rgba(255,255,255,0.58)"/>
+                  <circle cx="66" cy="88" r="2.5" fill="#16A34A" opacity="0.4"/>
+                  <circle cx="55" cy="91" r="2"   fill="#16A34A" opacity="0.35"/>
+                  <!-- Upper -->
+                  <circle cx="61" cy="68" r="15" fill="url(#rw3-f1)" stroke="#22C55E" stroke-width="2">
+                    <animate attributeName="r" values="15;16.5;15" dur="2.7s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
                   </circle>
+                  <circle cx="55" cy="62" r="4.5" fill="rgba(255,255,255,0.62)"/>
+                  <!-- Top -->
+                  <circle cx="61" cy="55" r="11" fill="url(#rw3-f0)" stroke="#22C55E" stroke-width="2">
+                    <animate attributeName="r" values="11;12.5;11" dur="2.4s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </circle>
+                  <circle cx="56" cy="50" r="3.5" fill="rgba(255,255,255,0.68)"/>
                 </g>
 
-                <!-- Stage 3+ -->
-                <g v-if="treeData.stage >= 3">
-                  <ellipse cx="60" cy="69" rx="15" ry="9" fill="#22C55E">
-                    <animate attributeName="rx" values="15;17;15" dur="3.2s" repeatCount="indefinite" begin="0.3s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                  </ellipse>
-                  <circle cx="60" cy="59" r="11" :fill="treeData.stage === 3 ? '#4ADE80' : '#22C55E'">
-                    <animate attributeName="r" values="11;12.5;11" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                <!-- ── Stage 2: chibi small tree + flowers ── -->
+                <g v-if="viewData.stage === 2">
+                  <!-- Back balls -->
+                  <circle cx="38" cy="95" r="17" fill="url(#rw3-f4)" stroke="#15803D" stroke-width="2"/>
+                  <circle cx="34" cy="91" r="5"   fill="rgba(255,255,255,0.5)"/>
+                  <circle cx="82" cy="93" r="17" fill="url(#rw3-f4)" stroke="#15803D" stroke-width="2"/>
+                  <circle cx="78" cy="89" r="5"   fill="rgba(255,255,255,0.5)"/>
+                  <!-- Mid -->
+                  <circle cx="44" cy="82" r="18" fill="url(#rw3-f3)" stroke="#15803D" stroke-width="2"/>
+                  <circle cx="76" cy="80" r="18" fill="url(#rw3-f3)" stroke="#15803D" stroke-width="2"/>
+                  <!-- Main -->
+                  <circle cx="60" cy="86" r="23" fill="url(#rw3-f3)" stroke="#16A34A" stroke-width="2">
+                    <animate attributeName="r" values="23;24.5;23" dur="3.5s" repeatCount="indefinite" begin="0.2s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
                   </circle>
+                  <circle cx="51" cy="77" r="7"   fill="rgba(255,255,255,0.52)"/>
+                  <circle cx="67" cy="90" r="2.8" fill="#16A34A" opacity="0.4"/>
+                  <!-- Upper -->
+                  <circle cx="60" cy="69" r="19" fill="url(#rw3-f2)" stroke="#22C55E" stroke-width="2">
+                    <animate attributeName="r" values="19;20.5;19" dur="3s" repeatCount="indefinite" begin="0.5s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </circle>
+                  <circle cx="52" cy="61" r="5.8" fill="rgba(255,255,255,0.56)"/>
+                  <!-- Crown -->
+                  <circle cx="61" cy="53" r="15" fill="url(#rw3-f1)" stroke="#22C55E" stroke-width="2">
+                    <animate attributeName="r" values="15;16.5;15" dur="2.7s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </circle>
+                  <circle cx="55" cy="46" r="4.5" fill="rgba(255,255,255,0.62)"/>
+                  <!-- Top -->
+                  <circle cx="61" cy="40" r="11" fill="url(#rw3-f0)" stroke="#22C55E" stroke-width="2">
+                    <animate attributeName="r" values="11;12.5;11" dur="2.4s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </circle>
+                  <circle cx="56" cy="34" r="3.5" fill="rgba(255,255,255,0.68)"/>
+                  <!-- Cute flowers -->
+                  <g><ellipse cx="35" cy="86" rx="3.5" ry="5.5" fill="#FBCFE8"/><ellipse cx="35" cy="86" rx="5.5" ry="3.5" fill="#FBCFE8"/><circle cx="35" cy="86" r="3" fill="#FDE047"/><circle cx="34" cy="85" r="0.9" fill="rgba(255,255,255,0.8)"/></g>
+                  <g><ellipse cx="85" cy="84" rx="3.5" ry="5.5" fill="#FBCFE8"/><ellipse cx="85" cy="84" rx="5.5" ry="3.5" fill="#FBCFE8"/><circle cx="85" cy="84" r="3" fill="#FDE047"/><circle cx="84" cy="83" r="0.9" fill="rgba(255,255,255,0.8)"/></g>
+                  <g><ellipse cx="46" cy="71" rx="3"   ry="4.5" fill="#BAE6FD"/><ellipse cx="46" cy="71" rx="4.5" ry="3"   fill="#BAE6FD"/><circle cx="46" cy="71" r="2.5" fill="#FBBF24"/><circle cx="45" cy="70" r="0.8" fill="rgba(255,255,255,0.8)"/></g>
                 </g>
 
-                <!-- Stage 4+: fruits -->
-                <g v-if="treeData.stage >= 4">
-                  <circle cx="43" cy="102" r="3.5" fill="#EF4444"><animate attributeName="r" values="3.5;4.3;3.5" dur="2.1s" repeatCount="indefinite" begin="0s"/></circle>
-                  <circle cx="77" cy="100" r="3.5" fill="#F97316"><animate attributeName="r" values="3.5;4.3;3.5" dur="2.1s" repeatCount="indefinite" begin="0.5s"/></circle>
-                  <circle cx="47" cy="89"  r="3"   fill="#FBBF24"><animate attributeName="r" values="3;3.8;3"     dur="2.4s" repeatCount="indefinite" begin="0.9s"/></circle>
-                  <circle cx="73" cy="87"  r="3"   fill="#EF4444"><animate attributeName="r" values="3;3.8;3"     dur="2.4s" repeatCount="indefinite" begin="1.3s"/></circle>
-                  <circle cx="52" cy="77"  r="2.5" fill="#F97316"><animate attributeName="r" values="2.5;3.2;2.5" dur="2.2s" repeatCount="indefinite" begin="0.4s"/></circle>
-                  <circle cx="68" cy="75"  r="2.5" fill="#FBBF24"><animate attributeName="r" values="2.5;3.2;2.5" dur="2.2s" repeatCount="indefinite" begin="1s"/></circle>
-                  <ellipse cx="60" cy="50" rx="13" ry="8" fill="#22C55E">
-                    <animate attributeName="rx" values="13;15;13" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                  </ellipse>
-                  <circle cx="60" cy="41" r="9" fill="#4ADE80">
-                    <animate attributeName="r" values="9;10.5;9" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                <!-- ── Stage 3+: large chibi canopy ── -->
+                <g v-if="viewData.stage >= 3">
+                  <!-- Far back -->
+                  <circle cx="30" cy="97" r="19" fill="url(#rw3-f5)" stroke="#059669" stroke-width="2"/>
+                  <circle cx="26" cy="93" r="5.5" fill="rgba(255,255,255,0.44)"/>
+                  <circle cx="90" cy="95" r="19" fill="url(#rw3-f5)" stroke="#059669" stroke-width="2"/>
+                  <circle cx="86" cy="91" r="5.5" fill="rgba(255,255,255,0.44)"/>
+                  <!-- Inner back -->
+                  <circle cx="41" cy="84" r="21" fill="url(#rw3-f4)" stroke="#15803D" stroke-width="2"/>
+                  <circle cx="80" cy="82" r="21" fill="url(#rw3-f4)" stroke="#15803D" stroke-width="2"/>
+                  <!-- Main base -->
+                  <circle cx="60" cy="90" r="27" fill="url(#rw3-f4)" stroke="#15803D" stroke-width="2">
+                    <animate attributeName="r" values="27;28.5;27" dur="3.5s" repeatCount="indefinite" begin="0.2s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
                   </circle>
+                  <circle cx="49" cy="78" r="8.5" fill="rgba(255,255,255,0.46)"/>
+                  <circle cx="68" cy="93" r="3.5" fill="#15803D" opacity="0.38"/>
+                  <!-- Front mid clusters -->
+                  <circle cx="43" cy="75" r="21" fill="url(#rw3-f3)" stroke="#16A34A" stroke-width="2"/>
+                  <circle cx="37" cy="67" r="6.5" fill="rgba(255,255,255,0.5)"/>
+                  <circle cx="77" cy="73" r="21" fill="url(#rw3-f3)" stroke="#16A34A" stroke-width="2"/>
+                  <circle cx="71" cy="65" r="6.5" fill="rgba(255,255,255,0.5)"/>
+                  <!-- Centre front -->
+                  <circle cx="60" cy="75" r="24" fill="url(#rw3-f3)" stroke="#16A34A" stroke-width="2">
+                    <animate attributeName="r" values="24;25.5;24" dur="3s" repeatCount="indefinite" begin="0.5s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </circle>
+                  <circle cx="49" cy="65" r="7.5" fill="rgba(255,255,255,0.47)"/>
+                  <!-- Upper -->
+                  <circle cx="60" cy="58" r="21" fill="url(#rw3-f2)" stroke="#22C55E" stroke-width="2">
+                    <animate attributeName="r" values="21;22.5;21" dur="3.2s" repeatCount="indefinite" begin="0.3s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </circle>
+                  <circle cx="50" cy="48" r="6.5" fill="rgba(255,255,255,0.5)"/>
+                  <!-- Flowers (stage 3+ base) -->
+                  <g><ellipse cx="27" cy="88" rx="4" ry="6"   fill="#FBCFE8"/><ellipse cx="27" cy="88" rx="6"   ry="4" fill="#FBCFE8"/><circle cx="27" cy="88" r="3.5" fill="#FDE047"/><circle cx="26" cy="87" r="1"   fill="rgba(255,255,255,0.8)"/></g>
+                  <g><ellipse cx="93" cy="86" rx="4" ry="6"   fill="#FBCFE8"/><ellipse cx="93" cy="86" rx="6"   ry="4" fill="#FBCFE8"/><circle cx="93" cy="86" r="3.5" fill="#FDE047"/><circle cx="92" cy="85" r="1"   fill="rgba(255,255,255,0.8)"/></g>
+                  <g><ellipse cx="40" cy="63" rx="3.5" ry="5.5" fill="#BAE6FD"/><ellipse cx="40" cy="63" rx="5.5" ry="3.5" fill="#BAE6FD"/><circle cx="40" cy="63" r="3"   fill="#FBBF24"/><circle cx="39" cy="62" r="0.8" fill="rgba(255,255,255,0.8)"/></g>
+                  <g><ellipse cx="80" cy="61" rx="3.5" ry="5.5" fill="#FCA5A5"/><ellipse cx="80" cy="61" rx="5.5" ry="3.5" fill="#FCA5A5"/><circle cx="80" cy="61" r="3"   fill="#FDE047"/><circle cx="79" cy="60" r="0.8" fill="rgba(255,255,255,0.8)"/></g>
+                  <!-- Stage 3 specific top -->
+                  <g v-if="viewData.stage === 3">
+                    <circle cx="61" cy="41" r="17" fill="url(#rw3-f1)" stroke="#22C55E" stroke-width="2">
+                      <animate attributeName="r" values="17;18.5;17" dur="2.7s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                    </circle>
+                    <circle cx="53" cy="33" r="5.5" fill="rgba(255,255,255,0.58)"/>
+                    <circle cx="61" cy="26" r="12" fill="url(#rw3-f0)" stroke="#22C55E" stroke-width="2">
+                      <animate attributeName="r" values="12;13.5;12" dur="2.4s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                    </circle>
+                    <circle cx="56" cy="20" r="3.8" fill="rgba(255,255,255,0.68)"/>
+                    <g><ellipse cx="74" cy="34" rx="3" ry="4.5" fill="#FBCFE8"/><ellipse cx="74" cy="34" rx="4.5" ry="3" fill="#FBCFE8"/><circle cx="74" cy="34" r="2.5" fill="#FDE047"/></g>
+                  </g>
                 </g>
 
-                <!-- Stage 5: ancient + twinkling stars -->
-                <g v-if="treeData.stage >= 5">
-                  <ellipse cx="33" cy="76" rx="11" ry="8" fill="#4ADE80" opacity="0.85" transform="rotate(-20,33,76)"/>
-                  <ellipse cx="87" cy="73" rx="11" ry="8" fill="#4ADE80" opacity="0.85" transform="rotate(20,87,73)"/>
-                  <circle cx="60" cy="31" r="7" fill="#86EFAC">
-                    <animate attributeName="r" values="7;9;7" dur="2s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                <!-- ── Stage 4+: chibi fruits + tall crown ── -->
+                <g v-if="viewData.stage >= 4">
+                  <!-- Cute fruits with stroke + highlight -->
+                  <line x1="36" y1="100" x2="37" y2="105" stroke="#78350F" stroke-width="1.5"/><circle cx="37"  cy="108" r="6.5" fill="url(#rw3-fr)" stroke="#DC2626" stroke-width="1.2"/><circle cx="35"  cy="105.5" r="2"   fill="rgba(255,255,255,0.65)"/>
+                  <line x1="84" y1="98"  x2="83" y2="103" stroke="#78350F" stroke-width="1.5"/><circle cx="83"  cy="106" r="6.5" fill="url(#rw3-fo)" stroke="#EA580C" stroke-width="1.2"/><circle cx="81"  cy="103.5" r="2"   fill="rgba(255,255,255,0.65)"/>
+                  <line x1="40" y1="83"  x2="41" y2="88"  stroke="#78350F" stroke-width="1.3"/><circle cx="41"  cy="91"  r="5.5" fill="url(#rw3-fy)" stroke="#CA8A04" stroke-width="1.2"/><circle cx="39.5" cy="88.5" r="1.7" fill="rgba(255,255,255,0.6)"/>
+                  <line x1="80" y1="81"  x2="79" y2="86"  stroke="#78350F" stroke-width="1.3"/><circle cx="79"  cy="89"  r="5.5" fill="url(#rw3-fr)" stroke="#DC2626" stroke-width="1.2"/><circle cx="77.5" cy="86.5" r="1.7" fill="rgba(255,255,255,0.6)"/>
+                  <line x1="47" y1="66"  x2="48" y2="71"  stroke="#78350F" stroke-width="1.2"/><circle cx="48"  cy="74"  r="5"   fill="url(#rw3-fo)" stroke="#EA580C" stroke-width="1.1"/><circle cx="46.5" cy="71.5" r="1.5" fill="rgba(255,255,255,0.58)"/>
+                  <line x1="73" y1="64"  x2="72" y2="69"  stroke="#78350F" stroke-width="1.2"/><circle cx="72"  cy="72"  r="5"   fill="url(#rw3-fy)" stroke="#CA8A04" stroke-width="1.1"/><circle cx="70.5" cy="69.5" r="1.5" fill="rgba(255,255,255,0.58)"/>
+                  <line x1="53" y1="50"  x2="54" y2="55"  stroke="#78350F" stroke-width="1.1"/><circle cx="54"  cy="58"  r="4.5" fill="url(#rw3-fr)" stroke="#DC2626" stroke-width="1"/><circle cx="52.5" cy="55.5" r="1.3" fill="rgba(255,255,255,0.58)"/>
+                  <line x1="67" y1="51"  x2="66" y2="56"  stroke="#78350F" stroke-width="1.1"/><circle cx="66"  cy="59"  r="4.5" fill="url(#rw3-fo)" stroke="#EA580C" stroke-width="1"/><circle cx="64.5" cy="56.5" r="1.3" fill="rgba(255,255,255,0.58)"/>
+                  <!-- Stage 4 crown -->
+                  <g v-if="viewData.stage === 4">
+                    <circle cx="44" cy="48" r="17" fill="url(#rw3-f2)" stroke="#22C55E" stroke-width="2"/>
+                    <circle cx="38" cy="40" r="5"   fill="rgba(255,255,255,0.52)"/>
+                    <circle cx="76" cy="46" r="17" fill="url(#rw3-f2)" stroke="#22C55E" stroke-width="2"/>
+                    <circle cx="70" cy="38" r="5"   fill="rgba(255,255,255,0.52)"/>
+                    <circle cx="60" cy="36" r="21" fill="url(#rw3-f1)" stroke="#22C55E" stroke-width="2">
+                      <animate attributeName="r" values="21;22.5;21" dur="2.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                    </circle>
+                    <circle cx="50" cy="25" r="6.5" fill="rgba(255,255,255,0.54)"/>
+                    <circle cx="60" cy="17" r="14" fill="url(#rw3-f0)" stroke="#22C55E" stroke-width="2">
+                      <animate attributeName="r" values="14;15.5;14" dur="2.4s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                    </circle>
+                    <circle cx="54" cy="10" r="4.5" fill="rgba(255,255,255,0.65)"/>
+                    <g><ellipse cx="32" cy="40" rx="3.5" ry="5.5" fill="#FBCFE8"/><ellipse cx="32" cy="40" rx="5.5" ry="3.5" fill="#FBCFE8"/><circle cx="32" cy="40" r="3" fill="#FDE047"/></g>
+                    <g><ellipse cx="88" cy="38" rx="3.5" ry="5.5" fill="#BAE6FD"/><ellipse cx="88" cy="38" rx="5.5" ry="3.5" fill="#BAE6FD"/><circle cx="88" cy="38" r="3" fill="#FDE047"/></g>
+                    <g><ellipse cx="53" cy="26" rx="3"   ry="4.5" fill="#FCA5A5"/><ellipse cx="53" cy="26" rx="4.5" ry="3"   fill="#FCA5A5"/><circle cx="53" cy="26" r="2.5" fill="#FDE047"/></g>
+                  </g>
+                </g>
+
+                <!-- ── Stage 5: ancient magical chibi ── -->
+                <g v-if="viewData.stage >= 5">
+                  <path d="M53 102 Q36 97 21 104" stroke="#78350F" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                  <path d="M67 100 Q84 95 99 102" stroke="#78350F" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                  <!-- Far-side chibi blobs -->
+                  <circle cx="19"  cy="100" r="21" fill="url(#rw3-f5)" stroke="#047857" stroke-width="2"/>
+                  <circle cx="13"  cy="93"  r="6.5" fill="rgba(255,255,255,0.42)"/>
+                  <circle cx="101" cy="98"  r="21" fill="url(#rw3-f5)" stroke="#047857" stroke-width="2"/>
+                  <circle cx="95"  cy="91"  r="6.5" fill="rgba(255,255,255,0.42)"/>
+                  <!-- Grand centre crown -->
+                  <circle cx="44" cy="47" r="19" fill="url(#rw3-f5)" stroke="#047857" stroke-width="2"/>
+                  <circle cx="37" cy="39" r="5.8" fill="rgba(255,255,255,0.46)"/>
+                  <circle cx="76" cy="45" r="19" fill="url(#rw3-f5)" stroke="#047857" stroke-width="2"/>
+                  <circle cx="69" cy="37" r="5.8" fill="rgba(255,255,255,0.46)"/>
+                  <circle cx="60" cy="34" r="23" fill="url(#rw3-f5)" stroke="#047857" stroke-width="2">
+                    <animate attributeName="r" values="23;25;23" dur="2.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
                   </circle>
+                  <circle cx="49" cy="22" r="7"   fill="rgba(255,255,255,0.46)"/>
+                  <circle cx="60" cy="15" r="15" fill="url(#rw3-f5)" stroke="#047857" stroke-width="2">
+                    <animate attributeName="r" values="15;17;15" dur="2.3s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+                  </circle>
+                  <circle cx="53" cy="7"  r="4.8" fill="rgba(255,255,255,0.5)"/>
+                  <!-- Many flowers (magical) -->
+                  <g><ellipse cx="7"   cy="91" rx="4"   ry="6"   fill="#FBCFE8"/><ellipse cx="7"   cy="91" rx="6"   ry="4"   fill="#FBCFE8"/><circle cx="7"   cy="91" r="3.5" fill="#FDE047"/><circle cx="6"   cy="90" r="1"   fill="rgba(255,255,255,0.8)"/></g>
+                  <g><ellipse cx="113" cy="89" rx="4"   ry="6"   fill="#BAE6FD"/><ellipse cx="113" cy="89" rx="6"   ry="4"   fill="#BAE6FD"/><circle cx="113" cy="89" r="3.5" fill="#FDE047"/><circle cx="112" cy="88" r="1"   fill="rgba(255,255,255,0.8)"/></g>
+                  <g><ellipse cx="32"  cy="35" rx="3.5" ry="5.5" fill="#FCA5A5"/><ellipse cx="32"  cy="35" rx="5.5" ry="3.5" fill="#FCA5A5"/><circle cx="32"  cy="35" r="3"   fill="#FDE047"/></g>
+                  <g><ellipse cx="89"  cy="33" rx="3.5" ry="5.5" fill="#FBCFE8"/><ellipse cx="89"  cy="33" rx="5.5" ry="3.5" fill="#FBCFE8"/><circle cx="89"  cy="33" r="3"   fill="#A78BFA"/></g>
+                  <g><ellipse cx="50"  cy="19" rx="3"   ry="4.5" fill="#BAE6FD"/><ellipse cx="50"  cy="19" rx="4.5" ry="3"   fill="#BAE6FD"/><circle cx="50"  cy="19" r="2.5" fill="#FDE047"/></g>
+                  <!-- Chibi sparkle stars -->
                   <g>
-                    <line x1="14" y1="57" x2="22" y2="65" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
-                    <line x1="22" y1="57" x2="14" y2="65" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
-                    <circle cx="18" cy="61" r="2.5" fill="#FEF08A">
-                      <animate attributeName="r"       values="2.5;4;2.5" dur="1.8s" repeatCount="indefinite"/>
+                    <circle cx="8" cy="63" r="3.5" fill="#FEF08A" stroke="#FCD34D" stroke-width="1">
+                      <animate attributeName="r"       values="3.5;5;3.5" dur="1.8s" repeatCount="indefinite"/>
                       <animate attributeName="opacity" values="1;0.2;1"   dur="1.8s" repeatCount="indefinite"/>
                     </circle>
+                    <line x1="5" y1="60" x2="11" y2="66" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
+                    <line x1="11" y1="60" x2="5" y2="66" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
+                    <line x1="8" y1="58" x2="8" y2="68" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
                   </g>
                   <g>
-                    <line x1="96" y1="50" x2="104" y2="58" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.8s" repeatCount="indefinite"/></line>
-                    <line x1="104" y1="50" x2="96" y2="58" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.8s" repeatCount="indefinite"/></line>
-                    <circle cx="100" cy="54" r="2" fill="#FEF08A">
-                      <animate attributeName="r"       values="2;3.5;2" dur="1.8s" repeatCount="indefinite" begin="0.9s"/>
+                    <circle cx="112" cy="57" r="3" fill="#FEF08A" stroke="#FCD34D" stroke-width="1">
+                      <animate attributeName="r"       values="3;4.5;3"   dur="1.8s" repeatCount="indefinite" begin="0.9s"/>
                       <animate attributeName="opacity" values="0.2;1;0.2" dur="1.8s" repeatCount="indefinite" begin="0.9s"/>
                     </circle>
+                    <line x1="109" y1="54" x2="115" y2="60" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="0.1;1;0.1" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></line>
+                    <line x1="115" y1="54" x2="109" y2="60" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="0.1;1;0.1" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></line>
+                    <line x1="112" y1="52" x2="112" y2="62" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="0.1;1;0.1" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></line>
                   </g>
                 </g>
 
-                <!-- Floating particles (stage 2+) -->
-                <g v-if="treeData.stage >= 2">
-                  <circle cx="52" cy="78" r="2" fill="#4ADE80" opacity="0">
-                    <animate attributeName="cy"      values="78;52;28"   dur="4s"   repeatCount="indefinite" begin="0s"/>
-                    <animate attributeName="cx"      values="52;48;44"   dur="4s"   repeatCount="indefinite" begin="0s"/>
-                    <animate attributeName="opacity" values="0;0.85;0"   dur="4s"   repeatCount="indefinite" begin="0s"/>
+                <!-- Cute floating particles (stage 2+): pink, blue, yellow -->
+                <g v-if="viewData.stage >= 2">
+                  <circle cx="52" cy="78" r="2.8" fill="#FBCFE8" opacity="0">
+                    <animate attributeName="cy"      values="78;52;26" dur="4s"   repeatCount="indefinite" begin="0s"/>
+                    <animate attributeName="cx"      values="52;47;42" dur="4s"   repeatCount="indefinite" begin="0s"/>
+                    <animate attributeName="opacity" values="0;0.9;0"  dur="4s"   repeatCount="indefinite" begin="0s"/>
                   </circle>
-                  <circle cx="68" cy="82" r="1.5" fill="#86EFAC" opacity="0">
-                    <animate attributeName="cy"      values="82;58;34"   dur="3.6s" repeatCount="indefinite" begin="1.4s"/>
-                    <animate attributeName="cx"      values="68;72;76"   dur="3.6s" repeatCount="indefinite" begin="1.4s"/>
-                    <animate attributeName="opacity" values="0;0.7;0"    dur="3.6s" repeatCount="indefinite" begin="1.4s"/>
+                  <circle cx="68" cy="82" r="2.2" fill="#BAE6FD" opacity="0">
+                    <animate attributeName="cy"      values="82;58;34"  dur="3.6s" repeatCount="indefinite" begin="1.5s"/>
+                    <animate attributeName="cx"      values="68;73;78"  dur="3.6s" repeatCount="indefinite" begin="1.5s"/>
+                    <animate attributeName="opacity" values="0;0.88;0"  dur="3.6s" repeatCount="indefinite" begin="1.5s"/>
                   </circle>
-                  <circle cx="60" cy="72" r="1.5" fill="#A7F3D0" opacity="0">
-                    <animate attributeName="cy"      values="72;48;24"   dur="5s"   repeatCount="indefinite" begin="0.8s"/>
-                    <animate attributeName="opacity" values="0;0.65;0"   dur="5s"   repeatCount="indefinite" begin="0.8s"/>
+                  <circle cx="60" cy="72" r="2.2" fill="#FDE047" opacity="0">
+                    <animate attributeName="cy"      values="72;48;24" dur="5s"   repeatCount="indefinite" begin="0.9s"/>
+                    <animate attributeName="cx"      values="60;56;52" dur="5s"   repeatCount="indefinite" begin="0.9s"/>
+                    <animate attributeName="opacity" values="0;0.85;0" dur="5s"   repeatCount="indefinite" begin="0.9s"/>
                   </circle>
                 </g>
               </g>
             </svg>
 
-            <div v-if="treeData.stage >= 3" class="rw-float-leaf rw-fl-1">🍃</div>
-            <div v-if="treeData.stage >= 4" class="rw-float-leaf rw-fl-2">🍃</div>
-            <div v-if="treeData.stage >= 5" class="rw-float-leaf rw-fl-3">✨</div>
+            <div v-if="viewData.stage >= 5" class="rw-float-leaf rw-fl-3">✨</div>
           </div>
 
           <div class="rw-tree-prog-bar">
-            <div class="rw-tree-prog-fill" :style="{ width: treeData.progress + '%', background: treeData.color }"></div>
+            <div class="rw-tree-prog-fill" :style="{ width: viewData.progress + '%', background: viewData.color }"></div>
           </div>
           <div class="rw-tree-prog-labels">
             <span>{{ reward.total }} pts</span>
-            <span v-if="treeData.nextPts">อีก {{ treeData.ptsToNext }} pts → {{ treeData.nextName }}</span>
+            <span v-if="viewData.nextPts">อีก {{ viewData.ptsToNext }} pts → {{ viewData.nextName }}</span>
             <span v-else>🎉 ระดับสูงสุด!</span>
+          </div>
+
+          <!-- Level info panel -->
+          <div class="rw-level-panel">
+            <!-- Navigation row -->
+            <div class="rw-stage-nav">
+              <button
+                class="rw-stage-nav-btn"
+                :disabled="viewData.stage === 0"
+                @click="previewStage = viewData.stage - 1"
+              >‹</button>
+              <div class="rw-stage-dots">
+                <div
+                  v-for="s in TREE_STAGES" :key="s.stage"
+                  class="rw-stage-dot"
+                  :title="s.name"
+                  :style="s.stage === viewData.stage
+                    ? { background: s.color, boxShadow: '0 0 8px ' + s.color + 'CC', borderColor: s.color, transform: 'scale(1.4)' }
+                    : s.stage <= treeData.stage
+                      ? { background: s.color + 'BB', borderColor: s.color }
+                      : {}"
+                  @click="setPreview(s.stage)"
+                ></div>
+              </div>
+              <button
+                class="rw-stage-nav-btn"
+                :disabled="viewData.stage === TREE_STAGES.length - 1"
+                @click="previewStage = viewData.stage + 1"
+              >›</button>
+            </div>
+            <div class="rw-level-row">
+              <span class="rw-level-num" :style="{ color: viewData.color }">Lv.{{ viewData.stage + 1 }}/{{ TREE_STAGES.length }}</span>
+              <span class="rw-level-name-txt" :style="{ color: viewData.color }">{{ viewData.name }}</span>
+            </div>
+            <div class="rw-level-desc-txt">{{ viewData.desc }}</div>
+            <div class="rw-level-range-txt">
+              <span v-if="viewData.isPreview && viewData.stage > treeData.stage" style="color:#F59E0B;font-weight:700;">
+                ต้องการอีก {{ Math.max(0, viewData.min - reward.total).toLocaleString() }} pts ·
+              </span>
+              คะแนน {{ viewData.min.toLocaleString() }} – {{ viewData.max === Infinity ? '∞' : viewData.max.toLocaleString() }} pts
+            </div>
           </div>
 
           <button class="rw-tree-share-btn" @click="shareOpen = true">📸 แชร์ต้นไม้</button>
@@ -248,108 +467,253 @@
                 <!-- tree -->
                 <div class="rw-sc-tree-area">
                   <svg class="rw-sc-tree-svg" viewBox="0 0 120 130" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <!-- Chibi trunk: radial, warm amber highlight center → dark brown edge -->
+                      <radialGradient id="rwsc-trunk" cx="35%" cy="30%" r="65%">
+                        <stop offset="0%"   stop-color="#FCD34D"/>
+                        <stop offset="45%"  stop-color="#D97706"/>
+                        <stop offset="100%" stop-color="#78350F"/>
+                      </radialGradient>
+                      <!-- Chibi foliage: candy-ball (bright center → medium edge, NO dark) -->
+                      <radialGradient id="rwsc-f0" cx="36%" cy="30%" r="64%">
+                        <stop offset="0%"   stop-color="#ECFDF5"/>
+                        <stop offset="100%" stop-color="#86EFAC"/>
+                      </radialGradient>
+                      <radialGradient id="rwsc-f1" cx="36%" cy="30%" r="64%">
+                        <stop offset="0%"   stop-color="#D1FAE5"/>
+                        <stop offset="100%" stop-color="#4ADE80"/>
+                      </radialGradient>
+                      <radialGradient id="rwsc-f2" cx="36%" cy="30%" r="64%">
+                        <stop offset="0%"   stop-color="#A7F3D0"/>
+                        <stop offset="100%" stop-color="#22C55E"/>
+                      </radialGradient>
+                      <radialGradient id="rwsc-f3" cx="36%" cy="30%" r="64%">
+                        <stop offset="0%"   stop-color="#86EFAC"/>
+                        <stop offset="100%" stop-color="#16A34A"/>
+                      </radialGradient>
+                      <radialGradient id="rwsc-f4" cx="36%" cy="30%" r="64%">
+                        <stop offset="0%"   stop-color="#6EE7B7"/>
+                        <stop offset="100%" stop-color="#15803D"/>
+                      </radialGradient>
+                      <radialGradient id="rwsc-f5" cx="36%" cy="30%" r="64%">
+                        <stop offset="0%"   stop-color="#A7F3D0"/>
+                        <stop offset="100%" stop-color="#059669"/>
+                      </radialGradient>
+                      <!-- Fruits: bright cute gradients -->
+                      <radialGradient id="rwsc-fr" cx="36%" cy="28%" r="62%">
+                        <stop offset="0%"   stop-color="#FCA5A5"/>
+                        <stop offset="100%" stop-color="#DC2626"/>
+                      </radialGradient>
+                      <radialGradient id="rwsc-fo" cx="36%" cy="28%" r="62%">
+                        <stop offset="0%"   stop-color="#FED7AA"/>
+                        <stop offset="100%" stop-color="#EA580C"/>
+                      </radialGradient>
+                      <radialGradient id="rwsc-fy" cx="36%" cy="28%" r="62%">
+                        <stop offset="0%"   stop-color="#FEF9C3"/>
+                        <stop offset="100%" stop-color="#CA8A04"/>
+                      </radialGradient>
+                      <radialGradient id="rwsc-gs" cx="50%" cy="40%" r="50%">
+                        <stop offset="0%"   stop-color="rgba(0,0,0,0.22)"/>
+                        <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+                      </radialGradient>
+                    </defs>
+
+                    <!-- Grass + ground shadow -->
                     <ellipse cx="60" cy="122" rx="46" ry="9" fill="#BBF7D0"/>
                     <ellipse cx="60" cy="119" rx="38" ry="5" fill="#86EFAC"/>
+                    <ellipse cx="60" cy="126" rx="36" ry="5" fill="url(#rwsc-gs)"/>
+
                     <g>
                       <animateTransform attributeName="transform" type="rotate"
-                        values="-1.2 60 119; 1.2 60 119; -1.2 60 119"
-                        keyTimes="0;0.5;1" dur="4s" repeatCount="indefinite"
+                        values="-2 60 119; 2 60 119; -2 60 119"
+                        keyTimes="0;0.5;1" dur="3s" repeatCount="indefinite"
                         calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+
+                      <!-- Stage 0: chibi sprout -->
                       <g v-if="treeData.stage === 0">
-                        <ellipse cx="60" cy="117" rx="6" ry="4" fill="#6EE7B7"/>
-                        <line x1="60" y1="115" x2="53" y2="108" stroke="#4ADE80" stroke-width="2" stroke-linecap="round"/>
-                        <line x1="60" y1="115" x2="67" y2="108" stroke="#22C55E" stroke-width="2" stroke-linecap="round"/>
-                        <ellipse cx="51" cy="106" rx="5" ry="3.5" fill="#4ADE80" transform="rotate(-25,51,106)"/>
-                        <ellipse cx="69" cy="106" rx="5" ry="3.5" fill="#22C55E" transform="rotate(25,69,106)"/>
+                        <ellipse cx="60" cy="121" rx="14" ry="5.5" fill="#B45309" stroke="#78350F" stroke-width="1.5"/>
+                        <path d="M60 121 Q59 115 61 108" stroke="#22C55E" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <ellipse cx="51" cy="114" rx="9" ry="6" fill="url(#rwsc-f1)" stroke="#22C55E" stroke-width="1.5" transform="rotate(-35 51 114)"/>
+                        <circle cx="48.5" cy="111" r="2" fill="rgba(255,255,255,0.65)"/>
+                        <ellipse cx="69" cy="112" rx="9" ry="6" fill="url(#rwsc-f0)" stroke="#22C55E" stroke-width="1.5" transform="rotate(35 69 112)"/>
+                        <circle cx="66.5" cy="109" r="2" fill="rgba(255,255,255,0.65)"/>
+                        <circle cx="60" cy="104" r="6.5" fill="url(#rwsc-f0)" stroke="#22C55E" stroke-width="1.5"/>
+                        <circle cx="57.5" cy="101.5" r="2.2" fill="rgba(255,255,255,0.7)"/>
                       </g>
+
+                      <!-- Trunk (stage 1+): chibi rounded rect -->
                       <g v-if="treeData.stage >= 1">
-                        <rect x="56" :y="treeData.trunkTop" width="8" :height="115 - treeData.trunkTop" rx="3" fill="#92400E"/>
-                        <line x1="59" :y1="(treeData.trunkTop||90)+6" x2="59" y2="112" stroke="#78350F" stroke-width="1" opacity="0.4"/>
+                        <rect :x="58" :y="treeData.trunkTop+2" width="7" :height="119-treeData.trunkTop" rx="3.5" fill="#78350F" opacity="0.35"/>
+                        <rect :x="56" :y="treeData.trunkTop" width="8" :height="119-treeData.trunkTop" rx="4" fill="url(#rwsc-trunk)" stroke="#78350F" stroke-width="1.5"/>
+                        <rect :x="58" :y="treeData.trunkTop+5" width="2.5" :height="Math.max(4, Math.round((119-treeData.trunkTop)*0.38))" rx="1.5" fill="rgba(255,255,255,0.32)"/>
                       </g>
-                      <g v-if="treeData.stage === 1">
-                        <circle cx="47" cy="98" r="10" fill="#16A34A"/>
-                        <circle cx="73" cy="98" r="10" fill="#16A34A"/>
-                        <circle cx="60" cy="88" r="15" fill="#22C55E">
-                          <animate attributeName="r" values="15;16.5;15" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                        </circle>
-                        <circle cx="60" cy="77" r="11" fill="#4ADE80">
-                          <animate attributeName="r" values="11;12.5;11" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                        </circle>
-                      </g>
+
+                      <!-- Roots (stage 2+): cute rounded -->
                       <g v-if="treeData.stage >= 2">
-                        <ellipse cx="60" cy="107" rx="30" ry="12" fill="#15803D"/>
-                        <ellipse cx="60" cy="99" rx="24" ry="11" fill="#16A34A">
-                          <animate attributeName="rx" values="24;26;24" dur="3.5s" repeatCount="indefinite" begin="0.2s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                        </ellipse>
-                        <ellipse cx="60" cy="90" rx="19" ry="10" fill="#22C55E">
-                          <animate attributeName="rx" values="19;21;19" dur="3s" repeatCount="indefinite" begin="0.5s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                        </ellipse>
-                        <circle cx="60" cy="79" r="13" fill="#22C55E">
-                          <animate attributeName="r" values="13;14.5;13" dur="2.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                        </circle>
-                        <circle cx="60" cy="69" r="10" fill="#4ADE80" v-if="treeData.stage === 2">
-                          <animate attributeName="r" values="10;11.5;10" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                        </circle>
+                        <path d="M56 118 Q44 118 35 123" stroke="#78350F" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+                        <path d="M64 118 Q76 118 85 123" stroke="#78350F" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+                        <path d="M55 119 Q47 121 40 125" stroke="#92400E" stroke-width="3"   fill="none" stroke-linecap="round"/>
+                        <path d="M65 119 Q73 121 80 125" stroke="#92400E" stroke-width="3"   fill="none" stroke-linecap="round"/>
                       </g>
+
+                      <!-- Stage 1: chibi sapling -->
+                      <g v-if="treeData.stage === 1">
+                        <circle cx="43" cy="96" r="14" fill="url(#rwsc-f3)" stroke="#15803D" stroke-width="2"/>
+                        <circle cx="40" cy="93"  r="4.5" fill="rgba(255,255,255,0.6)"/>
+                        <circle cx="77" cy="95" r="14" fill="url(#rwsc-f3)" stroke="#15803D" stroke-width="2"/>
+                        <circle cx="74" cy="92"  r="4.5" fill="rgba(255,255,255,0.6)"/>
+                        <circle cx="60" cy="84" r="20" fill="url(#rwsc-f2)" stroke="#16A34A" stroke-width="2"/>
+                        <circle cx="53" cy="77" r="6.5" fill="rgba(255,255,255,0.58)"/>
+                        <circle cx="66" cy="88" r="2.5" fill="#16A34A" opacity="0.4"/>
+                        <circle cx="55" cy="91" r="2"   fill="#16A34A" opacity="0.35"/>
+                        <circle cx="61" cy="68" r="15" fill="url(#rwsc-f1)" stroke="#22C55E" stroke-width="2"/>
+                        <circle cx="55" cy="62" r="4.5" fill="rgba(255,255,255,0.62)"/>
+                        <circle cx="61" cy="55" r="11" fill="url(#rwsc-f0)" stroke="#22C55E" stroke-width="2"/>
+                        <circle cx="56" cy="50" r="3.5" fill="rgba(255,255,255,0.68)"/>
+                      </g>
+
+                      <!-- Stage 2: chibi small tree + flowers -->
+                      <g v-if="treeData.stage === 2">
+                        <circle cx="38" cy="95" r="17" fill="url(#rwsc-f4)" stroke="#15803D" stroke-width="2"/>
+                        <circle cx="34" cy="91" r="5"   fill="rgba(255,255,255,0.5)"/>
+                        <circle cx="82" cy="93" r="17" fill="url(#rwsc-f4)" stroke="#15803D" stroke-width="2"/>
+                        <circle cx="78" cy="89" r="5"   fill="rgba(255,255,255,0.5)"/>
+                        <circle cx="44" cy="82" r="18" fill="url(#rwsc-f3)" stroke="#15803D" stroke-width="2"/>
+                        <circle cx="76" cy="80" r="18" fill="url(#rwsc-f3)" stroke="#15803D" stroke-width="2"/>
+                        <circle cx="60" cy="86" r="23" fill="url(#rwsc-f3)" stroke="#16A34A" stroke-width="2"/>
+                        <circle cx="51" cy="77" r="7"   fill="rgba(255,255,255,0.52)"/>
+                        <circle cx="67" cy="90" r="2.8" fill="#16A34A" opacity="0.4"/>
+                        <circle cx="60" cy="69" r="19" fill="url(#rwsc-f2)" stroke="#22C55E" stroke-width="2"/>
+                        <circle cx="52" cy="61" r="5.8" fill="rgba(255,255,255,0.56)"/>
+                        <circle cx="61" cy="53" r="15" fill="url(#rwsc-f1)" stroke="#22C55E" stroke-width="2"/>
+                        <circle cx="55" cy="46" r="4.5" fill="rgba(255,255,255,0.62)"/>
+                        <circle cx="61" cy="40" r="11" fill="url(#rwsc-f0)" stroke="#22C55E" stroke-width="2"/>
+                        <circle cx="56" cy="34" r="3.5" fill="rgba(255,255,255,0.68)"/>
+                        <!-- Cute flowers -->
+                        <g><ellipse cx="35" cy="86" rx="3.5" ry="5.5" fill="#FBCFE8"/><ellipse cx="35" cy="86" rx="5.5" ry="3.5" fill="#FBCFE8"/><circle cx="35" cy="86" r="3" fill="#FDE047"/><circle cx="34" cy="85" r="0.9" fill="rgba(255,255,255,0.8)"/></g>
+                        <g><ellipse cx="85" cy="84" rx="3.5" ry="5.5" fill="#FBCFE8"/><ellipse cx="85" cy="84" rx="5.5" ry="3.5" fill="#FBCFE8"/><circle cx="85" cy="84" r="3" fill="#FDE047"/><circle cx="84" cy="83" r="0.9" fill="rgba(255,255,255,0.8)"/></g>
+                        <g><ellipse cx="46" cy="71" rx="3"   ry="4.5" fill="#BAE6FD"/><ellipse cx="46" cy="71" rx="4.5" ry="3"   fill="#BAE6FD"/><circle cx="46" cy="71" r="2.5" fill="#FBBF24"/><circle cx="45" cy="70" r="0.8" fill="rgba(255,255,255,0.8)"/></g>
+                      </g>
+
+                      <!-- Stage 3+: large chibi canopy -->
                       <g v-if="treeData.stage >= 3">
-                        <ellipse cx="60" cy="69" rx="15" ry="9" fill="#22C55E">
-                          <animate attributeName="rx" values="15;17;15" dur="3.2s" repeatCount="indefinite" begin="0.3s" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                        </ellipse>
-                        <circle cx="60" cy="59" r="11" :fill="treeData.stage === 3 ? '#4ADE80' : '#22C55E'">
-                          <animate attributeName="r" values="11;12.5;11" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                        </circle>
+                        <circle cx="30" cy="97" r="19" fill="url(#rwsc-f5)" stroke="#059669" stroke-width="2"/>
+                        <circle cx="26" cy="93" r="5.5" fill="rgba(255,255,255,0.44)"/>
+                        <circle cx="90" cy="95" r="19" fill="url(#rwsc-f5)" stroke="#059669" stroke-width="2"/>
+                        <circle cx="86" cy="91" r="5.5" fill="rgba(255,255,255,0.44)"/>
+                        <circle cx="41" cy="84" r="21" fill="url(#rwsc-f4)" stroke="#15803D" stroke-width="2"/>
+                        <circle cx="80" cy="82" r="21" fill="url(#rwsc-f4)" stroke="#15803D" stroke-width="2"/>
+                        <circle cx="60" cy="90" r="27" fill="url(#rwsc-f4)" stroke="#15803D" stroke-width="2"/>
+                        <circle cx="49" cy="78" r="8.5" fill="rgba(255,255,255,0.46)"/>
+                        <circle cx="68" cy="93" r="3.5" fill="#15803D" opacity="0.38"/>
+                        <circle cx="43" cy="75" r="21" fill="url(#rwsc-f3)" stroke="#16A34A" stroke-width="2"/>
+                        <circle cx="37" cy="67" r="6.5" fill="rgba(255,255,255,0.5)"/>
+                        <circle cx="77" cy="73" r="21" fill="url(#rwsc-f3)" stroke="#16A34A" stroke-width="2"/>
+                        <circle cx="71" cy="65" r="6.5" fill="rgba(255,255,255,0.5)"/>
+                        <circle cx="60" cy="75" r="24" fill="url(#rwsc-f3)" stroke="#16A34A" stroke-width="2"/>
+                        <circle cx="49" cy="65" r="7.5" fill="rgba(255,255,255,0.47)"/>
+                        <circle cx="60" cy="58" r="21" fill="url(#rwsc-f2)" stroke="#22C55E" stroke-width="2"/>
+                        <circle cx="50" cy="48" r="6.5" fill="rgba(255,255,255,0.5)"/>
+                        <!-- Flowers (stage 3+ base) -->
+                        <g><ellipse cx="27" cy="88" rx="4" ry="6"   fill="#FBCFE8"/><ellipse cx="27" cy="88" rx="6"   ry="4" fill="#FBCFE8"/><circle cx="27" cy="88" r="3.5" fill="#FDE047"/><circle cx="26" cy="87" r="1"   fill="rgba(255,255,255,0.8)"/></g>
+                        <g><ellipse cx="93" cy="86" rx="4" ry="6"   fill="#FBCFE8"/><ellipse cx="93" cy="86" rx="6"   ry="4" fill="#FBCFE8"/><circle cx="93" cy="86" r="3.5" fill="#FDE047"/><circle cx="92" cy="85" r="1"   fill="rgba(255,255,255,0.8)"/></g>
+                        <g><ellipse cx="40" cy="63" rx="3.5" ry="5.5" fill="#BAE6FD"/><ellipse cx="40" cy="63" rx="5.5" ry="3.5" fill="#BAE6FD"/><circle cx="40" cy="63" r="3"   fill="#FBBF24"/><circle cx="39" cy="62" r="0.8" fill="rgba(255,255,255,0.8)"/></g>
+                        <g><ellipse cx="80" cy="61" rx="3.5" ry="5.5" fill="#FCA5A5"/><ellipse cx="80" cy="61" rx="5.5" ry="3.5" fill="#FCA5A5"/><circle cx="80" cy="61" r="3"   fill="#FDE047"/><circle cx="79" cy="60" r="0.8" fill="rgba(255,255,255,0.8)"/></g>
+                        <!-- Stage 3 specific top -->
+                        <g v-if="treeData.stage === 3">
+                          <circle cx="61" cy="41" r="17" fill="url(#rwsc-f1)" stroke="#22C55E" stroke-width="2"/>
+                          <circle cx="53" cy="33" r="5.5" fill="rgba(255,255,255,0.58)"/>
+                          <circle cx="61" cy="26" r="12" fill="url(#rwsc-f0)" stroke="#22C55E" stroke-width="2"/>
+                          <circle cx="56" cy="20" r="3.8" fill="rgba(255,255,255,0.68)"/>
+                          <g><ellipse cx="74" cy="34" rx="3" ry="4.5" fill="#FBCFE8"/><ellipse cx="74" cy="34" rx="4.5" ry="3" fill="#FBCFE8"/><circle cx="74" cy="34" r="2.5" fill="#FDE047"/></g>
+                        </g>
                       </g>
+
+                      <!-- Stage 4+: chibi fruits + tall crown -->
                       <g v-if="treeData.stage >= 4">
-                        <circle cx="43" cy="102" r="3.5" fill="#EF4444"><animate attributeName="r" values="3.5;4.3;3.5" dur="2.1s" repeatCount="indefinite" begin="0s"/></circle>
-                        <circle cx="77" cy="100" r="3.5" fill="#F97316"><animate attributeName="r" values="3.5;4.3;3.5" dur="2.1s" repeatCount="indefinite" begin="0.5s"/></circle>
-                        <circle cx="47" cy="89"  r="3"   fill="#FBBF24"><animate attributeName="r" values="3;3.8;3"     dur="2.4s" repeatCount="indefinite" begin="0.9s"/></circle>
-                        <circle cx="73" cy="87"  r="3"   fill="#EF4444"><animate attributeName="r" values="3;3.8;3"     dur="2.4s" repeatCount="indefinite" begin="1.3s"/></circle>
-                        <circle cx="52" cy="77"  r="2.5" fill="#F97316"><animate attributeName="r" values="2.5;3.2;2.5" dur="2.2s" repeatCount="indefinite" begin="0.4s"/></circle>
-                        <circle cx="68" cy="75"  r="2.5" fill="#FBBF24"><animate attributeName="r" values="2.5;3.2;2.5" dur="2.2s" repeatCount="indefinite" begin="1s"/></circle>
-                        <ellipse cx="60" cy="50" rx="13" ry="8" fill="#22C55E">
-                          <animate attributeName="rx" values="13;15;13" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                        </ellipse>
-                        <circle cx="60" cy="41" r="9" fill="#4ADE80">
-                          <animate attributeName="r" values="9;10.5;9" dur="2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                        </circle>
+                        <line x1="36" y1="100" x2="37" y2="105" stroke="#78350F" stroke-width="1.5"/><circle cx="37"  cy="108" r="6.5" fill="url(#rwsc-fr)" stroke="#DC2626" stroke-width="1.2"/><circle cx="35"  cy="105.5" r="2"   fill="rgba(255,255,255,0.65)"/>
+                        <line x1="84" y1="98"  x2="83" y2="103" stroke="#78350F" stroke-width="1.5"/><circle cx="83"  cy="106" r="6.5" fill="url(#rwsc-fo)" stroke="#EA580C" stroke-width="1.2"/><circle cx="81"  cy="103.5" r="2"   fill="rgba(255,255,255,0.65)"/>
+                        <line x1="40" y1="83"  x2="41" y2="88"  stroke="#78350F" stroke-width="1.3"/><circle cx="41"  cy="91"  r="5.5" fill="url(#rwsc-fy)" stroke="#CA8A04" stroke-width="1.2"/><circle cx="39.5" cy="88.5" r="1.7" fill="rgba(255,255,255,0.6)"/>
+                        <line x1="80" y1="81"  x2="79" y2="86"  stroke="#78350F" stroke-width="1.3"/><circle cx="79"  cy="89"  r="5.5" fill="url(#rwsc-fr)" stroke="#DC2626" stroke-width="1.2"/><circle cx="77.5" cy="86.5" r="1.7" fill="rgba(255,255,255,0.6)"/>
+                        <line x1="47" y1="66"  x2="48" y2="71"  stroke="#78350F" stroke-width="1.2"/><circle cx="48"  cy="74"  r="5"   fill="url(#rwsc-fo)" stroke="#EA580C" stroke-width="1.1"/><circle cx="46.5" cy="71.5" r="1.5" fill="rgba(255,255,255,0.58)"/>
+                        <line x1="73" y1="64"  x2="72" y2="69"  stroke="#78350F" stroke-width="1.2"/><circle cx="72"  cy="72"  r="5"   fill="url(#rwsc-fy)" stroke="#CA8A04" stroke-width="1.1"/><circle cx="70.5" cy="69.5" r="1.5" fill="rgba(255,255,255,0.58)"/>
+                        <line x1="53" y1="50"  x2="54" y2="55"  stroke="#78350F" stroke-width="1.1"/><circle cx="54"  cy="58"  r="4.5" fill="url(#rwsc-fr)" stroke="#DC2626" stroke-width="1"/><circle cx="52.5" cy="55.5" r="1.3" fill="rgba(255,255,255,0.58)"/>
+                        <line x1="67" y1="51"  x2="66" y2="56"  stroke="#78350F" stroke-width="1.1"/><circle cx="66"  cy="59"  r="4.5" fill="url(#rwsc-fo)" stroke="#EA580C" stroke-width="1"/><circle cx="64.5" cy="56.5" r="1.3" fill="rgba(255,255,255,0.58)"/>
+                        <!-- Stage 4 crown -->
+                        <g v-if="treeData.stage === 4">
+                          <circle cx="44" cy="48" r="17" fill="url(#rwsc-f2)" stroke="#22C55E" stroke-width="2"/>
+                          <circle cx="38" cy="40" r="5"   fill="rgba(255,255,255,0.52)"/>
+                          <circle cx="76" cy="46" r="17" fill="url(#rwsc-f2)" stroke="#22C55E" stroke-width="2"/>
+                          <circle cx="70" cy="38" r="5"   fill="rgba(255,255,255,0.52)"/>
+                          <circle cx="60" cy="36" r="21" fill="url(#rwsc-f1)" stroke="#22C55E" stroke-width="2"/>
+                          <circle cx="50" cy="25" r="6.5" fill="rgba(255,255,255,0.54)"/>
+                          <circle cx="60" cy="17" r="14" fill="url(#rwsc-f0)" stroke="#22C55E" stroke-width="2"/>
+                          <circle cx="54" cy="10" r="4.5" fill="rgba(255,255,255,0.65)"/>
+                          <g><ellipse cx="32" cy="40" rx="3.5" ry="5.5" fill="#FBCFE8"/><ellipse cx="32" cy="40" rx="5.5" ry="3.5" fill="#FBCFE8"/><circle cx="32" cy="40" r="3" fill="#FDE047"/></g>
+                          <g><ellipse cx="88" cy="38" rx="3.5" ry="5.5" fill="#BAE6FD"/><ellipse cx="88" cy="38" rx="5.5" ry="3.5" fill="#BAE6FD"/><circle cx="88" cy="38" r="3" fill="#FDE047"/></g>
+                          <g><ellipse cx="53" cy="26" rx="3"   ry="4.5" fill="#FCA5A5"/><ellipse cx="53" cy="26" rx="4.5" ry="3"   fill="#FCA5A5"/><circle cx="53" cy="26" r="2.5" fill="#FDE047"/></g>
+                        </g>
                       </g>
+
+                      <!-- Stage 5: ancient magical chibi -->
                       <g v-if="treeData.stage >= 5">
-                        <ellipse cx="33" cy="76" rx="11" ry="8" fill="#4ADE80" opacity="0.85" transform="rotate(-20,33,76)"/>
-                        <ellipse cx="87" cy="73" rx="11" ry="8" fill="#4ADE80" opacity="0.85" transform="rotate(20,87,73)"/>
-                        <circle cx="60" cy="31" r="7" fill="#86EFAC">
-                          <animate attributeName="r" values="7;9;7" dur="2s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
-                        </circle>
+                        <path d="M53 102 Q36 97 21 104" stroke="#78350F" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                        <path d="M67 100 Q84 95 99 102" stroke="#78350F" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                        <circle cx="19"  cy="100" r="21" fill="url(#rwsc-f5)" stroke="#047857" stroke-width="2"/>
+                        <circle cx="13"  cy="93"  r="6.5" fill="rgba(255,255,255,0.42)"/>
+                        <circle cx="101" cy="98"  r="21" fill="url(#rwsc-f5)" stroke="#047857" stroke-width="2"/>
+                        <circle cx="95"  cy="91"  r="6.5" fill="rgba(255,255,255,0.42)"/>
+                        <circle cx="44" cy="47" r="19" fill="url(#rwsc-f5)" stroke="#047857" stroke-width="2"/>
+                        <circle cx="37" cy="39" r="5.8" fill="rgba(255,255,255,0.46)"/>
+                        <circle cx="76" cy="45" r="19" fill="url(#rwsc-f5)" stroke="#047857" stroke-width="2"/>
+                        <circle cx="69" cy="37" r="5.8" fill="rgba(255,255,255,0.46)"/>
+                        <circle cx="60" cy="34" r="23" fill="url(#rwsc-f5)" stroke="#047857" stroke-width="2"/>
+                        <circle cx="49" cy="22" r="7"   fill="rgba(255,255,255,0.46)"/>
+                        <circle cx="60" cy="15" r="15" fill="url(#rwsc-f5)" stroke="#047857" stroke-width="2"/>
+                        <circle cx="53" cy="7"  r="4.8" fill="rgba(255,255,255,0.5)"/>
+                        <!-- Many flowers (magical) -->
+                        <g><ellipse cx="7"   cy="91" rx="4"   ry="6"   fill="#FBCFE8"/><ellipse cx="7"   cy="91" rx="6"   ry="4"   fill="#FBCFE8"/><circle cx="7"   cy="91" r="3.5" fill="#FDE047"/><circle cx="6"   cy="90" r="1"   fill="rgba(255,255,255,0.8)"/></g>
+                        <g><ellipse cx="113" cy="89" rx="4"   ry="6"   fill="#BAE6FD"/><ellipse cx="113" cy="89" rx="6"   ry="4"   fill="#BAE6FD"/><circle cx="113" cy="89" r="3.5" fill="#FDE047"/><circle cx="112" cy="88" r="1"   fill="rgba(255,255,255,0.8)"/></g>
+                        <g><ellipse cx="32"  cy="35" rx="3.5" ry="5.5" fill="#FCA5A5"/><ellipse cx="32"  cy="35" rx="5.5" ry="3.5" fill="#FCA5A5"/><circle cx="32"  cy="35" r="3"   fill="#FDE047"/></g>
+                        <g><ellipse cx="89"  cy="33" rx="3.5" ry="5.5" fill="#FBCFE8"/><ellipse cx="89"  cy="33" rx="5.5" ry="3.5" fill="#FBCFE8"/><circle cx="89"  cy="33" r="3"   fill="#A78BFA"/></g>
+                        <g><ellipse cx="50"  cy="19" rx="3"   ry="4.5" fill="#BAE6FD"/><ellipse cx="50"  cy="19" rx="4.5" ry="3"   fill="#BAE6FD"/><circle cx="50"  cy="19" r="2.5" fill="#FDE047"/></g>
+                        <!-- Chibi sparkle stars -->
                         <g>
-                          <line x1="14" y1="57" x2="22" y2="65" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
-                          <line x1="22" y1="57" x2="14" y2="65" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
-                          <circle cx="18" cy="61" r="2.5" fill="#FEF08A">
-                            <animate attributeName="r"       values="2.5;4;2.5" dur="1.8s" repeatCount="indefinite"/>
+                          <circle cx="8" cy="63" r="3.5" fill="#FEF08A" stroke="#FCD34D" stroke-width="1">
+                            <animate attributeName="r"       values="3.5;5;3.5" dur="1.8s" repeatCount="indefinite"/>
                             <animate attributeName="opacity" values="1;0.2;1"   dur="1.8s" repeatCount="indefinite"/>
                           </circle>
+                          <line x1="5" y1="60" x2="11" y2="66" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
+                          <line x1="11" y1="60" x2="5" y2="66" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
+                          <line x1="8" y1="58" x2="8" y2="68" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
                         </g>
                         <g>
-                          <line x1="96" y1="50" x2="104" y2="58" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.8s" repeatCount="indefinite"/></line>
-                          <line x1="104" y1="50" x2="96" y2="58" stroke="#FCD34D" stroke-width="2"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.8s" repeatCount="indefinite"/></line>
-                          <circle cx="100" cy="54" r="2" fill="#FEF08A">
-                            <animate attributeName="r"       values="2;3.5;2"   dur="1.8s" repeatCount="indefinite" begin="0.9s"/>
+                          <circle cx="112" cy="57" r="3" fill="#FEF08A" stroke="#FCD34D" stroke-width="1">
+                            <animate attributeName="r"       values="3;4.5;3"   dur="1.8s" repeatCount="indefinite" begin="0.9s"/>
                             <animate attributeName="opacity" values="0.2;1;0.2" dur="1.8s" repeatCount="indefinite" begin="0.9s"/>
                           </circle>
+                          <line x1="109" y1="54" x2="115" y2="60" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="0.1;1;0.1" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></line>
+                          <line x1="115" y1="54" x2="109" y2="60" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="0.1;1;0.1" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></line>
+                          <line x1="112" y1="52" x2="112" y2="62" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="0.1;1;0.1" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></line>
                         </g>
                       </g>
+
+                      <!-- Cute floating particles (stage 2+): pink, blue, yellow -->
                       <g v-if="treeData.stage >= 2">
-                        <circle cx="52" cy="78" r="2" fill="#4ADE80" opacity="0">
-                          <animate attributeName="cy" values="78;52;28" dur="4s" repeatCount="indefinite" begin="0s"/>
-                          <animate attributeName="cx" values="52;48;44" dur="4s" repeatCount="indefinite" begin="0s"/>
-                          <animate attributeName="opacity" values="0;0.85;0" dur="4s" repeatCount="indefinite" begin="0s"/>
+                        <circle cx="52" cy="78" r="2.8" fill="#FBCFE8" opacity="0">
+                          <animate attributeName="cy"      values="78;52;26" dur="4s"   repeatCount="indefinite" begin="0s"/>
+                          <animate attributeName="cx"      values="52;47;42" dur="4s"   repeatCount="indefinite" begin="0s"/>
+                          <animate attributeName="opacity" values="0;0.9;0"  dur="4s"   repeatCount="indefinite" begin="0s"/>
                         </circle>
-                        <circle cx="68" cy="82" r="1.5" fill="#86EFAC" opacity="0">
-                          <animate attributeName="cy" values="82;58;34" dur="3.6s" repeatCount="indefinite" begin="1.4s"/>
-                          <animate attributeName="cx" values="68;72;76" dur="3.6s" repeatCount="indefinite" begin="1.4s"/>
-                          <animate attributeName="opacity" values="0;0.7;0" dur="3.6s" repeatCount="indefinite" begin="1.4s"/>
+                        <circle cx="68" cy="82" r="2.2" fill="#BAE6FD" opacity="0">
+                          <animate attributeName="cy"      values="82;58;34"  dur="3.6s" repeatCount="indefinite" begin="1.5s"/>
+                          <animate attributeName="cx"      values="68;73;78"  dur="3.6s" repeatCount="indefinite" begin="1.5s"/>
+                          <animate attributeName="opacity" values="0;0.88;0"  dur="3.6s" repeatCount="indefinite" begin="1.5s"/>
                         </circle>
-                        <circle cx="60" cy="72" r="1.5" fill="#A7F3D0" opacity="0">
-                          <animate attributeName="cy" values="72;48;24" dur="5s" repeatCount="indefinite" begin="0.8s"/>
-                          <animate attributeName="opacity" values="0;0.65;0" dur="5s" repeatCount="indefinite" begin="0.8s"/>
+                        <circle cx="60" cy="72" r="2.2" fill="#FDE047" opacity="0">
+                          <animate attributeName="cy"      values="72;48;24" dur="5s"   repeatCount="indefinite" begin="0.9s"/>
+                          <animate attributeName="cx"      values="60;56;52" dur="5s"   repeatCount="indefinite" begin="0.9s"/>
+                          <animate attributeName="opacity" values="0;0.85;0" dur="5s"   repeatCount="indefinite" begin="0.9s"/>
                         </circle>
                       </g>
                     </g>
@@ -493,12 +857,12 @@ const todayThai = computed(() => {
 })
 
 const TREE_STAGES = [
-  { stage: 0, min: 0,    max: 49,       name: 'เมล็ดพันธุ์',        color: '#6EE7B7', trunkTop: null },
-  { stage: 1, min: 50,   max: 149,      name: 'ต้นกล้า',            color: '#4ADE80', trunkTop: 90   },
-  { stage: 2, min: 150,  max: 349,      name: 'ต้นไม้น้อย',         color: '#22C55E', trunkTop: 75   },
-  { stage: 3, min: 350,  max: 699,      name: 'ต้นไม้กลาง',         color: '#16A34A', trunkTop: 60   },
-  { stage: 4, min: 700,  max: 1199,     name: 'ต้นไม้ใหญ่',         color: '#15803D', trunkTop: 45   },
-  { stage: 5, min: 1200, max: Infinity, name: 'ต้นไม้แห่งปัญญา ✨', color: '#047857', trunkTop: 35   },
+  { stage: 0, min: 0,    max: 49,       name: 'เมล็ดพันธุ์',        desc: 'จุดเริ่มต้นแห่งการเดินทาง ทุกต้นไม้ใหญ่เริ่มจากเมล็ดเล็กๆ',              color: '#6EE7B7', trunkTop: null },
+  { stage: 1, min: 50,   max: 149,      name: 'ต้นกล้า',            desc: 'เริ่มแตกใบอ่อน พร้อมเติบโตสู่สิ่งที่ยิ่งใหญ่กว่าเดิม',                    color: '#4ADE80', trunkTop: 90   },
+  { stage: 2, min: 150,  max: 349,      name: 'ต้นไม้น้อย',         desc: 'รากแผ่กว้าง ลำต้นแข็งแกร่ง กำลังสร้างรากฐานที่มั่นคง',                   color: '#22C55E', trunkTop: 75   },
+  { stage: 3, min: 350,  max: 699,      name: 'ต้นไม้กลาง',         desc: 'ร่มเงาเริ่มปรากฏ กิ่งก้านแผ่ออกอย่างมั่นคง เป็นที่พักพิงได้แล้ว',       color: '#16A34A', trunkTop: 60   },
+  { stage: 4, min: 700,  max: 1199,     name: 'ต้นไม้ใหญ่',         desc: 'ออกดอกออกผล เป็นแรงบันดาลใจและที่พึ่งพิงให้คนรอบข้าง',                   color: '#15803D', trunkTop: 45   },
+  { stage: 5, min: 1200, max: Infinity, name: 'ต้นไม้แห่งปัญญา ✨', desc: 'ยืนหยัดอย่างภาคภูมิ เป็นสัญลักษณ์แห่งปัญญาและพลังของชุมชน DS',          color: '#047857', trunkTop: 35   },
 ]
 
 const treeData = computed(() => {
@@ -519,6 +883,31 @@ const treeData = computed(() => {
     progress,
   }
 })
+
+// ── Level preview navigation ───────────────────────────────────────────────
+const previewStage = ref(null)
+
+const viewData = computed(() => {
+  const stage = previewStage.value !== null ? previewStage.value : treeData.value.stage
+  const s    = TREE_STAGES[stage]
+  const next = stage < TREE_STAGES.length - 1 ? TREE_STAGES[stage + 1] : null
+  const pts  = reward.total || 0
+  let progress = 100
+  if (stage > treeData.value.stage)       progress = 0
+  else if (stage === treeData.value.stage) progress = treeData.value.progress
+  return {
+    ...s,
+    nextName:  next?.name ?? null,
+    nextPts:   next?.min  ?? null,
+    ptsToNext: next ? next.min - pts : 0,
+    progress,
+    isPreview: previewStage.value !== null && previewStage.value !== treeData.value.stage,
+  }
+})
+
+function setPreview(stage) {
+  previewStage.value = stage === treeData.value.stage ? null : stage
+}
 
 const checkinPts = computed(() => {
   const rule = (reward.rules.length ? reward.rules : FALLBACK_RULES)
@@ -960,7 +1349,7 @@ function formatTime(raw) {
 }
 .rw-tree-svg {
   width: 120px; height: 130px;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.10));
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.18)) drop-shadow(0 2px 4px rgba(0,0,0,0.10));
 }
 .rw-float-leaf {
   position: absolute; font-size: 14px; pointer-events: none;
@@ -982,6 +1371,68 @@ function formatTime(raw) {
 .rw-tree-prog-labels {
   display: flex; justify-content: space-between;
   font-size: 10px; font-weight: 700; color: #6B7280;
+}
+
+/* ── Level info panel ── */
+.rw-level-panel {
+  background: #F0FDF4;
+  border: 1.5px solid #BBF7D0;
+  border-radius: 14px;
+  padding: 12px 16px 10px;
+  margin-top: 10px;
+  text-align: center;
+}
+.rw-stage-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+.rw-stage-nav-btn {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid #BBF7D0;
+  background: white;
+  color: #16A34A;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, opacity 0.15s;
+  padding: 0;
+}
+.rw-stage-nav-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+.rw-stage-nav-btn:not(:disabled):active { background: #DCFCE7; }
+.rw-stage-dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.rw-stage-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #D1FAE5;
+  border: 1.5px solid #BBF7D0;
+  cursor: pointer;
+  transition: background 0.3s, box-shadow 0.3s, border-color 0.3s, transform 0.2s;
+}
+.rw-level-row {
+  display: flex; align-items: center; gap: 7px; justify-content: center;
+  margin-bottom: 5px;
+}
+.rw-level-num {
+  font-size: 15px; font-weight: 900; line-height: 1;
+}
+.rw-level-name-txt {
+  font-size: 13px; font-weight: 800;
+}
+.rw-level-desc-txt {
+  font-size: 12px; color: #374151; line-height: 1.65; margin-bottom: 5px;
+}
+.rw-level-range-txt {
+  font-size: 11px; color: #9CA3AF; font-weight: 600;
 }
 
 @keyframes shimmer {
