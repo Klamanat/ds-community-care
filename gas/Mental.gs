@@ -101,17 +101,110 @@ function submitConsultRequest(params) {
     var sheet = ss.getSheetByName('ConsultationRequests');
     if (!sheet) {
       sheet = ss.insertSheet('ConsultationRequests');
-      sheet.appendRow(['id', 'counselorEmployeeId', 'message', 'createdAt', 'isRead']);
+      sheet.appendRow(['id', 'counselorEmployeeId', 'senderEmployeeId', 'message', 'createdAt', 'isRead', 'reply', 'repliedAt']);
     }
+    // Ensure new columns exist (migrate old schema)
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    ['senderEmployeeId', 'reply', 'repliedAt'].forEach(function(col) {
+      if (headers.indexOf(col) < 0) {
+        headers.push(col);
+        sheet.getRange(1, headers.length).setValue(col);
+      }
+    });
     var id = uuid();
-    sheet.appendRow([
-      id,
-      String(params.counselorEmployeeId || ''),
-      String(params.message             || ''),
-      new Date().toISOString(),
-      'false',
-    ]);
+    var row = headers.map(function(h) {
+      if (h === 'id')                  return id;
+      if (h === 'counselorEmployeeId') return String(params.counselorEmployeeId || '');
+      if (h === 'senderEmployeeId')    return String(params.senderEmployeeId    || '');
+      if (h === 'message')             return String(params.message             || '');
+      if (h === 'createdAt')           return new Date().toISOString();
+      if (h === 'isRead')              return 'false';
+      return '';
+    });
+    sheet.appendRow(row);
     return ok({ id: id });
+  } catch(e) {
+    return err(e.message);
+  }
+}
+
+function getMyConsultRequests(params) {
+  try {
+    var ss    = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName('ConsultationRequests');
+    if (!sheet) return ok([]);
+    var rows     = sheetToObjects('ConsultationRequests');
+    var senderId = String(params.senderEmployeeId || '');
+    var filtered = rows.filter(function(r) {
+      return String(r.senderEmployeeId || '') === senderId;
+    });
+    filtered.sort(function(a, b) { return a.createdAt > b.createdAt ? -1 : 1; });
+    // Enrich with counselor name
+    var advisorMap = {};
+    try {
+      sheetToObjects('MentalAdvisors').forEach(function(a) {
+        if (a.employeeId) advisorMap[String(a.employeeId)] = String(a.name || '');
+      });
+    } catch(e) {}
+    return ok(filtered.map(function(r) {
+      return {
+        id:                  String(r.id                  || ''),
+        counselorEmployeeId: String(r.counselorEmployeeId || ''),
+        counselorName:       advisorMap[String(r.counselorEmployeeId)] || '—',
+        message:             String(r.message             || ''),
+        createdAt:           String(r.createdAt           || ''),
+        reply:               String(r.reply               || ''),
+        repliedAt:           String(r.repliedAt           || ''),
+      };
+    }));
+  } catch(e) {
+    return err(e.message);
+  }
+}
+
+function addConsultReply(params) {
+  try {
+    var reply = String(params.reply || '').trim();
+    if (!reply) return err('reply required');
+    var requestId = String(params.requestId || '').trim();
+    if (!requestId) return err('requestId required');
+    // Validate counselor
+    try {
+      var advisors = sheetToObjects('MentalAdvisors');
+      var ok_ = advisors.some(function(a) {
+        return String(a.employeeId || '') === String(params.counselorEmployeeId || '');
+      });
+      if (!ok_) return err('Not authorized');
+    } catch(e) {}
+    var ss    = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName('ConsultationRequests');
+    if (!sheet) return err('Sheet not found');
+    var data    = sheet.getDataRange().getValues();
+    var headers = data[0];
+    // Ensure reply + repliedAt columns
+    var replyIdx     = headers.indexOf('reply');
+    var repliedAtIdx = headers.indexOf('repliedAt');
+    if (replyIdx < 0) {
+      replyIdx = headers.length;
+      headers.push('reply');
+      sheet.getRange(1, replyIdx + 1).setValue('reply');
+    }
+    if (repliedAtIdx < 0) {
+      repliedAtIdx = headers.length;
+      headers.push('repliedAt');
+      sheet.getRange(1, repliedAtIdx + 1).setValue('repliedAt');
+    }
+    var idIdx     = headers.indexOf('id');
+    var isReadIdx = headers.indexOf('isRead');
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][idIdx] || '').trim() === requestId) {
+        sheet.getRange(i + 1, replyIdx     + 1).setValue(reply);
+        sheet.getRange(i + 1, repliedAtIdx + 1).setValue(new Date().toISOString());
+        if (isReadIdx >= 0) sheet.getRange(i + 1, isReadIdx + 1).setValue('true');
+        return ok({ ok: true });
+      }
+    }
+    return err('Not found');
   } catch(e) {
     return err(e.message);
   }
@@ -128,7 +221,17 @@ function getConsultRequests(params) {
       return String(r.counselorEmployeeId || '') === counselorId;
     });
     filtered.sort(function(a, b) { return a.createdAt > b.createdAt ? -1 : 1; });
-    return ok(filtered);
+    // Never expose senderEmployeeId to counselor — keep anonymous
+    return ok(filtered.map(function(r) {
+      return {
+        id:        String(r.id        || ''),
+        message:   String(r.message   || ''),
+        createdAt: String(r.createdAt || ''),
+        isRead:    String(r.isRead    || 'false'),
+        reply:     String(r.reply     || ''),
+        repliedAt: String(r.repliedAt || ''),
+      };
+    }));
   } catch(e) {
     return err(e.message);
   }

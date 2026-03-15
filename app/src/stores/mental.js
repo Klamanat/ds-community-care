@@ -24,7 +24,7 @@ export const useMentalStore = defineStore('mental', () => {
     return advisors.value.some(a => a.employeeId && String(a.employeeId) === String(employeeId))
   }
 
-  // ── Consultation Requests ─────────────────────────────────────────────────
+  // ── Counselor Inbox (received messages) ──────────────────────────────────
   const myRequests      = ref([])
   const requestsLoaded  = ref(false)
   const requestsLoading = ref(false)
@@ -47,10 +47,6 @@ export const useMentalStore = defineStore('mental', () => {
     }
   }
 
-  async function submitRequest(counselorEmployeeId, message) {
-    await gasGet('submitConsultRequest', { counselorEmployeeId, message })
-  }
-
   async function markRead(id) {
     try {
       await gasGet('markConsultRead', { id })
@@ -59,13 +55,53 @@ export const useMentalStore = defineStore('mental', () => {
     } catch {}
   }
 
+  async function addReply(requestId, reply, counselorEmployeeId) {
+    await gasGet('addConsultReply', { requestId, reply, counselorEmployeeId })
+    const r = myRequests.value.find(r => r.id === requestId)
+    if (r) { r.reply = reply; r.repliedAt = new Date().toISOString(); r.isRead = 'true' }
+    // Also update sender's view if loaded
+    const sr = senderRequests.value.find(r => r.id === requestId)
+    if (sr) { sr.reply = reply; sr.repliedAt = new Date().toISOString() }
+  }
+
   const unreadCount = computed(() =>
     myRequests.value.filter(r => r.isRead !== 'true').length
   )
 
+  // ── Sender History (sent messages + replies) ──────────────────────────────
+  const senderRequests = ref([])
+  const senderLoaded   = ref(false)
+  const senderLoading  = ref(false)
+  const senderError    = ref('')
+
+  async function loadSenderRequests(senderEmployeeId, force = false) {
+    if (!senderEmployeeId) return
+    if (!force && senderLoaded.value) return
+    senderLoading.value = true
+    senderError.value   = ''
+    try {
+      const res            = await gasGet('getMyConsultRequests', { senderEmployeeId })
+      senderRequests.value = res.data || []
+      senderLoaded.value   = true
+    } catch (e) {
+      senderError.value    = e.message || 'โหลดไม่สำเร็จ'
+      senderRequests.value = []
+      senderLoaded.value   = true
+    } finally {
+      senderLoading.value = false
+    }
+  }
+
+  async function submitRequest(counselorEmployeeId, message, senderEmployeeId) {
+    await gasGet('submitConsultRequest', { counselorEmployeeId, message, senderEmployeeId })
+    senderLoaded.value = false  // invalidate cache so history reloads
+  }
+
   return {
     advisors, loaded, loadAdvisors, isCounselor,
     myRequests, requestsLoaded, requestsLoading, requestsError,
-    loadMyRequests, submitRequest, markRead, unreadCount,
+    loadMyRequests, markRead, addReply, unreadCount,
+    senderRequests, senderLoaded, senderLoading, senderError,
+    loadSenderRequests, submitRequest,
   }
 })

@@ -139,6 +139,8 @@ function doGet(e) {
       getConsultRequests:            function() { return getConsultRequests(e.parameter); },
       markConsultRead:               function() { return markConsultRead(e.parameter); },
       adminGetAllConsultRequests:    function() { return adminGetAllConsultRequests(e.parameter); },
+      getMyConsultRequests:          function() { return getMyConsultRequests(e.parameter); },
+      addConsultReply:               function() { return addConsultReply(e.parameter); },
 
       // Blog
       getBlogPosts:        function() { return getBlogPosts(e.parameter); },

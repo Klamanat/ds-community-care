@@ -38,13 +38,52 @@
           :key="r.id"
           class="ci-item"
           :class="{ 'ci-item-unread': r.isRead !== 'true' }"
-          @click="mental.markRead(r.id)"
         >
-          <div class="ci-item-top">
+          <!-- Message header -->
+          <div class="ci-item-top" @click="mental.markRead(r.id)">
             <span v-if="r.isRead !== 'true'" class="ci-new-badge">ใหม่</span>
+            <span v-if="r.reply" class="ci-replied-badge">ตอบแล้ว</span>
             <span class="ci-time">{{ fmtTime(r.createdAt) }}</span>
           </div>
-          <div class="ci-msg">{{ r.message }}</div>
+
+          <!-- User message -->
+          <div class="ci-msg" @click="mental.markRead(r.id)">{{ r.message }}</div>
+
+          <!-- Existing reply -->
+          <div v-if="r.reply" class="ci-my-reply">
+            <div class="ci-reply-label">💬 คุณตอบไว้</div>
+            <div class="ci-reply-text">{{ r.reply }}</div>
+            <div class="ci-reply-time">{{ fmtTime(r.repliedAt) }}</div>
+          </div>
+
+          <!-- Reply input (toggle) -->
+          <div v-if="replyingId === r.id" class="ci-reply-box">
+            <textarea
+              v-model="replyText"
+              class="ci-reply-input"
+              :placeholder="r.reply ? 'แก้ไขการตอบกลับ...' : 'พิมพ์คำตอบ...'"
+              maxlength="500"
+              rows="3"
+            ></textarea>
+            <div class="ci-reply-actions">
+              <button class="ci-cancel-btn" @click="replyingId = null; replyText = ''">ยกเลิก</button>
+              <button
+                class="ci-send-reply-btn"
+                :disabled="replying || !replyText.trim()"
+                @click="sendReply(r.id)"
+              >
+                {{ replying ? '⏳' : '✅ ส่ง' }}
+              </button>
+            </div>
+            <div v-if="replyError" class="ci-reply-error">⚠️ {{ replyError }}</div>
+          </div>
+          <button
+            v-else
+            class="ci-reply-btn"
+            @click="startReply(r)"
+          >
+            💬 {{ r.reply ? 'แก้ไขคำตอบ' : 'ตอบกลับ' }}
+          </button>
         </div>
       </div>
 
@@ -53,23 +92,43 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import BaseModal from '../shared/BaseModal.vue'
 import { useMentalStore }   from '../../stores/mental.js'
 import { useUserAuthStore } from '../../stores/userAuth.js'
-import { useUiStore }       from '../../stores/ui.js'
 
 const mental   = useMentalStore()
 const userAuth = useUserAuthStore()
-const ui       = useUiStore()
+
+const replyingId = ref(null)
+const replyText  = ref('')
+const replying   = ref(false)
+const replyError = ref('')
 
 function reload() {
   mental.loadMyRequests(userAuth.userId, true)
 }
 
-onMounted(() => {
-  mental.loadMyRequests(userAuth.userId, true)
-})
+function startReply(r) {
+  replyingId.value = r.id
+  replyText.value  = r.reply || ''
+  replyError.value = ''
+}
+
+async function sendReply(requestId) {
+  if (!replyText.value.trim()) return
+  replying.value   = true
+  replyError.value = ''
+  try {
+    await mental.addReply(requestId, replyText.value.trim(), userAuth.userId)
+    replyingId.value = null
+    replyText.value  = ''
+  } catch (e) {
+    replyError.value = e.message || 'ส่งไม่สำเร็จ'
+  } finally {
+    replying.value = false
+  }
+}
 
 function fmtTime(iso) {
   if (!iso) return ''
@@ -82,6 +141,10 @@ function fmtTime(iso) {
     return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
   } catch { return '' }
 }
+
+onMounted(() => {
+  mental.loadMyRequests(userAuth.userId, true)
+})
 </script>
 
 <style scoped>
@@ -123,37 +186,72 @@ function fmtTime(iso) {
   padding: 2px 8px; cursor: pointer; margin-left: auto;
 }
 
-.ci-count {
-  font-size: 11px; font-weight: 700; color: #9CA3AF;
-  text-align: center; margin-bottom: 12px;
-}
+.ci-count { font-size: 11px; font-weight: 700; color: #9CA3AF; text-align: center; margin-bottom: 12px; }
 
 .ci-item {
-  padding: 14px;
-  background: white;
-  border: 1.5px solid #E5E7EB;
-  border-radius: 14px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.1s;
+  background: white; border: 1.5px solid #E5E7EB; border-radius: 16px;
+  padding: 14px; margin-bottom: 10px; overflow: hidden;
 }
-.ci-item:active { transform: scale(0.99); }
-.ci-item-unread {
-  background: #F0FDF4;
-  border-color: #86EFAC;
-}
+.ci-item-unread { background: #F0FDF4; border-color: #86EFAC; }
 
 .ci-item-top {
   display: flex; align-items: center; gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 8px; cursor: pointer;
 }
 .ci-new-badge {
   font-size: 10px; font-weight: 800; color: #15803D;
   background: #DCFCE7; padding: 2px 8px; border-radius: 10px;
 }
+.ci-replied-badge {
+  font-size: 10px; font-weight: 800; color: #1D4ED8;
+  background: #DBEAFE; padding: 2px 8px; border-radius: 10px;
+}
 .ci-time { font-size: 10px; color: #9CA3AF; margin-left: auto; }
 
 .ci-msg {
   font-size: 14px; color: #111827; line-height: 1.6;
+  margin-bottom: 10px; cursor: pointer;
 }
+
+/* Existing reply display */
+.ci-my-reply {
+  background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 10px;
+  padding: 10px; margin-bottom: 8px;
+}
+.ci-reply-label { font-size: 10px; font-weight: 800; color: #1D4ED8; margin-bottom: 4px; }
+.ci-reply-text  { font-size: 13px; color: #1E3A8A; line-height: 1.5; }
+.ci-reply-time  { font-size: 10px; color: #93C5FD; margin-top: 4px; }
+
+/* Reply button */
+.ci-reply-btn {
+  width: 100%; padding: 8px;
+  background: none; border: 1.5px dashed #D1D5DB; border-radius: 10px;
+  font-size: 12px; font-weight: 700; color: #6B7280; cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.ci-reply-btn:hover { border-color: #2EAF7D; color: #2EAF7D; }
+
+/* Reply input box */
+.ci-reply-box { margin-top: 8px; }
+.ci-reply-input {
+  width: 100%; padding: 10px; box-sizing: border-box;
+  border: 1.5px solid #2EAF7D; border-radius: 10px;
+  font-size: 13px; color: #111827; line-height: 1.5;
+  resize: none; outline: none; font-family: inherit;
+}
+.ci-reply-actions {
+  display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end;
+}
+.ci-cancel-btn {
+  padding: 7px 14px; background: #F3F4F6; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 700; color: #374151; cursor: pointer;
+}
+.ci-send-reply-btn {
+  padding: 7px 18px;
+  background: linear-gradient(135deg, #2EAF7D, #10B981);
+  border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 800; color: white; cursor: pointer;
+}
+.ci-send-reply-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.ci-reply-error { font-size: 11px; color: #DC2626; margin-top: 6px; }
 </style>
