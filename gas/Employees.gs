@@ -39,9 +39,9 @@ function getEmployees(params) {
       grad:         String(r.grad    || ''),
       inTeam:       r.inTeam === true || r.inTeam === 'TRUE',
       inStarGang:   r.inStarGang === true || r.inStarGang === 'TRUE',
-      starGangName:   String(r.starGangName   || ''),
-      starGangRole:   String(r.starGangRole   || ''),
-      starGangSlogan: String(r.starGangSlogan || ''),
+      starGangName:    String(r.starGangName    || ''),
+      starGangRole:    String(r.starGangRole    || ''),
+      starGangSlogan:  String(r.starGangSlogan  || ''),
     };
   });
 

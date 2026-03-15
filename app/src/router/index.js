@@ -77,6 +77,12 @@ const routes = [
     component: () => import('../views/admin/AdminTrainingView.vue'),
     meta: { adminLayout: true, requiresAdmin: true },
   },
+  {
+    path: '/admin/mental',
+    name: 'admin-mental',
+    component: () => import('../views/admin/AdminMentalView.vue'),
+    meta: { adminLayout: true, requiresAdmin: true },
+  },
 ]
 
 const router = createRouter({

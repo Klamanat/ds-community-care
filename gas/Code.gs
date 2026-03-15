@@ -129,6 +129,17 @@ function doGet(e) {
       adminUpdateIdpVideo:  function() { return adminUpdateIdpVideo(e.parameter); },
       adminDeleteIdpVideo:  function() { return adminDeleteIdpVideo(e.parameter); },
 
+      // Mental Health Advisors
+      getMentalAdvisors:        function() { return getMentalAdvisors(); },
+      adminAddMentalAdvisor:    function() { return adminAddMentalAdvisor(e.parameter); },
+      adminUpdateMentalAdvisor: function() { return adminUpdateMentalAdvisor(e.parameter); },
+      adminDeleteMentalAdvisor: function() { return adminDeleteMentalAdvisor(e.parameter); },
+      // Consultation Requests
+      submitConsultRequest:          function() { return submitConsultRequest(e.parameter); },
+      getConsultRequests:            function() { return getConsultRequests(e.parameter); },
+      markConsultRead:               function() { return markConsultRead(e.parameter); },
+      adminGetAllConsultRequests:    function() { return adminGetAllConsultRequests(e.parameter); },
+
       // Blog
       getBlogPosts:        function() { return getBlogPosts(e.parameter); },
       addBlogPost:         function() { return addBlogPost(e.parameter); },

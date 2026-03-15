@@ -54,6 +54,7 @@ const navCards = [
   { to: '/admin/announcement', icon: '📢', label: 'ประกาศ / Popup',     sub: 'Announcement settings' },
   { to: '/admin/reward-rules', icon: '🏆', label: 'วิธีสะสมคะแนน',     sub: 'PointRules sheet' },
   { to: '/admin/training',     icon: '📚', label: 'Training',           sub: 'หลักสูตรพัฒนาทักษะ' },
+  { to: '/admin/mental',       icon: '💚', label: 'Mental Health',       sub: 'ที่ปรึกษาสุขภาพจิต' },
 ]
 
 function doLogout() {

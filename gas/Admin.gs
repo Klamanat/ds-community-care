@@ -182,8 +182,8 @@ function adminAddEmployee(params) {
     if (h === 'grad')         return params.grad        || '';
     if (h === 'inTeam')       return params.inTeam === 'true' || params.inTeam === true;
     if (h === 'inStarGang')   return params.inStarGang === 'true' || params.inStarGang === true;
-    if (h === 'starGangName') return params.starGangName || '';
-    if (h === 'starGangRole') return params.starGangRole || '';
+    if (h === 'starGangName')  return params.starGangName  || '';
+    if (h === 'starGangRole')  return params.starGangRole  || '';
     return '';
   });
   sheet.appendRow(row);

@@ -87,6 +87,36 @@
             </div>
           </div>
 
+          <!-- Counselor inbox -->
+          <template v-if="isCounselor">
+            <div class="pf-divider" style="margin:16px 0 12px;"></div>
+            <div class="pf-section-title" style="font-size:14px;">
+              💚 กล่องข้อความที่ปรึกษา
+              <span v-if="mental.unreadCount" class="pf-unread-badge">{{ mental.unreadCount }}</span>
+            </div>
+            <div v-if="mental.requestsLoading" class="pf-req-loading">⏳ กำลังโหลด...</div>
+            <div v-else-if="mental.requestsError" class="pf-req-error">
+              ⚠️ {{ mental.requestsError }}
+              <button class="pf-req-retry" @click="mental.loadMyRequests(userAuth.userId, true)">โหลดใหม่</button>
+            </div>
+            <div v-else-if="!mental.myRequests.length" class="pf-req-empty">📭 ยังไม่มีข้อความ</div>
+            <div v-else class="pf-req-list">
+              <div
+                v-for="r in mental.myRequests"
+                :key="r.id"
+                class="pf-req-item"
+                :class="{ 'pf-req-unread': r.isRead !== 'true' }"
+                @click="mental.markRead(r.id)"
+              >
+                <div class="pf-req-msg">{{ r.message }}</div>
+                <div class="pf-req-meta">
+                  <span class="pf-req-time">{{ fmtTime(r.createdAt) }}</span>
+                  <span v-if="r.isRead !== 'true'" class="pf-req-new">ใหม่</span>
+                </div>
+              </div>
+            </div>
+          </template>
+
           <!-- Logout -->
           <div class="pf-divider" style="margin:16px 0 12px;"></div>
           <button class="pf-logout-btn" @click="handleLogout">
@@ -122,19 +152,28 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseModal from '../shared/BaseModal.vue'
 import { useUiStore }       from '../../stores/ui.js'
 import { useUserAuthStore } from '../../stores/userAuth.js'
 import { useTeamStore }     from '../../stores/team.js'
+import { useMentalStore }   from '../../stores/mental.js'
 import { gasGet }           from '../../services/api.js'
 import { uploadImage as driveUpload } from '../../services/activitiesService.js'
 
 const ui       = useUiStore()
 const userAuth = useUserAuthStore()
 const team     = useTeamStore()
+const mental   = useMentalStore()
 const router   = useRouter()
+
+onMounted(async () => {
+  await mental.loadAdvisors()
+  if (isCounselor.value) mental.loadMyRequests(userAuth.userId, true)
+})
+
+const isCounselor = computed(() => mental.isCounselor(userAuth.userId))
 
 const isStarGang = computed(() => {
   const name = userAuth.userName
@@ -213,6 +252,19 @@ async function saveEdit() {
   try { await gasGet('updateEmployeeSelf', { id: userAuth.userId, name, role: userAuth.userRole, dept: userAuth.userDept, starGangSlogan: userAuth.userSlogan }) } catch {}
   saving.value = false; editing.value = false
   ui.showToast('บันทึกข้อมูลสำเร็จ ✅')
+}
+
+// ── Counselor inbox ──────────────────────────────────────────
+function fmtTime(iso) {
+  if (!iso) return ''
+  try {
+    const d    = new Date(iso)
+    const diff = Date.now() - d
+    if (diff < 60000)    return 'เมื่อกี้'
+    if (diff < 3600000)  return Math.floor(diff / 60000) + ' นาทีที่แล้ว'
+    if (diff < 86400000) return Math.floor(diff / 3600000) + ' ชั่วโมงที่แล้ว'
+    return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
+  } catch { return '' }
 }
 
 // ── Logout ──────────────────────────────────────────────────
@@ -371,6 +423,43 @@ function handleLogout() {
   background: white;
 }
 .pf-input:focus { border-color: #1877F2; }
+
+/* ── Counselor inbox ── */
+.pf-unread-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #EF4444; color: white;
+  font-size: 10px; font-weight: 800;
+  min-width: 18px; height: 18px; border-radius: 9px;
+  padding: 0 5px; margin-left: 6px; vertical-align: middle;
+}
+.pf-req-loading { font-size: 12px; color: #9CA3AF; padding: 8px 0; }
+.pf-req-empty   { font-size: 12px; color: #9CA3AF; padding: 8px 0; }
+.pf-req-error {
+  font-size: 12px; color: #DC2626; padding: 8px 10px;
+  background: #FEF2F2; border-radius: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.pf-req-retry {
+  background: none; border: 1px solid #DC2626; color: #DC2626;
+  font-size: 11px; font-weight: 700; border-radius: 6px;
+  padding: 2px 8px; cursor: pointer; margin-left: auto;
+}
+.pf-req-retry:hover { background: #FEF2F2; }
+.pf-req-list    { display: flex; flex-direction: column; gap: 8px; }
+.pf-req-item {
+  padding: 10px 12px;
+  background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px;
+  cursor: pointer; transition: background 0.1s;
+}
+.pf-req-item:active { background: #F0FDF4; }
+.pf-req-unread { background: #F0FDF4; border-color: #86EFAC; }
+.pf-req-msg  { font-size: 13px; color: #111827; line-height: 1.5; margin-bottom: 4px; }
+.pf-req-meta { display: flex; align-items: center; gap: 8px; }
+.pf-req-time { font-size: 10px; color: #9CA3AF; }
+.pf-req-new  {
+  font-size: 10px; font-weight: 800; color: #15803D;
+  background: #DCFCE7; padding: 1px 6px; border-radius: 10px;
+}
 
 /* ── Logout ── */
 .pf-logout-btn {
