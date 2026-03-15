@@ -29,7 +29,8 @@
       <TrainingModal  :key="ui.modalKeys['modal-training']   || 0" />
       <RewardModal       :key="ui.modalKeys['modal-reward']      || 0" />
       <AnnouncementModal />
-      <NotifModal :key="ui.modalKeys['modal-notif'] || 0" />
+      <NotifModal  :key="ui.modalKeys['modal-notif'] || 0" />
+      <BlogModal   :key="ui.modalKeys['modal-blog']  || 0" />
 
       <!-- Toast -->
       <div class="toast" :class="{ hidden: !ui.toast.visible }">{{ ui.toast.msg }}</div>
@@ -66,6 +67,7 @@ import TrainingModal from './components/modals/TrainingModal.vue'
 import RewardModal from './components/modals/RewardModal.vue'
 import AnnouncementModal from './components/modals/AnnouncementModal.vue'
 import NotifModal       from './components/modals/NotifModal.vue'
+import BlogModal       from './components/modals/BlogModal.vue'
 import { useUiStore }       from './stores/ui.js'
 import { useUserAuthStore } from './stores/userAuth.js'
 import { useNotifStore }    from './stores/notif.js'

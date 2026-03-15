@@ -7,7 +7,6 @@
 //   CompulsoryTrainings  id | title | description | instructor | section | createdAt
 //   SuperskillsTrainings id | title | description | instructor | section | createdAt
 //   LeadershipTrainings  id | title | description | instructor | section | createdAt
-//   BlogTrainings        id | title | description | instructor | section | createdAt
 //
 // Site Visit (แยกต่างหาก):
 //   SiteVisits  id | title | description | instructor | color | createdAt
@@ -25,7 +24,6 @@ var CAT_TO_SHEET = {
   compulsory:  'CompulsoryTrainings',
   superskills: 'SuperskillsTrainings',
   leadership:  'LeadershipTrainings',
-  blog:        'BlogTrainings',
 };
 
 var SHEET_TO_CAT = (function() {

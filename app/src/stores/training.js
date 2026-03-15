@@ -39,7 +39,6 @@ export const useTrainingStore = defineStore('training', () => {
     { id: 's6',  category: 'superskills', title: 'AI & Prompt Engineering',            description: 'ใช้ AI ช่วยงานอย่างมีประสิทธิภาพ',     instructor: 'อ.กานต์ ใจดี',    section: 'new' },
     { id: 's7',  category: 'idp',         title: 'Presentation & Public Speaking',     description: 'นำเสนองานอย่างมั่นใจ',                instructor: 'อ.นภา พรมมา',     section: 'new' },
     { id: 's8',  category: 'external',    title: 'Project Management Professional',    description: 'บริหารโครงการแบบ PMP',                 instructor: 'อ.ธนา วิชัย',     section: 'new' },
-    { id: 's10', category: 'blog',        title: 'เขียน Internal Blog อย่างไรให้ปัง', description: 'เทคนิคการเขียนบทความภายใน',           instructor: 'อ.พิมพ์ใจ สดใส', section: 'new' },
   ]
 
   const SEED_SITE_VISITS = [

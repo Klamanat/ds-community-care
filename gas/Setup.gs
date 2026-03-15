@@ -80,7 +80,6 @@ function forceResetExternalTrainings()    { forceResetSheet('ExternalTrainings')
 function forceResetCompulsoryTrainings()  { forceResetSheet('CompulsoryTrainings'); }
 function forceResetSuperskillsTrainings() { forceResetSheet('SuperskillsTrainings'); }
 function forceResetLeadershipTrainings()  { forceResetSheet('LeadershipTrainings'); }
-function forceResetBlogTrainings()        { forceResetSheet('BlogTrainings'); }
 function forceResetTrainingRegistrations(){ forceResetSheet('TrainingRegistrations'); }
 function forceResetTrainingReviews()      { forceResetSheet('TrainingReviews'); }
 
@@ -297,7 +296,6 @@ var ALL_SHEETS = [
   { name: 'CompulsoryTrainings',  headers: ['id','title','description','instructor','section','createdAt'] },
   { name: 'SuperskillsTrainings', headers: ['id','title','description','instructor','section','createdAt'] },
   { name: 'LeadershipTrainings',  headers: ['id','title','description','instructor','section','createdAt'] },
-  { name: 'BlogTrainings',        headers: ['id','title','description','instructor','section','createdAt'] },
   {
     name: 'SiteVisits',
     headers: ['id','title','description','instructor','color','createdAt'],
@@ -329,6 +327,10 @@ var ALL_SHEETS = [
   {
     name: 'PointRules',
     headers: ['id','type','subtype','icon','name','desc','pts','color','active'],
+  },
+  {
+    name: 'BlogPosts',
+    headers: ['id','title','body','category','authorName','authorId','createdAt'],
   },
 ];
 

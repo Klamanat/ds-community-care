@@ -20,6 +20,7 @@ function doPost(e) {
       userSetPassword:      function() { return userSetPassword(body); },
       adminAddActivity:     function() { return adminAddActivity(body); },
       adminUpdateActivity:  function() { return adminUpdateActivity(body); },
+      addBlogPost:          function() { return addBlogPost(body); },
     };
 
     if (!handlers[action]) return respond(err('Unknown action: ' + action));
@@ -116,6 +117,13 @@ function doGet(e) {
       submitSiteSuggestion:    function() { return submitSiteSuggestion(e.parameter); },
       getMySiteSuggestion:     function() { return getMySiteSuggestion(e.parameter); },
       adminGetSiteSuggestions: function() { return adminGetSiteSuggestions(e.parameter); },
+
+      // Blog
+      getBlogPosts:        function() { return getBlogPosts(e.parameter); },
+      addBlogPost:         function() { return addBlogPost(e.parameter); },
+      adminGetBlogPosts:   function() { return adminGetBlogPosts(e.parameter); },
+      adminDeleteBlogPost: function() { return adminDeleteBlogPost(e.parameter); },
+      adminUpdateBlogPost: function() { return adminUpdateBlogPost(e.parameter); },
 
       // Announcement
       getAnnouncement:    function() { return getAnnouncement(); },
