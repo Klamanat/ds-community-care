@@ -31,8 +31,8 @@
         </div>
       </div>
 
-      <!-- ── Toolbar ── -->
-      <div class="atr-toolbar">
+      <!-- ── Toolbar (hidden for IDP — it has its own add button inside) ── -->
+      <div v-if="activeTab !== 'idp'" class="atr-toolbar">
         <span class="atr-toolbar-desc">{{ activeDef?.desc || '' }}</span>
         <button class="al-btn al-btn-save" @click="openAdd">
           + {{ activeTab === 'site' ? 'เพิ่มสถานที่' : 'เพิ่มหลักสูตร' }}
@@ -48,6 +48,9 @@
         :sug-loading="sugLoading"
         @edit="openEdit"
         @delete="confirmDel"
+      />
+      <AdminIdpTab
+        v-else-if="activeTab === 'idp'"
       />
       <AdminCourseTab
         v-else
@@ -158,6 +161,7 @@ import { useAdminStore } from '../../stores/admin.js'
 import * as svc from '../../services/trainingService.js'
 import AdminCourseTab from './training/AdminCourseTab.vue'
 import AdminSiteTab   from './training/AdminSiteTab.vue'
+import AdminIdpTab    from './training/AdminIdpTab.vue'
 
 const admin  = useAdminStore()
 const router = useRouter()
@@ -183,11 +187,13 @@ const tabRows     = computed(() => courseCache[activeTab.value] || [])
 
 function tabCount(key) {
   if (key === 'site') return siteRows.value.length || 0
+  if (key === 'idp')  return null   // AdminIdpTab shows its own counts
   return (courseCache[key] || []).length || 0
 }
 
 async function loadTab(key) {
   if (key === 'site') { await loadSite(); return }
+  if (key === 'idp')  return  // AdminIdpTab loads its own data
   if (courseCache[key] !== undefined) return
   tabLoading.value = true
   try {

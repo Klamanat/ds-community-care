@@ -39,7 +39,7 @@ function addBlogPost(params) {
 // ── Admin ─────────────────────────────────────────────────────────────────────
 
 function adminDeleteBlogPost(params) {
-  if (!validateAdmin(params.token)) return err('unauthorized');
+  verifyToken(params.token);
   var id    = params.id;
   var sheet = getSheet(BLOG_SHEET);
   var data  = sheet.getDataRange().getValues();
@@ -53,7 +53,7 @@ function adminDeleteBlogPost(params) {
 }
 
 function adminUpdateBlogPost(params) {
-  if (!validateAdmin(params.token)) return err('unauthorized');
+  verifyToken(params.token);
   var id    = params.id;
   var sheet = getSheet(BLOG_SHEET);
   var data  = sheet.getDataRange().getValues();
@@ -75,7 +75,7 @@ function adminUpdateBlogPost(params) {
 }
 
 function adminGetBlogPosts(params) {
-  if (!validateAdmin(params.token)) return err('unauthorized');
+  verifyToken(params.token);
   var rows = sheetToObjects(BLOG_SHEET);
   rows.sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
   return ok(rows);

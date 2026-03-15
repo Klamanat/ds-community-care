@@ -1,4 +1,4 @@
-import { gasGet } from './api.js'
+import { gasGet, gasPost } from './api.js'
 
 export async function fetchTrainings(category) {
   const r = await gasGet('getTrainings', category ? { category } : {})
@@ -96,6 +96,59 @@ export async function fetchMySiteSuggestion(employeeId) {
 
 export async function cancelSiteSuggestion(employeeId) {
   const r = await gasGet('submitSiteSuggestion', { employeeId, suggestion: '' })
+  if (!r.ok) throw new Error(r.error || 'error')
+  return r.data
+}
+
+// ── IDP Posters & Videos ──────────────────────────────────────────────────────
+
+export async function adminUploadIdpImage(base64Data, mimeType, fileName) {
+  const r = await gasPost('adminUploadIdpImage', { token: token(), base64: base64Data, mimeType, fileName })
+  return r.data // { url, fileId }
+}
+
+export async function fetchIdpPosters() {
+  const r = await gasGet('getIdpPosters', {})
+  return r.data || []
+}
+
+export async function fetchIdpVideos() {
+  const r = await gasGet('getIdpVideos', {})
+  return r.data || []
+}
+
+export async function adminAddIdpPoster(fields) {
+  const r = await gasGet('adminAddIdpPoster', { token: token(), ...fields })
+  if (!r.ok) throw new Error(r.error || 'error')
+  return r.data
+}
+
+export async function adminUpdateIdpPoster(id, fields) {
+  const r = await gasGet('adminUpdateIdpPoster', { token: token(), id, ...fields })
+  if (!r.ok) throw new Error(r.error || 'error')
+  return r.data
+}
+
+export async function adminDeleteIdpPoster(id) {
+  const r = await gasGet('adminDeleteIdpPoster', { token: token(), id })
+  if (!r.ok) throw new Error(r.error || 'error')
+  return r.data
+}
+
+export async function adminAddIdpVideo(fields) {
+  const r = await gasGet('adminAddIdpVideo', { token: token(), ...fields })
+  if (!r.ok) throw new Error(r.error || 'error')
+  return r.data
+}
+
+export async function adminUpdateIdpVideo(id, fields) {
+  const r = await gasGet('adminUpdateIdpVideo', { token: token(), id, ...fields })
+  if (!r.ok) throw new Error(r.error || 'error')
+  return r.data
+}
+
+export async function adminDeleteIdpVideo(id) {
+  const r = await gasGet('adminDeleteIdpVideo', { token: token(), id })
   if (!r.ok) throw new Error(r.error || 'error')
   return r.data
 }

@@ -82,6 +82,8 @@ function forceResetSuperskillsTrainings() { forceResetSheet('SuperskillsTraining
 function forceResetLeadershipTrainings()  { forceResetSheet('LeadershipTrainings'); }
 function forceResetTrainingRegistrations(){ forceResetSheet('TrainingRegistrations'); }
 function forceResetTrainingReviews()      { forceResetSheet('TrainingReviews'); }
+function forceResetIdpPosters()           { forceResetSheet('IdpPosters'); }
+function forceResetIdpVideos()            { forceResetSheet('IdpVideos'); }
 
 /**
  * deleteOldSheets() — ลบ sheet เก่าที่ถูกแทนที่โดย schema ใหม่
@@ -292,6 +294,8 @@ var ALL_SHEETS = [
   },
   { name: 'AnnualTrainings',      headers: ['id','title','description','instructor','section','createdAt'] },
   { name: 'IdpTrainings',         headers: ['id','title','description','instructor','section','createdAt'] },
+  { name: 'IdpPosters',           headers: ['id','title','imageUrl','description','date','createdAt'] },
+  { name: 'IdpVideos',            headers: ['id','title','videoUrl','description','createdAt'] },
   { name: 'ExternalTrainings',    headers: ['id','title','description','instructor','section','createdAt'] },
   { name: 'CompulsoryTrainings',  headers: ['id','title','description','instructor','section','createdAt'] },
   { name: 'SuperskillsTrainings', headers: ['id','title','description','instructor','section','createdAt'] },

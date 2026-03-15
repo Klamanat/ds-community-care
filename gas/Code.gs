@@ -21,6 +21,7 @@ function doPost(e) {
       adminAddActivity:     function() { return adminAddActivity(body); },
       adminUpdateActivity:  function() { return adminUpdateActivity(body); },
       addBlogPost:          function() { return addBlogPost(body); },
+      adminUploadIdpImage:  function() { return adminUploadIdpImage(body); },
     };
 
     if (!handlers[action]) return respond(err('Unknown action: ' + action));
@@ -117,6 +118,16 @@ function doGet(e) {
       submitSiteSuggestion:    function() { return submitSiteSuggestion(e.parameter); },
       getMySiteSuggestion:     function() { return getMySiteSuggestion(e.parameter); },
       adminGetSiteSuggestions: function() { return adminGetSiteSuggestions(e.parameter); },
+
+      // IDP Posters & Videos
+      getIdpPosters:        function() { return getIdpPosters(); },
+      getIdpVideos:         function() { return getIdpVideos(); },
+      adminAddIdpPoster:    function() { return adminAddIdpPoster(e.parameter); },
+      adminUpdateIdpPoster: function() { return adminUpdateIdpPoster(e.parameter); },
+      adminDeleteIdpPoster: function() { return adminDeleteIdpPoster(e.parameter); },
+      adminAddIdpVideo:     function() { return adminAddIdpVideo(e.parameter); },
+      adminUpdateIdpVideo:  function() { return adminUpdateIdpVideo(e.parameter); },
+      adminDeleteIdpVideo:  function() { return adminDeleteIdpVideo(e.parameter); },
 
       // Blog
       getBlogPosts:        function() { return getBlogPosts(e.parameter); },

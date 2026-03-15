@@ -22,6 +22,7 @@ var SUBFOLDERS = {
   profiles:      "Profiles",
   announcements: "Announcements",
   empathy:       "Empathy",
+  idpPosters:    "IDP Posters",
 };
 
 function _getOrCreateSubfolder(parent, name) {
@@ -142,6 +143,38 @@ function uploadAnnouncementVideo(body) {
   return ok({
     url: 'https://drive.google.com/file/d/' + fileId + '/view',
     id:  fileId,
+  });
+}
+
+/**
+ * adminUploadIdpImage — upload a poster image to IDP Posters/ subfolder.
+ * Called from doPost with action: 'adminUploadIdpImage'
+ * body: { token, base64, fileName, mimeType }
+ * Returns: { url: 'https://drive.google.com/thumbnail?id=...&sz=w1600', fileId }
+ */
+function adminUploadIdpImage(body) {
+  verifyToken(body.token);
+
+  var base64Raw = (body.base64 || '').replace(/^data:[^;]+;base64,/, '');
+  var mimeType  = body.mimeType || 'image/jpeg';
+  var fileName  = body.fileName || ('idp_' + new Date().getTime() + '.jpg');
+
+  if (!base64Raw) return err('No image data');
+
+  var m          = DRIVE_FOLDER_ID.match(/folders\/([a-zA-Z0-9_-]+)/);
+  var folderId   = m ? m[1] : DRIVE_FOLDER_ID;
+  var mainFolder = DriveApp.getFolderById(folderId);
+  var subfolder  = _getOrCreateSubfolder(mainFolder, SUBFOLDERS.idpPosters);
+
+  var decoded = Utilities.base64Decode(base64Raw);
+  var blob    = Utilities.newBlob(decoded, mimeType, fileName);
+  var file    = subfolder.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW);
+
+  var fileId = file.getId();
+  return ok({
+    url:    'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1600',
+    fileId: fileId,
   });
 }
 

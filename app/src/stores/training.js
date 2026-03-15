@@ -14,6 +14,11 @@ export const useTrainingStore = defineStore('training', () => {
   const siteVisits     = ref([])      // [{ id, title, description, instructor, color, voteCount }]
   const mySiteVoteIds  = ref([])      // [siteId, ...]
 
+  // IDP
+  const idpPosters  = ref([])   // [{ id, title, imageUrl, description, date, createdAt }]
+  const idpVideos   = ref([])   // [{ id, title, videoUrl, description, createdAt }]
+  const idpLoading  = ref(false)
+
   // reviews: { [trainingId]: { avg, count, myStars, myComment } }
   const reviews        = reactive({})
   // allReviews: raw list for showing individual reviews inside detail
@@ -44,6 +49,29 @@ export const useTrainingStore = defineStore('training', () => {
   const SEED_SITE_VISITS = [
     { id: 'sv1', title: 'Site Visit — โรงงานอมตะซิตี้', description: 'เยี่ยมชมกระบวนการผลิต', instructor: 'ทีม HR', color: '#0EA5E9', voteCount: 0 },
   ]
+
+  async function loadIdpPosters(force = false) {
+    if (!force && idpPosters.value.length > 0) return
+    idpLoading.value = true
+    try {
+      const data = await svc.fetchIdpPosters()
+      idpPosters.value = data.length ? data : []
+    } catch {
+      idpPosters.value = []
+    } finally {
+      idpLoading.value = false
+    }
+  }
+
+  async function loadIdpVideos(force = false) {
+    if (!force && idpVideos.value.length > 0) return
+    try {
+      const data = await svc.fetchIdpVideos()
+      idpVideos.value = data.length ? data : []
+    } catch {
+      idpVideos.value = []
+    }
+  }
 
   async function loadCourses(force = false) {
     if (!force && lastFetched.value && Date.now() - lastFetched.value < 60000) return
@@ -227,8 +255,10 @@ export const useTrainingStore = defineStore('training', () => {
   return {
     courses, myTrainingIds, isLoading, categories, reviews, allReviews, mySuggestion,
     siteVisits, mySiteVoteIds,
+    idpPosters, idpVideos, idpLoading,
     loadCourses, loadMyTrainings, loadMySuggestion, loadReviews, submitReview, register, cancel,
     loadSiteVisits, loadMySiteVotes, voteSite: voteSiteAction, cancelSiteVote: cancelSiteVoteAction, isSiteVoted,
+    loadIdpPosters, loadIdpVideos,
     coursesByCategory, isRegistered, getCategoryInfo, reviewsForCourse,
   }
 })

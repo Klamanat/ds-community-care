@@ -46,6 +46,7 @@
       <!-- Courses view: delegate to per-category components -->
       <template v-else-if="view === 'courses'">
         <TrSiteView    v-if="selectedCat?.key === 'site'" />
+        <TrIdpView     v-else-if="selectedCat?.key === 'idp'" />
         <TrBlogView    v-else-if="selectedCat?.key === 'blog'"   @open-post="onOpenPost" />
         <TrAnnualView  v-else-if="selectedCat?.key === 'annual'" :cat="selectedCat" @open-review="onOpenReview" />
         <TrCoursesView v-else :cat="selectedCat" />
@@ -94,6 +95,7 @@ import BaseModal     from '../shared/BaseModal.vue'
 import TrCatsView    from './training/TrCatsView.vue'
 import TrSiteView    from './training/TrSiteView.vue'
 import TrBlogView    from './training/TrBlogView.vue'
+import TrIdpView     from './training/TrIdpView.vue'
 import TrAnnualView  from './training/TrAnnualView.vue'
 import TrCoursesView from './training/TrCoursesView.vue'
 import TrReviewView  from './training/TrReviewView.vue'
