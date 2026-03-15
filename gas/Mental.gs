@@ -6,13 +6,28 @@ function getMentalAdvisors() {
   try {
     var rows = cachedSheetRead('MentalAdvisors', 300);
     rows.sort(function(a, b) { return (Number(a.order) || 0) - (Number(b.order) || 0); });
+
+    // Build employee map to enrich with profile image
+    var empMap = {};
+    try {
+      sheetToObjects('Employees').forEach(function(e) {
+        if (!e.id) return;
+        var raw = String(e.imgUrl || '');
+        empMap[String(e.id)] = raw.indexOf('drive:') === 0
+          ? { imgId: raw.slice(6), imgUrl: '' }
+          : { imgId: '', imgUrl: raw };
+      });
+    } catch(e) {}
+
     return ok(rows.map(function(r) {
+      var emp = empMap[String(r.employeeId || '')] || {};
       return {
         id:         String(r.id         || ''),
         name:       String(r.name       || ''),
         role:       String(r.role       || ''),
         employeeId: String(r.employeeId || ''),
-        url:        String(r.url        || ''),
+        imgId:      String(emp.imgId    || ''),
+        imgUrl:     String(emp.imgUrl   || ''),
         order:      Number(r.order)     || 0,
       };
     }));

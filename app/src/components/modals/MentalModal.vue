@@ -30,18 +30,50 @@
 
         <!-- ── List view ── -->
         <template v-if="view === 'list'">
-          <div class="mh-section-label">🌿 เลือกที่ปรึกษาที่ต้องการติดต่อ</div>
+
+          <!-- Online counseling hero -->
+          <a class="mh-online-hero" href="https://www.istrong.co" target="_blank" rel="noopener noreferrer">
+            <div class="mh-online-orb mh-online-orb1"></div>
+            <div class="mh-online-orb mh-online-orb2"></div>
+            <div class="mh-online-orb mh-online-orb3"></div>
+
+            <div class="mh-online-recommend">✨ แนะนำ</div>
+
+            <div class="mh-istrong-logo">
+              <span class="mh-istrong-i">i</span><span class="mh-istrong-strong">Strong</span>
+            </div>
+
+            <div class="mh-online-tagline">ห้องให้คำปรึกษาออนไลน์</div>
+            <div class="mh-online-sub">พูดคุยกับนักจิตวิทยา · ปลอดภัย · เป็นความลับ</div>
+
+            <div class="mh-online-cta-bar">
+              <span>เปิดเว็บไซต์</span>
+              <span>↗</span>
+              <div class="mh-online-shimmer"></div>
+            </div>
+          </a>
+
+          <!-- Divider -->
+          <div class="mh-divider">
+            <span class="mh-divider-line"></span>
+            <span class="mh-divider-text">หรือส่งข้อความถึง</span>
+            <span class="mh-divider-line"></span>
+          </div>
 
           <div class="mh-list">
             <button v-for="c in mental.advisors" :key="c.id" class="mh-card" @click="selectAdvisor(c)">
-              <div class="mh-av" :style="{ background: avatarGrad(c.name) }">
-                {{ (c.name || '?').charAt(0) }}
+              <div class="mh-card-av-wrap">
+                <div class="mh-card-av" :style="c.imgUrl ? {} : { background: avatarGrad(c.name) }">
+                  <img v-if="c.imgUrl" :src="c.imgUrl" class="mh-av-img" />
+                  <span v-else>{{ (c.name || '?').charAt(0) }}</span>
+                </div>
+                <div class="mh-card-online-dot"></div>
               </div>
-              <div class="mh-card-info">
+              <div class="mh-card-info-wrap">
                 <div class="mh-card-name">{{ c.name }}</div>
                 <div v-if="c.role" class="mh-card-role">{{ c.role }}</div>
               </div>
-              <div class="mh-card-arr">›</div>
+              <div class="mh-card-cta">ส่งข้อความ →</div>
             </button>
           </div>
 
@@ -61,8 +93,9 @@
           <button class="mh-back" @click="view = 'list'">← กลับ</button>
 
           <div class="mh-form-advisor">
-            <div class="mh-av mh-av-lg" :style="{ background: avatarGrad(selected.name) }">
-              {{ (selected.name || '?').charAt(0) }}
+            <div class="mh-av mh-av-lg" :style="selected.imgUrl ? {} : { background: avatarGrad(selected.name) }">
+              <img v-if="selected.imgUrl" :src="selected.imgUrl" class="mh-av-img" />
+              <span v-else>{{ (selected.name || '?').charAt(0) }}</span>
             </div>
             <div>
               <div class="mh-card-name">{{ selected.name }}</div>
@@ -261,31 +294,168 @@ onMounted(() => mental.loadAdvisors())
   text-align:center; letter-spacing:0.5px; margin-bottom:12px;
 }
 
-.mh-list { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+.mh-list {
+  display: flex; flex-direction: column;
+  gap: 10px; margin-bottom: 16px;
+}
 
 .mh-card {
-  display:flex; align-items:center; gap:12px;
-  padding:12px 14px; width:100%; text-align:left;
-  background:white; border:1.5px solid #E5E7EB; border-radius:16px;
-  cursor:pointer; transition:border-color 0.15s, box-shadow 0.15s, transform 0.1s;
-  box-shadow:0 1px 4px rgba(0,0,0,0.05);
+  display: flex; flex-direction: row; align-items: center; gap: 14px;
+  padding: 14px 16px; width: 100%; text-align: left;
+  background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 55%, #A7F3D0 100%);
+  border: 1.5px solid #6EE7B7; border-radius: 18px;
+  cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  box-shadow: 0 3px 12px rgba(16,185,129,0.12);
+  position: relative; overflow: hidden;
 }
-.mh-card:hover  { border-color:#2EAF7D; box-shadow:0 4px 14px rgba(46,175,125,0.15); }
-.mh-card:active { transform:scale(0.98); }
+.mh-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, #D1FAE5 0%, #6EE7B7 100%);
+  opacity: 0; transition: opacity 0.2s;
+}
+.mh-card:hover { border-color: #10B981; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(16,185,129,0.25); }
+.mh-card:hover::before { opacity: 0.5; }
+.mh-card:active { transform: scale(0.98); }
 
+/* Avatar */
+.mh-card-av-wrap { position: relative; flex-shrink: 0; z-index: 1; }
+.mh-card-av {
+  width: 60px; height: 60px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 900; color: white; overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  border: 3px solid white;
+  outline: 2px solid #A7F3D0;
+  transition: outline-color 0.2s;
+}
+.mh-card:hover .mh-card-av { outline-color: #10B981; }
+
+/* Online green dot */
+.mh-card-online-dot {
+  position: absolute; bottom: 2px; right: 2px;
+  width: 13px; height: 13px; border-radius: 50%;
+  background: #22C55E; border: 2px solid white;
+  box-shadow: 0 0 6px rgba(34,197,94,0.6);
+}
+
+.mh-av-img { width:100%; height:100%; object-fit:cover; }
+/* mh-av used in form + history views */
 .mh-av {
-  width:52px; height:52px; border-radius:50%; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-  font-size:22px; font-weight:800; color:white;
+  border-radius: 50%; flex-shrink: 0; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; color: white;
 }
-.mh-av-lg { width:60px; height:60px; font-size:26px; }
-.mh-av-sm { width:32px; height:32px; font-size:14px; flex-shrink:0; }
+.mh-av-lg { width:64px; height:64px; font-size:26px; box-shadow:0 4px 12px rgba(0,0,0,0.12); }
+.mh-av-sm { width:32px; height:32px; font-size:14px; }
 
-.mh-card-info { flex:1; min-width:0; }
-.mh-card-name { font-size:14px; font-weight:800; color:#111827; }
-.mh-card-role { font-size:11px; color:#6B7280; margin-top:1px; }
-.mh-card-arr { font-size:22px; color:#D1D5DB; flex-shrink:0; }
-.mh-card:hover .mh-card-arr { color:#2EAF7D; }
+/* Info wrap for horizontal layout */
+.mh-card-info-wrap { flex: 1; z-index: 1; min-width: 0; }
+
+.mh-card-name {
+  font-size: 15px; font-weight: 900; color: #064E3B;
+  margin-bottom: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mh-card-role {
+  font-size: 11px; color: #059669;
+  line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.mh-card-cta {
+  z-index: 1; flex-shrink: 0;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #059669, #10B981);
+  border-radius: 30px;
+  font-size: 12px; font-weight: 800; color: white;
+  transition: filter 0.15s;
+  box-shadow: 0 2px 8px rgba(16,185,129,0.35);
+  white-space: nowrap;
+}
+.mh-card:hover .mh-card-cta { filter: brightness(1.08); }
+
+/* Online counseling hero banner */
+.mh-online-hero {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 20px 20px 16px; margin-bottom: 14px; text-align: center;
+  background: linear-gradient(150deg, #0A2472 0%, #0D47A1 40%, #1565C0 75%, #1976D2 100%);
+  border-radius: 22px; text-decoration: none; cursor: pointer;
+  position: relative; overflow: hidden;
+  box-shadow: 0 8px 28px rgba(10,36,114,0.45), 0 2px 8px rgba(10,36,114,0.2);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.mh-online-hero:hover  { transform: translateY(-3px); box-shadow: 0 14px 36px rgba(10,36,114,0.55), 0 4px 12px rgba(10,36,114,0.25); }
+.mh-online-hero:active { transform: scale(0.975); }
+
+.mh-online-orb { position: absolute; border-radius: 50%; pointer-events: none; }
+.mh-online-orb1 { width:140px; height:140px; top:-50px; right:-40px; background:rgba(255,255,255,0.07); }
+.mh-online-orb2 { width:80px;  height:80px;  bottom:-30px; left:-20px; background:rgba(255,255,255,0.05); }
+.mh-online-orb3 { width:50px;  height:50px;  top:10px; left:20px; background:rgba(255,255,255,0.04); }
+
+/* "แนะนำ" badge */
+.mh-online-recommend {
+  position: absolute; top: 12px; right: 14px; z-index: 2;
+  background: linear-gradient(135deg, #FCD34D, #F59E0B);
+  color: #78350F; font-size: 10px; font-weight: 900;
+  padding: 3px 10px; border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(245,158,11,0.4);
+  letter-spacing: 0.3px;
+}
+
+/* iStrong CSS logo */
+.mh-istrong-logo {
+  position: relative; z-index: 1; margin-bottom: 10px;
+  display: flex; align-items: baseline; gap: 1px;
+  filter: drop-shadow(0 2px 10px rgba(0,0,0,0.3));
+}
+.mh-istrong-i {
+  font-size: 38px; font-weight: 900; color: #FCD34D;
+  font-style: italic; line-height: 1;
+  font-family: Georgia, serif;
+}
+.mh-istrong-strong {
+  font-size: 32px; font-weight: 900; color: white;
+  letter-spacing: -0.5px; line-height: 1;
+  font-family: 'Arial Black', Arial, sans-serif;
+}
+
+.mh-online-tagline {
+  font-size: 14px; font-weight: 800; color: white;
+  position: relative; z-index: 1; margin-bottom: 4px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.mh-online-sub {
+  font-size: 11px; color: rgba(255,255,255,0.75);
+  position: relative; z-index: 1; margin-bottom: 14px;
+  font-weight: 500;
+}
+
+/* Full-width CTA bar */
+.mh-online-cta-bar {
+  position: relative; z-index: 1; overflow: hidden;
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: white; border-radius: 14px; padding: 11px;
+  font-size: 14px; font-weight: 900; color: #0D47A1;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+
+/* Shimmer sweep animation */
+.mh-online-shimmer {
+  position: absolute; inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.55) 50%, transparent 60%);
+  transform: translateX(-100%);
+  animation: shimmer-sweep 2.8s ease-in-out infinite;
+}
+@keyframes shimmer-sweep {
+  0%   { transform: translateX(-100%); }
+  50%, 100% { transform: translateX(200%); }
+}
+
+/* Divider */
+.mh-divider {
+  display:flex; align-items:center; gap:10px; margin-bottom:14px;
+}
+.mh-divider-line { flex:1; height:1px; background:#E5E7EB; }
+.mh-divider-text { font-size:11px; font-weight:700; color:#9CA3AF; white-space:nowrap; }
 
 .mh-notice {
   background:linear-gradient(135deg,#F0FDF4,#DCFCE7);

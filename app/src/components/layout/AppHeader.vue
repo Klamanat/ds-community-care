@@ -11,6 +11,12 @@
     </div>
 
     <div class="hdr-right">
+      <!-- Counselor inbox — only visible when user is a counselor -->
+      <div v-if="isCounselor" class="hdr-btn" @click="ui.openModal('modal-counselor-inbox')">
+        💬
+        <div v-if="mental.unreadCount" class="hbadge">{{ mental.unreadCount > 99 ? '99+' : mental.unreadCount }}</div>
+      </div>
+
       <div class="hdr-btn" @click="ui.openModal('modal-notif')">
         🔔
         <div v-if="ui.notifBadge > 0" class="hbadge">{{ ui.notifBadge }}</div>
@@ -30,6 +36,20 @@
 </template>
 
 <script setup>
-import { useUiStore } from '../../stores/ui.js'
-const ui = useUiStore()
+import { computed } from 'vue'
+import { useUiStore }       from '../../stores/ui.js'
+import { useMentalStore }   from '../../stores/mental.js'
+import { useUserAuthStore } from '../../stores/userAuth.js'
+
+const ui       = useUiStore()
+const mental   = useMentalStore()
+const userAuth = useUserAuthStore()
+
+const isCounselor = computed(() => mental.isCounselor(userAuth.userId))
 </script>
+
+<style scoped>
+@media (max-width: 480px) {
+  .hdr-logo-text { display: none; }
+}
+</style>

@@ -25,29 +25,31 @@
         <button class="ci-retry" @click="reload">โหลดใหม่</button>
       </div>
 
-      <div v-else-if="!mental.myRequests.length" class="ci-empty">
-        <div style="font-size:40px;margin-bottom:8px;">📭</div>
-        <div>ยังไม่มีข้อความ</div>
+      <div v-else-if="!unreadList.length" class="ci-empty">
+        <div style="font-size:40px;margin-bottom:8px;">✅</div>
+        <div>ไม่มีข้อความใหม่</div>
+        <div style="font-size:11px;margin-top:4px;color:#D1D5DB;">อ่านครบทุกข้อความแล้ว</div>
       </div>
 
       <div v-else>
-        <div class="ci-count">ทั้งหมด {{ mental.myRequests.length }} ข้อความ</div>
+        <div class="ci-count">
+          แสดง {{ visibleList.length }} จาก {{ unreadList.length }} ข้อความใหม่
+        </div>
 
         <div
-          v-for="r in mental.myRequests"
+          v-for="r in visibleList"
           :key="r.id"
-          class="ci-item"
-          :class="{ 'ci-item-unread': r.isRead !== 'true' }"
+          class="ci-item ci-item-unread"
         >
           <!-- Message header -->
-          <div class="ci-item-top" @click="mental.markRead(r.id)">
-            <span v-if="r.isRead !== 'true'" class="ci-new-badge">ใหม่</span>
+          <div class="ci-item-top">
+            <span class="ci-new-badge">ใหม่</span>
             <span v-if="r.reply" class="ci-replied-badge">ตอบแล้ว</span>
             <span class="ci-time">{{ fmtTime(r.createdAt) }}</span>
           </div>
 
           <!-- User message -->
-          <div class="ci-msg" @click="mental.markRead(r.id)">{{ r.message }}</div>
+          <div class="ci-msg">{{ r.message }}</div>
 
           <!-- Existing reply -->
           <div v-if="r.reply" class="ci-my-reply">
@@ -77,14 +79,15 @@
             </div>
             <div v-if="replyError" class="ci-reply-error">⚠️ {{ replyError }}</div>
           </div>
-          <button
-            v-else
-            class="ci-reply-btn"
-            @click="startReply(r)"
-          >
+          <button v-else class="ci-reply-btn" @click="startReply(r)">
             💬 {{ r.reply ? 'แก้ไขคำตอบ' : 'ตอบกลับ' }}
           </button>
         </div>
+
+        <!-- Load more -->
+        <button v-if="hasMore" class="ci-load-more" @click="loadMore">
+          โหลดเพิ่ม ({{ unreadList.length - visibleCount }} รายการ)
+        </button>
       </div>
 
     </div>
@@ -92,7 +95,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import BaseModal from '../shared/BaseModal.vue'
 import { useMentalStore }   from '../../stores/mental.js'
 import { useUserAuthStore } from '../../stores/userAuth.js'
@@ -105,7 +108,23 @@ const replyText  = ref('')
 const replying   = ref(false)
 const replyError = ref('')
 
+// ── Pagination + filter ──────────────────────────────────────
+const PAGE         = 5
+const visibleCount = ref(PAGE)
+
+const unreadList = computed(() =>
+  mental.myRequests.filter(r => r.isRead !== 'true')
+)
+const visibleList = computed(() =>
+  unreadList.value.slice(0, visibleCount.value)
+)
+const hasMore = computed(() =>
+  visibleCount.value < unreadList.value.length
+)
+function loadMore() { visibleCount.value += PAGE }
+
 function reload() {
+  visibleCount.value = PAGE
   mental.loadMyRequests(userAuth.userId, true)
 }
 
@@ -254,4 +273,13 @@ onMounted(() => {
 }
 .ci-send-reply-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .ci-reply-error { font-size: 11px; color: #DC2626; margin-top: 6px; }
+
+/* Load more */
+.ci-load-more {
+  width: 100%; padding: 11px;
+  background: #F9FAFB; border: 1.5px dashed #D1D5DB; border-radius: 12px;
+  font-size: 13px; font-weight: 700; color: #6B7280; cursor: pointer;
+  margin-top: 4px; transition: border-color 0.15s, color 0.15s;
+}
+.ci-load-more:hover { border-color: #2EAF7D; color: #2EAF7D; }
 </style>
