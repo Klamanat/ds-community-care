@@ -2,12 +2,24 @@
 
 import { supabase } from './supabase.js'
 
+function mapPost(p) {
+  return {
+    id:         p.id,
+    title:      p.title      || '',
+    body:       p.body       || '',
+    category:   p.category   || '',
+    authorName: p.author_name || '',
+    authorId:   p.author_id  || '',
+    createdAt:  p.created_at || '',
+  }
+}
+
 export async function fetchBlogPosts(category) {
   let q = supabase.from('blog_posts').select('*').order('created_at', { ascending: false })
   if (category) q = q.eq('category', category)
   const { data, error } = await q
   if (error) throw new Error(error.message)
-  return data || []
+  return (data || []).map(mapPost)
 }
 
 export async function submitBlogPost(fields) {

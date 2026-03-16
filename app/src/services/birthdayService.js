@@ -13,18 +13,21 @@ export async function fetchMonth(monthIdx) {
     .order('name')
   if (error) throw new Error(error.message)
 
-  const people = (data || []).map(e => ({
-    key:         `bday_${e.id}`,
-    employeeId:  e.id,
-    name:        e.name,
-    role:        e.role || '',
-    date:        e.bd_date || '',
-    monthIdx:    e.month_idx,
-    fallbackIdx: Number(e.fallback_idx) || 0,
-    photo:       e.img_url?.startsWith('drive:') ? getCached(e.img_id) || '' : e.img_url || '',
-    imgId:       e.img_id || '',
-    wishes:      [],
-  }))
+  const people = (data || []).map(e => {
+    const imgId = e.img_id || (e.img_url?.startsWith('drive:') ? e.img_url.slice(6) : '')
+    return {
+      key:         `bday_${e.id}`,
+      employeeId:  e.id,
+      name:        e.name,
+      role:        e.role || '',
+      date:        e.bd_date || '',
+      monthIdx:    e.month_idx,
+      fallbackIdx: Number(e.fallback_idx) || 0,
+      photo:       getCached(imgId) || (e.img_url?.startsWith('drive:') ? '' : e.img_url || ''),
+      imgId,
+      wishes:      [],
+    }
+  })
 
   const ids = [...new Set(people.map(p => p.imgId).filter(Boolean))]
   if (ids.length) fetchImages(ids).then(map => {

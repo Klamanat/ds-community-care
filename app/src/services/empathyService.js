@@ -8,15 +8,18 @@ export async function fetchPeople() {
   const { data, error } = await supabase.rpc('get_empathy_people')
   if (error) throw new Error(error.message)
   // Map snake_case → camelCase for store compatibility
-  return (data || []).map(p => ({
-    id:           p.id,
-    empCode:      p.emp_code,
-    name:         p.name,
-    role:         p.role,
-    imgUrl:       p.img_url || '',
-    imgId:        p.img_id  || '',
-    commentCount: Number(p.comment_count) || 0,
-  }))
+  return (data || []).map(p => {
+    const imgId = p.img_id || (p.img_url?.startsWith('drive:') ? p.img_url.slice(6) : '')
+    return {
+      id:           p.id,
+      empCode:      p.emp_code,
+      name:         p.name,
+      role:         p.role,
+      imgUrl:       p.img_url?.startsWith('drive:') ? '' : (p.img_url || ''),
+      imgId,
+      commentCount: Number(p.comment_count) || 0,
+    }
+  })
 }
 
 export async function fetchComments(postId, userKey = '') {

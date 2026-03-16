@@ -3,13 +3,36 @@
 import { supabase } from './supabase.js'
 import { uploadImage as edgeUpload } from './edgeFunctions.js'
 
+function mapActivity(a) {
+  return {
+    id:           a.id,
+    monthIdx:     a.month_idx    != null ? Number(a.month_idx) : null,
+    name:         a.name         || '',
+    emoji:        a.emoji        || '',
+    date:         a.date         || '',
+    dateEnd:      a.date_end     || '',
+    loc:          a.loc          || '',
+    desc:         a.desc         || '',
+    steps:        a.steps        || '',
+    joinUrl:      a.join_url     || '',
+    joinOpen:     a.join_open    !== false,
+    joinLabel:    a.join_label   || '',
+    joinOpenAt:   a.join_open_at  || '',
+    joinCloseAt:  a.join_close_at || '',
+    feedbackUrl:  a.feedback_url || '',
+    imgUrl:       a.img_url?.startsWith('drive:') ? '' : (a.img_url || ''),
+    imgId:        a.img_id || (a.img_url?.startsWith('drive:') ? a.img_url.slice(6) : ''),
+    createdAt:    a.created_at   || '',
+  }
+}
+
 export async function fetchAll() {
   const { data, error } = await supabase
     .from('activities')
     .select('*')
     .order('date')
   if (error) throw new Error(error.message)
-  return data || []
+  return (data || []).map(mapActivity)
 }
 
 export async function fetchByMonth(monthIdx) {
@@ -19,7 +42,7 @@ export async function fetchByMonth(monthIdx) {
     .eq('month_idx', monthIdx)
     .order('date')
   if (error) throw new Error(error.message)
-  return data || []
+  return (data || []).map(mapActivity)
 }
 
 export async function addActivity(fields) {
@@ -46,7 +69,7 @@ export async function addActivity(fields) {
     .select()
     .single()
   if (error) throw new Error(error.message)
-  return data
+  return mapActivity(data)
 }
 
 export async function updateActivity(id, fields) {
@@ -69,7 +92,7 @@ export async function updateActivity(id, fields) {
     .select()
     .single()
   if (error) throw new Error(error.message)
-  return data
+  return mapActivity(data)
 }
 
 export async function deleteActivity(id) {
