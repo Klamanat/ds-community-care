@@ -487,252 +487,277 @@
                 <div class="rw-sc-tree-area">
                   <svg class="rw-sc-tree-svg" viewBox="0 0 120 130" xmlns="http://www.w3.org/2000/svg">
                     <defs>
-                      <!-- Chibi trunk: radial, warm amber highlight center → dark brown edge -->
-                      <radialGradient id="rwsc-trunk" cx="35%" cy="30%" r="65%">
-                        <stop offset="0%"   stop-color="#FCD34D"/>
-                        <stop offset="45%"  stop-color="#D97706"/>
+                      <filter id="sc-drop" x="-20%" y="-15%" width="140%" height="135%">
+                        <feDropShadow dx="2" dy="4" stdDeviation="3" flood-color="#1A4A1A" flood-opacity="0.4"/>
+                      </filter>
+                      <radialGradient id="sc-gs" cx="50%" cy="40%" r="50%">
+                        <stop offset="0%"   stop-color="rgba(0,0,0,0.28)"/>
+                        <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+                      </radialGradient>
+                      <linearGradient id="sc-t1" x1="5%" y1="5%" x2="95%" y2="95%">
+                        <stop offset="0%"   stop-color="#D1FAE5"/>
+                        <stop offset="22%"  stop-color="#4ADE80"/>
+                        <stop offset="65%"  stop-color="#22C55E"/>
+                        <stop offset="100%" stop-color="#14532D"/>
+                      </linearGradient>
+                      <linearGradient id="sc-t2" x1="5%" y1="5%" x2="95%" y2="95%">
+                        <stop offset="0%"   stop-color="#A7F3D0"/>
+                        <stop offset="25%"  stop-color="#34D399"/>
+                        <stop offset="65%"  stop-color="#16A34A"/>
+                        <stop offset="100%" stop-color="#052E16"/>
+                      </linearGradient>
+                      <linearGradient id="sc-t3" x1="5%" y1="5%" x2="95%" y2="95%">
+                        <stop offset="0%"   stop-color="#6EE7B7"/>
+                        <stop offset="28%"  stop-color="#10B981"/>
+                        <stop offset="68%"  stop-color="#065F46"/>
+                        <stop offset="100%" stop-color="#022C22"/>
+                      </linearGradient>
+                      <linearGradient id="sc-trunk" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%"   stop-color="#FDE68A"/>
+                        <stop offset="28%"  stop-color="#D97706"/>
+                        <stop offset="100%" stop-color="#451A03"/>
+                      </linearGradient>
+                      <radialGradient id="sc-star" cx="30%" cy="30%" r="70%">
+                        <stop offset="0%"   stop-color="#FEF9C3"/>
+                        <stop offset="40%"  stop-color="#FBBF24"/>
+                        <stop offset="100%" stop-color="#92400E"/>
+                      </radialGradient>
+                      <radialGradient id="sc-fr" cx="30%" cy="25%" r="70%">
+                        <stop offset="0%"   stop-color="#FFF0F0"/>
+                        <stop offset="32%"  stop-color="#F87171"/>
+                        <stop offset="100%" stop-color="#7F1D1D"/>
+                      </radialGradient>
+                      <radialGradient id="sc-fo" cx="30%" cy="25%" r="70%">
+                        <stop offset="0%"   stop-color="#FFF7ED"/>
+                        <stop offset="32%"  stop-color="#FB923C"/>
+                        <stop offset="100%" stop-color="#7C2D12"/>
+                      </radialGradient>
+                      <radialGradient id="sc-fy" cx="30%" cy="25%" r="70%">
+                        <stop offset="0%"   stop-color="#FFFBEB"/>
+                        <stop offset="32%"  stop-color="#FBBF24"/>
                         <stop offset="100%" stop-color="#78350F"/>
                       </radialGradient>
-                      <!-- Chibi foliage: candy-ball (bright center → medium edge, NO dark) -->
-                      <radialGradient id="rwsc-f0" cx="36%" cy="30%" r="64%">
-                        <stop offset="0%"   stop-color="#ECFDF5"/>
-                        <stop offset="100%" stop-color="#86EFAC"/>
+                      <radialGradient id="sc-fb" cx="30%" cy="25%" r="70%">
+                        <stop offset="0%"   stop-color="#EFF6FF"/>
+                        <stop offset="32%"  stop-color="#60A5FA"/>
+                        <stop offset="100%" stop-color="#1E3A8A"/>
                       </radialGradient>
-                      <radialGradient id="rwsc-f1" cx="36%" cy="30%" r="64%">
-                        <stop offset="0%"   stop-color="#D1FAE5"/>
-                        <stop offset="100%" stop-color="#4ADE80"/>
-                      </radialGradient>
-                      <radialGradient id="rwsc-f2" cx="36%" cy="30%" r="64%">
-                        <stop offset="0%"   stop-color="#A7F3D0"/>
-                        <stop offset="100%" stop-color="#22C55E"/>
-                      </radialGradient>
-                      <radialGradient id="rwsc-f3" cx="36%" cy="30%" r="64%">
-                        <stop offset="0%"   stop-color="#86EFAC"/>
-                        <stop offset="100%" stop-color="#16A34A"/>
-                      </radialGradient>
-                      <radialGradient id="rwsc-f4" cx="36%" cy="30%" r="64%">
-                        <stop offset="0%"   stop-color="#6EE7B7"/>
-                        <stop offset="100%" stop-color="#15803D"/>
-                      </radialGradient>
-                      <radialGradient id="rwsc-f5" cx="36%" cy="30%" r="64%">
-                        <stop offset="0%"   stop-color="#A7F3D0"/>
-                        <stop offset="100%" stop-color="#059669"/>
-                      </radialGradient>
-                      <!-- Fruits: bright cute gradients -->
-                      <radialGradient id="rwsc-fr" cx="36%" cy="28%" r="62%">
-                        <stop offset="0%"   stop-color="#FCA5A5"/>
-                        <stop offset="100%" stop-color="#DC2626"/>
-                      </radialGradient>
-                      <radialGradient id="rwsc-fo" cx="36%" cy="28%" r="62%">
-                        <stop offset="0%"   stop-color="#FED7AA"/>
-                        <stop offset="100%" stop-color="#EA580C"/>
-                      </radialGradient>
-                      <radialGradient id="rwsc-fy" cx="36%" cy="28%" r="62%">
-                        <stop offset="0%"   stop-color="#FEF9C3"/>
-                        <stop offset="100%" stop-color="#CA8A04"/>
-                      </radialGradient>
-                      <radialGradient id="rwsc-gs" cx="50%" cy="40%" r="50%">
-                        <stop offset="0%"   stop-color="rgba(0,0,0,0.22)"/>
-                        <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+                      <radialGradient id="sc-seed" cx="32%" cy="28%" r="70%">
+                        <stop offset="0%"   stop-color="#FDE68A"/>
+                        <stop offset="30%"  stop-color="#D97706"/>
+                        <stop offset="75%"  stop-color="#92400E"/>
+                        <stop offset="100%" stop-color="#431407"/>
                       </radialGradient>
                     </defs>
 
-                    <!-- Grass + ground shadow -->
-                    <ellipse cx="60" cy="122" rx="46" ry="9" fill="#BBF7D0"/>
-                    <ellipse cx="60" cy="119" rx="38" ry="5" fill="#86EFAC"/>
-                    <ellipse cx="60" cy="126" rx="36" ry="5" fill="url(#rwsc-gs)"/>
+                    <ellipse cx="60" cy="126" rx="38" ry="5.5" fill="url(#sc-gs)"/>
 
-                    <g>
+                    <g filter="url(#sc-drop)">
                       <animateTransform attributeName="transform" type="rotate"
-                        values="-2 60 119; 2 60 119; -2 60 119"
-                        keyTimes="0;0.5;1" dur="3s" repeatCount="indefinite"
+                        values="-1.5 60 119; 1.5 60 119; -1.5 60 119"
+                        keyTimes="0;0.5;1" dur="3.5s" repeatCount="indefinite"
                         calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
 
-                      <!-- Stage 0: chibi sprout -->
+                      <!-- Stage 0: seed -->
                       <g v-if="treeData.stage === 0">
-                        <ellipse cx="60" cy="121" rx="14" ry="5.5" fill="#B45309" stroke="#78350F" stroke-width="1.5"/>
-                        <path d="M60 121 Q59 115 61 108" stroke="#22C55E" stroke-width="3" fill="none" stroke-linecap="round"/>
-                        <ellipse cx="51" cy="114" rx="9" ry="6" fill="url(#rwsc-f1)" stroke="#22C55E" stroke-width="1.5" transform="rotate(-35 51 114)"/>
-                        <circle cx="48.5" cy="111" r="2" fill="rgba(255,255,255,0.85)"/>
-                        <ellipse cx="69" cy="112" rx="9" ry="6" fill="url(#rwsc-f0)" stroke="#22C55E" stroke-width="1.5" transform="rotate(35 69 112)"/>
-                        <circle cx="66.5" cy="109" r="2" fill="rgba(255,255,255,0.85)"/>
-                        <circle cx="60" cy="104" r="6.5" fill="url(#rwsc-f0)" stroke="#22C55E" stroke-width="1.5"/>
-                        <circle cx="57.5" cy="101.5" r="2.2" fill="rgba(255,255,255,0.7)"/>
+                        <ellipse cx="60" cy="122" rx="22" ry="6" fill="#5C3A1E" stroke="#3D1F0A" stroke-width="1"/>
+                        <ellipse cx="60" cy="120" rx="15" ry="3.5" fill="#A0622A" opacity="0.6"/>
+                        <ellipse cx="62" cy="114" rx="12" ry="15.5" fill="#431407" opacity="0.28"/>
+                        <ellipse cx="60" cy="111" rx="12" ry="15" fill="url(#sc-seed)" stroke="#78350F" stroke-width="1.5"/>
+                        <ellipse cx="55.5" cy="104" rx="4" ry="5.5" fill="rgba(255,255,255,0.3)" transform="rotate(-20 55.5 104)"/>
+                        <path d="M60,96 Q61,104 60,126" stroke="#78350F" stroke-width="1" fill="none" opacity="0.3"/>
+                        <path d="M60,96 Q58,92 60,89" stroke="#4ADE80" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+                        <circle cx="60" cy="87.5" r="3.5" fill="#22C55E" stroke="#16A34A" stroke-width="1"/>
+                        <circle cx="58.5" cy="86" r="1.2" fill="rgba(255,255,255,0.7)"/>
                       </g>
 
-                      <!-- Trunk (stage 1+): chibi rounded rect -->
+                      <!-- Trunk (stage 1+) -->
                       <g v-if="treeData.stage >= 1">
-                        <rect :x="58" :y="treeData.trunkTop+2" width="7" :height="119-treeData.trunkTop" rx="3.5" fill="#78350F" opacity="0.35"/>
-                        <rect :x="56" :y="treeData.trunkTop" width="8" :height="119-treeData.trunkTop" rx="4" fill="url(#rwsc-trunk)" stroke="#78350F" stroke-width="1.5"/>
-                        <rect :x="58" :y="treeData.trunkTop+5" width="2.5" :height="Math.max(4, Math.round((119-treeData.trunkTop)*0.38))" rx="1.5" fill="rgba(255,255,255,0.32)"/>
+                        <rect :x="58" :y="treeData.trunkTop + 2" width="7" :height="120 - treeData.trunkTop" rx="3" fill="#451A03" opacity="0.3"/>
+                        <rect :x="56" :y="treeData.trunkTop" width="8" :height="120 - treeData.trunkTop" rx="4" fill="url(#sc-trunk)" stroke="#78350F" stroke-width="1.2"/>
+                        <rect :x="57.5" :y="treeData.trunkTop + 5" width="2" :height="Math.max(4, Math.round((120 - treeData.trunkTop) * 0.4))" rx="1" fill="rgba(255,255,255,0.35)"/>
                       </g>
 
-                      <!-- Roots (stage 2+): cute rounded -->
-                      <g v-if="treeData.stage >= 2">
-                        <path d="M56 118 Q44 118 35 123" stroke="#78350F" stroke-width="5.5" fill="none" stroke-linecap="round"/>
-                        <path d="M64 118 Q76 118 85 123" stroke="#78350F" stroke-width="5.5" fill="none" stroke-linecap="round"/>
-                        <path d="M55 119 Q47 121 40 125" stroke="#92400E" stroke-width="3"   fill="none" stroke-linecap="round"/>
-                        <path d="M65 119 Q73 121 80 125" stroke="#92400E" stroke-width="3"   fill="none" stroke-linecap="round"/>
-                      </g>
-
-                      <!-- Stage 1: chibi sapling -->
+                      <!-- Stage 1: young pine 3D (2 tiers) -->
                       <g v-if="treeData.stage === 1">
-                        <circle cx="43" cy="96" r="14" fill="url(#rwsc-f3)" stroke="#15803D" stroke-width="2"/>
-                        <circle cx="40" cy="93"  r="4.5" fill="rgba(255,255,255,0.82)"/>
-                        <circle cx="77" cy="95" r="14" fill="url(#rwsc-f3)" stroke="#15803D" stroke-width="2"/>
-                        <circle cx="74" cy="92"  r="4.5" fill="rgba(255,255,255,0.82)"/>
-                        <circle cx="60" cy="84" r="20" fill="url(#rwsc-f2)" stroke="#16A34A" stroke-width="2"/>
-                        <circle cx="53" cy="77" r="6.5" fill="rgba(255,255,255,0.8)"/>
-                        <circle cx="66" cy="88" r="2.5" fill="#16A34A" opacity="0.4"/>
-                        <circle cx="55" cy="91" r="2"   fill="#16A34A" opacity="0.35"/>
-                        <circle cx="61" cy="68" r="15" fill="url(#rwsc-f1)" stroke="#22C55E" stroke-width="2"/>
-                        <circle cx="55" cy="62" r="4.5" fill="rgba(255,255,255,0.82)"/>
-                        <circle cx="61" cy="55" r="11" fill="url(#rwsc-f0)" stroke="#22C55E" stroke-width="2"/>
-                        <circle cx="56" cy="50" r="3.5" fill="rgba(255,255,255,0.88)"/>
+                        <path d="M62,106 L92,122 Q62,127 32,122 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,102 L90,118 Q60,123 30,118 Z" fill="url(#sc-t2)" stroke="#15803D" stroke-width="1.5"/>
+                        <path d="M30,118 Q60,123 90,118" fill="none" stroke="#022C22" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+                        <circle cx="57" cy="102.5" r="2.5" fill="rgba(255,255,255,0.72)"/>
+                        <path d="M62,93 L84,111 Q62,115 40,111 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,89 L82,107 Q60,111 38,107 Z" fill="url(#sc-t1)" stroke="#22C55E" stroke-width="1.5"/>
+                        <path d="M38,107 Q60,111 82,107" fill="none" stroke="#022C22" stroke-width="2.5" stroke-linecap="round" opacity="0.46"/>
+                        <circle cx="57.5" cy="89.5" r="2.2" fill="rgba(255,255,255,0.8)"/>
                       </g>
 
-                      <!-- Stage 2: chibi small tree + flowers -->
+                      <!-- Stage 2: small pine 3D (3 tiers) -->
                       <g v-if="treeData.stage === 2">
-                        <circle cx="38" cy="95" r="17" fill="url(#rwsc-f4)" stroke="#15803D" stroke-width="2"/>
-                        <circle cx="34" cy="91" r="5"   fill="rgba(255,255,255,0.78)"/>
-                        <circle cx="82" cy="93" r="17" fill="url(#rwsc-f4)" stroke="#15803D" stroke-width="2"/>
-                        <circle cx="78" cy="89" r="5"   fill="rgba(255,255,255,0.78)"/>
-                        <circle cx="44" cy="82" r="18" fill="url(#rwsc-f3)" stroke="#15803D" stroke-width="2"/>
-                        <circle cx="76" cy="80" r="18" fill="url(#rwsc-f3)" stroke="#15803D" stroke-width="2"/>
-                        <circle cx="60" cy="86" r="23" fill="url(#rwsc-f3)" stroke="#16A34A" stroke-width="2"/>
-                        <circle cx="51" cy="77" r="7"   fill="rgba(255,255,255,0.78)"/>
-                        <circle cx="67" cy="90" r="2.8" fill="#16A34A" opacity="0.4"/>
-                        <circle cx="60" cy="69" r="19" fill="url(#rwsc-f2)" stroke="#22C55E" stroke-width="2"/>
-                        <circle cx="52" cy="61" r="5.8" fill="rgba(255,255,255,0.56)"/>
-                        <circle cx="61" cy="53" r="15" fill="url(#rwsc-f1)" stroke="#22C55E" stroke-width="2"/>
-                        <circle cx="55" cy="46" r="4.5" fill="rgba(255,255,255,0.82)"/>
-                        <circle cx="61" cy="40" r="11" fill="url(#rwsc-f0)" stroke="#22C55E" stroke-width="2"/>
-                        <circle cx="56" cy="34" r="3.5" fill="rgba(255,255,255,0.88)"/>
-                        <!-- Cute flowers -->
-                        <g><ellipse cx="35" cy="86" rx="3.5" ry="5.5" fill="#FBCFE8"/><ellipse cx="35" cy="86" rx="5.5" ry="3.5" fill="#FBCFE8"/><circle cx="35" cy="86" r="3" fill="#FDE047"/><circle cx="34" cy="85" r="0.9" fill="rgba(255,255,255,0.8)"/></g>
-                        <g><ellipse cx="85" cy="84" rx="3.5" ry="5.5" fill="#FBCFE8"/><ellipse cx="85" cy="84" rx="5.5" ry="3.5" fill="#FBCFE8"/><circle cx="85" cy="84" r="3" fill="#FDE047"/><circle cx="84" cy="83" r="0.9" fill="rgba(255,255,255,0.8)"/></g>
-                        <g><ellipse cx="46" cy="71" rx="3"   ry="4.5" fill="#BAE6FD"/><ellipse cx="46" cy="71" rx="4.5" ry="3"   fill="#BAE6FD"/><circle cx="46" cy="71" r="2.5" fill="#FBBF24"/><circle cx="45" cy="70" r="0.8" fill="rgba(255,255,255,0.8)"/></g>
+                        <path d="M62,102 L96,121 Q62,126 28,121 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,98 L94,117 Q60,122 26,117 Z" fill="url(#sc-t3)" stroke="#15803D" stroke-width="1.5"/>
+                        <path d="M26,117 Q60,122 94,117" fill="none" stroke="#022C22" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+                        <circle cx="57" cy="98.5" r="2.8" fill="rgba(255,255,255,0.6)"/>
+                        <path d="M62,90 L88,107 Q62,111 36,107 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,86 L86,103 Q60,107 34,103 Z" fill="url(#sc-t2)" stroke="#16A34A" stroke-width="1.5"/>
+                        <path d="M34,103 Q60,107 86,103" fill="none" stroke="#022C22" stroke-width="2.5" stroke-linecap="round" opacity="0.46"/>
+                        <circle cx="57.5" cy="86.5" r="2.3" fill="rgba(255,255,255,0.73)"/>
+                        <path d="M62,78 L81,95 Q62,98 43,95 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,74 L79,91 Q60,94 41,91 Z" fill="url(#sc-t1)" stroke="#22C55E" stroke-width="1.5"/>
+                        <path d="M41,91 Q60,94 79,91" fill="none" stroke="#022C22" stroke-width="2.5" stroke-linecap="round" opacity="0.44"/>
+                        <circle cx="57.5" cy="74.5" r="2" fill="rgba(255,255,255,0.8)"/>
                       </g>
 
-                      <!-- Stage 3+: large chibi canopy -->
-                      <g v-if="treeData.stage >= 3">
-                        <circle cx="30" cy="97" r="19" fill="url(#rwsc-f5)" stroke="#059669" stroke-width="2"/>
-                        <circle cx="26" cy="93" r="5.5" fill="rgba(255,255,255,0.44)"/>
-                        <circle cx="90" cy="95" r="19" fill="url(#rwsc-f5)" stroke="#059669" stroke-width="2"/>
-                        <circle cx="86" cy="91" r="5.5" fill="rgba(255,255,255,0.44)"/>
-                        <circle cx="41" cy="84" r="21" fill="url(#rwsc-f4)" stroke="#15803D" stroke-width="2"/>
-                        <circle cx="80" cy="82" r="21" fill="url(#rwsc-f4)" stroke="#15803D" stroke-width="2"/>
-                        <circle cx="60" cy="90" r="27" fill="url(#rwsc-f4)" stroke="#15803D" stroke-width="2"/>
-                        <circle cx="49" cy="78" r="8.5" fill="rgba(255,255,255,0.46)"/>
-                        <circle cx="68" cy="93" r="3.5" fill="#15803D" opacity="0.38"/>
-                        <circle cx="43" cy="75" r="21" fill="url(#rwsc-f3)" stroke="#16A34A" stroke-width="2"/>
-                        <circle cx="37" cy="67" r="6.5" fill="rgba(255,255,255,0.78)"/>
-                        <circle cx="77" cy="73" r="21" fill="url(#rwsc-f3)" stroke="#16A34A" stroke-width="2"/>
-                        <circle cx="71" cy="65" r="6.5" fill="rgba(255,255,255,0.78)"/>
-                        <circle cx="60" cy="75" r="24" fill="url(#rwsc-f3)" stroke="#16A34A" stroke-width="2"/>
-                        <circle cx="49" cy="65" r="7.5" fill="rgba(255,255,255,0.47)"/>
-                        <circle cx="60" cy="58" r="21" fill="url(#rwsc-f2)" stroke="#22C55E" stroke-width="2"/>
-                        <circle cx="50" cy="48" r="6.5" fill="rgba(255,255,255,0.78)"/>
-                        <!-- Flowers (stage 3+ base) -->
-                        <g><ellipse cx="27" cy="88" rx="4" ry="6"   fill="#FBCFE8"/><ellipse cx="27" cy="88" rx="6"   ry="4" fill="#FBCFE8"/><circle cx="27" cy="88" r="3.5" fill="#FDE047"/><circle cx="26" cy="87" r="1"   fill="rgba(255,255,255,0.8)"/></g>
-                        <g><ellipse cx="93" cy="86" rx="4" ry="6"   fill="#FBCFE8"/><ellipse cx="93" cy="86" rx="6"   ry="4" fill="#FBCFE8"/><circle cx="93" cy="86" r="3.5" fill="#FDE047"/><circle cx="92" cy="85" r="1"   fill="rgba(255,255,255,0.8)"/></g>
-                        <g><ellipse cx="40" cy="63" rx="3.5" ry="5.5" fill="#BAE6FD"/><ellipse cx="40" cy="63" rx="5.5" ry="3.5" fill="#BAE6FD"/><circle cx="40" cy="63" r="3"   fill="#FBBF24"/><circle cx="39" cy="62" r="0.8" fill="rgba(255,255,255,0.8)"/></g>
-                        <g><ellipse cx="80" cy="61" rx="3.5" ry="5.5" fill="#FCA5A5"/><ellipse cx="80" cy="61" rx="5.5" ry="3.5" fill="#FCA5A5"/><circle cx="80" cy="61" r="3"   fill="#FDE047"/><circle cx="79" cy="60" r="0.8" fill="rgba(255,255,255,0.8)"/></g>
-                        <!-- Stage 3 specific top -->
-                        <g v-if="treeData.stage === 3">
-                          <circle cx="61" cy="41" r="17" fill="url(#rwsc-f1)" stroke="#22C55E" stroke-width="2"/>
-                          <circle cx="53" cy="33" r="5.5" fill="rgba(255,255,255,0.8)"/>
-                          <circle cx="61" cy="26" r="12" fill="url(#rwsc-f0)" stroke="#22C55E" stroke-width="2"/>
-                          <circle cx="56" cy="20" r="3.8" fill="rgba(255,255,255,0.88)"/>
-                          <g><ellipse cx="74" cy="34" rx="3" ry="4.5" fill="#FBCFE8"/><ellipse cx="74" cy="34" rx="4.5" ry="3" fill="#FBCFE8"/><circle cx="74" cy="34" r="2.5" fill="#FDE047"/></g>
-                        </g>
+                      <!-- Stage 3: pine tree 3D (4 tiers) -->
+                      <g v-if="treeData.stage === 3">
+                        <path d="M62,98 L99,119 Q62,124 25,119 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,94 L97,115 Q60,120 23,115 Z" fill="url(#sc-t3)" stroke="#059669" stroke-width="1.5"/>
+                        <path d="M23,115 Q60,120 97,115" fill="none" stroke="#022C22" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+                        <circle cx="57" cy="94.5" r="3" fill="rgba(255,255,255,0.55)"/>
+                        <path d="M62,86 L91,102 Q62,106 33,102 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,82 L89,98 Q60,102 31,98 Z" fill="url(#sc-t3)" stroke="#15803D" stroke-width="1.5"/>
+                        <path d="M31,98 Q60,102 89,98" fill="none" stroke="#022C22" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+                        <circle cx="57" cy="82.5" r="2.5" fill="rgba(255,255,255,0.65)"/>
+                        <path d="M62,74 L84,89 Q62,93 40,89 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,70 L82,85 Q60,89 38,85 Z" fill="url(#sc-t2)" stroke="#16A34A" stroke-width="1.5"/>
+                        <path d="M38,85 Q60,89 82,85" fill="none" stroke="#022C22" stroke-width="2.5" stroke-linecap="round" opacity="0.46"/>
+                        <circle cx="57.5" cy="70.5" r="2.2" fill="rgba(255,255,255,0.73)"/>
+                        <path d="M62,62 L78,78 Q62,81 46,78 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,58 L76,74 Q60,77 44,74 Z" fill="url(#sc-t1)" stroke="#22C55E" stroke-width="1.5"/>
+                        <path d="M44,74 Q60,77 76,74" fill="none" stroke="#022C22" stroke-width="2.5" stroke-linecap="round" opacity="0.44"/>
+                        <circle cx="57.5" cy="58.5" r="2" fill="rgba(255,255,255,0.82)"/>
                       </g>
 
-                      <!-- Stage 4+: chibi fruits + tall crown -->
-                      <g v-if="treeData.stage >= 4">
-                        <line x1="36" y1="100" x2="37" y2="105" stroke="#78350F" stroke-width="1.5"/><circle cx="37"  cy="108" r="6.5" fill="url(#rwsc-fr)" stroke="#DC2626" stroke-width="1.2"/><circle cx="35"  cy="105.5" r="2"   fill="rgba(255,255,255,0.85)"/>
-                        <line x1="84" y1="98"  x2="83" y2="103" stroke="#78350F" stroke-width="1.5"/><circle cx="83"  cy="106" r="6.5" fill="url(#rwsc-fo)" stroke="#EA580C" stroke-width="1.2"/><circle cx="81"  cy="103.5" r="2"   fill="rgba(255,255,255,0.85)"/>
-                        <line x1="40" y1="83"  x2="41" y2="88"  stroke="#78350F" stroke-width="1.3"/><circle cx="41"  cy="91"  r="5.5" fill="url(#rwsc-fy)" stroke="#CA8A04" stroke-width="1.2"/><circle cx="39.5" cy="88.5" r="1.7" fill="rgba(255,255,255,0.82)"/>
-                        <line x1="80" y1="81"  x2="79" y2="86"  stroke="#78350F" stroke-width="1.3"/><circle cx="79"  cy="89"  r="5.5" fill="url(#rwsc-fr)" stroke="#DC2626" stroke-width="1.2"/><circle cx="77.5" cy="86.5" r="1.7" fill="rgba(255,255,255,0.82)"/>
-                        <line x1="47" y1="66"  x2="48" y2="71"  stroke="#78350F" stroke-width="1.2"/><circle cx="48"  cy="74"  r="5"   fill="url(#rwsc-fo)" stroke="#EA580C" stroke-width="1.1"/><circle cx="46.5" cy="71.5" r="1.5" fill="rgba(255,255,255,0.8)"/>
-                        <line x1="73" y1="64"  x2="72" y2="69"  stroke="#78350F" stroke-width="1.2"/><circle cx="72"  cy="72"  r="5"   fill="url(#rwsc-fy)" stroke="#CA8A04" stroke-width="1.1"/><circle cx="70.5" cy="69.5" r="1.5" fill="rgba(255,255,255,0.8)"/>
-                        <line x1="53" y1="50"  x2="54" y2="55"  stroke="#78350F" stroke-width="1.1"/><circle cx="54"  cy="58"  r="4.5" fill="url(#rwsc-fr)" stroke="#DC2626" stroke-width="1"/><circle cx="52.5" cy="55.5" r="1.3" fill="rgba(255,255,255,0.8)"/>
-                        <line x1="67" y1="51"  x2="66" y2="56"  stroke="#78350F" stroke-width="1.1"/><circle cx="66"  cy="59"  r="4.5" fill="url(#rwsc-fo)" stroke="#EA580C" stroke-width="1"/><circle cx="64.5" cy="56.5" r="1.3" fill="rgba(255,255,255,0.8)"/>
-                        <!-- Stage 4 crown -->
-                        <g v-if="treeData.stage === 4">
-                          <circle cx="44" cy="48" r="17" fill="url(#rwsc-f2)" stroke="#22C55E" stroke-width="2"/>
-                          <circle cx="38" cy="40" r="5"   fill="rgba(255,255,255,0.78)"/>
-                          <circle cx="76" cy="46" r="17" fill="url(#rwsc-f2)" stroke="#22C55E" stroke-width="2"/>
-                          <circle cx="70" cy="38" r="5"   fill="rgba(255,255,255,0.78)"/>
-                          <circle cx="60" cy="36" r="21" fill="url(#rwsc-f1)" stroke="#22C55E" stroke-width="2"/>
-                          <circle cx="50" cy="25" r="6.5" fill="rgba(255,255,255,0.8)"/>
-                          <circle cx="60" cy="17" r="14" fill="url(#rwsc-f0)" stroke="#22C55E" stroke-width="2"/>
-                          <circle cx="54" cy="10" r="4.5" fill="rgba(255,255,255,0.85)"/>
-                          <g><ellipse cx="32" cy="40" rx="3.5" ry="5.5" fill="#FBCFE8"/><ellipse cx="32" cy="40" rx="5.5" ry="3.5" fill="#FBCFE8"/><circle cx="32" cy="40" r="3" fill="#FDE047"/></g>
-                          <g><ellipse cx="88" cy="38" rx="3.5" ry="5.5" fill="#BAE6FD"/><ellipse cx="88" cy="38" rx="5.5" ry="3.5" fill="#BAE6FD"/><circle cx="88" cy="38" r="3" fill="#FDE047"/></g>
-                          <g><ellipse cx="53" cy="26" rx="3"   ry="4.5" fill="#FCA5A5"/><ellipse cx="53" cy="26" rx="4.5" ry="3"   fill="#FCA5A5"/><circle cx="53" cy="26" r="2.5" fill="#FDE047"/></g>
-                        </g>
+                      <!-- Stage 4: mature pine 3D + ornaments (5 tiers) -->
+                      <g v-if="treeData.stage === 4">
+                        <path d="M62,95 L101,117 Q62,122 23,117 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,91 L99,113 Q60,118 21,113 Z" fill="url(#sc-t3)" stroke="#059669" stroke-width="1.5"/>
+                        <path d="M21,113 Q60,118 99,113" fill="none" stroke="#022C22" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+                        <circle cx="57" cy="91.5" r="3" fill="rgba(255,255,255,0.5)"/>
+                        <path d="M62,83 L93,100 Q62,104 31,100 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,79 L91,96 Q60,100 29,96 Z" fill="url(#sc-t3)" stroke="#15803D" stroke-width="1.5"/>
+                        <path d="M29,96 Q60,100 91,96" fill="none" stroke="#022C22" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+                        <circle cx="57" cy="79.5" r="2.5" fill="rgba(255,255,255,0.6)"/>
+                        <path d="M62,71 L87,88 Q62,92 37,88 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,67 L85,84 Q60,88 35,84 Z" fill="url(#sc-t2)" stroke="#16A34A" stroke-width="1.5"/>
+                        <path d="M35,84 Q60,88 85,84" fill="none" stroke="#022C22" stroke-width="2.5" stroke-linecap="round" opacity="0.46"/>
+                        <circle cx="57.5" cy="67.5" r="2.2" fill="rgba(255,255,255,0.7)"/>
+                        <path d="M62,59 L81,76 Q62,79 43,76 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,55 L79,72 Q60,75 41,72 Z" fill="url(#sc-t2)" stroke="#22C55E" stroke-width="1.5"/>
+                        <path d="M41,72 Q60,75 79,72" fill="none" stroke="#022C22" stroke-width="2.5" stroke-linecap="round" opacity="0.44"/>
+                        <circle cx="57.5" cy="55.5" r="2" fill="rgba(255,255,255,0.78)"/>
+                        <path d="M62,48 L76,63 Q62,66 48,63 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,44 L74,59 Q60,62 46,59 Z" fill="url(#sc-t1)" stroke="#22C55E" stroke-width="1.5"/>
+                        <path d="M46,59 Q60,62 74,59" fill="none" stroke="#022C22" stroke-width="2" stroke-linecap="round" opacity="0.42"/>
+                        <circle cx="57.5" cy="44.5" r="1.8" fill="rgba(255,255,255,0.85)"/>
+                        <line x1="27" y1="113" x2="27" y2="118" stroke="#78350F" stroke-width="1.2"/>
+                        <circle cx="27" cy="121" r="5" fill="url(#sc-fr)" stroke="#DC2626" stroke-width="1"/>
+                        <circle cx="25.5" cy="118.5" r="1.5" fill="rgba(255,255,255,0.8)"/>
+                        <line x1="93" y1="113" x2="93" y2="118" stroke="#78350F" stroke-width="1.2"/>
+                        <circle cx="93" cy="121" r="5" fill="url(#sc-fo)" stroke="#EA580C" stroke-width="1"/>
+                        <circle cx="91.5" cy="118.5" r="1.5" fill="rgba(255,255,255,0.8)"/>
+                        <line x1="33" y1="96" x2="33" y2="100" stroke="#78350F" stroke-width="1.2"/>
+                        <circle cx="33" cy="103" r="4.5" fill="url(#sc-fy)" stroke="#CA8A04" stroke-width="1"/>
+                        <circle cx="31.5" cy="100.5" r="1.3" fill="rgba(255,255,255,0.8)"/>
+                        <line x1="87" y1="96" x2="87" y2="100" stroke="#78350F" stroke-width="1.2"/>
+                        <circle cx="87" cy="103" r="4.5" fill="url(#sc-fb)" stroke="#2563EB" stroke-width="1"/>
+                        <circle cx="85.5" cy="100.5" r="1.3" fill="rgba(255,255,255,0.8)"/>
+                        <line x1="79" y1="84" x2="79" y2="88" stroke="#78350F" stroke-width="1.1"/>
+                        <circle cx="79" cy="91" r="4" fill="url(#sc-fr)" stroke="#DC2626" stroke-width="1"/>
+                        <circle cx="77.5" cy="88.5" r="1.2" fill="rgba(255,255,255,0.8)"/>
                       </g>
 
-                      <!-- Stage 5: ancient magical chibi -->
+                      <!-- Stage 5: magical pine 3D (6 tiers + star + ornaments) -->
                       <g v-if="treeData.stage >= 5">
-                        <path d="M53 102 Q36 97 21 104" stroke="#78350F" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-                        <path d="M67 100 Q84 95 99 102" stroke="#78350F" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-                        <circle cx="19"  cy="100" r="21" fill="url(#rwsc-f5)" stroke="#047857" stroke-width="2"/>
-                        <circle cx="13"  cy="93"  r="6.5" fill="rgba(255,255,255,0.42)"/>
-                        <circle cx="101" cy="98"  r="21" fill="url(#rwsc-f5)" stroke="#047857" stroke-width="2"/>
-                        <circle cx="95"  cy="91"  r="6.5" fill="rgba(255,255,255,0.42)"/>
-                        <circle cx="44" cy="47" r="19" fill="url(#rwsc-f5)" stroke="#047857" stroke-width="2"/>
-                        <circle cx="37" cy="39" r="5.8" fill="rgba(255,255,255,0.46)"/>
-                        <circle cx="76" cy="45" r="19" fill="url(#rwsc-f5)" stroke="#047857" stroke-width="2"/>
-                        <circle cx="69" cy="37" r="5.8" fill="rgba(255,255,255,0.46)"/>
-                        <circle cx="60" cy="34" r="23" fill="url(#rwsc-f5)" stroke="#047857" stroke-width="2"/>
-                        <circle cx="49" cy="22" r="7"   fill="rgba(255,255,255,0.46)"/>
-                        <circle cx="60" cy="15" r="15" fill="url(#rwsc-f5)" stroke="#047857" stroke-width="2"/>
-                        <circle cx="53" cy="7"  r="4.8" fill="rgba(255,255,255,0.78)"/>
-                        <!-- Many flowers (magical) -->
-                        <g><ellipse cx="7"   cy="91" rx="4"   ry="6"   fill="#FBCFE8"/><ellipse cx="7"   cy="91" rx="6"   ry="4"   fill="#FBCFE8"/><circle cx="7"   cy="91" r="3.5" fill="#FDE047"/><circle cx="6"   cy="90" r="1"   fill="rgba(255,255,255,0.8)"/></g>
-                        <g><ellipse cx="113" cy="89" rx="4"   ry="6"   fill="#BAE6FD"/><ellipse cx="113" cy="89" rx="6"   ry="4"   fill="#BAE6FD"/><circle cx="113" cy="89" r="3.5" fill="#FDE047"/><circle cx="112" cy="88" r="1"   fill="rgba(255,255,255,0.8)"/></g>
-                        <g><ellipse cx="32"  cy="35" rx="3.5" ry="5.5" fill="#FCA5A5"/><ellipse cx="32"  cy="35" rx="5.5" ry="3.5" fill="#FCA5A5"/><circle cx="32"  cy="35" r="3"   fill="#FDE047"/></g>
-                        <g><ellipse cx="89"  cy="33" rx="3.5" ry="5.5" fill="#FBCFE8"/><ellipse cx="89"  cy="33" rx="5.5" ry="3.5" fill="#FBCFE8"/><circle cx="89"  cy="33" r="3"   fill="#A78BFA"/></g>
-                        <g><ellipse cx="50"  cy="19" rx="3"   ry="4.5" fill="#BAE6FD"/><ellipse cx="50"  cy="19" rx="4.5" ry="3"   fill="#BAE6FD"/><circle cx="50"  cy="19" r="2.5" fill="#FDE047"/></g>
-                        <!-- Chibi sparkle stars -->
+                        <path d="M62,91 L104,114 Q62,119 20,114 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,87 L102,110 Q60,115 18,110 Z" fill="url(#sc-t3)" stroke="#047857" stroke-width="1.5"/>
+                        <path d="M18,110 Q60,115 102,110" fill="none" stroke="#022C22" stroke-width="3" stroke-linecap="round" opacity="0.52"/>
+                        <circle cx="57" cy="87.5" r="3.2" fill="rgba(255,255,255,0.48)"/>
+                        <path d="M62,80 L97,100 Q62,105 27,100 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,76 L95,96 Q60,101 25,96 Z" fill="url(#sc-t3)" stroke="#059669" stroke-width="1.5"/>
+                        <path d="M25,96 Q60,101 95,96" fill="none" stroke="#022C22" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+                        <circle cx="57" cy="76.5" r="2.8" fill="rgba(255,255,255,0.56)"/>
+                        <path d="M62,68 L90,86 Q62,90 34,86 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,64 L88,82 Q60,86 32,82 Z" fill="url(#sc-t2)" stroke="#15803D" stroke-width="1.5"/>
+                        <path d="M32,82 Q60,86 88,82" fill="none" stroke="#022C22" stroke-width="2.5" stroke-linecap="round" opacity="0.46"/>
+                        <circle cx="57.5" cy="64.5" r="2.4" fill="rgba(255,255,255,0.65)"/>
+                        <path d="M62,56 L84,72 Q62,76 40,72 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,52 L82,68 Q60,72 38,68 Z" fill="url(#sc-t2)" stroke="#16A34A" stroke-width="1.5"/>
+                        <path d="M38,68 Q60,72 82,68" fill="none" stroke="#022C22" stroke-width="2.5" stroke-linecap="round" opacity="0.44"/>
+                        <circle cx="57.5" cy="52.5" r="2.1" fill="rgba(255,255,255,0.73)"/>
+                        <path d="M62,45 L78,59 Q62,62 46,59 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,41 L76,55 Q60,58 44,55 Z" fill="url(#sc-t1)" stroke="#22C55E" stroke-width="1.5"/>
+                        <path d="M44,55 Q60,58 76,55" fill="none" stroke="#022C22" stroke-width="2" stroke-linecap="round" opacity="0.42"/>
+                        <circle cx="57.5" cy="41.5" r="1.9" fill="rgba(255,255,255,0.8)"/>
+                        <path d="M62,34 L73,47 Q62,50 51,47 Z" fill="#022C22" opacity="0.38"/>
+                        <path d="M60,30 L71,43 Q60,46 49,43 Z" fill="url(#sc-t1)" stroke="#22C55E" stroke-width="1.5"/>
+                        <path d="M49,43 Q60,46 71,43" fill="none" stroke="#022C22" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+                        <circle cx="57.5" cy="30.5" r="1.6" fill="rgba(255,255,255,0.86)"/>
+                        <polygon points="60,18 62.4,25.8 70.4,25.8 64,30.3 66.4,38 60,33.5 53.6,38 56,30.3 49.6,25.8 57.6,25.8"
+                          fill="url(#sc-star)" stroke="#D97706" stroke-width="1">
+                          <animate attributeName="opacity" values="0.75;1;0.75" dur="1.5s" repeatCount="indefinite"/>
+                        </polygon>
+                        <circle cx="60" cy="26" r="2.5" fill="rgba(255,255,255,0.9)">
+                          <animate attributeName="opacity" values="0.5;1;0.5" dur="1.5s" repeatCount="indefinite"/>
+                        </circle>
+                        <line x1="22" y1="110" x2="22" y2="115" stroke="#78350F" stroke-width="1.2"/>
+                        <circle cx="22" cy="119" r="5.5" fill="url(#sc-fr)" stroke="#DC2626" stroke-width="1"/>
+                        <circle cx="20.5" cy="116.5" r="1.6" fill="rgba(255,255,255,0.82)"/>
+                        <line x1="98" y1="110" x2="98" y2="115" stroke="#78350F" stroke-width="1.2"/>
+                        <circle cx="98" cy="119" r="5.5" fill="url(#sc-fb)" stroke="#2563EB" stroke-width="1"/>
+                        <circle cx="96.5" cy="116.5" r="1.6" fill="rgba(255,255,255,0.82)"/>
+                        <line x1="29" y1="96" x2="29" y2="100" stroke="#78350F" stroke-width="1.2"/>
+                        <circle cx="29" cy="104" r="5" fill="url(#sc-fy)" stroke="#CA8A04" stroke-width="1"/>
+                        <circle cx="27.5" cy="101.5" r="1.5" fill="rgba(255,255,255,0.82)"/>
+                        <line x1="91" y1="96" x2="91" y2="100" stroke="#78350F" stroke-width="1.2"/>
+                        <circle cx="91" cy="104" r="5" fill="url(#sc-fo)" stroke="#EA580C" stroke-width="1"/>
+                        <circle cx="89.5" cy="101.5" r="1.5" fill="rgba(255,255,255,0.82)"/>
+                        <line x1="36" y1="82" x2="36" y2="86" stroke="#78350F" stroke-width="1.1"/>
+                        <circle cx="36" cy="89.5" r="4.5" fill="url(#sc-fo)" stroke="#EA580C" stroke-width="1"/>
+                        <circle cx="34.5" cy="87" r="1.3" fill="rgba(255,255,255,0.8)"/>
+                        <line x1="84" y1="82" x2="84" y2="86" stroke="#78350F" stroke-width="1.1"/>
+                        <circle cx="84" cy="89.5" r="4.5" fill="url(#sc-fr)" stroke="#DC2626" stroke-width="1"/>
+                        <circle cx="82.5" cy="87" r="1.3" fill="rgba(255,255,255,0.8)"/>
+                        <line x1="42" y1="68" x2="42" y2="72" stroke="#78350F" stroke-width="1.1"/>
+                        <circle cx="42" cy="75.5" r="4" fill="url(#sc-fb)" stroke="#2563EB" stroke-width="1"/>
+                        <circle cx="40.5" cy="73" r="1.2" fill="rgba(255,255,255,0.8)"/>
+                        <line x1="78" y1="68" x2="78" y2="72" stroke="#78350F" stroke-width="1.1"/>
+                        <circle cx="78" cy="75.5" r="4" fill="url(#sc-fy)" stroke="#CA8A04" stroke-width="1"/>
+                        <circle cx="76.5" cy="73" r="1.2" fill="rgba(255,255,255,0.8)"/>
                         <g>
-                          <circle cx="8" cy="63" r="3.5" fill="#FEF08A" stroke="#FCD34D" stroke-width="1">
+                          <circle cx="9" cy="72" r="3.5" fill="#FEF08A" stroke="#FCD34D" stroke-width="0.8">
                             <animate attributeName="r"       values="3.5;5;3.5" dur="1.8s" repeatCount="indefinite"/>
                             <animate attributeName="opacity" values="1;0.2;1"   dur="1.8s" repeatCount="indefinite"/>
                           </circle>
-                          <line x1="5" y1="60" x2="11" y2="66" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
-                          <line x1="11" y1="60" x2="5" y2="66" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
-                          <line x1="8" y1="58" x2="8" y2="68" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
+                          <line x1="6" y1="69" x2="12" y2="75" stroke="#FCD34D" stroke-width="1.3" stroke-linecap="round"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
+                          <line x1="12" y1="69" x2="6" y2="75" stroke="#FCD34D" stroke-width="1.3" stroke-linecap="round"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
+                          <line x1="9" y1="66" x2="9" y2="78" stroke="#FCD34D" stroke-width="1.3" stroke-linecap="round"><animate attributeName="opacity" values="1;0.1;1" dur="1.8s" repeatCount="indefinite"/></line>
                         </g>
                         <g>
-                          <circle cx="112" cy="57" r="3" fill="#FEF08A" stroke="#FCD34D" stroke-width="1">
+                          <circle cx="111" cy="66" r="3" fill="#FEF08A" stroke="#FCD34D" stroke-width="0.8">
                             <animate attributeName="r"       values="3;4.5;3"   dur="1.8s" repeatCount="indefinite" begin="0.9s"/>
                             <animate attributeName="opacity" values="0.2;1;0.2" dur="1.8s" repeatCount="indefinite" begin="0.9s"/>
                           </circle>
-                          <line x1="109" y1="54" x2="115" y2="60" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="0.1;1;0.1" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></line>
-                          <line x1="115" y1="54" x2="109" y2="60" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="0.1;1;0.1" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></line>
-                          <line x1="112" y1="52" x2="112" y2="62" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round"><animate attributeName="opacity" values="0.1;1;0.1" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></line>
+                          <line x1="108" y1="63" x2="114" y2="69" stroke="#FCD34D" stroke-width="1.3" stroke-linecap="round"><animate attributeName="opacity" values="0.1;1;0.1" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></line>
+                          <line x1="114" y1="63" x2="108" y2="69" stroke="#FCD34D" stroke-width="1.3" stroke-linecap="round"><animate attributeName="opacity" values="0.1;1;0.1" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></line>
+                          <line x1="111" y1="60" x2="111" y2="72" stroke="#FCD34D" stroke-width="1.3" stroke-linecap="round"><animate attributeName="opacity" values="0.1;1;0.1" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></line>
                         </g>
                       </g>
 
-                      <!-- Cute floating particles (stage 2+): pink, blue, yellow -->
+                      <!-- Floating particles (stage 2+) -->
                       <g v-if="treeData.stage >= 2">
-                        <circle cx="52" cy="78" r="2.8" fill="#FBCFE8" opacity="0">
-                          <animate attributeName="cy"      values="78;52;26" dur="4s"   repeatCount="indefinite" begin="0s"/>
-                          <animate attributeName="cx"      values="52;47;42" dur="4s"   repeatCount="indefinite" begin="0s"/>
-                          <animate attributeName="opacity" values="0;0.9;0"  dur="4s"   repeatCount="indefinite" begin="0s"/>
+                        <circle cx="50" cy="80" r="2.5" fill="#BBF7D0" opacity="0">
+                          <animate attributeName="cy"      values="80;55;30" dur="4s"   repeatCount="indefinite" begin="0s"/>
+                          <animate attributeName="cx"      values="50;45;40" dur="4s"   repeatCount="indefinite" begin="0s"/>
+                          <animate attributeName="opacity" values="0;0.85;0" dur="4s"   repeatCount="indefinite" begin="0s"/>
                         </circle>
-                        <circle cx="68" cy="82" r="2.2" fill="#BAE6FD" opacity="0">
-                          <animate attributeName="cy"      values="82;58;34"  dur="3.6s" repeatCount="indefinite" begin="1.5s"/>
-                          <animate attributeName="cx"      values="68;73;78"  dur="3.6s" repeatCount="indefinite" begin="1.5s"/>
-                          <animate attributeName="opacity" values="0;0.88;0"  dur="3.6s" repeatCount="indefinite" begin="1.5s"/>
+                        <circle cx="70" cy="83" r="2" fill="#FDE68A" opacity="0">
+                          <animate attributeName="cy"      values="83;60;37"  dur="3.7s" repeatCount="indefinite" begin="1.4s"/>
+                          <animate attributeName="cx"      values="70;74;78"  dur="3.7s" repeatCount="indefinite" begin="1.4s"/>
+                          <animate attributeName="opacity" values="0;0.85;0"  dur="3.7s" repeatCount="indefinite" begin="1.4s"/>
                         </circle>
-                        <circle cx="60" cy="72" r="2.2" fill="#FDE047" opacity="0">
-                          <animate attributeName="cy"      values="72;48;24" dur="5s"   repeatCount="indefinite" begin="0.9s"/>
-                          <animate attributeName="cx"      values="60;56;52" dur="5s"   repeatCount="indefinite" begin="0.9s"/>
-                          <animate attributeName="opacity" values="0;0.85;0" dur="5s"   repeatCount="indefinite" begin="0.9s"/>
+                        <circle cx="60" cy="74" r="2" fill="#FCA5A5" opacity="0">
+                          <animate attributeName="cy"      values="74;50;26" dur="5s"   repeatCount="indefinite" begin="0.8s"/>
+                          <animate attributeName="cx"      values="60;56;52" dur="5s"   repeatCount="indefinite" begin="0.8s"/>
+                          <animate attributeName="opacity" values="0;0.8;0"  dur="5s"   repeatCount="indefinite" begin="0.8s"/>
                         </circle>
                       </g>
                     </g>
