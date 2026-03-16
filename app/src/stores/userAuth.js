@@ -16,20 +16,6 @@ export const useUserAuthStore = defineStore('userAuth', () => {
   const isLoading  = ref(false)
   const error      = ref('')
 
-  // Restore session from Supabase on page reload
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    if (session?.user) _syncFromMeta(session.user)
-  })
-
-  // Keep state in sync if session changes (e.g. token refresh, sign-out elsewhere)
-  supabase.auth.onAuthStateChange((_event, session) => {
-    if (session?.user) {
-      _syncFromMeta(session.user)
-    } else if (!session) {
-      _clearLocal()
-    }
-  })
-
   // Background profile sync — refresh name/role/dept/slogan/image across devices
   if (userId.value) {
     setTimeout(function() { fetchAllEmployees().then(emps => {
@@ -54,10 +40,10 @@ export const useUserAuthStore = defineStore('userAuth', () => {
 
   const isAuthenticated = computed(() => !!userId.value)
 
-  async function loginWithEmployee(id, password) {
+  async function loginWithEmployee(id) {
     isLoading.value = true; error.value = ''
     try {
-      const emp = await authLogin(id, password || '')
+      const emp = await authLogin(id)
       _persist(emp)
       return true
     } catch (e) {

@@ -20,7 +20,10 @@ export async function uploadImage(base64, fileName, folderType = 'empathy') {
     },
     body: JSON.stringify({ base64, fileName, folderType }),
   })
-  const data = await res.json()
+  if (!res.ok) throw new Error(`upload-image: ${res.status}`)
+  const text = await res.text()
+  let data
+  try { data = JSON.parse(text) } catch { throw new Error('upload-image: invalid response') }
   if (!data.ok) throw new Error(data.error || 'upload-image failed')
   return data.data   // { id, url }
 }
@@ -37,7 +40,10 @@ export async function getImages(imgIds) {
   const res = await fetch(`${BASE}/get-images?${qs}`, {
     headers: { Authorization: `Bearer ${ANON}` },
   })
-  const data = await res.json()
+  if (!res.ok) throw new Error(`get-images: ${res.status}`)
+  const text = await res.text()
+  let data
+  try { data = JSON.parse(text) } catch { throw new Error('get-images: invalid response') }
   if (!data.ok) throw new Error(data.error || 'get-images failed')
   return data.data   // { id: base64 }
 }

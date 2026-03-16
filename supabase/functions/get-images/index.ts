@@ -53,9 +53,10 @@ Deno.serve(async (req: Request) => {
 // ── Drive fetch ───────────────────────────────────────────────
 
 async function getAccessToken(): Promise<string> {
-  const keyJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_KEY')
-  if (!keyJson) throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY not set')
-  return createGoogleAuth(JSON.parse(keyJson), ['https://www.googleapis.com/auth/drive.readonly'])
+  const clientEmail = Deno.env.get('GOOGLE_CLIENT_EMAIL')
+  const privateKey  = Deno.env.get('GOOGLE_PRIVATE_KEY')?.replace(/\\n/g, '\n')
+  if (!clientEmail || !privateKey) throw new Error('GOOGLE_CLIENT_EMAIL or GOOGLE_PRIVATE_KEY not set')
+  return createGoogleAuth({ client_email: clientEmail, private_key: privateKey }, ['https://www.googleapis.com/auth/drive.readonly'])
 }
 
 async function fetchImage(token: string, fileId: string): Promise<string> {

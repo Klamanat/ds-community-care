@@ -61,7 +61,12 @@ async function _flush() {
       const map = await edgeGetImages(ids)
       Object.entries(map).forEach(([id, b64]) => { if (b64) _mem.set(id, b64) })
       _scheduleSave()
-    } catch {}
+    } catch {
+      // Edge Function not deployed — fall back to direct Drive thumbnail URLs
+      ids.forEach(id => {
+        _mem.set(id, `https://lh3.googleusercontent.com/d/${id}`)
+      })
+    }
   }
 
   cbs.forEach(fn => fn())
