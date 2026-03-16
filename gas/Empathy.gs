@@ -80,14 +80,27 @@ function getEmpathyPeople(params) {
     var imgId  = '';
     // Empathy-specific photo takes priority over employee profile photo
     if (empathyPhotos[cid]) {
-      imgUrl = empathyPhotos[cid];
-    } else if (emp && emp.imgUrl) {
-      var raw = String(emp.imgUrl);
+      var epUrl = empathyPhotos[cid];
+      if (epUrl.indexOf('drive:') === 0) {
+        imgId = epUrl.slice(6);
+      } else {
+        // Extract Drive file ID from thumbnail URL (e.g. drive.google.com/thumbnail?id=XXX)
+        var epMatch = epUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (epMatch) {
+          imgId = epMatch[1]; // frontend batch-fetches via getImages → same path as everywhere
+        } else {
+          imgUrl = epUrl; // fallback: direct URL (e.g. non-Drive hosting)
+        }
+      }
+    } else if (emp) {
+      var raw = String(emp.imgUrl || '');
       if (raw.indexOf('drive:') === 0) {
         imgId = raw.slice(6); // frontend batch-fetches via getImages
-      } else {
+      } else if (raw) {
         imgUrl = raw;
       }
+      // Also check imgId column (set by adminUploadProfileImage alongside imgUrl)
+      if (!imgId) imgId = String(emp.imgId || '');
     }
     return {
       id:           cid,
@@ -109,63 +122,81 @@ function getEmpathyPeople(params) {
 }
 
 function getEmpathyPosts(params) {
+  var userKey = String(params.userKey || '');
   var hit = getCachedResult('posts');
-  if (hit) return ok(hit);
 
-  var rows = [];
-  try { rows = cachedSheetRead('EmpathyPosts'); } catch(e) { return ok([]); }
+  var page;
+  if (hit) {
+    page = hit;
+  } else {
+    var rows = [];
+    try { rows = cachedSheetRead('EmpathyPosts'); } catch(e) { return ok([]); }
 
-  rows.sort(function(a, b) {
-    return new Date(b.createdAt) - new Date(a.createdAt);
-  });
+    rows.sort(function(a, b) {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
 
-  var empByCode = {};
-  var empById   = {};
+    var empByCode = {};
+    var empById   = {};
+    try {
+      cachedSheetRead('Employees', 600).forEach(function(e) {
+        if (e.empCode) empByCode[String(e.empCode)] = e;
+        if (e.id)      empById[String(e.id)]         = e;
+      });
+    } catch(e) {}
+
+    var posts = rows.map(function(r) {
+      var recImg = String(r.recImgUrl || '');
+
+      var recImgId = '';
+      // If no image stored, look up by recEmployeeId
+      if (!recImg && r.recEmployeeId) {
+        var emp = empByCode[String(r.recEmployeeId)] || empById[String(r.recEmployeeId)];
+        if (emp) {
+          var empImg = String(emp.imgUrl || '');
+          if (empImg.indexOf('drive:') === 0) {
+            recImgId = empImg.slice(6); // frontend batch-fetches via getImages
+          } else {
+            recImg = empImg;
+          }
+        }
+      }
+
+      return {
+        id:            String(r.id || ''),
+        recEmployeeId: String(r.recEmployeeId || ''),
+        recName:       String(r.recName || ''),
+        recRole:       String(r.recRole || ''),
+        recImg:        recImg,
+        recImgId:      recImgId,
+        sndName:       String(r.sndName || ''),
+        msg:           String(r.msg || ''),
+        tag:           String(r.tag || ''),
+        likeCount:     parseInt(r.likeCount, 10) || 0,
+        createdAt:     String(r.createdAt || ''),
+        comments:      [],
+        react:         (String(r.tag || '')).includes('เก่งมาก') ? '⭐' : (String(r.tag || '')).includes('ขอบคุณ') ? '🙏' : '💪',
+      };
+    });
+
+    // Limit to 200 most recent — prevents huge payloads at 10K+ posts
+    page = posts.slice(0, 200);
+    cacheResult('posts', page, 60); // 1 min — likes/comments เปลี่ยนบ่อย
+  }
+
+  // Enrich with per-user _liked — not cached (user-specific data)
+  if (!userKey) return ok(page);
+
+  var likedSet = {};
   try {
-    cachedSheetRead('Employees', 600).forEach(function(e) {
-      if (e.empCode) empByCode[String(e.empCode)] = e;
-      if (e.id)      empById[String(e.id)]         = e;
+    cachedSheetRead('EmpathyLikes').forEach(function(r) {
+      if (String(r.userKey) === userKey) likedSet[String(r.postId)] = true;
     });
   } catch(e) {}
 
-  var posts = rows.map(function(r) {
-    var recImg = String(r.recImgUrl || '');
-
-    var recImgId = '';
-    // If no image stored, look up by recEmployeeId
-    if (!recImg && r.recEmployeeId) {
-      var emp = empByCode[String(r.recEmployeeId)] || empById[String(r.recEmployeeId)];
-      if (emp) {
-        var empImg = String(emp.imgUrl || '');
-        if (empImg.indexOf('drive:') === 0) {
-          recImgId = empImg.slice(6); // frontend batch-fetches via getImages
-        } else {
-          recImg = empImg;
-        }
-      }
-    }
-
-    return {
-      id:            String(r.id || ''),
-      recEmployeeId: String(r.recEmployeeId || ''),
-      recName:       String(r.recName || ''),
-      recRole:       String(r.recRole || ''),
-      recImg:        recImg,
-      recImgId:      recImgId,
-      sndName:       String(r.sndName || ''),
-      msg:           String(r.msg || ''),
-      tag:           String(r.tag || ''),
-      likeCount:     parseInt(r.likeCount, 10) || 0,
-      createdAt:     String(r.createdAt || ''),
-      comments:      [],
-      react:         (String(r.tag || '')).includes('เก่งมาก') ? '⭐' : (String(r.tag || '')).includes('ขอบคุณ') ? '🙏' : '💪',
-    };
-  });
-
-  // Limit to 200 most recent — prevents huge payloads at 10K+ posts
-  var page = posts.slice(0, 200);
-  cacheResult('posts', page, 60); // 1 min — likes/comments เปลี่ยนบ่อย
-  return ok(page);
+  return ok(page.map(function(p) {
+    return likedSet[p.id] ? Object.assign({}, p, { _liked: true }) : p;
+  }));
 }
 
 function addEmpathyPost(params) {

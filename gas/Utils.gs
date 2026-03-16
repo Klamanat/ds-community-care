@@ -189,9 +189,63 @@ function invalidateResult(key) {
 
 
 /**
- * Fetch Drive image as base64, cached for 60 min per imgId.
- * Avoids re-fetching the same image on every request.
+ * getImages — batch proxy for Drive images. Called by frontend after page renders.
+ * params: { imgIds: "id1,id2,id3" }
+ *
+ * Performance improvements vs old cachedDriveImage-per-id approach:
+ *  - cache.getAll()  → ONE cache roundtrip for all IDs (vs N individual get() calls)
+ *  - cache.putAll()  → ONE cache roundtrip to write all new images
+ *  - Images >95 KB base64 are skipped from ScriptCache (would exceed 100 KB limit)
  */
+function getImages(params) {
+  var ids = String(params.imgIds || '').split(',')
+    .map(function(s) { return s.trim(); }).filter(Boolean);
+  if (!ids.length) return ok({});
+
+  var cache = CacheService.getScriptCache();
+
+  // Batch-read all cached entries in ONE network roundtrip
+  var cacheKeys = ids.map(function(id) { return 'img_' + id; });
+  var cached = {};
+  try { cached = cache.getAll(cacheKeys); } catch(e) {}
+
+  var result  = {};
+  var missing = [];
+  ids.forEach(function(id) {
+    var val = cached['img_' + id];
+    if (val) result[id] = val;
+    else     missing.push(id);
+  });
+
+  if (!missing.length) return ok(result);
+
+  // Fetch missing images from Drive (sequential — GAS limitation)
+  var toCache = {};
+  missing.forEach(function(id) {
+    try {
+      var bytes = DriveApp.getFileById(id).getBlob().getBytes();
+      var b64   = 'data:image/jpeg;base64,' + Utilities.base64Encode(bytes);
+      result[id] = b64;
+      if (b64.length < 95000) toCache['img_' + id] = b64; // skip if too large for ScriptCache
+    } catch(e) {}
+  });
+
+  // Batch-write all new cache entries in ONE roundtrip
+  if (Object.keys(toCache).length) {
+    try {
+      cache.putAll(toCache, CACHE_TTL_IMAGE);
+    } catch(e) {
+      // putAll may fail if any single value is too large — fall back to individual puts
+      Object.keys(toCache).forEach(function(k) {
+        try { cache.put(k, toCache[k], CACHE_TTL_IMAGE); } catch(e2) {}
+      });
+    }
+  }
+
+  return ok(result);
+}
+
+// Kept for backward compatibility — direct callers can still use this
 function cachedDriveImage(imgId) {
   if (!imgId) return '';
   var cache = CacheService.getScriptCache();
@@ -201,22 +255,9 @@ function cachedDriveImage(imgId) {
   try {
     var bytes = DriveApp.getFileById(imgId).getBlob().getBytes();
     var b64   = 'data:image/jpeg;base64,' + Utilities.base64Encode(bytes);
-    try { cache.put(key, b64, CACHE_TTL_IMAGE); } catch(e) {}
+    if (b64.length < 95000) try { cache.put(key, b64, CACHE_TTL_IMAGE); } catch(e) {}
     return b64;
   } catch(e) { return ''; }
-}
-
-/**
- * getImages — batch proxy for Drive images. Called by frontend after page renders.
- * params: { imgIds: "id1,id2,id3" }
- * Uses cachedDriveImage (ScriptCache 60 min) per image — fast after first load.
- */
-function getImages(params) {
-  var ids = String(params.imgIds || '').split(',')
-    .map(function(s) { return s.trim(); }).filter(Boolean);
-  var result = {};
-  ids.forEach(function(imgId) { result[imgId] = cachedDriveImage(imgId); });
-  return ok(result);
 }
 
 /**

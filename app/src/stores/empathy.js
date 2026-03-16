@@ -38,9 +38,10 @@ function _applyCommentLikes(comments) {
 }
 
 export const useEmpathyStore = defineStore('empathy', () => {
-  const posts        = ref(lsGet('empathy_posts') || [])
-  const isLoading    = ref(false)
-  const lastFetched  = ref(null)
+  const posts             = ref(lsGet('empathy_posts') || [])
+  const isLoading         = ref(false)
+  const lastFetched       = ref(null)
+  const lastPeopleFetched = ref(null)
 
   // Flat comment arrays keyed by channelId — component does the nesting
   const postComments = reactive({})
@@ -58,8 +59,10 @@ export const useEmpathyStore = defineStore('empathy', () => {
   async function loadPosts(force = false) {
     if (!force && lastFetched.value && (Date.now() - lastFetched.value) < 30000) return // 30s
     isLoading.value = !posts.value.length
+    const ui = useUiStore()
+    const userKey = ui.currentUser?.id || ''
     try {
-      const data = await svc.fetchPosts()
+      const data = await svc.fetchPosts(userKey)
       // Apply cached images immediately before lazy-fetch
       posts.value = data.map(p => p.recImgId ? { ...p, recImg: getCached(p.recImgId) || p.recImg || '' } : p)
       lastFetched.value = Date.now()
@@ -76,6 +79,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
 
   // ── loadPeople — for EmpathyModal grid (from EmpathyComments) ─
   async function loadPeople(force = false) {
+    if (!force && lastPeopleFetched.value && (Date.now() - lastPeopleFetched.value) < 60000) return
     try {
       const data = await svc.fetchPeople()
       if (!data?.length) return
@@ -105,6 +109,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
         return true
       })
       praisedPeople.value = [...merged, ...sessionOnly]
+      lastPeopleFetched.value = Date.now()
       lsSet('empathy_people', stripBase64(merged, 'imgUrl'), 10 * 60 * 1000)
       // Lazy-fetch Drive images after page renders
       const ids = [...new Set(merged.map(p => p.imgId).filter(Boolean))]
@@ -182,6 +187,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
     const temp = { id: 'tmp_cm_' + Date.now(), postId: channelId, parentId: parentId || '', name: authorName, text, time: 'เมื่อกี้', likeCount: 0, _liked: false }
     postComments[channelId].push(temp)
     lsDel('empathy_people') // commentCount เปลี่ยน
+    lastPeopleFetched.value = null // force re-fetch on next loadPeople
 
     try {
       const cm = await svc.addComment(channelId, text, authorName, parentId)

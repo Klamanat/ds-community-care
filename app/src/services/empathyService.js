@@ -5,8 +5,10 @@ export async function fetchPeople() {
   return r.data   // [{ id, name, role, imgUrl, commentCount }]
 }
 
-export async function fetchPosts() {
-  const r = await gasGet('getEmpathyPosts')
+export async function fetchPosts(userKey = '') {
+  const params = {}
+  if (userKey) params.userKey = userKey
+  const r = await gasGet('getEmpathyPosts', params)
   return r.data
 }
 

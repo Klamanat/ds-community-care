@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { gasGet } from '../services/api.js'
 import { fetchImages } from '../services/imageService.js'
+import { fetchAllEmployees } from '../services/teamService.js'
 
 export const useMentalStore = defineStore('mental', () => {
   // ── Advisors ─────────────────────────────────────────────────────────────
@@ -11,18 +12,17 @@ export const useMentalStore = defineStore('mental', () => {
   async function loadAdvisors(force = false) {
     if (!force && loaded.value) return
     try {
-      const [advisorRes, empRes] = await Promise.allSettled([
-        gasGet('getMentalAdvisors'),
-        gasGet('getEmployees'),
+      const [list, emps] = await Promise.all([
+        gasGet('getMentalAdvisors').then(r => r.data || []).catch(() => []),
+        fetchAllEmployees(),
       ])
-      const list = advisorRes.status === 'fulfilled' ? (advisorRes.value.data || []) : []
       advisors.value = list
       loaded.value   = true
 
       // Build employee map for image lookup
-      if (empRes.status === 'fulfilled') {
+      if (emps.length) {
         const empMap = {}
-        ;(empRes.value.data || []).forEach(e => { if (e.id) empMap[String(e.id)] = e })
+        emps.forEach(e => { if (e.id) empMap[String(e.id)] = e })
         const enriched = list.map(a => {
           const emp = empMap[String(a.employeeId || '')]
           if (!emp) return a

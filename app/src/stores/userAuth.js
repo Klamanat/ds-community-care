@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { gasGet } from '../services/api.js'
 import { fetchImages, getCached } from '../services/imageService.js'
+import { fetchAllEmployees } from '../services/teamService.js'
 
 export const useUserAuthStore = defineStore('userAuth', () => {
   const userId     = ref(localStorage.getItem('user_id')    || '')
@@ -14,36 +15,27 @@ export const useUserAuthStore = defineStore('userAuth', () => {
   const isLoading  = ref(false)
   const error      = ref('')
 
-  // Resolve profile image on app start
-  if (userId.value && !userImgUrl.value) {
-    if (userImgId.value) {
-      // imgId known — fetch from Drive (or return from cache immediately)
-      const cached = getCached(userImgId.value)
-      if (cached) {
-        userImgUrl.value = cached
-      } else {
-        fetchImages([userImgId.value]).then(map => {
+  // Background profile sync on app start — refreshes name/role/dept/slogan/image across devices
+  if (userId.value) {
+    fetchAllEmployees().then(emps => {
+      const emp = emps.find(e => String(e.id) === String(userId.value))
+      if (!emp) return
+      const changed = emp.name !== userName.value
+        || (emp.role || '') !== userRole.value
+        || (emp.dept || '') !== userDept.value
+        || (emp.starGangSlogan || '') !== userSlogan.value
+        || (emp.imgId || '') !== userImgId.value
+      if (changed) {
+        _persist(emp)  // updates all fields + triggers image fetch if needed
+      } else if (!userImgUrl.value && userImgId.value) {
+        // Text data unchanged — resolve image only
+        const cached = getCached(userImgId.value)
+        if (cached) userImgUrl.value = cached
+        else fetchImages([userImgId.value]).then(map => {
           if (map[userImgId.value]) userImgUrl.value = map[userImgId.value]
         }).catch(() => {})
       }
-    } else {
-      // imgId not stored (old session) — fetch employee list to find it
-      import('../services/api.js').then(({ gasGet: _get }) =>
-        _get('getEmployees')
-      ).then(res => {
-        const emp = (res.data || []).find(e => String(e.id) === String(userId.value))
-        if (!emp) return
-        if (emp.imgId) {
-          userImgId.value = emp.imgId
-          localStorage.setItem('user_imgid', emp.imgId)
-          fetchImages([emp.imgId]).then(map => {
-            if (map[emp.imgId]) userImgUrl.value = map[emp.imgId]
-          }).catch(() => {})
-        } else if (emp.imgUrl) {
-          userImgUrl.value = emp.imgUrl
-        }
-      }).catch(() => {})
-    }
+    }).catch(() => {})
   }
 
   const isAuthenticated = computed(() => !!userId.value)
