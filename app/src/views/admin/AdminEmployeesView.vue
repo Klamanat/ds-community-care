@@ -414,11 +414,20 @@ async function doSave() {
         bdayRows.value.push({ key: bRes?.key || 'bday_' + Date.now(), employeeId: empId, name: form.name, role: form.role, ...bdayForm })
       }
     } else {
+      // Birthday data lives in the Employees sheet (columns: bdDate, monthIdx, fallbackIdx)
+      // so we include it directly in the employee update — no separate Birthdays sheet call needed.
+      const bdayExtra = bdayForm.date ? {
+        bdDate: bdayForm.date,
+        monthIdx: bdayForm.monthIdx,
+        fallbackIdx: bdayForm.fallbackIdx,
+      } : {}
+
       await svc.updateRow('Employees', 'id', empId, {
         empCode: form.empCode,
         name: form.name, role: form.role, dept: form.dept, grad: form.grad,
         inTeam: form.inTeam, inStarGang: form.inStarGang,
         starGangName: form.starGangName, starGangRole: form.starGangRole, starGangSlogan: form.starGangSlogan,
+        ...bdayExtra,
       })
 
       let imgUrl = form.imgUrl, imgId = form.imgId
@@ -429,19 +438,12 @@ async function doSave() {
       const idx = empRows.value.findIndex(r => r.id === empId)
       if (idx >= 0) Object.assign(empRows.value[idx], form, { imgUrl, imgId })
 
+      // Update local bdayRows state (GAS already persisted via the employee update above)
       if (bdayForm._key) {
-        await svc.updateRow('Birthdays', 'key', bdayForm._key, {
-          name: form.name, role: form.role,
-          date: bdayForm.date, monthIdx: bdayForm.monthIdx, fallbackIdx: bdayForm.fallbackIdx,
-        })
         const bi = bdayRows.value.findIndex(b => b.key === bdayForm._key)
-        if (bi >= 0) Object.assign(bdayRows.value[bi], { name: form.name, role: form.role, ...bdayForm })
+        if (bi >= 0) Object.assign(bdayRows.value[bi], { name: form.name, role: form.role, date: bdayForm.date, monthIdx: bdayForm.monthIdx, fallbackIdx: bdayForm.fallbackIdx })
       } else if (bdayForm.date) {
-        const bRes = await svc.addBirthday({
-          employeeId: empId, name: form.name, role: form.role,
-          date: bdayForm.date, monthIdx: bdayForm.monthIdx, fallbackIdx: bdayForm.fallbackIdx,
-        })
-        bdayRows.value.push({ key: bRes?.key || 'bday_' + Date.now(), employeeId: empId, name: form.name, role: form.role, ...bdayForm })
+        bdayRows.value.push({ key: empId, employeeId: empId, name: form.name, role: form.role, ...bdayForm })
       }
     }
 
