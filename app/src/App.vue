@@ -106,11 +106,17 @@ watch(() => userAuth.userId,    syncUser)
 watch(() => userAuth.userImgUrl, img => { if (ui.currentUser) ui.currentUser.img = img })
 
 // Load notifications when user is known; sync unread count → badge
-function loadNotifs() {
-  if (userAuth.userName) notif.load(userAuth.userName)
+// Deferred by 3s on first load so it doesn't compete with critical data on cold GAS start
+function loadNotifs(immediate = false) {
+  if (!userAuth.userName) return
+  if (immediate || notif.items.length) {
+    notif.load(userAuth.userName)
+  } else {
+    setTimeout(() => notif.load(userAuth.userName), 3000)
+  }
 }
-onMounted(loadNotifs)
-watch(() => userAuth.userName, loadNotifs)
+onMounted(() => loadNotifs(false))
+watch(() => userAuth.userName, () => loadNotifs(true))  // login/logout → immediate
 watch(() => notif.unreadCount, count => { ui.notifBadge = count }, { immediate: true })
 </script>
 

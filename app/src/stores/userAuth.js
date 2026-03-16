@@ -16,8 +16,9 @@ export const useUserAuthStore = defineStore('userAuth', () => {
   const error      = ref('')
 
   // Background profile sync on app start — refreshes name/role/dept/slogan/image across devices
+  // Deferred 5s so it doesn't compete with critical data calls on cold GAS start
   if (userId.value) {
-    fetchAllEmployees().then(emps => {
+    setTimeout(function() { fetchAllEmployees().then(emps => {
       const emp = emps.find(e => String(e.id) === String(userId.value))
       if (!emp) return
       const changed = emp.name !== userName.value
@@ -35,7 +36,7 @@ export const useUserAuthStore = defineStore('userAuth', () => {
           if (map[userImgId.value]) userImgUrl.value = map[userImgId.value]
         }).catch(() => {})
       }
-    }).catch(() => {})
+    }).catch(() => {}) }, 5000)
   }
 
   const isAuthenticated = computed(() => !!userId.value)

@@ -36,7 +36,11 @@ import { useActivitiesStore } from '../../stores/activities.js'
 defineEmits(['month-click'])
 
 const acts = useActivitiesStore()
-onMounted(() => acts.load())
+// Defer below-the-fold activities so critical above-fold data (birthday, empathy) loads first
+onMounted(() => {
+  if (acts.loaded) { acts.load(); return }  // already cached → refresh immediately
+  setTimeout(() => acts.load(), 2500)
+})
 
 const MONTHS = [
   { name: 'January',   icon: '🎆', grad: 'linear-gradient(160deg,#BFDBFE,#60A5FA)' },

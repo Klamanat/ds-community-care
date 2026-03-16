@@ -186,3 +186,21 @@ function respond(data) {
     .createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
 }
+
+// ── Keep-Alive Trigger ────────────────────────────────────────────────────────
+// GAS V8 sleeps after ~5 min inactivity → cold start takes 10-20s per request.
+// Run installKeepAliveTrigger() ONCE from the GAS editor (Run → Run function).
+// After setup, keepAlive fires every 5 min → script stays warm → ~300ms response.
+// ─────────────────────────────────────────────────────────────────────────────
+function keepAlive() {
+  CacheService.getScriptCache().get('_ka'); // lightweight touch — keeps V8 warm
+}
+
+function installKeepAliveTrigger() {
+  // Remove existing keepAlive triggers to avoid duplicates
+  ScriptApp.getProjectTriggers()
+    .filter(function(t) { return t.getHandlerFunction() === 'keepAlive'; })
+    .forEach(function(t) { ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('keepAlive').timeBased().everyMinutes(5).create();
+  Logger.log('keepAlive trigger installed — fires every 5 min. Cold start eliminated.');
+}
