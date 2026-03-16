@@ -54,9 +54,9 @@ const GRADS = [
   'linear-gradient(135deg,#FDE68A,#F59E0B)',
 ]
 
-// Map praisedPeople → shape EmpathyCard expects (max 6, sorted by latest comment from GAS)
+// Map praisedPeople → shape EmpathyCard expects (max 12, sorted by latest comment from GAS)
 const posts = computed(() =>
-  empathy.praisedPeople.slice(0, 6).map((person, idx) => {
+  empathy.praisedPeople.slice(0, 12).map((person, idx) => {
     const cl = empathy.channelLikes[person.id]
     return {
       id:        person.id,

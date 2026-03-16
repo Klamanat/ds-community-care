@@ -63,7 +63,7 @@ function getEmpathyPeople(params) {
     });
   } catch(e) {}
 
-  // Aggregate unique channelIds
+  // Build per-cid stats
   var channelMap = {};
   comments.forEach(function(c) {
     var cid = String(c.postId || '').trim();
@@ -73,49 +73,75 @@ function getEmpathyPeople(params) {
     if (String(c.createdAt) > channelMap[cid].lastTime) channelMap[cid].lastTime = String(c.createdAt);
   });
 
-  var people = Object.keys(channelMap).map(function(cid) {
-    // Look up by empCode first (new data), then by id (old data)
+  // Merge channels that belong to the same employee using canonical key (empCode > id > cid)
+  // Handles case where same person has comments under empCode channel AND name/id channel
+  var mergedMap = {}; // canonical key → { bestCid, emp, count, lastTime }
+  Object.keys(channelMap).forEach(function(cid) {
     var emp = empByCode[cid] || empById[cid];
+    var key = emp ? String(emp.empCode || emp.id || cid) : cid;
+    if (!mergedMap[key]) {
+      mergedMap[key] = { bestCid: cid, emp: emp, count: 0, lastTime: '' };
+    }
+    mergedMap[key].count += channelMap[cid].count;
+    if (channelMap[cid].lastTime > mergedMap[key].lastTime) {
+      mergedMap[key].lastTime = channelMap[cid].lastTime;
+    }
+    // Prefer empCode-matching cid as canonical representative
+    if (emp && String(emp.empCode) === cid) {
+      mergedMap[key].bestCid = cid;
+    }
+  });
+
+  var people = Object.keys(mergedMap).map(function(key) {
+    var m   = mergedMap[key];
+    var emp = m.emp;
+    var cid = m.bestCid;
+    var empCode = emp ? String(emp.empCode || '') : '';
     var imgUrl = '';
     var imgId  = '';
+
     // Empathy-specific photo takes priority over employee profile photo
-    if (empathyPhotos[cid]) {
-      var epUrl = empathyPhotos[cid];
+    var photoKey = empCode || cid;
+    if (empathyPhotos[photoKey]) {
+      var epUrl = empathyPhotos[photoKey];
       if (epUrl.indexOf('drive:') === 0) {
         imgId = epUrl.slice(6);
       } else {
-        // Extract Drive file ID from thumbnail URL (e.g. drive.google.com/thumbnail?id=XXX)
         var epMatch = epUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
         if (epMatch) {
-          imgId = epMatch[1]; // frontend batch-fetches via getImages → same path as everywhere
+          imgId = epMatch[1];
         } else {
-          imgUrl = epUrl; // fallback: direct URL (e.g. non-Drive hosting)
+          imgUrl = epUrl;
         }
       }
     } else if (emp) {
       var raw = String(emp.imgUrl || '');
       if (raw.indexOf('drive:') === 0) {
-        imgId = raw.slice(6); // frontend batch-fetches via getImages
+        imgId = raw.slice(6);
       } else if (raw) {
         imgUrl = raw;
       }
-      // Also check imgId column (set by adminUploadProfileImage alongside imgUrl)
       if (!imgId) imgId = String(emp.imgId || '');
     }
+
     return {
       id:           cid,
-      empCode:      emp ? String(emp.empCode || '') : '',
-      name:         emp ? String(emp.name    || cid) : cid,
-      role:         emp ? String(emp.role    || '')  : '',
+      empCode:      empCode,
+      name:         emp ? String(emp.name || cid) : cid,
+      role:         emp ? String(emp.role  || '')  : '',
       imgUrl:       imgUrl,
       imgId:        imgId,
-      commentCount: channelMap[cid].count,
+      commentCount: m.count,
+      _lastTime:    m.lastTime,
     };
   });
 
   people.sort(function(a, b) {
-    return channelMap[b.id].lastTime > channelMap[a.id].lastTime ? 1 : -1;
+    return b._lastTime > a._lastTime ? 1 : -1;
   });
+
+  // Strip internal sort field before caching
+  people.forEach(function(p) { delete p._lastTime; });
 
   cacheResult('people', people, 600); // 10 min
   return ok(people);

@@ -193,6 +193,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
       const cm = await svc.addComment(channelId, text, authorName, parentId)
       const idx = postComments[channelId].findIndex(c => c.id === temp.id)
       if (idx !== -1) postComments[channelId].splice(idx, 1, { ...cm, likeCount: 0, _liked: false })
+      lsDel('dsc_cm_' + channelId) // invalidate — ป้องกัน LS เก่า serve บน reload
     } catch {
       postComments[channelId] = postComments[channelId].filter(c => c.id !== temp.id)
       ui.showToast('ส่งความคิดเห็นไม่สำเร็จ')
