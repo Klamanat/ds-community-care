@@ -65,7 +65,7 @@
               <div class="mh-card-av-wrap">
                 <div class="mh-card-av" :style="c.imgUrl ? {} : { background: avatarGrad(c.name) }">
                   <img v-if="c.imgUrl" :src="c.imgUrl" class="mh-av-img" />
-                  <span v-else>{{ (c.name || '?').charAt(0) }}</span>
+                  <span v-else :class="isLemon(c.name) ? 'mh-av-emoji' : ''">{{ isLemon(c.name) ? '🍋' : (c.name || '?').charAt(0) }}</span>
                 </div>
                 <div class="mh-card-online-dot"></div>
               </div>
@@ -95,7 +95,7 @@
           <div class="mh-form-advisor">
             <div class="mh-av mh-av-lg" :style="selected.imgUrl ? {} : { background: avatarGrad(selected.name) }">
               <img v-if="selected.imgUrl" :src="selected.imgUrl" class="mh-av-img" />
-              <span v-else>{{ (selected.name || '?').charAt(0) }}</span>
+              <span v-else :class="isLemon(selected.name) ? 'mh-av-emoji' : ''">{{ isLemon(selected.name) ? '🍋' : (selected.name || '?').charAt(0) }}</span>
             </div>
             <div>
               <div class="mh-card-name">{{ selected.name }}</div>
@@ -201,14 +201,21 @@ const hasUnreplied = computed(() =>
 )
 
 const GRADS = [
-  'linear-gradient(135deg,#FDE68A,#F59E0B)',
   'linear-gradient(135deg,#FBCFE8,#EC4899)',
+  'linear-gradient(135deg,#FDE68A,#F59E0B)',
+  'linear-gradient(135deg,#F9F871,#D4E600)',  // index 2 → Manow 🍋
   'linear-gradient(135deg,#A7F3D0,#10B981)',
   'linear-gradient(135deg,#C7D2FE,#6366F1)',
   'linear-gradient(135deg,#BAE6FD,#0EA5E9)',
   'linear-gradient(135deg,#FED7AA,#F97316)',
+  'linear-gradient(135deg,#E8F5A3,#AECC00)',
 ]
+function isLemon(name) {
+  const s = (name || '').toLowerCase()
+  return s.includes('manow') || s.includes('มะนาว')
+}
 function avatarGrad(name) {
+  if (isLemon(name)) return GRADS[2]  // lemon gradient
   const n = (name || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0)
   return GRADS[n % GRADS.length]
 }
@@ -301,34 +308,51 @@ onMounted(() => mental.loadAdvisors())
 
 .mh-card {
   display: flex; flex-direction: row; align-items: center; gap: 14px;
-  padding: 14px 16px; width: 100%; text-align: left;
-  background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 55%, #A7F3D0 100%);
-  border: 1.5px solid #6EE7B7; border-radius: 18px;
-  cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
-  box-shadow: 0 3px 12px rgba(16,185,129,0.12);
+  padding: 16px 18px; width: 100%; text-align: left;
+  background: linear-gradient(135deg, #FBBF24 0%, #FCD34D 40%, #FDE68A 100%);
+  border: 2px solid #F59E0B; border-radius: 20px;
+  cursor: pointer; transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+  box-shadow: 0 4px 18px rgba(245,158,11,0.35), 0 1px 4px rgba(245,158,11,0.2);
   position: relative; overflow: hidden;
 }
 .mh-card::before {
   content: ''; position: absolute; inset: 0;
-  background: linear-gradient(135deg, #D1FAE5 0%, #6EE7B7 100%);
+  background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
   opacity: 0; transition: opacity 0.2s;
 }
-.mh-card:hover { border-color: #10B981; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(16,185,129,0.25); }
-.mh-card:hover::before { opacity: 0.5; }
-.mh-card:active { transform: scale(0.98); }
+/* lemon scatter — full card */
+.mh-card::after {
+  content: '🍋  🍋  🍋  🍋  🍋\A  🍋  🍋  🍋  🍋  🍋\A🍋  🍋  🍋  🍋  🍋\A  🍋  🍋  🍋  🍋  🍋';
+  white-space: pre;
+  position: absolute; left: -20px; top: -20px;
+  font-size: 48px; line-height: 1.6;
+  opacity: 0.35; pointer-events: none; z-index: 0;
+  transform: rotate(14deg);
+  transform-origin: top left;
+  filter: drop-shadow(0 2px 4px rgba(180,120,0,0.2));
+  transition: opacity 0.2s;
+}
+.mh-card:hover::after { opacity: 0.55; }
+.mh-card:hover {
+  border-color: #D97706;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(245,158,11,0.45), 0 2px 8px rgba(245,158,11,0.25);
+}
+.mh-card:hover::before { opacity: 0.25; }
+.mh-card:active { transform: scale(0.97); }
 
 /* Avatar */
 .mh-card-av-wrap { position: relative; flex-shrink: 0; z-index: 1; }
 .mh-card-av {
-  width: 60px; height: 60px; border-radius: 50%;
+  width: 76px; height: 76px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 24px; font-weight: 900; color: white; overflow: hidden;
+  font-size: 30px; font-weight: 900; color: white; overflow: hidden;
   box-shadow: 0 4px 14px rgba(0,0,0,0.15);
   border: 3px solid white;
-  outline: 2px solid #A7F3D0;
+  outline: 2px solid rgba(255,255,255,0.7);
   transition: outline-color 0.2s;
 }
-.mh-card:hover .mh-card-av { outline-color: #10B981; }
+.mh-card:hover .mh-card-av { outline-color: white; }
 
 /* Online green dot */
 .mh-card-online-dot {
@@ -339,6 +363,7 @@ onMounted(() => mental.loadAdvisors())
 }
 
 .mh-av-img { width:100%; height:100%; object-fit:cover; }
+.mh-av-emoji { font-size: 40px; line-height: 1; }
 /* mh-av used in form + history views */
 .mh-av {
   border-radius: 50%; flex-shrink: 0; overflow: hidden;
@@ -350,28 +375,30 @@ onMounted(() => mental.loadAdvisors())
 
 /* Info wrap for horizontal layout */
 .mh-card-info-wrap { flex: 1; z-index: 1; min-width: 0; }
+.mh-form-advisor .mh-av { z-index: 1; }
+.mh-form-advisor > div { z-index: 1; position: relative; }
 
 .mh-card-name {
-  font-size: 15px; font-weight: 900; color: #064E3B;
+  font-size: 15px; font-weight: 900; color: #78350F;
   margin-bottom: 3px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .mh-card-role {
-  font-size: 11px; color: #059669;
+  font-size: 11px; color: #92400E;
   line-height: 1.4;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .mh-card-cta {
   z-index: 1; flex-shrink: 0;
   padding: 8px 16px;
-  background: linear-gradient(135deg, #059669, #10B981);
+  background: linear-gradient(135deg, #92400E, #B45309);
   border-radius: 30px;
-  font-size: 12px; font-weight: 800; color: white;
+  font-size: 12px; font-weight: 800; color: #FEF3C7;
   transition: filter 0.15s;
-  box-shadow: 0 2px 8px rgba(16,185,129,0.35);
+  box-shadow: 0 2px 10px rgba(146,64,14,0.4);
   white-space: nowrap;
 }
-.mh-card:hover .mh-card-cta { filter: brightness(1.08); }
+.mh-card:hover .mh-card-cta { filter: brightness(1.1); }
 
 /* Online counseling hero banner */
 .mh-online-hero {
@@ -485,10 +512,21 @@ onMounted(() => mental.loadAdvisors())
 .mh-back:hover { color:#111827; }
 
 .mh-form-advisor {
-  display:flex; align-items:center; gap:12px;
-  padding:12px; background:#F9FAFB;
-  border:1.5px solid #E5E7EB; border-radius:14px;
-  margin-bottom:12px;
+  display:flex; align-items:center; gap:14px;
+  padding:14px 16px;
+  background: linear-gradient(135deg, #FBBF24 0%, #FCD34D 40%, #FDE68A 100%);
+  border: 2px solid #F59E0B; border-radius: 18px;
+  margin-bottom:14px;
+  box-shadow: 0 4px 14px rgba(245,158,11,0.25);
+  position: relative; overflow: hidden;
+}
+.mh-form-advisor::after {
+  content: '🍋  🍋  🍋\A  🍋  🍋  🍋\A🍋  🍋  🍋';
+  white-space: pre;
+  position: absolute; right: -16px; top: -16px;
+  font-size: 36px; line-height: 1.7;
+  opacity: 0.3; pointer-events: none;
+  transform: rotate(14deg);
 }
 
 .mh-anon-badge {
