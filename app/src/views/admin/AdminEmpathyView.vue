@@ -90,7 +90,7 @@ const channels = computed(() => {
 
   const map = new Map()
   for (const c of comments.value) {
-    const cid = String(c.postId || '').trim()
+    const cid = String(c.post_id || c.postId || '').trim()
     if (!cid) continue
     if (!map.has(cid)) {
       const emp = empMap.value[cid] || {}
@@ -123,7 +123,14 @@ onMounted(async () => {
     })
     const pm = {}
     ;(photos || []).forEach(p => {
-      if (p.empCode && p.imgUrl) pm[String(p.empCode)] = String(p.imgUrl)
+      // empathy_photos has employee_id (UUID) — look up empCode via empMap
+      const empId  = p.employee_id || p.employeeId || ''
+      const emp    = m[String(empId)] || {}
+      const code   = emp.empCode || String(empId)
+      const imgUrl = p.img_url  || p.imgUrl || ''
+      // strip 'drive:' prefix — imageService will fetch the actual image
+      const fileId = imgUrl.startsWith('drive:') ? imgUrl.slice(6) : imgUrl
+      if (code && fileId) pm[code] = `https://lh3.googleusercontent.com/d/${fileId}`
     })
     empMap.value   = m
     photoMap.value = pm

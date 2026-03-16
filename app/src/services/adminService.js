@@ -31,10 +31,32 @@ export async function uploadProfileImage(employeeId, base64, fileName) {
 
 // ── Employees ─────────────────────────────────────────────────
 
+function mapEmp(e) {
+  const imgId = e.img_id || (e.img_url?.startsWith('drive:') ? e.img_url.slice(6) : '')
+  return {
+    id:             e.id,
+    empCode:        e.emp_code        || '',
+    name:           e.name            || '',
+    role:           e.role            || '',
+    dept:           e.dept            || '',
+    grad:           e.grad            || '',
+    imgUrl:         e.img_url?.startsWith('drive:') ? '' : (e.img_url || ''),
+    imgId,
+    inTeam:         !!e.in_team,
+    inStarGang:     !!e.in_star_gang,
+    starGangName:   e.star_gang_name   || '',
+    starGangRole:   e.star_gang_role   || '',
+    starGangSlogan: e.star_gang_slogan || '',
+    monthIdx:       e.month_idx   != null ? Number(e.month_idx)   : null,
+    bdDate:         e.bd_date     || '',
+    fallbackIdx:    e.fallback_idx != null ? Number(e.fallback_idx) : 0,
+  }
+}
+
 export async function getEmployees() {
   const { data, error } = await supabase.from('employees').select('*').order('name')
   if (error) throw new Error(error.message)
-  return data || []
+  return (data || []).map(mapEmp)
 }
 
 export async function addEmployee(fields) {
@@ -63,7 +85,16 @@ export async function getBirthdays() {
     .not('bd_date', 'is', null)
     .order('month_idx')
   if (error) throw new Error(error.message)
-  return data || []
+  return (data || []).map(e => ({
+    key:         `bday_${e.id}`,
+    employeeId:  e.id,
+    name:        e.name    || '',
+    role:        e.role    || '',
+    monthIdx:    e.month_idx != null ? Number(e.month_idx) : null,
+    bdDate:      e.bd_date  || '',
+    imgId:       e.img_id  || (e.img_url?.startsWith('drive:') ? e.img_url.slice(6) : ''),
+    imgUrl:      e.img_url?.startsWith('drive:') ? '' : (e.img_url || ''),
+  }))
 }
 
 export async function addBirthday(fields) {

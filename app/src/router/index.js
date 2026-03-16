@@ -99,8 +99,8 @@ router.afterEach((to) => {
 router.beforeEach((to) => {
   // Admin guard
   if (to.meta.requiresAdmin) {
-    const token = localStorage.getItem('admin_token')
-    if (!token) return { name: 'admin-login' }
+    const name = localStorage.getItem('admin_name')
+    if (!name) return { name: 'admin-login' }
   }
   // User guard
   if (to.meta.requiresUser) {

@@ -30,7 +30,7 @@ export async function fetchAll() {
   const { data, error } = await supabase
     .from('activities')
     .select('*')
-    .order('date')
+    .order('created_at', { ascending: true })
   if (error) throw new Error(error.message)
   return (data || []).map(mapActivity)
 }

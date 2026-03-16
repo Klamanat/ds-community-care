@@ -10,7 +10,7 @@ export async function fetchMonth(monthIdx) {
     .select('id, emp_code, name, role, img_url, img_id, month_idx, bd_date, fallback_idx')
     .eq('month_idx', monthIdx)
     .not('bd_date', 'is', null)
-    .order('name')
+    .order('bd_date', { ascending: true })
   if (error) throw new Error(error.message)
 
   const people = (data || []).map(e => {
