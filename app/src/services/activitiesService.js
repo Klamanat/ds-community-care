@@ -1,56 +1,131 @@
-import { gasGet, gasPost } from './api.js'
+// activitiesService.js — Activities & attendance via Supabase
 
-const token = () => localStorage.getItem('admin_token') || ''
+import { supabase } from './supabase.js'
+import { uploadImage as edgeUpload } from './edgeFunctions.js'
 
-// Dedup: if a fetch is already in-flight, return the same Promise
-// Prevents 200 users opening the modal simultaneously from each firing a separate GAS call
-const _inflight = {}
-function dedupGet(key, fn) {
-  if (_inflight[key]) return _inflight[key]
-  const p = fn().finally(() => { delete _inflight[key] })
-  _inflight[key] = p
-  return p
-}
-
-export function fetchAll() {
-  return dedupGet('getActivities', async () => {
-    const r = await gasGet('getActivities')
-    return r.data || []
-  })
+export async function fetchAll() {
+  const { data, error } = await supabase
+    .from('activities')
+    .select('*')
+    .order('date')
+  if (error) throw new Error(error.message)
+  return data || []
 }
 
 export async function fetchByMonth(monthIdx) {
-  const r = await gasGet('getActivities', { monthIdx })
-  return r.data || []
+  const { data, error } = await supabase
+    .from('activities')
+    .select('*')
+    .eq('month_idx', monthIdx)
+    .order('date')
+  if (error) throw new Error(error.message)
+  return data || []
 }
 
 export async function addActivity(fields) {
-  return gasPost('adminAddActivity', { token: token(), ...fields })
+  const { data, error } = await supabase
+    .from('activities')
+    .insert({
+      month_idx:     fields.monthIdx,
+      name:          fields.name,
+      emoji:         fields.emoji,
+      date:          fields.date,
+      date_end:      fields.dateEnd,
+      loc:           fields.loc,
+      desc:          fields.desc,
+      steps:         fields.steps,
+      join_url:      fields.joinUrl,
+      join_open:     fields.joinOpen !== false,
+      join_label:    fields.joinLabel,
+      join_open_at:  fields.joinOpenAt,
+      join_close_at: fields.joinCloseAt,
+      feedback_url:  fields.feedbackUrl,
+      img_url:       fields.imgUrl,
+      img_id:        fields.imgId,
+    })
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
 }
 
 export async function updateActivity(id, fields) {
-  return gasPost('adminUpdateActivity', { token: token(), id, ...fields })
+  const { data, error } = await supabase
+    .from('activities')
+    .update({
+      name:          fields.name,
+      emoji:         fields.emoji,
+      date:          fields.date,
+      date_end:      fields.dateEnd,
+      loc:           fields.loc,
+      desc:          fields.desc,
+      join_open:     fields.joinOpen !== false,
+      join_label:    fields.joinLabel,
+      feedback_url:  fields.feedbackUrl,
+      img_url:       fields.imgUrl,
+      img_id:        fields.imgId,
+    })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
 }
 
 export async function deleteActivity(id) {
-  return gasGet('adminDeleteActivity', { token: token(), id })
+  const { error } = await supabase.from('activities').delete().eq('id', id)
+  if (error) throw new Error(error.message)
 }
 
 export async function joinActivity(activityId, activityName, employeeName, joinLabel) {
-  const r = await gasGet('joinActivity', { activityId, activityName, employeeName: employeeName || 'ไม่ระบุชื่อ', joinLabel: joinLabel || '' })
-  return r.data   // { alreadyJoined, joinCount }
+  // Check if already joined
+  const { data: existing } = await supabase
+    .from('activity_joins')
+    .select('id')
+    .eq('activity_id', activityId)
+    .eq('employee_name', employeeName || 'ไม่ระบุชื่อ')
+    .maybeSingle()
+
+  if (existing) return { alreadyJoined: true }
+
+  const { error } = await supabase.from('activity_joins').insert({
+    activity_id:   activityId,
+    activity_name: activityName,
+    employee_name: employeeName || 'ไม่ระบุชื่อ',
+    reward_type:   joinLabel || '',
+  })
+  if (error) throw new Error(error.message)
+
+  const { count } = await supabase
+    .from('activity_joins')
+    .select('*', { count: 'exact', head: true })
+    .eq('activity_id', activityId)
+
+  return { alreadyJoined: false, joinCount: count || 0 }
 }
 
 export async function uploadImage(base64, fileName, folderType = 'activities') {
-  return gasPost('uploadImage', { base64, fileName: fileName || 'image.jpg', folderType })
+  return edgeUpload(base64, fileName || 'image.jpg', folderType)
 }
 
 export async function getMyStamps(employeeName) {
-  const r = await gasGet('getMyStamps', { employeeName })
-  return r.data || []
+  const { data, error } = await supabase
+    .from('activity_joins')
+    .select('*')
+    .eq('employee_name', employeeName)
+    .order('stamped_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return data || []
 }
 
 export async function claimReward(activityId, employeeName, rewardType) {
-  const r = await gasGet('claimActivityReward', { activityId, employeeName, rewardType })
-  return r.data
+  const { data, error } = await supabase
+    .from('activity_joins')
+    .update({ reward_claimed: true, reward_type: rewardType })
+    .eq('activity_id', activityId)
+    .eq('employee_name', employeeName)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
 }

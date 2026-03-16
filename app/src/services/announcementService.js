@@ -1,17 +1,21 @@
-import { gasGet } from './api.js'
+// announcementService.js — Announcement via Supabase
 
-/**
- * Fetch active announcement from GAS.
- * Returns null if no active announcement or GAS not configured.
- *
- * GAS reads from a "Settings" sheet with key-value rows:
- *   ann_enabled  | TRUE
- *   ann_id       | ann_2026_03_13
- *   ann_title    | หัวข้อประกาศ
- *   ann_video    | https://youtu.be/xxxxx
- *   ann_desc     | รายละเอียด...
- */
+import { supabase } from './supabase.js'
+
 export async function fetchAnnouncement() {
-  const r = await gasGet('getAnnouncement')
-  return r.data || null
+  const { data, error } = await supabase
+    .from('settings')
+    .select('key, value')
+    .in('key', ['ann_enabled', 'ann_id', 'ann_title', 'ann_video', 'ann_desc'])
+  if (error || !data?.length) return null
+
+  const kv = Object.fromEntries(data.map(r => [r.key, r.value]))
+  if (kv.ann_enabled !== 'true') return null
+
+  return {
+    id:    kv.ann_id    || '',
+    title: kv.ann_title || '',
+    video: kv.ann_video || '',
+    desc:  kv.ann_desc  || '',
+  }
 }

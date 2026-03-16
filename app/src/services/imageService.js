@@ -1,4 +1,4 @@
-import { gasGet } from './api.js'
+import { getImages as edgeGetImages } from './edgeFunctions.js'
 
 // ── Storage ──────────────────────────────────────────────────────────
 const LS_KEY  = 'dsc_imgcache'
@@ -58,8 +58,7 @@ async function _flush() {
 
   if (ids.length) {
     try {
-      const r   = await gasGet('getImages', { imgIds: ids.join(',') })
-      const map = r.data || {}
+      const map = await edgeGetImages(ids)
       Object.entries(map).forEach(([id, b64]) => { if (b64) _mem.set(id, b64) })
       _scheduleSave()
     } catch {}

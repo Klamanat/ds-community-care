@@ -1,33 +1,56 @@
-import { gasGet, gasPost } from './api.js'
-import { fetchImages } from './imageService.js'
+// birthdayService.js — Birthday system via Supabase
+
+import { supabase } from './supabase.js'
+import { uploadImage } from './edgeFunctions.js'
+import { fetchImages, getCached } from './imageService.js'
 
 export async function fetchMonth(monthIdx) {
-  const r = await gasGet('getBirthdays', { monthIdx })
-  return (r.data || []).map(b => ({
-    key:         b.key,
-    employeeId:  b.employeeId,
-    name:        b.name,
-    role:        b.role,
-    date:        b.date,
-    monthIdx:    b.monthIdx,
-    fallbackIdx: Number(b.fallbackIdx) || 0,
-    photo:       b.imgUrl || '',
-    imgId:       b.imgId  || '',
+  const { data, error } = await supabase
+    .from('employees')
+    .select('id, emp_code, name, role, img_url, img_id, month_idx, bd_date, fallback_idx')
+    .eq('month_idx', monthIdx)
+    .not('bd_date', 'is', null)
+    .order('name')
+  if (error) throw new Error(error.message)
+
+  const people = (data || []).map(e => ({
+    key:         `bday_${e.id}`,
+    employeeId:  e.id,
+    name:        e.name,
+    role:        e.role || '',
+    date:        e.bd_date || '',
+    monthIdx:    e.month_idx,
+    fallbackIdx: Number(e.fallback_idx) || 0,
+    photo:       e.img_url?.startsWith('drive:') ? getCached(e.img_id) || '' : e.img_url || '',
+    imgId:       e.img_id || '',
     wishes:      [],
   }))
+
+  const ids = [...new Set(people.map(p => p.imgId).filter(Boolean))]
+  if (ids.length) fetchImages(ids).then(map => {
+    people.forEach(p => { if (p.imgId && map[p.imgId]) p.photo = map[p.imgId] })
+  }).catch(() => {})
+
+  return people
 }
 
 export async function fetchWishes(birthdayKey) {
-  const r = await gasGet('getBirthdayWishes', { birthdayKey })
-  const wishes = (r.data || []).map(w => ({
-    from:      w.fromName,
-    avIdx:     w.fromAvIdx,
-    fromImgId: w.fromImgId || '',
-    photo:     '',
+  const { data, error } = await supabase
+    .from('birthday_wishes')
+    .select('*')
+    .eq('birthday_key', birthdayKey)
+    .order('time', { ascending: false })
+  if (error) throw new Error(error.message)
+
+  const wishes = (data || []).map(w => ({
+    from:      w.from_name,
+    avIdx:     w.from_av_idx,
+    fromImgId: w.from_img_id || '',
+    photo:     getCached(w.from_img_id) || '',
     msg:       w.msg,
     time:      w.time,
   }))
-  // Batch-fetch sender Drive photos
+
   const ids = [...new Set(wishes.map(w => w.fromImgId).filter(Boolean))]
   if (ids.length) {
     const map = await fetchImages(ids).catch(() => ({}))
@@ -36,27 +59,24 @@ export async function fetchWishes(birthdayKey) {
   return wishes
 }
 
-/**
- * Persist a compressed base64 image for a birthday employee.
- * Uses POST because base64 strings exceed URL param length limits.
- */
 export async function uploadPhoto(birthdayKey, imageBase64) {
-  const r = await gasPost('uploadImage', {
-    sheetName:   'Birthdays',
-    keyCol:      'key',
-    keyVal:      birthdayKey,
-    imageBase64,
-  })
-  return r.data
+  return uploadImage(imageBase64, `birthday_${birthdayKey}_${Date.now()}.jpg`, 'profiles')
 }
 
 export async function addWish(birthdayKey, msg, fromName, fromAvIdx, fromImgId = '') {
-  const r = await gasGet('addBirthdayWish', {
-    birthdayKey,
-    msg: msg.slice(0, 500),
-    fromName,
-    fromAvIdx,
-    fromImgId,
-  })
-  return r.data
+  const { data, error } = await supabase
+    .from('birthday_wishes')
+    .insert({
+      birthday_key: birthdayKey,
+      from_name:    fromName,
+      from_av_idx:  fromAvIdx || 0,
+      msg:          msg.slice(0, 500),
+      time:         new Date().toISOString(),
+      year:         new Date().getFullYear(),
+      from_img_id:  fromImgId || null,
+    })
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
 }

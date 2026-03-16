@@ -1,32 +1,47 @@
-import { gasGet, gasPost } from './api.js'
+// blogService.js — Blog via Supabase
+
+import { supabase } from './supabase.js'
 
 export async function fetchBlogPosts(category) {
-  const r = await gasGet('getBlogPosts', category ? { category } : {})
-  return r.data || []
+  let q = supabase.from('blog_posts').select('*').order('created_at', { ascending: false })
+  if (category) q = q.eq('category', category)
+  const { data, error } = await q
+  if (error) throw new Error(error.message)
+  return data || []
 }
 
 export async function submitBlogPost(fields) {
-  const r = await gasPost('addBlogPost', fields)
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .insert({
+      title:       fields.title,
+      body:        fields.body,
+      category:    fields.category,
+      author_name: fields.authorName,
+      author_id:   fields.authorId,
+    })
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
 }
 
-function token() { return localStorage.getItem('admin_token') || '' }
-
 export async function adminGetBlogPosts() {
-  const r = await gasGet('adminGetBlogPosts', { token: token() })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data || []
+  return fetchBlogPosts()
 }
 
 export async function adminDeleteBlogPost(id) {
-  const r = await gasGet('adminDeleteBlogPost', { token: token(), id })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { error } = await supabase.from('blog_posts').delete().eq('id', id)
+  if (error) throw new Error(error.message)
 }
 
 export async function adminUpdateBlogPost(id, fields) {
-  const r = await gasGet('adminUpdateBlogPost', { token: token(), id, ...fields })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .update({ title: fields.title, body: fields.body, category: fields.category })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
 }

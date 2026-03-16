@@ -1,201 +1,225 @@
-import { gasGet, gasPost } from './api.js'
+// trainingService.js — Trainings, site visits, IDP via Supabase
+
+import { supabase } from './supabase.js'
+import { uploadImage } from './edgeFunctions.js'
+
+const TRAINING_TABLE = {
+  annual:      'annual_trainings',
+  idp:         'idp_trainings',
+  external:    'external_trainings',
+  compulsory:  'compulsory_trainings',
+  superskills: 'superskills_trainings',
+  leadership:  'leadership_trainings',
+}
+
+function tableFor(category) {
+  return TRAINING_TABLE[category] || 'annual_trainings'
+}
 
 export async function fetchTrainings(category) {
-  const r = await gasGet('getTrainings', category ? { category } : {})
-  return r.data || []
+  if (!category) {
+    // Fetch all categories merged
+    const all = await Promise.all(
+      Object.entries(TRAINING_TABLE).map(async ([cat, tbl]) => {
+        const { data } = await supabase.from(tbl).select('*').order('created_at', { ascending: false })
+        return (data || []).map(r => ({ ...r, category: cat }))
+      })
+    )
+    return all.flat()
+  }
+  const { data, error } = await supabase.from(tableFor(category)).select('*').order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map(r => ({ ...r, category }))
 }
 
 export async function fetchMyTrainings(employeeId) {
-  const r = await gasGet('getMyTrainings', { employeeId })
-  return r.data || []
+  const { data, error } = await supabase
+    .from('training_registrations')
+    .select('training_id')
+    .eq('employee_id', employeeId)
+  if (error) throw new Error(error.message)
+  return (data || []).map(r => r.training_id)
 }
 
 export async function registerTraining(trainingId, employeeId, employeeName) {
-  const r = await gasGet('registerTraining', { trainingId, employeeId, employeeName })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { error } = await supabase.from('training_registrations').insert({
+    training_id:   trainingId,
+    employee_id:   employeeId,
+    employee_name: employeeName,
+  })
+  if (error) throw new Error(error.message)
 }
 
 export async function cancelRegistration(trainingId, employeeId) {
-  const r = await gasGet('cancelRegistration', { trainingId, employeeId })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { error } = await supabase.from('training_registrations')
+    .delete()
+    .eq('training_id', trainingId)
+    .eq('employee_id', employeeId)
+  if (error) throw new Error(error.message)
 }
 
-export async function fetchReviews() {
-  const r = await gasGet('getTrainingReviews', {})
-  return r.data || []
+export async function fetchReviews(trainingId) {
+  let q = supabase.from('training_reviews').select('*').order('created_at', { ascending: false })
+  if (trainingId) q = q.eq('training_id', trainingId)
+  const { data, error } = await q
+  if (error) throw new Error(error.message)
+  return data || []
 }
 
 export async function submitReview(trainingId, employeeId, employeeName, stars, comment) {
-  const r = await gasGet('submitTrainingReview', { trainingId, employeeId, employeeName, stars, comment })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { data, error } = await supabase.from('training_reviews').insert({
+    training_id:   trainingId,
+    employee_id:   employeeId,
+    employee_name: employeeName,
+    stars,
+    comment,
+  }).select().single()
+  if (error) throw new Error(error.message)
+  return data
 }
 
-// ── Site Visit (แยก sheet) ─────────────────────────────────────────────────────
+// ── Site Visits ───────────────────────────────────────────────
 
 export async function fetchSiteVisits() {
-  const r = await gasGet('getSiteVisits', {})
-  return r.data || []
+  const { data, error } = await supabase.from('site_visits').select('*').order('created_at')
+  if (error) throw new Error(error.message)
+  return data || []
 }
 
 export async function voteSite(siteId, employeeId, employeeName) {
-  const r = await gasGet('voteSite', { siteId, employeeId, employeeName })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { error } = await supabase.from('site_votes').insert({ site_id: siteId, employee_id: employeeId, employee_name: employeeName })
+  if (error) throw new Error(error.message)
 }
 
 export async function cancelSiteVote(siteId, employeeId) {
-  const r = await gasGet('cancelSiteVote', { siteId, employeeId })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { error } = await supabase.from('site_votes').delete().eq('site_id', siteId).eq('employee_id', employeeId)
+  if (error) throw new Error(error.message)
 }
 
 export async function fetchMySiteVotes(employeeId) {
-  const r = await gasGet('getMySiteVotes', { employeeId })
-  return r.data || []
+  const { data, error } = await supabase.from('site_votes').select('site_id').eq('employee_id', employeeId)
+  if (error) throw new Error(error.message)
+  return (data || []).map(r => r.site_id)
 }
-
-export async function adminFetchSiteVotes() {
-  const r = await gasGet('adminGetSiteVotes', { token: token() })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data || []
-}
-
-export async function adminAddSiteVisit(fields) {
-  const r = await gasGet('adminAddSiteVisit', { token: token(), ...fields })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
-}
-
-export async function adminUpdateSiteVisit(id, fields) {
-  const r = await gasGet('adminUpdateSiteVisit', { token: token(), id, ...fields })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
-}
-
-export async function adminDeleteSiteVisit(id) {
-  const r = await gasGet('adminDeleteSiteVisit', { token: token(), id })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
-}
-
-// ── Site Suggestions (อื่นๆ) ──────────────────────────────────────────────────
 
 export async function submitSiteSuggestion(employeeId, employeeName, suggestion) {
-  const r = await gasGet('submitSiteSuggestion', { employeeId, employeeName, suggestion })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { error } = await supabase.from('site_suggestions').upsert({
+    employee_id:   employeeId,
+    employee_name: employeeName,
+    description:   suggestion,
+  }, { onConflict: 'employee_id' })
+  if (error) throw new Error(error.message)
 }
 
 export async function fetchMySiteSuggestion(employeeId) {
-  const r = await gasGet('getMySiteSuggestion', { employeeId })
-  return r.data || null   // { suggestion: '...' } or null
+  const { data } = await supabase.from('site_suggestions').select('description').eq('employee_id', employeeId).maybeSingle()
+  return data ? { suggestion: data.description } : null
 }
 
-export async function cancelSiteSuggestion(employeeId) {
-  const r = await gasGet('submitSiteSuggestion', { employeeId, suggestion: '' })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
-}
-
-// ── IDP Posters & Videos ──────────────────────────────────────────────────────
-
-export async function adminUploadIdpImage(base64Data, mimeType, fileName) {
-  const r = await gasPost('adminUploadIdpImage', { token: token(), base64: base64Data, mimeType, fileName })
-  return r.data // { url, fileId }
-}
+// ── IDP Posters & Videos ──────────────────────────────────────
 
 export async function fetchIdpPosters() {
-  const r = await gasGet('getIdpPosters', {})
-  return r.data || []
+  const { data, error } = await supabase.from('idp_posters').select('*').order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return data || []
 }
 
 export async function fetchIdpVideos() {
-  const r = await gasGet('getIdpVideos', {})
-  return r.data || []
+  const { data, error } = await supabase.from('idp_videos').select('*').order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function adminUploadIdpImage(base64Data, _mimeType, fileName) {
+  return uploadImage(base64Data, fileName || 'idp.jpg', 'idp')
 }
 
 export async function adminAddIdpPoster(fields) {
-  const r = await gasGet('adminAddIdpPoster', { token: token(), ...fields })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { data, error } = await supabase.from('idp_posters').insert(fields).select().single()
+  if (error) throw new Error(error.message)
+  return data
 }
 
 export async function adminUpdateIdpPoster(id, fields) {
-  const r = await gasGet('adminUpdateIdpPoster', { token: token(), id, ...fields })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { data, error } = await supabase.from('idp_posters').update(fields).eq('id', id).select().single()
+  if (error) throw new Error(error.message)
+  return data
 }
 
 export async function adminDeleteIdpPoster(id) {
-  const r = await gasGet('adminDeleteIdpPoster', { token: token(), id })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { error } = await supabase.from('idp_posters').delete().eq('id', id)
+  if (error) throw new Error(error.message)
 }
 
 export async function adminAddIdpVideo(fields) {
-  const r = await gasGet('adminAddIdpVideo', { token: token(), ...fields })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { data, error } = await supabase.from('idp_videos').insert(fields).select().single()
+  if (error) throw new Error(error.message)
+  return data
 }
 
 export async function adminUpdateIdpVideo(id, fields) {
-  const r = await gasGet('adminUpdateIdpVideo', { token: token(), id, ...fields })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { data, error } = await supabase.from('idp_videos').update(fields).eq('id', id).select().single()
+  if (error) throw new Error(error.message)
+  return data
 }
 
 export async function adminDeleteIdpVideo(id) {
-  const r = await gasGet('adminDeleteIdpVideo', { token: token(), id })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { error } = await supabase.from('idp_videos').delete().eq('id', id)
+  if (error) throw new Error(error.message)
 }
 
-function token() { return localStorage.getItem('admin_token') || '' }
+// ── Admin: Training CRUD ──────────────────────────────────────
 
-// ── Admin: Training (category-aware) ─────────────────────────────────────────
-
-export async function adminFetchTrainings(category) {
-  const params = category ? { category } : {}
-  const r = await gasGet('getTrainings', params)
-  return r.data || []
-}
-
-export async function adminFetchSiteVisits() {
-  const r = await gasGet('getSiteVisits', {})
-  return r.data || []
-}
+export { fetchTrainings as adminFetchTrainings, fetchSiteVisits as adminFetchSiteVisits }
 
 export async function adminGetTrainingRegistrations(trainingId) {
-  const r = await gasGet('adminGetTrainingRegistrations', { token: token(), trainingId })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data || []
+  const { data, error } = await supabase.from('training_registrations').select('*').eq('training_id', trainingId)
+  if (error) throw new Error(error.message)
+  return data || []
 }
 
 export async function adminAddTraining(fields) {
-  // fields must include category
-  const r = await gasGet('adminAddTraining', { token: token(), ...fields })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { data, error } = await supabase.from(tableFor(fields.category)).insert(fields).select().single()
+  if (error) throw new Error(error.message)
+  return data
 }
 
 export async function adminUpdateTraining(id, fields) {
-  // fields must include category
-  const r = await gasGet('adminUpdateTraining', { token: token(), id, ...fields })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { data, error } = await supabase.from(tableFor(fields.category)).update(fields).eq('id', id).select().single()
+  if (error) throw new Error(error.message)
+  return data
 }
 
 export async function adminDeleteTraining(id, category) {
-  const r = await gasGet('adminDeleteTraining', { token: token(), id, category })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data
+  const { error } = await supabase.from(tableFor(category)).delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function adminFetchSiteVotes() {
+  const { data, error } = await supabase.from('site_votes').select('*')
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function adminAddSiteVisit(fields) {
+  const { data, error } = await supabase.from('site_visits').insert(fields).select().single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
+export async function adminUpdateSiteVisit(id, fields) {
+  const { data, error } = await supabase.from('site_visits').update(fields).eq('id', id).select().single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
+export async function adminDeleteSiteVisit(id) {
+  const { error } = await supabase.from('site_visits').delete().eq('id', id)
+  if (error) throw new Error(error.message)
 }
 
 export async function adminFetchSiteSuggestions() {
-  const r = await gasGet('adminGetSiteSuggestions', { token: token() })
-  if (!r.ok) throw new Error(r.error || 'error')
-  return r.data || []
+  const { data, error } = await supabase.from('site_suggestions').select('*').order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return data || []
 }

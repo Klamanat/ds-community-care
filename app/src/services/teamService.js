@@ -1,48 +1,67 @@
-import { gasGet } from './api.js'
+// teamService.js — Employee / team data via Supabase
+// Replaces GAS getEmployees, addTeamMember, joinStarGang, updateEmployeeSelf
 
-// ── Shared employee dedup cache ───────────────────────────────────────────────
-// Concurrent calls with the same action+params share ONE in-flight HTTP request.
-// Subsequent calls within DEDUP_TTL return the cached promise (no new GAS call).
-// Used by: teamService (fetchTeam/StarGang/Directory), mental.js, userAuth.js
-// ─────────────────────────────────────────────────────────────────────────────
-const _inflight = {}
-const DEDUP_TTL = 30000   // 30 s
+import { supabase } from './supabase.js'
 
-function _dedup(action, params) {
-  const key = action + '?' + new URLSearchParams(params || {}).toString()
-  const now = Date.now()
-  if (_inflight[key] && now - _inflight[key].ts < DEDUP_TTL) return _inflight[key].p
-  _inflight[key] = { ts: now, p: gasGet(action, params).then(r => r.data || []).catch(() => []) }
-  return _inflight[key].p
+export async function fetchAllEmployees() {
+  const { data, error } = await supabase
+    .from('employees')
+    .select('*')
+    .order('name')
+  if (error) throw new Error(error.message)
+  return data || []
 }
 
-// Exported so mental.js, userAuth.js can share the same dedup'd call
-export const fetchAllEmployees = () => _dedup('getEmployees')
-
 export async function fetchTeam() {
-  return _dedup('getEmployees', { inTeam: 'true' })
+  const { data, error } = await supabase
+    .from('employees')
+    .select('*')
+    .eq('in_team', true)
+    .order('name')
+  if (error) throw new Error(error.message)
+  return data || []
 }
 
 export async function fetchStarGang() {
-  return _dedup('getEmployees', { inStarGang: 'true' })
+  const { data, error } = await supabase
+    .from('employees')
+    .select('*')
+    .eq('in_star_gang', true)
+    .order('name')
+  if (error) throw new Error(error.message)
+  return data || []
 }
 
-export async function fetchDirectory() {
-  return fetchAllEmployees()
+export async function addToTeam(fields) {
+  const { data, error } = await supabase
+    .from('employees')
+    .upsert({
+      id:      fields.id,
+      name:    fields.name,
+      role:    fields.role || '',
+      dept:    fields.dept || '',
+      in_team: true,
+    }, { onConflict: 'id' })
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
 }
 
-export async function addTeamMember(member) {
-  const r = await gasGet('addTeamMember', {
-    id: member.id,
-    name: member.name,
-    role: member.role,
-    dept: member.dept || '',
-    imgUrl: member.imgUrl || ''
-  })
-  return r.data
-}
-
-export async function joinStarGang(member) {
-  const r = await gasGet('joinStarGang', { name: member.name, role: member.role })
-  return r.data
+export async function updateSelf(employeeId, fields) {
+  const { data, error } = await supabase
+    .from('employees')
+    .update({
+      name:              fields.name,
+      role:              fields.role,
+      dept:              fields.dept,
+      img_url:           fields.imgUrl,
+      img_id:            fields.imgId,
+      star_gang_slogan:  fields.starGangSlogan,
+    })
+    .eq('id', employeeId)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
 }

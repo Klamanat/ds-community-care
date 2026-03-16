@@ -1,91 +1,164 @@
-import { gasGet, gasPost } from './api.js'
+// adminService.js — Admin operations via Supabase
 
-// Upload employee profile image to Google Drive (overwrites old file if exists)
-// Returns { url, id }
-export async function uploadProfileImage(employeeId, base64, fileName) {
-  const r = await gasPost('adminUploadProfileImage', {
-    token: token(), employeeId, base64, fileName: fileName || 'profile.jpg',
-  })
-  return r.data
-}
+import { supabase } from './supabase.js'
+import { uploadImage } from './edgeFunctions.js'
 
-// Use public endpoints so drive:fileId → base64 conversion is applied
-export async function getEmployees() {
-  const r = await gasGet('getEmployees', { noCache: 'true' })
-  return r.data || []
-}
-
-export async function getBirthdays() {
-  const r = await gasGet('getBirthdays')
-  return r.data || []
-}
-
-export async function addBirthday(fields) {
-  const r = await gasGet('adminAddBirthday', { token: token(), ...fields })
-  return r.data
-}
-
-function token() {
-  return localStorage.getItem('admin_token') || ''
-}
+// ── Auth ──────────────────────────────────────────────────────
 
 export async function login(username, password) {
-  const r = await gasPost('login', { username, password })
-  return r.data // { token, name }
+  const email = username.includes('@') ? username : `${username}@ds.internal`
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error) throw new Error(error.message)
+  const role = data.user?.user_metadata?.role
+  if (role !== 'admin') {
+    await supabase.auth.signOut()
+    throw new Error('ไม่มีสิทธิ์ admin')
+  }
+  return { name: data.user.user_metadata?.name || username }
 }
 
-export async function getAll(sheetName) {
-  const r = await gasGet('adminGetAll', { token: token(), sheetName })
-  return r.data
+// ── Images ────────────────────────────────────────────────────
+
+export async function uploadProfileImage(employeeId, base64, fileName) {
+  const result = await uploadImage(base64, fileName || 'profile.jpg', 'profiles')
+  const { error } = await supabase
+    .from('employees')
+    .update({ img_id: result.id, img_url: result.url })
+    .eq('id', employeeId)
+  if (error) throw new Error(error.message)
+  return result
 }
 
-export async function updateRow(sheetName, keyCol, keyVal, updates) {
-  const r = await gasGet('adminUpdateRow', { token: token(), sheetName, keyCol, keyVal, ...updates })
-  return r.data
-}
+// ── Employees ─────────────────────────────────────────────────
 
-export async function deleteRow(sheetName, keyCol, keyVal) {
-  const r = await gasGet('adminDeleteRow', { token: token(), sheetName, keyCol, keyVal })
-  return r.data
+export async function getEmployees() {
+  const { data, error } = await supabase.from('employees').select('*').order('name')
+  if (error) throw new Error(error.message)
+  return data || []
 }
 
 export async function addEmployee(fields) {
-  const r = await gasGet('adminAddEmployee', { token: token(), ...fields })
-  return r.data
+  const { data, error } = await supabase.from('employees').insert(fields).select().single()
+  if (error) throw new Error(error.message)
+  return data
 }
+
+export async function updateEmployee(id, fields) {
+  const { data, error } = await supabase.from('employees').update(fields).eq('id', id).select().single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
+export async function deleteEmployee(id) {
+  const { error } = await supabase.from('employees').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+// ── Birthdays ─────────────────────────────────────────────────
+
+export async function getBirthdays() {
+  const { data, error } = await supabase
+    .from('employees')
+    .select('id,name,role,month_idx,bd_date,img_id,img_url')
+    .not('bd_date', 'is', null)
+    .order('month_idx')
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function addBirthday(fields) {
+  const { data, error } = await supabase
+    .from('employees')
+    .update({ bd_date: fields.bdDate, month_idx: fields.monthIdx })
+    .eq('id', fields.employeeId)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
+// ── Ideas ─────────────────────────────────────────────────────
 
 export async function updateIdea(id, status) {
-  const r = await gasGet('adminUpdateIdea', { token: token(), id, status })
-  return r.data
+  const { data, error } = await supabase
+    .from('ideas')
+    .update({ status })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
 }
+
+// ── Empathy ───────────────────────────────────────────────────
 
 export async function deletePost(postId) {
-  const r = await gasGet('adminDeletePost', { token: token(), postId })
-  return r.data
+  const { error } = await supabase.from('empathy_comments').delete().eq('id', postId)
+  if (error) throw new Error(error.message)
 }
 
-export async function deleteComment(commentId, postId) {
-  const r = await gasGet('adminDeleteComment', { token: token(), commentId, postId: postId || '' })
-  return r.data
+export async function deleteComment(commentId) {
+  const { error } = await supabase.from('empathy_replies').delete().eq('id', commentId)
+  if (error) throw new Error(error.message)
 }
 
 export async function deleteChannel(channelId) {
-  const r = await gasGet('adminDeleteChannel', { token: token(), channelId })
-  return r.data
+  const { error } = await supabase.from('channels').delete().eq('id', channelId)
+  if (error) throw new Error(error.message)
 }
 
-// ── Announcement ──────────────────────────────────────────────────
+// ── Announcement ──────────────────────────────────────────────
 
 export async function saveAnnouncement(fields) {
-  const r = await gasGet('saveAnnouncement', { token: token(), ...fields })
-  if (!r.ok) throw new Error(r.error || 'บันทึกไม่สำเร็จ')
-  return r.data
+  const rows = [
+    { key: 'ann_enabled', value: String(fields.enabled !== false) },
+    { key: 'ann_id',      value: fields.id    || `ann_${Date.now()}` },
+    { key: 'ann_title',   value: fields.title || '' },
+    { key: 'ann_video',   value: fields.video || '' },
+    { key: 'ann_desc',    value: fields.desc  || '' },
+  ]
+  const { error } = await supabase.from('settings').upsert(rows, { onConflict: 'key' })
+  if (error) throw new Error(error.message)
 }
 
-export async function uploadAnnouncementVideo(base64, fileName, mimeType) {
-  const r = await gasPost('uploadAnnouncementVideo', {
-    token: token(), base64, fileName: fileName || 'announcement.mp4', mimeType: mimeType || 'video/mp4',
-  })
-  if (!r.ok) throw new Error(r.error || 'อัปโหลดไม่สำเร็จ')
-  return r.data
+export async function uploadAnnouncementVideo(base64, fileName, _mimeType) {
+  return uploadImage(base64, fileName || 'announcement.mp4', 'announcements')
+}
+
+// ── Generic (legacy compat) ───────────────────────────────────
+
+const TABLE_MAP = {
+  Employees:       'employees',
+  Birthdays:       'employees',
+  EmpathyComments: 'empathy_comments',
+  Ideas:           'ideas',
+  Activities:      'activities',
+  BlogPosts:       'blog_posts',
+  SiteVisits:      'site_visits',
+  MentalAdvisors:  'mental_advisors',
+  ConsultRequests: 'consult_requests',
+}
+
+function toSnake(camel) {
+  return camel.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '')
+}
+
+export async function getAll(sheetName) {
+  const tbl = TABLE_MAP[sheetName] || sheetName.toLowerCase()
+  const { data, error } = await supabase.from(tbl).select('*')
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function updateRow(sheetName, keyCol, keyVal, updates) {
+  const tbl = TABLE_MAP[sheetName] || sheetName.toLowerCase()
+  const { data, error } = await supabase.from(tbl).update(updates).eq(toSnake(keyCol), keyVal).select().single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
+export async function deleteRow(sheetName, keyCol, keyVal) {
+  const tbl = TABLE_MAP[sheetName] || sheetName.toLowerCase()
+  const { error } = await supabase.from(tbl).delete().eq(toSnake(keyCol), keyVal)
+  if (error) throw new Error(error.message)
 }
