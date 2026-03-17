@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { gasGet } from '../services/api.js'
+import { supabase } from '../services/supabase.js'
 
 const LS_READ = 'notif_read'
 const LS_DATA = 'notif_cache'
@@ -27,24 +27,15 @@ export const useNotifStore = defineStore('notif', () => {
     if (readIds.value.has(id)) return
     readIds.value.add(id)
     _persist()
-    _pushToServer([id])
   }
 
   function markAllRead() {
-    const newIds = items.value.filter(n => !readIds.value.has(n.id)).map(n => n.id)
     items.value.forEach(n => readIds.value.add(n.id))
     _persist()
-    if (newIds.length) _pushToServer(newIds)
   }
 
   function _persist() {
     localStorage.setItem(LS_READ, JSON.stringify([...readIds.value]))
-  }
-
-  // Fire-and-forget — does not block UI
-  function _pushToServer(ids) {
-    if (!ids.length || !_lastEmp) return
-    gasGet('markNotifsRead', { employeeName: _lastEmp, ids: JSON.stringify(ids) }).catch(() => {})
   }
 
   function _hydrate(emp) {
@@ -69,30 +60,21 @@ export const useNotifStore = defineStore('notif', () => {
     loading.value = true
 
     try {
-      // Fetch notifications + server readIds in parallel
       const monthIdx = new Date().getMonth() + 1
-      const [notifRes, readsRes] = await Promise.all([
-        gasGet('getNotifications', { employeeName, monthIdx }),
-        employeeName
-          ? gasGet('getNotifReads', { employeeName }).catch(() => ({ data: [] }))
-          : Promise.resolve({ data: [] }),
-      ])
+      const { data, error } = await supabase.rpc('get_notifications', {
+        p_emp_name:   employeeName,
+        p_month_idx:  monthIdx,
+      })
+      if (error) throw new Error(error.message)
 
-      if (Array.isArray(notifRes.data)) {
-        items.value = notifRes.data
+      if (Array.isArray(data)) {
+        items.value = data
         _lastFetch  = Date.now()
         localStorage.setItem(LS_DATA, JSON.stringify({
-          exp: Date.now() + TTL,
-          emp: employeeName,
-          items: notifRes.data,
+          exp:   Date.now() + TTL,
+          emp:   employeeName,
+          items: data,
         }))
-      }
-
-      // Merge server readIds into local set
-      const serverIds = Array.isArray(readsRes.data) ? readsRes.data : []
-      if (serverIds.length) {
-        serverIds.forEach(id => readIds.value.add(id))
-        _persist()
       }
     } catch {}
     finally { loading.value = false }

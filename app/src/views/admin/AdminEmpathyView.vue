@@ -84,7 +84,7 @@ const delTarget = ref(null)
 const channels = computed(() => {
   const likesMap = {}
   for (const l of likesRaw.value) {
-    const cid = String(l.channelId || '').trim()
+    const cid = String(l.channel_id || l.channelId || '').trim()
     if (cid) likesMap[cid] = (likesMap[cid] || 0) + 1
   }
 

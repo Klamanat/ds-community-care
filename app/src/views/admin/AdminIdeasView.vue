@@ -149,7 +149,7 @@ function statusLabel(s) {
 
 onMounted(async () => {
   try {
-    const data = await svc.getAll('Ideas')
+    const data = await svc.getAdminIdeas()
     rows.value = data.length ? data : SEED
   } catch {
     rows.value = SEED

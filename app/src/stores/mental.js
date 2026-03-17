@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { gasGet } from '../services/api.js'
+import {
+  fetchAdvisors,
+  fetchCounselorRequests, fetchSenderRequests,
+  submitConsultRequest, markConsultRead, addConsultReply,
+} from '../services/mentalService.js'
 import { fetchImages } from '../services/imageService.js'
 import { fetchAllEmployees } from '../services/teamService.js'
 
@@ -13,13 +17,12 @@ export const useMentalStore = defineStore('mental', () => {
     if (!force && loaded.value) return
     try {
       const [list, emps] = await Promise.all([
-        gasGet('getMentalAdvisors').then(r => r.data || []).catch(() => []),
+        fetchAdvisors(),
         fetchAllEmployees(),
       ])
-      advisors.value = list
-      loaded.value   = true
+      loaded.value = true
 
-      // Build employee map for image lookup
+      // Enrich with employee images
       if (emps.length) {
         const empMap = {}
         emps.forEach(e => { if (e.id) empMap[String(e.id)] = e })
@@ -32,10 +35,14 @@ export const useMentalStore = defineStore('mental', () => {
 
         const ids = [...new Set(enriched.map(a => a.imgId).filter(Boolean))]
         if (ids.length) fetchImages(ids).then(map => {
-          advisors.value = advisors.value.map(a =>
-            a.imgId && map[a.imgId] ? { ...a, imgUrl: map[a.imgId] } : a
-          )
+          advisors.value = advisors.value.map(a => {
+            if (!a.imgId || !map[a.imgId]) return a
+            if (a.imgUrl) return a
+            return { ...a, imgUrl: map[a.imgId] }
+          })
         }).catch(() => {})
+      } else {
+        advisors.value = list
       }
     } catch {
       advisors.value = []
@@ -60,8 +67,7 @@ export const useMentalStore = defineStore('mental', () => {
     requestsLoading.value = true
     requestsError.value   = ''
     try {
-      const res        = await gasGet('getConsultRequests', { counselorEmployeeId })
-      myRequests.value = res.data || []
+      myRequests.value     = await fetchCounselorRequests(counselorEmployeeId)
       requestsLoaded.value = true
     } catch (e) {
       requestsError.value  = e.message || 'โหลดไม่สำเร็จ'
@@ -73,23 +79,22 @@ export const useMentalStore = defineStore('mental', () => {
 
   async function markRead(id) {
     try {
-      await gasGet('markConsultRead', { id })
+      await markConsultRead(id)
       const r = myRequests.value.find(r => r.id === id)
-      if (r) r.isRead = 'true'
+      if (r) r.isRead = true
     } catch {}
   }
 
   async function addReply(requestId, reply, counselorEmployeeId) {
-    await gasGet('addConsultReply', { requestId, reply, counselorEmployeeId })
+    await addConsultReply(requestId, reply, counselorEmployeeId)
     const r = myRequests.value.find(r => r.id === requestId)
-    if (r) { r.reply = reply; r.repliedAt = new Date().toISOString(); r.isRead = 'true' }
-    // Also update sender's view if loaded
+    if (r) { r.reply = reply; r.repliedAt = new Date().toISOString(); r.isRead = true }
     const sr = senderRequests.value.find(r => r.id === requestId)
     if (sr) { sr.reply = reply; sr.repliedAt = new Date().toISOString() }
   }
 
   const unreadCount = computed(() =>
-    myRequests.value.filter(r => r.isRead !== 'true').length
+    myRequests.value.filter(r => !r.isRead).length
   )
 
   // ── Sender History (sent messages + replies) ──────────────────────────────
@@ -104,8 +109,7 @@ export const useMentalStore = defineStore('mental', () => {
     senderLoading.value = true
     senderError.value   = ''
     try {
-      const res            = await gasGet('getMyConsultRequests', { senderEmployeeId })
-      senderRequests.value = res.data || []
+      senderRequests.value = await fetchSenderRequests(senderEmployeeId)
       senderLoaded.value   = true
     } catch (e) {
       senderError.value    = e.message || 'โหลดไม่สำเร็จ'
@@ -116,8 +120,8 @@ export const useMentalStore = defineStore('mental', () => {
     }
   }
 
-  async function submitRequest(counselorEmployeeId, message, senderEmployeeId) {
-    await gasGet('submitConsultRequest', { counselorEmployeeId, message, senderEmployeeId })
+  async function doSubmitRequest(counselorEmployeeId, message, senderEmployeeId, senderName) {
+    await submitConsultRequest(counselorEmployeeId, message, senderEmployeeId, senderName)
     senderLoaded.value = false  // invalidate cache so history reloads
   }
 
@@ -126,6 +130,7 @@ export const useMentalStore = defineStore('mental', () => {
     myRequests, requestsLoaded, requestsLoading, requestsError,
     loadMyRequests, markRead, addReply, unreadCount,
     senderRequests, senderLoaded, senderLoading, senderError,
-    loadSenderRequests, submitRequest,
+    loadSenderRequests,
+    submitRequest: doSubmitRequest,
   }
 })

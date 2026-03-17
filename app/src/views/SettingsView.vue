@@ -133,22 +133,11 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUiStore } from '../stores/ui.js'
 import { useUserAuthStore } from '../stores/userAuth.js'
-import { gasGet } from '../services/api.js'
-
 const ui       = useUiStore()
 const userAuth = useUserAuthStore()
 const router   = useRouter()
 
 const appVersion = ref('v2.0')
-
-onMounted(async () => {
-  try {
-    const res = await gasGet('getVersion')
-    appVersion.value = 'v' + res.data.version
-  } catch {
-    // keep fallback
-  }
-})
 
 const toggles = ref([
   { key:'push',    ico:'🔔', title:'Push Notification', sub:'รับแจ้งเตือนกิจกรรมทั้งหมด',          on: true  },

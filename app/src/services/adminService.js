@@ -110,6 +110,23 @@ export async function addBirthday(fields) {
 
 // ── Ideas ─────────────────────────────────────────────────────
 
+export async function getAdminIdeas() {
+  const { data, error } = await supabase
+    .from('ideas')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map(i => ({
+    id:            i.id,
+    category:      i.category      || '',
+    title:         i.title         || '',
+    detail:        i.detail        || '',
+    submitterName: i.submitter_name || '',
+    createdAt:     i.created_at    || '',
+    status:        i.status        || 'pending',
+  }))
+}
+
 export async function updateIdea(id, status) {
   const { data, error } = await supabase
     .from('ideas')
@@ -134,8 +151,13 @@ export async function deleteComment(commentId) {
 }
 
 export async function deleteChannel(channelId) {
-  const { error } = await supabase.from('channels').delete().eq('id', channelId)
-  if (error) throw new Error(error.message)
+  // Delete all comments and likes for this channel (post_id = emp_code)
+  const [r1, r2] = await Promise.all([
+    supabase.from('empathy_comments').delete().eq('post_id', channelId),
+    supabase.from('channel_likes').delete().eq('channel_id', channelId),
+  ])
+  if (r1.error) throw new Error(r1.error.message)
+  if (r2.error) throw new Error(r2.error.message)
 }
 
 // ── Announcement ──────────────────────────────────────────────
@@ -156,12 +178,80 @@ export async function uploadAnnouncementVideo(base64, fileName, _mimeType) {
   return uploadImage(base64, fileName || 'announcement.mp4', 'announcements')
 }
 
+// ── Mental Advisors ───────────────────────────────────────────
+
+function mapAdvisor(a) {
+  return {
+    id:         a.id,
+    name:       a.name        || '',
+    role:       a.role        || '',
+    employeeId: a.employee_id || '',
+    imgId:      a.img_id      || '',
+    imgUrl:     a.img_url     || '',
+    order:      a.order       != null ? Number(a.order) : 0,
+  }
+}
+
+export async function getMentalAdvisors() {
+  const { data, error } = await supabase
+    .from('mental_advisors')
+    .select('*')
+    .order('order')
+  if (error) throw new Error(error.message)
+  return (data || []).map(mapAdvisor)
+}
+
+export async function addMentalAdvisor(fields) {
+  const { data, error } = await supabase
+    .from('mental_advisors')
+    .insert({ name: fields.name, role: fields.role, employee_id: fields.employeeId, order: fields.order || 0 })
+    .select().single()
+  if (error) throw new Error(error.message)
+  return mapAdvisor(data)
+}
+
+export async function updateMentalAdvisor(id, fields) {
+  const { data, error } = await supabase
+    .from('mental_advisors')
+    .update({ name: fields.name, role: fields.role, employee_id: fields.employeeId, order: fields.order || 0 })
+    .eq('id', id).select().single()
+  if (error) throw new Error(error.message)
+  return mapAdvisor(data)
+}
+
+export async function deleteMentalAdvisor(id) {
+  const { error } = await supabase.from('mental_advisors').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function getConsultRequests() {
+  const { data, error } = await supabase
+    .from('consult_requests')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data || []).map(r => ({
+    id:                 r.id,
+    counselorEmployeeId: r.counselor_employee_id || '',
+    message:            r.message               || '',
+    employeeId:         r.employee_id           || '',
+    employeeName:       r.employee_name         || '',
+    createdAt:          r.created_at            || '',
+    isRead:             !!r.is_read,
+    reply:              r.reply                 || '',
+    counselorName:      r.counselor_name        || '',
+    repliedAt:          r.replied_at            || '',
+  }))
+}
+
 // ── Generic (legacy compat) ───────────────────────────────────
 
 const TABLE_MAP = {
   Employees:       'employees',
   Birthdays:       'employees',
   EmpathyComments: 'empathy_comments',
+  ChannelLikes:    'channel_likes',
+  EmpathyPhotos:   'empathy_photos',
   Ideas:           'ideas',
   Activities:      'activities',
   BlogPosts:       'blog_posts',

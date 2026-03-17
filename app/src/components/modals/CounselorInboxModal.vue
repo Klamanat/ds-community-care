@@ -113,7 +113,7 @@ const PAGE         = 5
 const visibleCount = ref(PAGE)
 
 const unreadList = computed(() =>
-  mental.myRequests.filter(r => r.isRead !== 'true')
+  mental.myRequests.filter(r => !r.isRead)
 )
 const visibleList = computed(() =>
   unreadList.value.slice(0, visibleCount.value)

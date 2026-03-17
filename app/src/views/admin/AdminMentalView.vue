@@ -182,12 +182,14 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAdminStore } from '../../stores/admin.js'
-import { gasGet } from '../../services/api.js'
+import {
+  getEmployees,
+  getMentalAdvisors, addMentalAdvisor, updateMentalAdvisor, deleteMentalAdvisor,
+  getConsultRequests,
+} from '../../services/adminService.js'
 
 const admin  = useAdminStore()
 const router = useRouter()
-
-function token() { return localStorage.getItem('admin_token') || '' }
 
 const tab = ref('advisors')
 
@@ -225,11 +227,11 @@ function grad(name) {
 
 onMounted(async () => {
   const [ar, er] = await Promise.allSettled([
-    gasGet('getMentalAdvisors'),
-    gasGet('getEmployees', { noCache: 'true' }),
+    getMentalAdvisors(),
+    getEmployees(),
   ])
-  advisors.value  = ar.status === 'fulfilled' ? (ar.value.data || []) : []
-  employees.value = er.status === 'fulfilled' ? (er.value.data || []) : []
+  advisors.value  = ar.status === 'fulfilled' ? (ar.value || []) : []
+  employees.value = er.status === 'fulfilled' ? (er.value || []) : []
   loading.value   = false
 })
 
@@ -266,14 +268,14 @@ async function doSave() {
   if (!form.name.trim()) { modal.error = 'กรุณากรอกชื่อ'; return }
   modal.saving = true; modal.error = ''
   try {
-    const payload = { token: token(), name: form.name.trim(), role: form.role.trim(), employeeId: form.employeeId.trim(), order: form.order }
+    const payload = { name: form.name.trim(), role: form.role.trim(), employeeId: form.employeeId.trim(), order: form.order }
     if (modal.mode === 'add') {
-      const res = await gasGet('adminAddMentalAdvisor', payload)
-      advisors.value.push({ ...form, id: res.data?.id || Date.now() })
+      const created = await addMentalAdvisor(payload)
+      advisors.value.push(created)
     } else {
-      await gasGet('adminUpdateMentalAdvisor', { ...payload, id: form.id })
+      const updated = await updateMentalAdvisor(form.id, payload)
       const idx = advisors.value.findIndex(a => a.id === form.id)
-      if (idx >= 0) Object.assign(advisors.value[idx], form)
+      if (idx >= 0) advisors.value[idx] = updated
     }
     advisors.value.sort((a, b) => (a.order || 0) - (b.order || 0))
     modal.open = false
@@ -288,7 +290,7 @@ function confirmDel(a) { delTarget.value = a }
 async function doDelete() {
   deleting.value = true
   try {
-    await gasGet('adminDeleteMentalAdvisor', { token: token(), id: delTarget.value.id })
+    await deleteMentalAdvisor(delTarget.value.id)
     advisors.value = advisors.value.filter(a => a.id !== delTarget.value.id)
     delTarget.value = null
   } catch {} finally { deleting.value = false }
@@ -309,8 +311,7 @@ async function loadRequests(force = false) {
   if (!force && reqLoaded.value) return
   reqLoading.value = true; reqError.value = ''
   try {
-    const res    = await gasGet('adminGetAllConsultRequests', { token: token() })
-    requests.value = res.data || []
+    requests.value  = await getConsultRequests()
     reqLoaded.value = true
   } catch (e) {
     reqError.value = e.message || 'โหลดไม่สำเร็จ'

@@ -144,8 +144,8 @@ import { useUiStore }       from '../../stores/ui.js'
 import { useUserAuthStore } from '../../stores/userAuth.js'
 import { useTeamStore }     from '../../stores/team.js'
 import { useMentalStore }   from '../../stores/mental.js'
-import { gasGet }           from '../../services/api.js'
 import { uploadImage as driveUpload } from '../../services/activitiesService.js'
+import { updateSelf } from '../../services/teamService.js'
 
 const ui       = useUiStore()
 const userAuth = useUserAuthStore()
@@ -191,7 +191,7 @@ async function onFileChange(e) {
     ui.currentUser.img = b64
     ui.showToast('อัปโหลดรูปสำเร็จ 📷')
     driveUpload(b64, file.name, 'profiles')
-      .then(res => gasGet('updateEmployeeSelf', { id: userAuth.userId, imgId: res.data.id }))
+      .then(res => updateSelf(userAuth.userId, { imgId: res.id, imgUrl: res.url }))
       .catch(() => {})
   } catch (err) {
     uploadError.value = err.message || 'อัปโหลดไม่สำเร็จ'
@@ -231,7 +231,7 @@ async function saveEdit() {
   localStorage.setItem('user_dept',   userAuth.userDept)
   localStorage.setItem('user_slogan', userAuth.userSlogan)
   ui.currentUser.name = name; ui.currentUser.role = userAuth.userRole
-  try { await gasGet('updateEmployeeSelf', { id: userAuth.userId, name, role: userAuth.userRole, dept: userAuth.userDept, starGangSlogan: userAuth.userSlogan }) } catch {}
+  updateSelf(userAuth.userId, { name, role: userAuth.userRole, dept: userAuth.userDept, starGangSlogan: userAuth.userSlogan }).catch(() => {})
   saving.value = false; editing.value = false
   ui.showToast('บันทึกข้อมูลสำเร็จ ✅')
 }

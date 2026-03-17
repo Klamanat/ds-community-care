@@ -248,6 +248,7 @@ async function sendRequest() {
       selected.value.employeeId,
       message.value.trim(),
       userAuth.userId,
+      userAuth.userName,
     )
     view.value = 'sent'
   } catch (e) {
