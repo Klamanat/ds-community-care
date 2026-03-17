@@ -128,9 +128,15 @@ onMounted(async () => {
       const emp    = m[String(empId)] || {}
       const code   = emp.empCode || String(empId)
       const imgUrl = p.img_url  || p.imgUrl || ''
-      // strip 'drive:' prefix — imageService will fetch the actual image
-      const fileId = imgUrl.startsWith('drive:') ? imgUrl.slice(6) : imgUrl
-      if (code && fileId) pm[code] = `https://lh3.googleusercontent.com/d/${fileId}`
+      if (!imgUrl || !code) return
+      // Already a full URL (Supabase Storage) — use directly
+      // drive: prefix or plain Drive file ID → lh3 CDN fallback
+      const resolvedUrl = imgUrl.startsWith('http')
+        ? imgUrl
+        : imgUrl.startsWith('drive:')
+          ? `https://lh3.googleusercontent.com/d/${imgUrl.slice(6)}`
+          : `https://lh3.googleusercontent.com/d/${imgUrl}`
+      pm[code] = resolvedUrl
     })
     empMap.value   = m
     photoMap.value = pm

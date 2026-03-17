@@ -111,6 +111,14 @@
           <div class="tt">เสนอไอเดีย</div>
           <div class="ts">แชร์ความคิดสร้างสรรค์</div>
         </div>
+        <div class="tool-card emp ripple-host flex-col items-start opacity-70" @click="ui.showToast('สายมู — เร็วๆ นี้ 🔮')">
+          <div class="ti">🔮</div>
+          <div class="tt">สายมู</div>
+          <div class="ts">ดูดวง, ฤกษ์มงคล, วันดีประจำสัปดาห์</div>
+          <div class="etags">
+            <span class="etag">🚀 เร็วๆ นี้</span>
+          </div>
+        </div>
       </div>
     </div>
 

@@ -60,7 +60,8 @@ export async function getEmployees() {
 }
 
 export async function addEmployee(fields) {
-  const { data, error } = await supabase.from('employees').insert(fields).select().single()
+  const snakeFields = Object.fromEntries(Object.entries(fields).map(([k, v]) => [toSnake(k), v]))
+  const { data, error } = await supabase.from('employees').insert(snakeFields).select().single()
   if (error) throw new Error(error.message)
   return data
 }
@@ -273,7 +274,8 @@ export async function getAll(sheetName) {
 
 export async function updateRow(sheetName, keyCol, keyVal, updates) {
   const tbl = TABLE_MAP[sheetName] || sheetName.toLowerCase()
-  const { data, error } = await supabase.from(tbl).update(updates).eq(toSnake(keyCol), keyVal).select().single()
+  const snakeUpdates = Object.fromEntries(Object.entries(updates).map(([k, v]) => [toSnake(k), v]))
+  const { data, error } = await supabase.from(tbl).update(snakeUpdates).eq(toSnake(keyCol), keyVal).select().single()
   if (error) throw new Error(error.message)
   return data
 }

@@ -16,14 +16,18 @@ export async function login(empCode) {
   if (error) throw new Error(error.message)
   if (!emp)  throw new Error('ไม่พบรหัสพนักงานนี้ กรุณาตรวจสอบอีกครั้ง')
 
+  const rawUrl = emp.img_url || ''
+  const imgId  = emp.img_id  || (rawUrl.startsWith('drive:') ? rawUrl.slice(6) : '')
+  const imgUrl = rawUrl.startsWith('drive:') ? '' : rawUrl
+
   return {
     id:      emp.id,
     empCode: emp.emp_code,
     name:    emp.name    || '',
     role:    emp.role    || '',
     dept:    emp.dept    || '',
-    imgId:   emp.img_id  || '',
-    imgUrl:  emp.img_url || '',
+    imgId,
+    imgUrl,
     slogan:  emp.star_gang_slogan || '',
   }
 }
