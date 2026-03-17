@@ -1,15 +1,6 @@
 <template>
-  <div class="al-wrap">
-    <header class="al-header">
-      <div class="al-logo">🛡️ DS Admin</div>
-      <div class="al-header-right">
-        <span class="al-user-name">{{ admin.adminName }}</span>
-        <button class="al-logout-btn" @click="doLogout">ออกจากระบบ</button>
-      </div>
-    </header>
-
+  <div>
     <main class="al-main">
-      <a class="al-back" @click="router.push('/admin')">← Dashboard</a>
 
       <div class="al-page-header">
         <h2 class="al-page-title">📚 Training & Development</h2>
@@ -156,15 +147,10 @@
 
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAdminStore } from '../../stores/admin.js'
 import * as svc from '../../services/trainingService.js'
 import AdminCourseTab from './training/AdminCourseTab.vue'
 import AdminSiteTab   from './training/AdminSiteTab.vue'
 import AdminIdpTab    from './training/AdminIdpTab.vue'
-
-const admin  = useAdminStore()
-const router = useRouter()
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 const ALL_TABS = [
@@ -331,7 +317,6 @@ async function doDelete() {
   finally { deleting.value = false }
 }
 
-function doLogout() { admin.logout(); router.push('/admin/login') }
 </script>
 
 <style scoped>

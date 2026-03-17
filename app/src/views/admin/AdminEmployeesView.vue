@@ -1,15 +1,6 @@
 <template>
-  <div class="al-wrap">
-    <header class="al-header">
-      <div class="al-logo">🛡️ DS Admin</div>
-      <div class="al-header-right">
-        <span class="al-user-name">{{ admin.adminName }}</span>
-        <button class="al-btn al-btn-cancel" @click="doLogout">ออกจากระบบ</button>
-      </div>
-    </header>
-
+  <div>
     <main class="al-main">
-      <a class="al-back" @click="router.push('/admin')">← Dashboard</a>
 
       <!-- Toolbar (sticky) -->
       <div class="emp-toolbar emp-toolbar--sticky">
@@ -264,13 +255,8 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAdminStore } from '../../stores/admin.js'
 import * as svc from '../../services/adminService.js'
 import { fetchImages } from '../../services/imageService.js'
-
-const admin  = useAdminStore()
-const router = useRouter()
 
 const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
 function isTrue(v) { return v === true || v === 'true' || v === 'TRUE' }
@@ -530,7 +516,6 @@ async function doDelete() {
   } catch { } finally { deleting.value = false }
 }
 
-function doLogout() { admin.logout(); router.push('/admin/login') }
 </script>
 
 <style scoped>
@@ -544,11 +529,14 @@ function doLogout() { admin.logout(); router.push('/admin/login') }
 }
 .emp-toolbar--sticky {
   position: sticky;
-  top: 56px; /* below .al-header */
+  top: 56px; /* mobile: below topbar */
   z-index: 100;
   background: #F0F1FF;
   padding: 8px 0;
   margin: -8px 0;
+}
+@media (min-width: 768px) {
+  .emp-toolbar--sticky { top: 0; }
 }
 .emp-search {
   flex: 1;

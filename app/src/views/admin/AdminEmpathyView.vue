@@ -1,15 +1,6 @@
 <template>
-  <div class="al-wrap">
-    <header class="al-header">
-      <div class="al-logo">🛡️ DS Admin</div>
-      <div class="al-header-right">
-        <span class="al-user-name">{{ admin.adminName }}</span>
-        <button class="al-btn al-btn-cancel" @click="doLogout">ออกจากระบบ</button>
-      </div>
-    </header>
-
+  <div>
     <main class="al-main">
-      <a class="al-back" @click="router.push('/admin')">← Dashboard</a>
 
       <div class="al-page-header">
         <h2 class="al-page-title">💌 Empathy Board</h2>
@@ -65,12 +56,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAdminStore } from '../../stores/admin.js'
 import * as svc from '../../services/adminService.js'
-
-const admin  = useAdminStore()
-const router = useRouter()
 
 const comments  = ref([])
 const likesRaw  = ref([])
@@ -162,7 +148,6 @@ async function doDelete() {
   }
 }
 
-function doLogout() { admin.logout(); router.push('/admin/login') }
 </script>
 
 <style scoped>

@@ -1,15 +1,6 @@
 <template>
-  <div class="al-wrap">
-    <header class="al-header">
-      <div class="al-logo">🛡️ DS Admin</div>
-      <div class="al-header-right">
-        <span class="al-user-name">{{ admin.adminName }}</span>
-        <button class="al-logout-btn" @click="doLogout">ออกจากระบบ</button>
-      </div>
-    </header>
-
+  <div>
     <main class="al-main">
-      <a class="al-back" @click="router.push('/admin')">← Dashboard</a>
 
       <div class="al-page-header">
         <h2 class="al-page-title">🏆 วิธีสะสมคะแนน</h2>
@@ -191,8 +182,6 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAdminStore }  from '../../stores/admin.js'
 import { useRewardStore } from '../../stores/reward.js'
 import {
   adminAddRewardRule,
@@ -200,9 +189,7 @@ import {
   adminDeleteRewardRule,
 } from '../../services/rewardService.js'
 
-const admin  = useAdminStore()
 const reward = useRewardStore()
-const router = useRouter()
 
 const loading   = ref(true)
 const rules     = ref([])
@@ -292,14 +279,14 @@ async function saveModal() {
   modal.saving = true; modal.error = ''
   try {
     if (modal.mode === 'add') {
-      const res = await adminAddRewardRule(admin.token, {
+      const res = await adminAddRewardRule(null, {
         type: form.type.trim(), subtype: form.subtype.trim(),
         icon: form.icon, name: form.name,
         desc: form.desc, pts: String(form.pts), color: form.color, active: form.active,
       })
       rules.value.push({ ...form, id: res.id, type: form.type.trim(), subtype: form.subtype.trim() })
     } else {
-      await adminUpdateRewardRule(admin.token, form.id, {
+      await adminUpdateRewardRule(null, form.id, {
         icon: form.icon, name: form.name, desc: form.desc,
         pts: String(form.pts), color: form.color, active: form.active,
       })
@@ -319,7 +306,7 @@ function confirmDelete(r) { delTarget.value = r }
 async function doDelete() {
   deleting.value = true
   try {
-    await adminDeleteRewardRule(admin.token, delTarget.value.id)
+    await adminDeleteRewardRule(null, delTarget.value.id)
     rules.value   = rules.value.filter(r => r.id !== delTarget.value.id)
     reward.rules  = [...rules.value]
     delTarget.value = null
@@ -328,7 +315,6 @@ async function doDelete() {
   }
 }
 
-function doLogout() { admin.logout(); router.push('/admin/login') }
 </script>
 
 <style scoped>

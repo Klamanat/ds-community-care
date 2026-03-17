@@ -1,14 +1,5 @@
 <template>
-  <div class="al-wrap">
-    <header class="al-header">
-      <div class="al-logo">🛡️ DS Admin</div>
-      <div class="al-header-right">
-        <span class="al-user-name">สวัสดี, <strong>{{ admin.adminName }}</strong></span>
-        <button class="al-logout-btn" @click="doLogout">ออกจากระบบ</button>
-      </div>
-    </header>
-
-    <main class="al-main">
+  <main class="al-main">
       <!-- Welcome -->
       <div style="background:linear-gradient(135deg,#312E81,#4F46E5,#7C3AED);border-radius:16px;padding:20px 18px;color:white;">
         <div style="font-size:22px;font-weight:900;margin-bottom:4px;">👋 สวัสดี, {{ admin.adminName }}</div>
@@ -36,15 +27,12 @@
         </ul>
       </div>
     </main>
-  </div>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
 import { useAdminStore } from '../../stores/admin.js'
 
-const admin  = useAdminStore()
-const router = useRouter()
+const admin = useAdminStore()
 
 const navCards = [
   { to: '/admin/employees',    icon: '👥', label: 'พนักงาน & วันเกิด', sub: 'Employees · Birthdays' },
@@ -57,10 +45,6 @@ const navCards = [
   { to: '/admin/mental',       icon: '💚', label: 'Mental Health',       sub: 'ที่ปรึกษาสุขภาพจิต' },
 ]
 
-function doLogout() {
-  admin.logout()
-  router.push('/admin/login')
-}
 </script>
 
 <style scoped>

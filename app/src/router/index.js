@@ -18,70 +18,70 @@ const routes = [
   { path: '/bday',     name: 'bday',     component: () => import('../views/BdayView.vue'),     meta: { requiresUser: true } },
   { path: '/culture',    name: 'culture',    component: () => import('../views/CultureView.vue'),    meta: { requiresUser: true } },
 
-  // Admin routes (separate auth)
+  // Admin login (no layout)
   {
     path: '/admin/login',
     name: 'admin-login',
     component: () => import('../views/admin/AdminLoginView.vue'),
     meta: { adminLayout: true },
   },
+
+  // Admin routes — wrapped in AdminLayout (sidebar)
   {
     path: '/admin',
-    name: 'admin',
-    component: () => import('../views/admin/AdminDashboard.vue'),
+    component: () => import('../views/admin/AdminLayout.vue'),
     meta: { adminLayout: true, requiresAdmin: true },
-  },
-  {
-    path: '/admin/employees',
-    name: 'admin-employees',
-    component: () => import('../views/admin/AdminEmployeesView.vue'),
-    meta: { adminLayout: true, requiresAdmin: true },
-  },
-  {
-    path: '/admin/birthdays',
-    redirect: '/admin/employees',
-  },
-  {
-    path: '/admin/empathy',
-    name: 'admin-empathy',
-    component: () => import('../views/admin/AdminEmpathyView.vue'),
-    meta: { adminLayout: true, requiresAdmin: true },
-  },
-  {
-    path: '/admin/ideas',
-    name: 'admin-ideas',
-    component: () => import('../views/admin/AdminIdeasView.vue'),
-    meta: { adminLayout: true, requiresAdmin: true },
-  },
-  {
-    path: '/admin/activities',
-    name: 'admin-activities',
-    component: () => import('../views/admin/AdminActivitiesView.vue'),
-    meta: { adminLayout: true, requiresAdmin: true },
-  },
-  {
-    path: '/admin/announcement',
-    name: 'admin-announcement',
-    component: () => import('../views/admin/AdminAnnouncementView.vue'),
-    meta: { adminLayout: true, requiresAdmin: true },
-  },
-  {
-    path: '/admin/reward-rules',
-    name: 'admin-reward-rules',
-    component: () => import('../views/admin/AdminRewardRulesView.vue'),
-    meta: { adminLayout: true, requiresAdmin: true },
-  },
-  {
-    path: '/admin/training',
-    name: 'admin-training',
-    component: () => import('../views/admin/AdminTrainingView.vue'),
-    meta: { adminLayout: true, requiresAdmin: true },
-  },
-  {
-    path: '/admin/mental',
-    name: 'admin-mental',
-    component: () => import('../views/admin/AdminMentalView.vue'),
-    meta: { adminLayout: true, requiresAdmin: true },
+    children: [
+      {
+        path: '',
+        name: 'admin',
+        component: () => import('../views/admin/AdminDashboard.vue'),
+      },
+      {
+        path: 'employees',
+        name: 'admin-employees',
+        component: () => import('../views/admin/AdminEmployeesView.vue'),
+      },
+      {
+        path: 'birthdays',
+        redirect: '/admin/employees',
+      },
+      {
+        path: 'empathy',
+        name: 'admin-empathy',
+        component: () => import('../views/admin/AdminEmpathyView.vue'),
+      },
+      {
+        path: 'ideas',
+        name: 'admin-ideas',
+        component: () => import('../views/admin/AdminIdeasView.vue'),
+      },
+      {
+        path: 'activities',
+        name: 'admin-activities',
+        component: () => import('../views/admin/AdminActivitiesView.vue'),
+      },
+      {
+        path: 'announcement',
+        name: 'admin-announcement',
+        component: () => import('../views/admin/AdminAnnouncementView.vue'),
+      },
+      {
+        path: 'reward-rules',
+        name: 'admin-reward-rules',
+        component: () => import('../views/admin/AdminRewardRulesView.vue'),
+      },
+      {
+        path: 'training',
+        name: 'admin-training',
+        component: () => import('../views/admin/AdminTrainingView.vue'),
+      },
+      {
+        path: 'mental',
+        name: 'admin-mental',
+        component: () => import('../views/admin/AdminMentalView.vue'),
+      },
+    ],
   },
 ]
 
@@ -97,8 +97,8 @@ router.afterEach((to) => {
 })
 
 router.beforeEach((to) => {
-  // Admin guard
-  if (to.meta.requiresAdmin) {
+  // Admin guard (check matched chain for nested routes)
+  if (to.matched.some(r => r.meta.requiresAdmin)) {
     const name = localStorage.getItem('admin_name')
     if (!name) return { name: 'admin-login' }
   }

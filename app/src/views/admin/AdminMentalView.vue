@@ -1,15 +1,6 @@
 <template>
-  <div class="al-wrap">
-    <header class="al-header">
-      <div class="al-logo">🛡️ DS Admin</div>
-      <div class="al-header-right">
-        <span class="al-user-name">{{ admin.adminName }}</span>
-        <button class="al-logout-btn" @click="doLogout">ออกจากระบบ</button>
-      </div>
-    </header>
-
+  <div>
     <main class="al-main">
-      <a class="al-back" @click="router.push('/admin')">← Dashboard</a>
 
       <div class="al-page-header">
         <h2 class="al-page-title">💚 ที่ปรึกษาสุขภาพจิต</h2>
@@ -180,16 +171,11 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAdminStore } from '../../stores/admin.js'
 import {
   getEmployees,
   getMentalAdvisors, addMentalAdvisor, updateMentalAdvisor, deleteMentalAdvisor,
   getConsultRequests,
 } from '../../services/adminService.js'
-
-const admin  = useAdminStore()
-const router = useRouter()
 
 const tab = ref('advisors')
 
@@ -332,7 +318,6 @@ function fmtTime(iso) {
   } catch { return iso }
 }
 
-function doLogout() { admin.logout(); router.push('/admin/login') }
 </script>
 
 <style scoped>

@@ -1,15 +1,6 @@
 <template>
-  <div class="al-wrap">
-    <header class="al-header">
-      <div class="al-logo">🛡️ DS Admin</div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span style="font-size:13px;color:#6B7280;">สวัสดี, <strong>{{ admin.adminName }}</strong></span>
-        <button class="al-logout-btn" @click="doLogout">ออกจากระบบ</button>
-      </div>
-    </header>
-
+  <div>
     <main class="al-main">
-      <a class="al-back" @click="router.push('/admin')">← กลับ Dashboard</a>
       <h2 class="al-page-title">🎂 จัดการวันเกิด</h2>
 
       <div class="al-card">
@@ -100,12 +91,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAdminStore } from '../../stores/admin.js'
 import * as svc from '../../services/adminService.js'
-
-const admin  = useAdminStore()
-const router = useRouter()
 
 const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
 function monthName(idx) { return MONTHS[Number(idx)] ?? '—' }
@@ -213,7 +199,6 @@ async function doDelete() {
   }
 }
 
-function doLogout() { admin.logout(); router.push('/admin/login') }
 </script>
 
 <style scoped>

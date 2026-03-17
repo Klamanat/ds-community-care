@@ -1,15 +1,6 @@
 <template>
-  <div class="al-wrap">
-    <header class="al-header">
-      <div class="al-logo">🛡️ DS Admin</div>
-      <div class="al-header-right">
-        <span class="al-user-name">สวัสดี, <strong>{{ admin.adminName }}</strong></span>
-        <button class="al-logout-btn" @click="doLogout">ออกจากระบบ</button>
-      </div>
-    </header>
-
+  <div>
     <main class="al-main">
-      <router-link to="/admin" class="al-back">‹ กลับ</router-link>
 
       <div class="al-page-header">
         <h1 class="al-page-title">📢 จัดการประกาศ</h1>
@@ -219,12 +210,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAdminStore } from '../../stores/admin.js'
 import * as svc from '../../services/adminService.js'
-
-const admin  = useAdminStore()
-const router = useRouter()
 
 // ── State ──────────────────────────────────────────────────────────
 const loading      = ref(true)
@@ -386,10 +372,6 @@ async function doSave() {
   }
 }
 
-function doLogout() {
-  admin.logout()
-  router.push('/admin/login')
-}
 </script>
 
 <style scoped>
