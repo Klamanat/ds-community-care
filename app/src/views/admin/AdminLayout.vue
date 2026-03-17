@@ -7,7 +7,13 @@
     <!-- Sidebar -->
     <aside class="adm-sidebar" :class="{ open: sideOpen }">
       <div class="adm-sb-brand">
-        <span>🛡️ DS Admin</span>
+        <div class="adm-sb-logo">
+          <div class="adm-sb-logo-icon">🛡️</div>
+          <div>
+            <div class="adm-sb-logo-name">DS Admin</div>
+            <div class="adm-sb-logo-ver">v2.0 · Dashboard</div>
+          </div>
+        </div>
         <button class="adm-sb-close" @click="sideOpen = false">✕</button>
       </div>
 
@@ -30,8 +36,11 @@
 
       <div class="adm-sb-footer">
         <div class="adm-sb-user">
-          <span class="adm-sb-user-ico">👤</span>
-          <span class="adm-sb-user-name">{{ admin.adminName }}</span>
+          <div class="adm-sb-user-av">{{ (admin.adminName || 'A')[0].toUpperCase() }}</div>
+          <div class="adm-sb-user-info">
+            <div class="adm-sb-user-name">{{ admin.adminName }}</div>
+            <div class="adm-sb-user-role">Administrator</div>
+          </div>
         </div>
         <button class="adm-sb-logout" @click="doLogout">ออกจากระบบ</button>
       </div>
@@ -39,11 +48,28 @@
 
     <!-- Main body -->
     <div class="adm-body">
+
       <!-- Topbar (mobile only) -->
       <header class="adm-topbar">
         <button class="adm-hamburger" @click="sideOpen = true">☰</button>
-        <div class="adm-topbar-logo">🛡️ DS Admin</div>
+        <div class="adm-topbar-logo">🛡️ <strong>DS Admin</strong></div>
         <span class="adm-topbar-user">{{ admin.adminName }}</span>
+      </header>
+
+      <!-- Desktop header (hidden on mobile) -->
+      <header class="adm-desk-header">
+        <div class="adm-desk-bc">
+          <span class="adm-desk-bc-root">DS Admin</span>
+          <span class="adm-desk-bc-sep">/</span>
+          <div class="adm-desk-bc-page">
+            <span>{{ currentItem.icon }}</span>
+            <span>{{ currentItem.label }}</span>
+          </div>
+        </div>
+        <div class="adm-desk-user">
+          <div class="adm-desk-user-av">{{ (admin.adminName || 'A')[0].toUpperCase() }}</div>
+          <span class="adm-desk-user-name">{{ admin.adminName }}</span>
+        </div>
       </header>
 
       <!-- Page content -->
@@ -56,7 +82,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAdminStore } from '../../stores/admin.js'
 
@@ -82,6 +108,8 @@ function isActive(item) {
   if (item.to === '/admin') return route.path === '/admin'
   return route.path.startsWith(item.to)
 }
+
+const currentItem = computed(() => navItems.find(i => isActive(i)) || navItems[0])
 
 function doLogout() {
   admin.logout()

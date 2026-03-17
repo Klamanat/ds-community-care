@@ -529,14 +529,11 @@ async function doDelete() {
 }
 .emp-toolbar--sticky {
   position: sticky;
-  top: 56px; /* mobile: below topbar */
+  top: 56px;
   z-index: 100;
-  background: #F0F1FF;
+  background: #F2F3FA;
   padding: 8px 0;
   margin: -8px 0;
-}
-@media (min-width: 768px) {
-  .emp-toolbar--sticky { top: 0; }
 }
 .emp-search {
   flex: 1;
