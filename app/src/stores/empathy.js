@@ -114,7 +114,11 @@ export const useEmpathyStore = defineStore('empathy', () => {
       // Lazy-fetch Drive images after page renders
       const ids = [...new Set(merged.map(p => p.imgId).filter(Boolean))]
       if (ids.length) fetchImages(ids).then(map => {
-        praisedPeople.value = praisedPeople.value.map(p => (p.imgId && map[p.imgId]) ? { ...p, imgUrl: map[p.imgId] } : p)
+        praisedPeople.value = praisedPeople.value.map(p => {
+          if (!p.imgId || !map[p.imgId]) return p
+          if (p.imgUrl) return p  // already has URL (e.g. Supabase Storage) — don't overwrite
+          return { ...p, imgUrl: map[p.imgId] }
+        })
       }).catch(() => {})
     } catch { }
   }

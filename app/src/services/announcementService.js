@@ -13,9 +13,9 @@ export async function fetchAnnouncement() {
   if (kv.ann_enabled !== 'true') return null
 
   return {
-    id:    kv.ann_id    || '',
-    title: kv.ann_title || '',
-    video: kv.ann_video || '',
-    desc:  kv.ann_desc  || '',
+    id:       kv.ann_id    || '',
+    title:    kv.ann_title || '',
+    videoUrl: kv.ann_video || '',
+    desc:     kv.ann_desc  || '',
   }
 }

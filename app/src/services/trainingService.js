@@ -121,29 +121,49 @@ export async function fetchMySiteSuggestion(employeeId) {
 export async function fetchIdpPosters() {
   const { data, error } = await supabase.from('idp_posters').select('*').order('created_at', { ascending: false })
   if (error) throw new Error(error.message)
-  return data || []
+  return (data || []).map(p => ({
+    id:          p.id,
+    title:       p.title       || '',
+    imageUrl:    p.image_url   || '',
+    description: p.description || '',
+    date:        p.date        || '',
+    createdAt:   p.created_at  || '',
+  }))
 }
 
 export async function fetchIdpVideos() {
   const { data, error } = await supabase.from('idp_videos').select('*').order('created_at', { ascending: false })
   if (error) throw new Error(error.message)
-  return data || []
+  return (data || []).map(v => ({
+    id:          v.id,
+    title:       v.title       || '',
+    videoUrl:    v.video_url   || '',
+    description: v.description || '',
+    createdAt:   v.created_at  || '',
+  }))
 }
 
 export async function adminUploadIdpImage(base64Data, _mimeType, fileName) {
   return uploadImage(base64Data, fileName || 'idp.jpg', 'idp')
 }
 
+function toPosterRow(f) {
+  return { title: f.title, image_url: f.imageUrl, description: f.description, date: f.date || null }
+}
+function toVideoRow(f) {
+  return { title: f.title, video_url: f.videoUrl, description: f.description }
+}
+
 export async function adminAddIdpPoster(fields) {
-  const { data, error } = await supabase.from('idp_posters').insert(fields).select().single()
+  const { data, error } = await supabase.from('idp_posters').insert(toPosterRow(fields)).select().single()
   if (error) throw new Error(error.message)
-  return data
+  return { ...fields, id: data.id, createdAt: data.created_at }
 }
 
 export async function adminUpdateIdpPoster(id, fields) {
-  const { data, error } = await supabase.from('idp_posters').update(fields).eq('id', id).select().single()
+  const { data, error } = await supabase.from('idp_posters').update(toPosterRow(fields)).eq('id', id).select().single()
   if (error) throw new Error(error.message)
-  return data
+  return { ...fields, id: data.id, createdAt: data.created_at }
 }
 
 export async function adminDeleteIdpPoster(id) {
@@ -152,15 +172,15 @@ export async function adminDeleteIdpPoster(id) {
 }
 
 export async function adminAddIdpVideo(fields) {
-  const { data, error } = await supabase.from('idp_videos').insert(fields).select().single()
+  const { data, error } = await supabase.from('idp_videos').insert(toVideoRow(fields)).select().single()
   if (error) throw new Error(error.message)
-  return data
+  return { ...fields, id: data.id, createdAt: data.created_at }
 }
 
 export async function adminUpdateIdpVideo(id, fields) {
-  const { data, error } = await supabase.from('idp_videos').update(fields).eq('id', id).select().single()
+  const { data, error } = await supabase.from('idp_videos').update(toVideoRow(fields)).eq('id', id).select().single()
   if (error) throw new Error(error.message)
-  return data
+  return { ...fields, id: data.id, createdAt: data.created_at }
 }
 
 export async function adminDeleteIdpVideo(id) {

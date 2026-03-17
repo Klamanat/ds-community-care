@@ -89,22 +89,24 @@ watch(show, async (val) => {
   playVideo()
 })
 
-// YouTube → iframe embed, Drive → '' (ใช้ HTML5 video), อื่นๆ → ''
+// YouTube / Drive → iframe embed, Supabase Storage / direct URL → HTML5 video
 const embedUrl = computed(() => {
   const url = ann.value.videoUrl || ''
   if (!url) return ''
-  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/)
-  if (m) return `https://www.youtube.com/embed/${m[1]}?autoplay=1&loop=1&playlist=${m[1]}&mute=1&controls=0&rel=0&modestbranding=1`
+  // YouTube
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/)
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1&loop=1&playlist=${yt[1]}&mute=1&controls=0&rel=0&modestbranding=1`
+  // Google Drive — use /preview iframe (Drive doesn't support HTML5 video streaming)
+  const drive = url.match(/drive\.google\.com\/file\/d\/([^/]+)/)
+  if (drive) return `https://drive.google.com/file/d/${drive[1]}/preview`
   return ''
 })
 
-// Drive → ใช้ direct URL สำหรับ <video> tag (frame-ancestors CSP ใช้กับ iframe เท่านั้น)
+// Supabase Storage / direct URL → HTML5 <video>
 const videoSrc = computed(() => {
   const url = ann.value.videoUrl || ''
   if (!url || embedUrl.value) return ''
-  const m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/)
-  if (m) return `https://drive.google.com/uc?id=${m[1]}`
-  return url  // direct video URL
+  return url
 })
 
 const LS_SEEN = 'dsc_ann_seen'

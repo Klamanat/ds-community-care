@@ -313,6 +313,7 @@ const addPhotoUploading = ref(false)
 const addFileInput      = ref(null)
 const gridFileInput     = ref(null)
 const editingPersonId   = ref(null)
+const editingPersonUUID = ref(null)
 
 const tags = ['เก่งมาก ⭐', 'ขอบคุณ 🙏', 'สู้ๆ 💪', 'ประทับใจ 💫', 'ช่วยเหลือ 🤝']
 
@@ -508,7 +509,8 @@ function triggerAddPhoto() {
 }
 
 function editPersonPhoto(person) {
-  editingPersonId.value = String(person.empCode || person.id || person.name).trim()
+  editingPersonId.value   = String(person.empCode || person.id || person.name).trim()
+  editingPersonUUID.value = String(person.id || person.empCode || person.name).trim()
   gridFileInput.value?.click()
 }
 
@@ -521,13 +523,14 @@ async function onGridPhotoChange(e) {
     const result = await uploadEmpathyPhoto(base64, file.name)
     // Update local display immediately
     empathy.updatePersonImg(empCode, result.url)
-    // Save to EmpathyPhotos sheet (separate from employee profile)
-    setEmpathyPhoto(empCode, result.url).catch(() => {})
+    // Save to EmpathyPhotos — use UUID as employee_id (matches RPC join on e.id)
+    setEmpathyPhoto(editingPersonUUID.value || empCode, result.url).catch(() => {})
     ui.showToast('อัปเดตรูปสำเร็จ ✨')
   } catch {
     ui.showToast('อัปโหลดรูปไม่สำเร็จ')
   } finally {
-    editingPersonId.value = null
+    editingPersonId.value   = null
+    editingPersonUUID.value = null
     if (gridFileInput.value) gridFileInput.value.value = ''
   }
 }
@@ -555,8 +558,8 @@ async function addAndPraise() {
   const empCode = String(m.empCode || m.id || m.name).trim()
   if (addPhotoUrl.value) {
     empathy.updatePersonImg(empCode, addPhotoUrl.value)
-    // Save to EmpathyPhotos sheet (separate from employee profile)
-    setEmpathyPhoto(empCode, addPhotoUrl.value).catch(() => {})
+    // Save to EmpathyPhotos — use UUID (m.id) as employee_id (matches RPC join on e.id)
+    setEmpathyPhoto(String(m.id || empCode), addPhotoUrl.value).catch(() => {})
   }
   dirSearch.value  = ''
   pickedDir.value  = null

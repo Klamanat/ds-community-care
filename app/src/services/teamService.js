@@ -35,6 +35,8 @@ export async function fetchAllEmployees() {
   return (data || []).map(mapEmp)
 }
 
+export const fetchDirectory = fetchAllEmployees
+
 export async function fetchTeam() {
   const { data, error } = await supabase
     .from('employees')

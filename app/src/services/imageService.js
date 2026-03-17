@@ -57,16 +57,23 @@ async function _flush() {
   _pending.clear()
 
   if (ids.length) {
-    try {
-      const map = await edgeGetImages(ids)
-      Object.entries(map).forEach(([id, b64]) => { if (b64) _mem.set(id, b64) })
-      _scheduleSave()
-    } catch { /* fall through to thumbnail fallback below */ }
-    // For any IDs still not in cache (Edge Function failed or lacks Drive access),
-    // use the public thumbnail URL (works for publicly-shared Drive files)
-    ids.forEach(id => {
-      if (!_mem.has(id)) _mem.set(id, `https://lh3.googleusercontent.com/d/${id}`)
-    })
+    // IDs that are storage paths (contain '/') or full URLs — use directly
+    const storageIds = ids.filter(id => id.includes('/') || id.startsWith('http'))
+    storageIds.forEach(id => { if (!_mem.has(id)) _mem.set(id, id) })
+
+    // IDs that look like Drive file IDs — fetch via Edge Function
+    const driveIds = ids.filter(id => !id.includes('/') && !id.startsWith('http'))
+    if (driveIds.length) {
+      try {
+        const map = await edgeGetImages(driveIds)
+        Object.entries(map).forEach(([id, b64]) => { if (b64) _mem.set(id, b64) })
+        _scheduleSave()
+      } catch { /* fall through to thumbnail fallback below */ }
+      // Fallback: use public thumbnail URL for Drive files
+      driveIds.forEach(id => {
+        if (!_mem.has(id)) _mem.set(id, `https://lh3.googleusercontent.com/d/${id}`)
+      })
+    }
   }
 
   cbs.forEach(fn => fn())
