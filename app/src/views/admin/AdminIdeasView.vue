@@ -110,11 +110,6 @@ const filtered = computed(() =>
   filter.value === 'all' ? rows.value : rows.value.filter(r => r.status === filter.value)
 )
 
-const SEED = [
-  { id:'idea1', title:'ระบบ OKR รายบุคคล', category:'HR', submitterName:'นก', status:'pending', createdAt:'2026-01-10T08:00:00Z', detail:'อยากให้มีระบบติดตาม OKR แบบ real-time เพื่อให้พนักงานเห็นความก้าวหน้าของตัวเองได้ชัดเจนขึ้น' },
-  { id:'idea2', title:'ห้องพักสายตาในออฟฟิศ', category:'สวัสดิการ', submitterName:'วุฒิ', status:'approved', createdAt:'2026-01-12T10:00:00Z', detail:'ขอพื้นที่เล็กๆ สำหรับพักสายตา/นั่งเงียบๆ ระหว่างวัน' },
-]
-
 function formatDate(s) {
   if (!s) return '-'
   const d = new Date(s)
@@ -135,10 +130,9 @@ function statusLabel(s) {
 
 onMounted(async () => {
   try {
-    const data = await svc.getAdminIdeas()
-    rows.value = data.length ? data : SEED
+    rows.value = await svc.getAdminIdeas()
   } catch {
-    rows.value = SEED
+    rows.value = []
   } finally {
     loading.value = false
   }

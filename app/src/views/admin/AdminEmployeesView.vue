@@ -11,6 +11,12 @@
         </div>
       </div>
 
+      <!-- Filter chips -->
+      <div class="al-filters">
+        <button class="al-chip" :class="{ active: filterMode === 'all' }"  @click="filterMode = 'all'">👥 ทั้งหมด</button>
+        <button class="al-chip" :class="{ active: filterMode === 'bday' }" @click="filterMode = 'bday'">🎂 วันเกิดเดือนนี้</button>
+      </div>
+
       <!-- States -->
       <div v-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
       <div v-else-if="!empRows.length" class="al-empty">📭 ไม่มีข้อมูล</div>
@@ -255,8 +261,11 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import * as svc from '../../services/adminService.js'
 import { fetchImages } from '../../services/imageService.js'
+
+const route = useRoute()
 
 const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
 function isTrue(v) { return v === true || v === 'true' || v === 'TRUE' }
@@ -291,14 +300,21 @@ async function resizeToBase64(file, maxPx = 400, quality = 0.75) {
 }
 
 // ── Data ───────────────────────────────────────────────────────────────────────
-const empRows = ref([])
-const loading = ref(true)
-const search  = ref('')
+const empRows    = ref([])
+const loading    = ref(true)
+const search     = ref('')
+const filterMode = ref('all')   // 'all' | 'bday'
+
+const thisMonth = new Date().getMonth()   // 0-based
 
 const filteredRows = computed(() => {
+  let rows = empRows.value
+  if (filterMode.value === 'bday') {
+    rows = rows.filter(r => r.monthIdx === thisMonth)
+  }
   const q = search.value.trim().toLowerCase()
-  if (!q) return empRows.value
-  return empRows.value.filter(r =>
+  if (!q) return rows
+  return rows.filter(r =>
     (r.name    || '').toLowerCase().includes(q) ||
     (r.empCode || '').toLowerCase().includes(q) ||
     (r.role    || '').toLowerCase().includes(q) ||
@@ -307,6 +323,7 @@ const filteredRows = computed(() => {
 })
 
 onMounted(async () => {
+  if (route.query.filter === 'bday') filterMode.value = 'bday'
   try {
     empRows.value = (await svc.getEmployees()) || []
   } catch {

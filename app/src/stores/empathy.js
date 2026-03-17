@@ -3,6 +3,7 @@ import { ref, reactive } from 'vue'
 import * as svc from '../services/empathyService.js'
 import { fetchImages, getCached } from '../services/imageService.js'
 import { useUiStore } from './ui.js'
+import { useUserAuthStore } from './userAuth.js'
 import { lsGet, lsSet, lsDel, stripBase64 } from '../utils/cache.js'
 
 // ── localStorage helpers ─────────────────────────────────────────────
@@ -59,8 +60,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
   async function loadPosts(force = false) {
     if (!force && lastFetched.value && (Date.now() - lastFetched.value) < 30000) return // 30s
     isLoading.value = !posts.value.length
-    const ui = useUiStore()
-    const userKey = ui.currentUser?.id || ''
+    const userKey = useUserAuthStore().userId || ''
     try {
       const data = await svc.fetchPosts(userKey)
       // Apply cached images immediately before lazy-fetch
@@ -143,8 +143,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
 
   // ── loadComments — fetch with userKey so GAS returns _liked per comment ─
   async function loadComments(channelId) {
-    const ui      = useUiStore()
-    const userKey = ui.currentUser?.id || ''
+    const userKey = useUserAuthStore().userId || ''
     // Hydrate from localStorage immediately (shows comments without waiting for GAS)
     if (!postComments[channelId]) {
       const cached = lsGet('dsc_cm_' + channelId)
@@ -172,8 +171,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
 
   // ── loadChannelLike — fetch channel like state from GAS when opening thread ─
   async function loadChannelLike(channelId) {
-    const ui      = useUiStore()
-    const userKey = ui.currentUser?.id || ''
+    const userKey = useUserAuthStore().userId || ''
     try {
       const result = await svc.fetchChannelLike(channelId, userKey)
       if (result) {
@@ -206,7 +204,6 @@ export const useEmpathyStore = defineStore('empathy', () => {
 
   // ── toggleCommentLike — EmpathyModal thread comments ──────────
   async function toggleCommentLike(channelId, commentId) {
-    const ui = useUiStore()
     const comments = postComments[channelId]
     if (!comments) return
     const cm = comments.find(c => c.id === commentId)
@@ -218,7 +215,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
     _saveCommentLike(commentId, { liked: cm._liked, count: cm.likeCount })
 
     try {
-      const result = await svc.toggleCommentLike(commentId, ui.currentUser?.id || 'anonymous')
+      const result = await svc.toggleCommentLike(commentId, useUserAuthStore().userId || 'anonymous')
       if (result && typeof result.likeCount === 'number') {
         cm._liked    = result.liked
         cm.likeCount = result.likeCount
@@ -229,7 +226,6 @@ export const useEmpathyStore = defineStore('empathy', () => {
 
   // ── toggleChannelLike — person-level like in EmpathyModal ─────
   async function toggleChannelLike(channelId) {
-    const ui = useUiStore()
     if (!channelLikes[channelId]) channelLikes[channelId] = { count: 0, liked: false }
     const s = channelLikes[channelId]
 
@@ -239,7 +235,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
     _saveChannelLike(channelId, { liked: s.liked, count: s.count })
 
     try {
-      const result = await svc.toggleChannelLike(channelId, ui.currentUser?.id || 'anonymous')
+      const result = await svc.toggleChannelLike(channelId, useUserAuthStore().userId || 'anonymous')
       if (result && typeof result.likeCount === 'number') {
         s.liked = result.liked
         s.count = result.likeCount
@@ -250,7 +246,6 @@ export const useEmpathyStore = defineStore('empathy', () => {
 
   // ── togglePostCommentLike — EmpDetailModal comments ───────────
   async function togglePostCommentLike(postId, commentId) {
-    const ui = useUiStore()
     const post = posts.value.find(p => p.id === postId)
     if (!post?.comments) return
     const cm = post.comments.find(c => c.id === commentId)
@@ -262,7 +257,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
     _saveCommentLike(commentId, { liked: cm._liked, count: cm.likeCount })
 
     try {
-      const result = await svc.toggleCommentLike(commentId, ui.currentUser?.id || 'anonymous')
+      const result = await svc.toggleCommentLike(commentId, useUserAuthStore().userId || 'anonymous')
       if (result && typeof result.likeCount === 'number') {
         cm._liked    = result.liked
         cm.likeCount = result.likeCount
@@ -273,7 +268,6 @@ export const useEmpathyStore = defineStore('empathy', () => {
 
   // ── toggleLike — post-level like (EmpathyBoard/EmpDetailModal) ─
   async function toggleLike(postId) {
-    const ui   = useUiStore()
     const post = posts.value.find(p => p.id === postId)
     if (!post) return
     const wasLiked = post._liked
@@ -281,7 +275,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
     post.likeCount = (post.likeCount || 0) + (post._liked ? 1 : -1)
     lsDel('empathy_posts') // invalidate — likeCount เปลี่ยนทันที
     try {
-      const result = await svc.toggleLike(postId, ui.currentUser?.id || 'anonymous')
+      const result = await svc.toggleLike(postId, useUserAuthStore().userId || 'anonymous')
       if (result && typeof result.likeCount === 'number') {
         post.likeCount = result.likeCount
         post._liked    = result.liked

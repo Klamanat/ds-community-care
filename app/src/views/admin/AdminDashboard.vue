@@ -77,7 +77,7 @@ const statCards = computed(() => [
     bg: '#EEF2FF', color: '#4F46E5',
   },
   {
-    key: 'bday', icon: '🎂', label: 'วันเกิดเดือนนี้', to: '/admin/employees',
+    key: 'bday', icon: '🎂', label: 'วันเกิดเดือนนี้', to: '/admin/employees?filter=bday',
     value: counts.bdayThisMonth, sub: 'คน',
     bg: '#FDF2F8', color: '#DB2777',
   },
