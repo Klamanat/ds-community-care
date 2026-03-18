@@ -14,8 +14,10 @@
         <!-- Birthday card -->
         <div
           class="ripple-host relative overflow-hidden rounded-2xl cursor-pointer sm:h-full"
-          @click="ui.openModal('modal-bday')"
+          :class="{ 'opacity-60': !cardConfig.isEnabled('bday') }"
+          @click="cardClick('bday', () => ui.openModal('modal-bday'))"
         >
+          <div v-if="!cardConfig.isEnabled('bday')" class="hc-soon-badge">🔜 เร็วๆ นี้</div>
           <!-- Mobile-only height spacer (aspect-ratio 375/150) -->
           <div class="sm:hidden" style="aspect-ratio:375/150;"></div>
 
@@ -50,17 +52,23 @@
 
         <!-- Quick links: 4-col on mobile, flex-col on PC -->
         <div class="grid grid-cols-3 gap-2 sm:flex sm:flex-col">
-<div class="c-card ripple-host bg-[linear-gradient(135deg,#FF6B00,#FF3CAC,#A855F7,#3B82F6)] sm:flex-1" @click="ui.openModal('modal-culture')">
+          <div class="c-card ripple-host bg-[linear-gradient(135deg,#FF6B00,#FF3CAC,#A855F7,#3B82F6)] sm:flex-1"
+               :class="{ 'opacity-60': !cardConfig.isEnabled('culture') }"
+               @click="cardClick('culture', () => ui.openModal('modal-culture'))">
             <div class="c-emo">🤝</div>
             <div class="c-lbl">Team Culture</div>
-            <div class="c-sub">วัฒนธรรมองค์กร</div>
+            <div class="c-sub">{{ cardConfig.isEnabled('culture') ? 'วัฒนธรรมองค์กร' : '🔜 เร็วๆ นี้' }}</div>
           </div>
-          <div class="c-card ripple-host bg-[linear-gradient(135deg,#FFD6DC,#FF8FA3,#FF4D6D)] sm:flex-1" @click="ui.openModal('modal-training')">
+          <div class="c-card ripple-host bg-[linear-gradient(135deg,#FFD6DC,#FF8FA3,#FF4D6D)] sm:flex-1"
+               :class="{ 'opacity-60': !cardConfig.isEnabled('training') }"
+               @click="cardClick('training', () => ui.openModal('modal-training'))">
             <div class="c-emo"><img src="/images/icon-training.png" style="width:26px;height:26px;object-fit:contain;" /></div>
             <div class="c-lbl">Training</div>
-            <div class="c-sub">การฝึกอบรม</div>
+            <div class="c-sub">{{ cardConfig.isEnabled('training') ? 'การฝึกอบรม' : '🔜 เร็วๆ นี้' }}</div>
           </div>
-          <div class="c-card ripple-host bg-[linear-gradient(135deg,#06C755,#00A040)] sm:flex-1" @click="ui.openModal('modal-reward')">
+          <div class="c-card ripple-host bg-[linear-gradient(135deg,#06C755,#00A040)] sm:flex-1"
+               :class="{ 'opacity-60': !cardConfig.isEnabled('reward') }"
+               @click="cardClick('reward', () => ui.openModal('modal-reward'))">
             <div class="c-emo">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
                 <path d="M12 2L4 5.5V11C4 15.5 7.5 19.7 12 21C16.5 19.7 20 15.5 20 11V5.5L12 2Z" fill="white"/>
@@ -68,6 +76,7 @@
               </svg>
             </div>
             <div class="c-lbl">DS Reward</div>
+            <div v-if="!cardConfig.isEnabled('reward')" class="c-sub">🔜 เร็วๆ นี้</div>
           </div>
         </div>
 
@@ -88,35 +97,47 @@
         <span class="sec-title">🛠 Other</span>
       </div>
       <div class="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-4">
-        <div class="tool-card org ripple-host flex-col items-start" @click="ui.openModal('modal-org')">
-          <div class="ti">🏆</div>
-          <div class="tt">Star Gang</div>
-          <div class="ts">สมาชิกดาวเด่น</div>
-          <div class="org-avs">
-            <div class="org-av" style="background:linear-gradient(135deg,#FDE68A,#F59E0B);">🌟</div>
-            <div class="org-av" style="background:linear-gradient(135deg,#FBCFE8,#EC4899);">⭐</div>
-            <div class="org-av" style="background:linear-gradient(135deg,#C7D2FE,#6366F1);">✨</div>
+        <div class="tool-card org ripple-host flex-col items-start"
+             :class="{ 'opacity-60': !cardConfig.isEnabled('monthly') }"
+             @click="cardClick('monthly', () => {})">
+          <div class="ti">📅</div>
+          <div class="tt">Monthly Plan</div>
+          <div class="ts">แผนกิจกรรม {{ currentYear }}</div>
+          <div class="mp-months">
+            <span v-for="m in monthDots" :key="m.i" class="mp-dot" :class="{ active: m.i === currentMonth }"></span>
+          </div>
+          <div v-if="!cardConfig.isEnabled('monthly')" class="etags">
+            <span class="etag">🔜 เร็วๆ นี้</span>
           </div>
         </div>
-        <div class="tool-card emp ripple-host flex-col items-start opacity-70" @click="ui.showToast('ตลาดนัด — เร็วๆ นี้ 🚀')">
+        <div class="tool-card emp ripple-host flex-col items-start"
+             :class="{ 'opacity-60': !cardConfig.isEnabled('market') }"
+             @click="cardClick('market', () => {})">
           <div class="ti">🛍️</div>
           <div class="tt">ตลาดนัด</div>
           <div class="ts">ปล่อยของง่าย ขายคล่อง เพื่อนจองพร้อมช้อป!</div>
           <div class="etags">
-            <span class="etag">🚀 เร็วๆ นี้</span>
+            <span class="etag">🔜 เร็วๆ นี้</span>
           </div>
         </div>
-        <div class="tool-card org ripple-host flex-col items-start" @click="router.push('/idea')">
+        <div class="tool-card org ripple-host flex-col items-start"
+             :class="{ 'opacity-60': !cardConfig.isEnabled('idea') }"
+             @click="cardClick('idea', () => router.push('/idea'))">
           <div class="ti">💡</div>
           <div class="tt">เสนอไอเดีย</div>
           <div class="ts">แชร์ความคิดสร้างสรรค์</div>
+          <div v-if="!cardConfig.isEnabled('idea')" class="etags">
+            <span class="etag">🔜 เร็วๆ นี้</span>
+          </div>
         </div>
-        <div class="tool-card emp ripple-host flex-col items-start opacity-70" @click="ui.showToast('สายมู — เร็วๆ นี้ 🔮')">
+        <div class="tool-card emp ripple-host flex-col items-start"
+             :class="{ 'opacity-60': !cardConfig.isEnabled('fortune') }"
+             @click="cardClick('fortune', () => {})">
           <div class="ti">🔮</div>
           <div class="tt">สายมู</div>
           <div class="ts">ดูดวง, ฤกษ์มงคล, วันดีประจำสัปดาห์</div>
           <div class="etags">
-            <span class="etag">🚀 เร็วๆ นี้</span>
+            <span class="etag">🔜 เร็วๆ นี้</span>
           </div>
         </div>
       </div>
@@ -126,7 +147,7 @@
     <div class="sec">
       <div class="sec-hdr">
         <span class="sec-title">💝 Empathy Board</span>
-        <span class="sec-more" @click="ui.openModal('modal-emp')">ส่งคำชื่นชม</span>
+        <span class="sec-more" @click="cardClick('empathy', () => ui.openModal('modal-emp'))">ส่งคำชื่นชม</span>
       </div>
       <EmpathyBoard />
     </div>
@@ -150,12 +171,21 @@ import MonthsGrid from '../components/home/MonthsGrid.vue'
 import EmpathyBoard from '../components/home/EmpathyBoard.vue'
 import { useUiStore } from '../stores/ui.js'
 import { useBirthdayStore } from '../stores/birthday.js'
+import { useCardConfigStore } from '../stores/cardConfig.js'
 
 const router = useRouter()
 const ui = useUiStore()
 const bday = useBirthdayStore()
+const cardConfig = useCardConfigStore()
 
-const currentMonth = new Date().getMonth()  // 0-based
+function cardClick(key, action) {
+  if (!cardConfig.isEnabled(key)) { ui.showToast('🔜 เร็วๆ นี้'); return }
+  action()
+}
+
+const currentMonth = new Date().getMonth()
+const currentYear  = new Date().getFullYear() + 543   // พ.ศ.
+const monthDots    = Array.from({ length: 12 }, (_, i) => ({ i }))
 
 onMounted(() => bday.loadMonth(currentMonth))
 
@@ -166,3 +196,40 @@ const bdaySub = computed(() => {
   return `เดือนนี้มี ${n} คนเกิดวันเกิด 🎉`
 })
 </script>
+
+<style scoped>
+/* Monthly Plan dots */
+.mp-months {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.mp-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #C7D2FE;
+}
+.mp-dot.active {
+  background: #4F46E5;
+  box-shadow: 0 0 0 2px rgba(79,70,229,0.25);
+}
+
+.hc-soon-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.55);
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 6px 16px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
+}
+</style>

@@ -81,6 +81,11 @@ const routes = [
         name: 'admin-mental',
         component: () => import('../views/admin/AdminMentalView.vue'),
       },
+      {
+        path: 'home-cards',
+        name: 'admin-home-cards',
+        component: () => import('../views/admin/AdminHomeCardsView.vue'),
+      },
     ],
   },
 ]

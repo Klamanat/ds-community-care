@@ -112,6 +112,7 @@ const navCards = [
   { to: '/admin/reward-rules', icon: '🏆', label: 'วิธีสะสมคะแนน' },
   { to: '/admin/training',     icon: '📚', label: 'Training' },
   { to: '/admin/mental',       icon: '💚', label: 'Mental Health' },
+  { to: '/admin/home-cards',   icon: '🏠', label: 'Home Cards' },
 ]
 
 onMounted(async () => {

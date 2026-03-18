@@ -70,13 +70,18 @@ import AnnouncementModal from './components/modals/AnnouncementModal.vue'
 import NotifModal       from './components/modals/NotifModal.vue'
 import BlogModal            from './components/modals/BlogModal.vue'
 import CounselorInboxModal  from './components/modals/CounselorInboxModal.vue'
-import { useUiStore }       from './stores/ui.js'
-import { useUserAuthStore } from './stores/userAuth.js'
-import { useNotifStore }    from './stores/notif.js'
+import { useUiStore }        from './stores/ui.js'
+import { useUserAuthStore }  from './stores/userAuth.js'
+import { useNotifStore }     from './stores/notif.js'
+import { useCardConfigStore } from './stores/cardConfig.js'
 
-const ui       = useUiStore()
-const userAuth = useUserAuthStore()
-const notif    = useNotifStore()
+const ui         = useUiStore()
+const userAuth   = useUserAuthStore()
+const notif      = useNotifStore()
+const cardConfig = useCardConfigStore()
+
+// Load card config once at app start (non-admin users also need to know which cards are on/off)
+cardConfig.load()
 const route    = useRoute()
 const router   = useRouter()
 

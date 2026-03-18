@@ -102,6 +102,7 @@ const navItems = [
   { to: '/admin/reward-rules', icon: '🏆', label: 'วิธีสะสมคะแนน',     sub: 'PointRules' },
   { to: '/admin/training',     icon: '📚', label: 'Training',           sub: 'หลักสูตร' },
   { to: '/admin/mental',       icon: '💚', label: 'Mental Health',      sub: 'ที่ปรึกษา' },
+  { to: '/admin/home-cards',   icon: '🏠', label: 'Home Cards',         sub: 'เปิด-ปิด cards' },
 ]
 
 function isActive(item) {

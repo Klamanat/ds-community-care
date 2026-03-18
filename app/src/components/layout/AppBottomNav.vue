@@ -2,7 +2,7 @@
   <nav class="bottom-nav">
     <NavItem to="/"         icon="🏠" label="หน้าหลัก"  mobile />
     <NavItem to="/star"     icon="⭐" label="Star"      mobile />
-    <NavItem to="/idea"     icon="💡" label="ไอเดีย"    mobile />
+    <NavItem v-if="cardConfig.isEnabled('idea')" to="/idea" icon="💡" label="ไอเดีย" mobile />
 
     <!-- Notification bell — popup -->
     <button class="notif-bell-btn" @click.stop="ui.openModal('modal-notif')">
@@ -20,7 +20,9 @@
 <script setup>
 import NavItem from './NavItem.vue'
 import { useUiStore } from '../../stores/ui.js'
+import { useCardConfigStore } from '../../stores/cardConfig.js'
 const ui = useUiStore()
+const cardConfig = useCardConfigStore()
 </script>
 
 <style scoped>
