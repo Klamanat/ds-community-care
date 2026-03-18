@@ -61,13 +61,13 @@ export const useBirthdayStore = defineStore('birthday', () => {
       allEmployees[monthIdx] = enriched
       loadedMonths.value.add(monthIdx)
       lsSet('bday_m' + monthIdx, stripBase64(enriched, 'imgUrl', 'photo'), TTL)
-      // Lazy-fetch uncached Drive images in background
+      // Lazy-fetch uncached Drive images in background (mutate in-place to preserve object references)
       const ids = [...new Set(enriched.map(e => e.imgId).filter(Boolean))]
       if (ids.length) fetchImages(ids).then(map => {
         if (!allEmployees[monthIdx]) return
-        allEmployees[monthIdx] = allEmployees[monthIdx].map(e =>
-          (e.imgId && map[e.imgId]) ? { ...e, photo: map[e.imgId] } : e
-        )
+        allEmployees[monthIdx].forEach(e => {
+          if (e.imgId && map[e.imgId]) e.photo = map[e.imgId]
+        })
       }).catch(() => {})
     } catch {
       if (!allEmployees[monthIdx]) allEmployees[monthIdx] = []
@@ -102,6 +102,36 @@ export const useBirthdayStore = defineStore('birthday', () => {
     } catch { return [] }
   }
 
+  async function deleteWish(empKey, wishId) {
+    const emp = getEmployee(empKey)
+    if (!emp) return
+    const prev = [...emp.wishes]
+    emp.wishes = emp.wishes.filter(w => w.id !== wishId)
+    try {
+      await svc.deleteWish(wishId)
+      useUiStore().showToast('ลบคำอวยพรแล้ว')
+    } catch {
+      emp.wishes = prev
+      useUiStore().showToast('ลบไม่สำเร็จ กรุณาลองใหม่')
+    }
+  }
+
+  async function updateWish(empKey, wishId, msg) {
+    const emp = getEmployee(empKey)
+    if (!emp) return
+    const w = emp.wishes.find(x => x.id === wishId)
+    if (!w) return
+    const prevMsg = w.msg
+    w.msg = msg
+    try {
+      await svc.updateWish(wishId, msg)
+      useUiStore().showToast('แก้ไขคำอวยพรแล้ว ✓')
+    } catch {
+      w.msg = prevMsg
+      useUiStore().showToast('แก้ไขไม่สำเร็จ กรุณาลองใหม่')
+    }
+  }
+
   async function uploadPhoto(key, dataUrl) {
     const emp = getEmployee(key)
     if (!emp) return
@@ -109,5 +139,5 @@ export const useBirthdayStore = defineStore('birthday', () => {
     try { await svc.uploadPhoto(key, dataUrl) } catch {}
   }
 
-  return { allEmployees, loadedMonths, isLoading, getEmployee, getFallbackBg, getFallbackEmoji, getSenderAvatar, loadMonth, loadWishes, sendWish, uploadPhoto }
+  return { allEmployees, loadedMonths, isLoading, getEmployee, getFallbackBg, getFallbackEmoji, getSenderAvatar, loadMonth, loadWishes, sendWish, deleteWish, updateWish, uploadPhoto }
 })

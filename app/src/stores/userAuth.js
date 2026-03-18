@@ -6,7 +6,8 @@ import { fetchImages, getCached } from '../services/imageService.js'
 import { fetchAllEmployees } from '../services/teamService.js'
 
 export const useUserAuthStore = defineStore('userAuth', () => {
-  const userId     = ref(localStorage.getItem('user_id')     || '')
+  const userId     = ref(localStorage.getItem('user_id')      || '')
+  const userEmpCode= ref(localStorage.getItem('user_empcode') || '')
   const userName   = ref(localStorage.getItem('user_name')   || '')
   const userRole   = ref(localStorage.getItem('user_role')   || '')
   const userImgId  = ref(localStorage.getItem('user_imgid')  || '')
@@ -30,9 +31,12 @@ export const useUserAuthStore = defineStore('userAuth', () => {
         _persist(emp)
       } else if (!userImgUrl.value && userImgId.value) {
         const cached = getCached(userImgId.value)
-        if (cached) userImgUrl.value = cached
+        if (cached) { userImgUrl.value = cached; localStorage.setItem('user_img', cached) }
         else fetchImages([userImgId.value]).then(map => {
-          if (map[userImgId.value]) userImgUrl.value = map[userImgId.value]
+          if (map[userImgId.value]) {
+            userImgUrl.value = map[userImgId.value]
+            localStorage.setItem('user_img', userImgUrl.value)
+          }
         }).catch(() => {})
       }
     }).catch(() => {}) }, 5000)
@@ -69,23 +73,35 @@ export const useUserAuthStore = defineStore('userAuth', () => {
   }
 
   function _persist(emp) {
-    userId.value     = String(emp.id || emp.employee_id || '')
-    userName.value   = emp.name   || ''
-    userRole.value   = emp.role   || ''
-    userImgId.value  = emp.img_id  || emp.imgId  || ''
-    userImgUrl.value = emp.img_url || emp.imgUrl || getCached(userImgId.value) || ''
-    userDept.value   = emp.dept           || ''
-    userSlogan.value = emp.star_gang_slogan || emp.starGangSlogan || ''
+    userId.value      = String(emp.id || emp.employee_id || '')
+    userEmpCode.value = String(emp.empCode || emp.emp_code || '')
+    userName.value    = emp.name   || ''
+    userRole.value    = emp.role   || ''
+    userDept.value    = emp.dept           || ''
+    userSlogan.value  = emp.star_gang_slogan || emp.starGangSlogan || ''
+
+    const newImgId  = emp.img_id || emp.imgId || ''
+    const imgChanged = newImgId !== userImgId.value
+    userImgId.value = newImgId
+
+    const newImgUrl = emp.img_url || emp.imgUrl || getCached(newImgId) || ''
+    // Don't clear a working URL when imgId hasn't changed (e.g. Drive images return empty imgUrl from mapEmp)
+    if (newImgUrl || imgChanged) userImgUrl.value = newImgUrl
+
     _saveLocal()
     if (userImgId.value && !userImgUrl.value) {
       fetchImages([userImgId.value]).then(map => {
-        if (map[userImgId.value]) userImgUrl.value = map[userImgId.value]
+        if (map[userImgId.value]) {
+          userImgUrl.value = map[userImgId.value]
+          localStorage.setItem('user_img', userImgUrl.value)  // save after async fetch
+        }
       }).catch(() => {})
     }
   }
 
   function _saveLocal() {
-    localStorage.setItem('user_id',     userId.value)
+    localStorage.setItem('user_id',      userId.value)
+    localStorage.setItem('user_empcode', userEmpCode.value)
     localStorage.setItem('user_name',   userName.value)
     localStorage.setItem('user_role',   userRole.value)
     localStorage.setItem('user_imgid',  userImgId.value)
@@ -95,15 +111,15 @@ export const useUserAuthStore = defineStore('userAuth', () => {
   }
 
   function _clearLocal() {
-    userId.value = ''; userName.value = ''; userRole.value = ''
+    userId.value = ''; userEmpCode.value = ''; userName.value = ''; userRole.value = ''
     userImgId.value = ''; userImgUrl.value = ''; userDept.value = ''; userSlogan.value = ''
   }
 
   async function logout() {
     await supabase.auth.signOut()
     _clearLocal()
-    ;['user_id','user_name','user_role','user_imgid','user_img','user_dept','user_slogan','dsc_ann_seen'].forEach(k => localStorage.removeItem(k))
+    ;['user_id','user_empcode','user_name','user_role','user_imgid','user_img','user_dept','user_slogan','dsc_ann_seen'].forEach(k => localStorage.removeItem(k))
   }
 
-  return { userId, userName, userRole, userImgId, userImgUrl, userDept, userSlogan, isLoading, error, isAuthenticated, loginWithEmployee, logout }
+  return { userId, userEmpCode, userName, userRole, userImgId, userImgUrl, userDept, userSlogan, isLoading, error, isAuthenticated, loginWithEmployee, logout }
 })

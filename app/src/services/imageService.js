@@ -34,11 +34,30 @@ function _scheduleSave() {
 // Pre-load cache from localStorage immediately on module init
 _loadLs()
 
+const STORAGE_BASE = (import.meta.env.VITE_SUPABASE_URL || '') + '/storage/v1/object/public/'
+
 // ── Public API ────────────────────────────────────────────────────────
 
-/** Return cached base64 for imgId synchronously ('' if not cached) */
+/** Return cached URL/base64 for imgId synchronously ('' if not cached).
+ *  For Supabase Storage paths (contain '/'), returns the public URL immediately. */
 export function getCached(imgId) {
-  return (imgId && _mem.get(imgId)) || ''
+  if (!imgId) return ''
+  if (_mem.has(imgId)) return _mem.get(imgId)
+  // Storage path not yet in cache — construct public URL on-the-fly
+  if (imgId.includes('/') && !imgId.startsWith('http')) return STORAGE_BASE + imgId
+  return ''
+}
+
+/** Force re-fetch a Drive image, bypassing cache. Returns fresh URL/base64 or '' */
+export async function forceRefreshImage(imgId) {
+  if (!imgId || imgId.includes('/') || imgId.startsWith('http')) return ''
+  _mem.delete(imgId)  // clear stale lh3 / bad entry
+  try {
+    const map = await edgeGetImages([imgId])
+    const val = map[imgId]
+    if (val) { _mem.set(imgId, val); _scheduleSave(); return val }
+  } catch {}
+  return ''
 }
 
 // ── Batch queue ───────────────────────────────────────────────────────
@@ -57,11 +76,15 @@ async function _flush() {
   _pending.clear()
 
   if (ids.length) {
-    // IDs that are storage paths (contain '/') or full URLs — use directly
-    const storageIds = ids.filter(id => id.includes('/') || id.startsWith('http'))
-    storageIds.forEach(id => { if (!_mem.has(id)) _mem.set(id, id) })
+    // Full URLs — use as-is
+    const httpIds = ids.filter(id => id.startsWith('http'))
+    httpIds.forEach(id => { if (!_mem.has(id)) _mem.set(id, id) })
 
-    // IDs that look like Drive file IDs — fetch via Edge Function
+    // Supabase Storage paths (contain '/' but not 'http') → build public URL
+    const storageIds = ids.filter(id => id.includes('/') && !id.startsWith('http'))
+    storageIds.forEach(id => { if (!_mem.has(id)) _mem.set(id, STORAGE_BASE + id) })
+
+    // IDs that look like Drive file IDs (no '/', no 'http') — fetch via Edge Function
     const driveIds = ids.filter(id => !id.includes('/') && !id.startsWith('http'))
     if (driveIds.length) {
       try {

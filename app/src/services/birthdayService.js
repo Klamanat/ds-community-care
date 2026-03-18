@@ -46,6 +46,7 @@ export async function fetchWishes(birthdayKey) {
   if (error) throw new Error(error.message)
 
   const wishes = (data || []).map(w => ({
+    id:        w.id,
     from:      w.from_name,
     avIdx:     w.from_av_idx,
     fromImgId: w.from_img_id || '',
@@ -60,6 +61,16 @@ export async function fetchWishes(birthdayKey) {
     wishes.forEach(w => { if (w.fromImgId && map[w.fromImgId]) w.photo = map[w.fromImgId] })
   }
   return wishes
+}
+
+export async function deleteWish(id) {
+  const { error } = await supabase.from('birthday_wishes').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function updateWish(id, msg) {
+  const { error } = await supabase.from('birthday_wishes').update({ msg }).eq('id', id)
+  if (error) throw new Error(error.message)
 }
 
 export async function uploadPhoto(birthdayKey, imageBase64) {

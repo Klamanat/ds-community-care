@@ -10,7 +10,7 @@
         <!-- Avatar overlapping cover -->
         <div class="pf-av-wrap">
           <div class="pf-av" @click="triggerUpload">
-            <img v-if="previewImg" :src="previewImg" class="pf-av-img" @error="e => e.target.style.display='none'" />
+            <img v-if="previewImg && !imgError" :src="previewImg" class="pf-av-img" @error="onImgError" />
             <span v-else class="pf-av-initial">{{ userAuth.userName?.charAt(0) || '😊' }}</span>
             <div class="pf-cam-btn">{{ uploading ? '⏳' : '📷' }}</div>
           </div>
@@ -55,7 +55,7 @@
             <span class="pf-info-icon">🪪</span>
             <div>
               <div class="pf-info-label">รหัสพนักงาน</div>
-              <div class="pf-info-val">{{ userAuth.userId || '—' }}</div>
+              <div class="pf-info-val">{{ userAuth.userEmpCode || '—' }}</div>
             </div>
           </div>
           <div class="pf-info-row">
@@ -137,7 +137,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseModal from '../shared/BaseModal.vue'
 import { useUiStore }       from '../../stores/ui.js'
@@ -146,6 +146,7 @@ import { useTeamStore }     from '../../stores/team.js'
 import { useMentalStore }   from '../../stores/mental.js'
 import { uploadImage as driveUpload } from '../../services/activitiesService.js'
 import { updateSelf } from '../../services/teamService.js'
+import { fetchImages, forceRefreshImage } from '../../services/imageService.js'
 
 const ui       = useUiStore()
 const userAuth = useUserAuthStore()
@@ -153,7 +154,22 @@ const team     = useTeamStore()
 const mental   = useMentalStore()
 const router   = useRouter()
 
-onMounted(() => mental.loadAdvisors())
+onMounted(async () => {
+  mental.loadAdvisors()
+  // Drive profile photo: if stored URL is lh3 fallback or missing, force fresh fetch
+  const id  = userAuth.userImgId  || ''
+  const url = userAuth.userImgUrl || ''
+  const isDrive = id && !id.includes('/') && !id.startsWith('http')
+  const isStale = !url || url.includes('lh3.googleusercontent') || url.includes('drive.google.com')
+  if (isDrive && isStale) {
+    const fresh = await forceRefreshImage(id)
+    if (fresh) {
+      userAuth.userImgUrl = fresh
+      localStorage.setItem('user_img', fresh)
+      imgError.value = false
+    }
+  }
+})
 
 const isCounselor = computed(() => mental.isCounselor(userAuth.userId))
 
@@ -167,7 +183,24 @@ const isStarGang = computed(() => {
 const fileInput   = ref(null)
 const uploading   = ref(false)
 const uploadError = ref('')
+const imgError    = ref(false)
 const previewImg  = computed(() => userAuth.userImgUrl || '')
+
+// Reset error flag when URL changes (e.g. after upload)
+watch(previewImg, () => { imgError.value = false })
+
+async function onImgError() {
+  imgError.value = true
+  const id = userAuth.userImgId || ''
+  if (!id || id.includes('/') || id.startsWith('http')) return  // not a Drive ID
+  // Force fresh fetch from edge function (bypass stale lh3 cache)
+  const fresh = await forceRefreshImage(id)
+  if (fresh && !fresh.includes('lh3.googleusercontent')) {
+    userAuth.userImgUrl = fresh
+    localStorage.setItem('user_img', fresh)
+    imgError.value = false
+  }
+}
 
 function triggerUpload() {
   if (uploading.value) return
@@ -191,7 +224,14 @@ async function onFileChange(e) {
     ui.currentUser.img = b64
     ui.showToast('อัปโหลดรูปสำเร็จ 📷')
     driveUpload(b64, file.name, 'profiles')
-      .then(res => updateSelf(userAuth.userId, { imgId: res.id, imgUrl: res.url }))
+      .then(async res => {
+        await updateSelf(userAuth.userId, { imgId: res.id, imgUrl: res.url })
+        // Update store + localStorage with real URL (replace temporary base64)
+        userAuth.userImgId  = res.id
+        userAuth.userImgUrl = res.url || b64
+        localStorage.setItem('user_imgid', res.id)
+        localStorage.setItem('user_img',   res.url || b64)
+      })
       .catch(() => {})
   } catch (err) {
     uploadError.value = err.message || 'อัปโหลดไม่สำเร็จ'

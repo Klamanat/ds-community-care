@@ -7,7 +7,7 @@
       </div>
       <div class="mt-1 inline-flex items-center gap-1.5 bg-[linear-gradient(135deg,#FFF7ED,#FEF3C7)] border border-[#FCD34D] rounded-full px-3 py-0.5">
         <span class="text-[12px]">🌟</span>
-        <span class="text-[11px] font-extrabold text-[#92400E]">ทุก Empathy = +10 LINE pts</span>
+        <span class="text-[11px] font-extrabold text-[#92400E]">ทุก Empathy = +10 DS pts</span>
       </div>
     </div>
 

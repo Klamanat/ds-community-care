@@ -210,7 +210,7 @@
 
         <div class="flex items-center gap-1.5 bg-[linear-gradient(135deg,#FFFBEB,#FEF3C7)] border border-[#FCD34D] rounded-xl px-3 py-2">
           <span class="text-[14px]">🌟</span>
-          <div class="text-[11px] font-bold text-[#92400E]">ส่ง Empathy = <strong>+10 LINE pts</strong></div>
+          <div class="text-[11px] font-bold text-[#92400E]">ส่ง Empathy = <strong>+10 DS pts</strong></div>
         </div>
       </div>
 

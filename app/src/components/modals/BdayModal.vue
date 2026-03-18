@@ -129,7 +129,7 @@
             </div>
             <div
               v-for="(w, i) in wishesLoading ? [] : selectedPerson.wishes"
-              :key="i"
+              :key="w.id ?? i"
               class="wish-item"
               :class="{ 'wi-new': i === 0 && justSent }"
             >
@@ -140,13 +140,41 @@
                 </div>
                 <div class="wi-name">{{ w.from }}</div>
                 <div class="wi-time">{{ formatWishTime(w.time) }}</div>
+                <!-- action buttons -->
+                <div v-if="canEdit(w) || canDelete(w)" class="wi-actions">
+                  <button v-if="canEdit(w)" class="wi-act-btn" title="แก้ไข" @click.stop="editingWishId === w.id ? cancelEdit() : startEdit(w)">✏️</button>
+                  <button v-if="canDelete(w)" class="wi-act-btn" title="ลบ" @click.stop="doDelete(w)">🗑</button>
+                </div>
               </div>
-              <div class="wi-msg">{{ w.msg }}</div>
+              <!-- inline edit -->
+              <template v-if="editingWishId === w.id">
+                <textarea
+                  v-model="editMsg"
+                  rows="2"
+                  maxlength="500"
+                  class="w-full rounded-xl p-2 text-[12px] text-app-dark bg-app-bg resize-none outline-none mt-1"
+                  style="border:1.5px solid #6366F1;"
+                ></textarea>
+                <div style="display:flex;gap:6px;margin-top:5px;">
+                  <button class="wi-save-btn" @click="saveEdit(w)">บันทึก</button>
+                  <button class="wi-cancel-btn" @click="cancelEdit">ยกเลิก</button>
+                </div>
+              </template>
+              <div v-else class="wi-msg">{{ w.msg }}</div>
             </div>
           </div>
 
           <!-- Wish composer -->
-          <template v-if="!wishSent">
+          <!-- blocked: self -->
+          <div v-if="isSelf" class="wish-blocked-notice">
+            😊 ไม่สามารถอวยพรตัวเองได้นะคะ
+          </div>
+          <!-- blocked: future month -->
+          <div v-else-if="isFutureMonth" class="wish-blocked-notice">
+            🗓️ ยังส่งคำอวยพรล่วงหน้าไม่ได้ค่ะ<br>
+            <span style="font-weight:600;">รอถึงเดือน {{ monthFullNames[selectedMonth - 1] }} ก่อนนะคะ</span>
+          </div>
+          <template v-else-if="!wishSent">
             <div class="text-[12px] font-black text-app-mid mb-2">
               ✍️ ส่งคำอวยพรให้ <span style="color:#6366F1;">{{ selectedPerson.name }}</span>
             </div>
@@ -417,11 +445,14 @@ import BaseModal from '../shared/BaseModal.vue'
 import { useBirthdayStore } from '../../stores/birthday.js'
 import { useUiStore } from '../../stores/ui.js'
 import { useUserAuthStore } from '../../stores/userAuth.js'
+import { useAdminStore } from '../../stores/admin.js'
 import { useConfetti } from '../../composables/useConfetti.js'
+import { deleteWish as svcDeleteWish, updateWish as svcUpdateWish } from '../../services/birthdayService.js'
 
 const bday     = useBirthdayStore()
 const ui       = useUiStore()
 const userAuth = useUserAuthStore()
+const admin    = useAdminStore()
 
 const _TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
 function formatWishTime(raw) {
@@ -495,7 +526,10 @@ const monthFullNames = [
   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม',
 ]
 
-const currentEmps = computed(() => bday.allEmployees[selectedMonth.value - 1] || [])
+const currentEmps = computed(() => {
+  const emps = bday.allEmployees[selectedMonth.value - 1] || []
+  return [...emps].sort((a, b) => (parseInt(a.date) || 0) - (parseInt(b.date) || 0))
+})
 
 // Local loading state — starts true, resolves after fetch
 const loading = ref(true)
@@ -513,6 +547,67 @@ watch(selectedMonth, async (m) => {
 })
 
 const wishesLoading = ref(false)
+
+const isSelf = computed(() => {
+  const myName = (ui.currentUser?.name || '').trim().toLowerCase()
+  return !!myName && (selectedPerson.value?.name || '').trim().toLowerCase() === myName
+})
+const isFutureMonth = computed(() => selectedMonth.value > currentMonth)
+
+// Edit / delete wish
+const editingWishId = ref(null)
+const editMsg       = ref('')
+
+function canDelete(w) {
+  if (admin.isAuthenticated) return true
+  const myName = userAuth.userName.trim()
+  if (!myName) return false
+  // Own wish (sender name matches)
+  if ((w.from || '').trim() === myName) return true
+  // Birthday person can delete any wish on their own profile
+  if ((selectedPerson.value?.name || '').trim() === myName) return true
+  return false
+}
+function canEdit(w) {
+  const myName = userAuth.userName.trim()
+  return !!myName && (w.from || '').trim() === myName
+}
+function startEdit(w) {
+  editingWishId.value = w.id
+  editMsg.value = w.msg
+}
+function cancelEdit() {
+  editingWishId.value = null
+  editMsg.value = ''
+}
+async function saveEdit(w) {
+  const msg = editMsg.value.trim()
+  if (!msg) return
+  editingWishId.value = null
+  const wish = selectedPerson.value.wishes.find(x => x.id === w.id)
+  if (!wish) return
+  const prev = wish.msg
+  wish.msg = msg
+  try {
+    await svcUpdateWish(w.id, msg)
+    ui.showToast('แก้ไขคำอวยพรแล้ว ✓')
+  } catch {
+    wish.msg = prev
+    ui.showToast('แก้ไขไม่สำเร็จ กรุณาลองใหม่')
+  }
+}
+async function doDelete(w) {
+  if (!w.id) return
+  const prev = [...selectedPerson.value.wishes]
+  selectedPerson.value.wishes = selectedPerson.value.wishes.filter(x => x.id !== w.id)
+  try {
+    await svcDeleteWish(w.id)
+    ui.showToast('ลบคำอวยพรแล้ว')
+  } catch {
+    selectedPerson.value.wishes = prev
+    ui.showToast('ลบไม่สำเร็จ กรุณาลองใหม่')
+  }
+}
 
 async function openPerson(emp) {
   selectedPerson.value = emp
@@ -575,6 +670,64 @@ function confirmPrize() {
 </script>
 
 <style scoped>
+
+/* ── Wish blocked notice ── */
+.wish-blocked-notice {
+  text-align: center;
+  padding: 14px 12px;
+  border-radius: 14px;
+  background: #F9FAFB;
+  border: 1.5px dashed #E5E7EB;
+  font-size: 13px;
+  font-weight: 700;
+  color: #6B7280;
+  line-height: 1.6;
+  margin-bottom: 4px;
+}
+
+/* ── Wish action buttons ── */
+.wi-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.wi-act-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  border-radius: 6px;
+  opacity: 0.55;
+  transition: opacity 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.wi-act-btn:hover { opacity: 1; background: rgba(99,102,241,0.08); }
+.wi-save-btn {
+  flex: 1;
+  padding: 5px 10px;
+  border-radius: 10px;
+  border: none;
+  background: #6366F1;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Sarabun', sans-serif;
+}
+.wi-cancel-btn {
+  flex: 1;
+  padding: 5px 10px;
+  border-radius: 10px;
+  border: 1px solid #E5E7EB;
+  background: white;
+  color: #6B7280;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Sarabun', sans-serif;
+}
 
 /* ── Golden arena ── */
 .eligible-arena {
