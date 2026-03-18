@@ -16,7 +16,7 @@
           v-model="employeeId"
           type="text"
           class="ul-input"
-          placeholder="เช่น EMP001"
+          placeholder="เช่น 11XXXXXX"
           autocomplete="username"
           autofocus
           required

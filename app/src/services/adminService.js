@@ -165,7 +165,7 @@ export async function deleteChannel(channelId) {
 
 export async function saveAnnouncement(fields) {
   const rows = [
-    { key: 'ann_enabled', value: String(fields.enabled !== false) },
+    { key: 'ann_enabled', value: (fields.enabled === true || String(fields.enabled).toUpperCase() === 'TRUE') ? 'true' : 'false' },
     { key: 'ann_id',      value: fields.id    || `ann_${Date.now()}` },
     { key: 'ann_title',   value: fields.title || '' },
     { key: 'ann_video',   value: fields.video || '' },

@@ -159,8 +159,8 @@ onMounted(async () => {
     const data = await fetchAnnouncement()
 
     if (!data || !data.id) {
-      if (!show.value) setCached(null)
-      else if (!cached) show.value = false
+      setCached(null)
+      show.value = false
       return
     }
 

@@ -27,7 +27,7 @@
             v-model="selectedId"
             type="text"
             class="sp-input"
-            placeholder="เช่น EMP001"
+            placeholder="เช่น 11XXXXXX"
             :readonly="!!route.query.employeeId"
             required
           />
