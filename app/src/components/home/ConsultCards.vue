@@ -2,7 +2,6 @@
   <div class="flex flex-col gap-3">
 
     <div class="consult-card mental ripple-host"
-         :class="{ 'opacity-60': !cardConfig.isEnabled('mental') }"
          @click="cardClick('mental', () => ui.openModal('modal-mental'))">
       <div class="ci" style="width:48px;height:48px;overflow:hidden;border-radius:14px;background:none;padding:0;flex-shrink:0;">
         <img src="/images/icon-mental.png" style="width:100%;height:100%;object-fit:cover;" />
@@ -15,7 +14,6 @@
     </div>
 
     <div class="consult-card financial ripple-host"
-         :class="{ 'opacity-60': !cardConfig.isEnabled('financial') }"
          @click="cardClick('financial', () => ui.openModal('modal-financial'))">
       <div class="ci">💰</div>
       <div class="ci-info">

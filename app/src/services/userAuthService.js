@@ -16,6 +16,10 @@ export async function login(empCode) {
   if (error) throw new Error(error.message)
   if (!emp)  throw new Error('ไม่พบรหัสพนักงานนี้ กรุณาตรวจสอบอีกครั้ง')
 
+  // Ensure a Supabase auth session exists so auth.role() = 'authenticated' for RLS policies
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) await supabase.auth.signInAnonymously().catch(() => {})
+
   const rawUrl = emp.img_url || ''
   const imgId  = emp.img_id  || (rawUrl.startsWith('drive:') ? rawUrl.slice(6) : '')
   const imgUrl = rawUrl.startsWith('drive:') ? '' : rawUrl
