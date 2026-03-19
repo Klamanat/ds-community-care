@@ -60,7 +60,7 @@ export const useNotifStore = defineStore('notif', () => {
     loading.value = true
 
     try {
-      const monthIdx = new Date().getMonth() + 1
+      const monthIdx = new Date().getMonth()  // 0-indexed, matches employees.month_idx
       const { data, error } = await supabase.rpc('get_notifications', {
         p_emp_name:   employeeName,
         p_month_idx:  monthIdx,
