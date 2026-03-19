@@ -34,7 +34,7 @@ function _scheduleSave() {
 // Pre-load cache from localStorage immediately on module init
 _loadLs()
 
-const STORAGE_BASE = (import.meta.env.VITE_SUPABASE_URL || '') + '/storage/v1/object/public/'
+const STORAGE_BASE = (import.meta.env.VITE_SUPABASE_URL || '') + '/storage/v1/object/public/images/'
 
 // ── Public API ────────────────────────────────────────────────────────
 

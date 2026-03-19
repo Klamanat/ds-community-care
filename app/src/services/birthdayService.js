@@ -23,7 +23,7 @@ export async function fetchMonth(monthIdx) {
       date:        e.bd_date || '',
       monthIdx:    e.month_idx,
       fallbackIdx: Number(e.fallback_idx) || 0,
-      photo:       getCached(imgId) || (e.img_url?.startsWith('drive:') ? '' : e.img_url || ''),
+      photo:       (e.img_url?.startsWith('http') ? e.img_url : '') || getCached(imgId) || '',
       imgId,
       wishes:      [],
     }
