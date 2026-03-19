@@ -51,12 +51,14 @@
 
         <!-- Quick links: 4-col on mobile, flex-col on PC -->
         <div class="grid grid-cols-3 gap-2 sm:flex sm:flex-col">
-          <div class="c-card ripple-host bg-[linear-gradient(135deg,#FF6B00,#FF3CAC,#A855F7,#3B82F6)] sm:flex-1">
+          <div class="c-card ripple-host bg-[linear-gradient(135deg,#FF6B00,#FF3CAC,#A855F7,#3B82F6)] sm:flex-1"
+               @click="cardClick('culture', () => ui.openModal('modal-culture'))">
             <div class="c-emo">🤝</div>
             <div class="c-lbl">Team Culture</div>
             <div class="c-sub">{{ cardConfig.isEnabled('culture') ? 'วัฒนธรรมองค์กร' : '🔜 เร็วๆ นี้' }}</div>
           </div>
-          <div class="c-card ripple-host bg-[linear-gradient(135deg,#FFD6DC,#FF8FA3,#FF4D6D)] sm:flex-1">
+          <div class="c-card ripple-host bg-[linear-gradient(135deg,#FFD6DC,#FF8FA3,#FF4D6D)] sm:flex-1"
+               @click="cardClick('training', () => ui.openModal('modal-training'))">
             <div class="c-emo"><img src="/images/icon-training.png" style="width:26px;height:26px;object-fit:contain;" /></div>
             <div class="c-lbl">Training</div>
             <div class="c-sub">{{ cardConfig.isEnabled('training') ? 'การฝึกอบรม' : '🔜 เร็วๆ นี้' }}</div>
