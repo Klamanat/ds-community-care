@@ -61,7 +61,7 @@ export const useBirthdayStore = defineStore('birthday', () => {
       allEmployees[monthIdx] = enriched
       loadedMonths.value.add(monthIdx)
       lsSet('bday_m' + monthIdx, stripBase64(enriched, 'imgUrl', 'photo'), TTL)
-      // Lazy-fetch uncached Drive images in background (mutate in-place to preserve object references)
+      // Lazy-fetch images in background (mutate in-place to preserve object references)
       const ids = [...new Set(enriched.map(e => e.imgId).filter(Boolean))]
       if (ids.length) fetchImages(ids).then(map => {
         if (!allEmployees[monthIdx]) return
