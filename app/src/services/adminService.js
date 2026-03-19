@@ -50,6 +50,7 @@ function mapEmp(e) {
     monthIdx:       e.month_idx   != null ? Number(e.month_idx)   : null,
     bdDate:         e.bd_date     || '',
     fallbackIdx:    e.fallback_idx != null ? Number(e.fallback_idx) : 0,
+    passcode:       e.passcode !== undefined ? e.passcode : null,
   }
 }
 

@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { supabase } from '../services/supabase.js'
-import { login as authLogin } from '../services/userAuthService.js'
+import { login as authLogin, checkEmployee as authCheck, setPasscode as authSetPasscode } from '../services/userAuthService.js'
 import { fetchImages, getCached } from '../services/imageService.js'
 import { fetchAllEmployees } from '../services/teamService.js'
 
@@ -44,10 +44,26 @@ export const useUserAuthStore = defineStore('userAuth', () => {
 
   const isAuthenticated = computed(() => !!userId.value)
 
-  async function loginWithEmployee(id) {
+  async function checkEmployee(empCode) {
+    return authCheck(empCode)
+  }
+
+  async function setPasscode(empCode, passcode) {
     isLoading.value = true; error.value = ''
     try {
-      const emp = await authLogin(id)
+      return await authSetPasscode(empCode, passcode)
+    } catch (e) {
+      error.value = e.message || 'เกิดข้อผิดพลาด'
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  async function loginWithEmployee(id, passcode = '') {
+    isLoading.value = true; error.value = ''
+    try {
+      const emp = await authLogin(id, passcode)
       _persist(emp)
       return true
     } catch (e) {
@@ -121,5 +137,5 @@ export const useUserAuthStore = defineStore('userAuth', () => {
     ;['user_id','user_empcode','user_name','user_role','user_imgid','user_img','user_dept','user_slogan','dsc_ann_seen'].forEach(k => localStorage.removeItem(k))
   }
 
-  return { userId, userEmpCode, userName, userRole, userImgId, userImgUrl, userDept, userSlogan, isLoading, error, isAuthenticated, loginWithEmployee, logout }
+  return { userId, userEmpCode, userName, userRole, userImgId, userImgUrl, userDept, userSlogan, isLoading, error, isAuthenticated, checkEmployee, setPasscode, loginWithEmployee, logout }
 })

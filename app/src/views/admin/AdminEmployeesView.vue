@@ -48,6 +48,7 @@
                   {{ isTrue(r.inTeam) ? '✓ Team' : 'No team' }}
                 </span>
                 <span v-if="r.bdDate" class="emp-bday">🎂 {{ r.bdDate }}</span>
+                <span v-if="r.passcode !== null && r.passcode !== undefined" class="emp-bday">🔐 {{ r.passcode ? 'มีรหัส' : 'รอตั้งรหัส' }}</span>
               </div>
             </div>
             <div class="emp-row-act" @click.stop>
@@ -125,7 +126,48 @@
               </div>
             </div>
 
-            <!-- ── Section D: StarGang (collapsible) ── -->
+            <!-- ── Section D: Passcode ── -->
+            <details class="emp-stargng">
+              <summary>🔐 Passcode</summary>
+              <div style="margin-top:10px;">
+                <!-- Toggle: enable / disable passcode requirement -->
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                  <div class="emp-field-label" style="margin:0;">ต้องการรหัสผ่าน</div>
+                  <div
+                    class="emp-toggle emp-toggle-sm"
+                    :class="{ on: editForms[r.id].passcode !== null }"
+                    @click="togglePasscodeRequired(r)"
+                  >
+                    <div class="emp-toggle-knob"></div>
+                  </div>
+                  <span style="font-size:11px;color:#6B7280;">
+                    {{ editForms[r.id].passcode !== null ? 'เปิดใช้งาน' : 'ปิด (ไม่ต้องใส่รหัส)' }}
+                  </span>
+                </div>
+
+                <!-- Status when enabled -->
+                <template v-if="editForms[r.id].passcode !== null">
+                  <div v-if="editForms[r.id].passcode" style="font-size:12px;color:#059669;margin-bottom:8px;">
+                    🔐 ผู้ใช้ตั้งรหัสผ่านแล้ว
+                  </div>
+                  <div v-else style="font-size:12px;color:#F59E0B;margin-bottom:8px;">
+                    ⏳ รอผู้ใช้ตั้งรหัสผ่านเมื่อ Login ครั้งแรก
+                  </div>
+                  <button
+                    v-if="editForms[r.id].passcode"
+                    type="button"
+                    class="al-btn al-btn-cancel"
+                    style="font-size:12px;padding:6px 12px;"
+                    :disabled="resetingPasscode[r.id]"
+                    @click.prevent="resetPasscode(r)"
+                  >
+                    {{ resetingPasscode[r.id] ? 'กำลัง Reset...' : '🔄 Reset (ให้ตั้งใหม่)' }}
+                  </button>
+                </template>
+              </div>
+            </details>
+
+            <!-- ── Section E: StarGang (collapsible) ── -->
             <details class="emp-stargng">
               <summary>⭐ StarGang & Slogan</summary>
               <div style="margin-top:10px;">
@@ -344,11 +386,12 @@ onMounted(async () => {
 })
 
 // ── Inline edit state (multiple rows can be open simultaneously) ───────────────
-const editForms     = reactive({})  // { [id]: formFields }
-const editSaving    = reactive({})  // { [id]: boolean }
-const editErrors    = reactive({})  // { [id]: string }
-const editUploading = reactive({})
-const editUploadDone = reactive({})
+const editForms       = reactive({})  // { [id]: formFields }
+const editSaving      = reactive({})  // { [id]: boolean }
+const editErrors      = reactive({})  // { [id]: string }
+const editUploading   = reactive({})
+const editUploadDone  = reactive({})
+const resetingPasscode = reactive({})  // { [id]: true | false(done) | undefined }
 
 function startEdit(r) {
   if (editForms[r.id]) { cancelEdit(r.id); return } // toggle off if already open
@@ -370,6 +413,7 @@ function startEdit(r) {
     monthIdx:       p.monthIdx,
     imgPending:     '',
     imgPreview:     r.imgUrl         || '',
+    passcode:       r.passcode !== undefined ? r.passcode : null,
   }
   editSaving[r.id]     = false
   editErrors[r.id]     = ''
@@ -383,6 +427,37 @@ function cancelEdit(id) {
   delete editErrors[id]
   delete editUploading[id]
   delete editUploadDone[id]
+  delete resetingPasscode[id]
+}
+
+async function togglePasscodeRequired(r) {
+  const f = editForms[r.id]
+  if (!f) return
+  const enabling = f.passcode === null
+  const newVal = enabling ? '' : null
+  try {
+    await svc.updateRow('Employees', 'id', r.id, { passcode: newVal })
+    f.passcode = newVal
+    const idx = empRows.value.findIndex(e => e.id === r.id)
+    if (idx >= 0) empRows.value[idx] = { ...empRows.value[idx], passcode: newVal }
+  } catch (e) {
+    editErrors[r.id] = e.message || 'เกิดข้อผิดพลาด'
+  }
+}
+
+async function resetPasscode(r) {
+  resetingPasscode[r.id] = true
+  try {
+    // Reset to '' so user re-sets on next login (keeps passcode requirement enabled)
+    await svc.updateRow('Employees', 'id', r.id, { passcode: '' })
+    editForms[r.id].passcode = ''
+    const idx = empRows.value.findIndex(e => e.id === r.id)
+    if (idx >= 0) empRows.value[idx] = { ...empRows.value[idx], passcode: '' }
+    resetingPasscode[r.id] = false
+  } catch (e) {
+    editErrors[r.id] = e.message || 'เกิดข้อผิดพลาด'
+    delete resetingPasscode[r.id]
+  }
 }
 
 async function pickEditImage(e, id) {
