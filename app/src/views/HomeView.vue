@@ -94,7 +94,7 @@
       </div>
       <div class="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-4">
         <div class="tool-card org ripple-host flex-col items-start"
-             @click="cardClick('monthly', () => {})">
+             @click="cardClick('monthly', () => ui.openModal('modal-monthly-plan'))">
           <div class="ti">📅</div>
           <div class="tt">Monthly Plan</div>
           <div class="ts">แผนกิจกรรม {{ currentYear }}</div>

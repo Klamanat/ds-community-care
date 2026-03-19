@@ -483,6 +483,10 @@
   .modal-sheet--bday {
     max-width: 620px !important;
   }
+  /* === Monthly Plan modal === */
+  .modal-sheet--monthly-plan {
+    max-width: 560px !important;
+  }
 
   /* === Training modal — wide sheet with 3-col grid === */
   .modal-sheet--training {

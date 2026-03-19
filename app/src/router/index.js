@@ -86,6 +86,11 @@ const routes = [
         name: 'admin-home-cards',
         component: () => import('../views/admin/AdminHomeCardsView.vue'),
       },
+      {
+        path: 'plans',
+        name: 'admin-plans',
+        component: () => import('../views/admin/AdminPlansView.vue'),
+      },
     ],
   },
 ]
