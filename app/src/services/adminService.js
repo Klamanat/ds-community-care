@@ -191,6 +191,10 @@ function mapAdvisor(a) {
     imgId:      a.img_id      || '',
     imgUrl:     a.img_url     || '',
     order:      a.order       != null ? Number(a.order) : 0,
+    cardBgType:  a.card_bg_type  || '',
+    cardBgValue: a.card_bg_value || '',
+    cardBgId:    a.card_bg_id   || '',
+    cardBgEmoji: a.card_bg_emoji || '',
   }
 }
 
@@ -206,7 +210,7 @@ export async function getMentalAdvisors() {
 export async function addMentalAdvisor(fields) {
   const { data, error } = await supabase
     .from('mental_advisors')
-    .insert({ name: fields.name, role: fields.role, employee_id: fields.employeeId, order: fields.order || 0 })
+    .insert({ name: fields.name, role: fields.role, employee_id: fields.employeeId, order: fields.order || 0, card_bg_type: fields.cardBgType || null, card_bg_value: fields.cardBgValue || null, card_bg_id: fields.cardBgId || null, card_bg_emoji: fields.cardBgEmoji || null })
     .select().single()
   if (error) throw new Error(error.message)
   return mapAdvisor(data)
@@ -215,7 +219,7 @@ export async function addMentalAdvisor(fields) {
 export async function updateMentalAdvisor(id, fields) {
   const { data, error } = await supabase
     .from('mental_advisors')
-    .update({ name: fields.name, role: fields.role, employee_id: fields.employeeId, order: fields.order || 0 })
+    .update({ name: fields.name, role: fields.role, employee_id: fields.employeeId, order: fields.order || 0, card_bg_type: fields.cardBgType || null, card_bg_value: fields.cardBgValue || null, card_bg_id: fields.cardBgId || null, card_bg_emoji: fields.cardBgEmoji || null })
     .eq('id', id).select().single()
   if (error) throw new Error(error.message)
   return mapAdvisor(data)

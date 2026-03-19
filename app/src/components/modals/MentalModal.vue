@@ -61,7 +61,14 @@
           </div>
 
           <div class="mh-list">
-            <button v-for="c in mental.advisors" :key="c.id" class="mh-card" @click="selectAdvisor(c)">
+            <button v-for="c in mental.advisors" :key="c.id" class="mh-card"
+                    :class="{ 'mh-card--custom': !!c.cardBgType }"
+                    :style="cardStyle(c)"
+                    @click="selectAdvisor(c)">
+              <div v-if="c.cardBgEmoji" class="mh-card-emoji-bg" aria-hidden="true">
+                <span v-for="(p, i) in emojiPositions(c.id || c.name)" :key="i" class="mh-emoji-dot"
+                  :style="{ left: p.left+'%', top: p.top+'%', transform: `rotate(${p.rotate}deg) scale(${p.scale})` }">{{ c.cardBgEmoji }}</span>
+              </div>
               <div class="mh-card-av-wrap">
                 <div class="mh-card-av" :style="c.imgUrl ? {} : { background: avatarGrad(c.name) }">
                   <img v-if="c.imgUrl" :src="c.imgUrl" class="mh-av-img" />
@@ -73,7 +80,7 @@
                 <div class="mh-card-name">{{ c.name }}</div>
                 <div v-if="c.role" class="mh-card-role">{{ c.role }}</div>
               </div>
-              <div class="mh-card-cta">ส่งข้อความ →</div>
+              <div class="mh-card-cta" :style="ctaStyle(c)">ส่งข้อความ →</div>
             </button>
           </div>
 
@@ -92,7 +99,13 @@
         <template v-else-if="view === 'form'">
           <button class="mh-back" @click="view = 'list'">← กลับ</button>
 
-          <div class="mh-form-advisor">
+          <div class="mh-form-advisor"
+               :class="{ 'mh-card--custom': !!selected?.cardBgType }"
+               :style="cardStyle(selected)">
+            <div v-if="selected?.cardBgEmoji" class="mh-card-emoji-bg" aria-hidden="true">
+              <span v-for="(p, i) in emojiPositions(selected.id || selected.name)" :key="i" class="mh-emoji-dot"
+                :style="{ left: p.left+'%', top: p.top+'%', transform: `rotate(${p.rotate}deg) scale(${p.scale})` }">{{ selected.cardBgEmoji }}</span>
+            </div>
             <div class="mh-av mh-av-lg" :style="selected.imgUrl ? {} : { background: avatarGrad(selected.name) }">
               <img v-if="selected.imgUrl" :src="selected.imgUrl" class="mh-av-img" />
               <span v-else :class="isLemon(selected.name) ? 'mh-av-emoji' : ''">{{ isLemon(selected.name) ? '🍋' : (selected.name || '?').charAt(0) }}</span>
@@ -186,6 +199,7 @@ import { ref, computed, onMounted } from 'vue'
 import BaseModal from '../shared/BaseModal.vue'
 import { useMentalStore }   from '../../stores/mental.js'
 import { useUserAuthStore } from '../../stores/userAuth.js'
+import { CARD_COLOR_MAP, emojiPositions } from '../../constants/mentalCardColors.js'
 
 const mental   = useMentalStore()
 const userAuth = useUserAuthStore()
@@ -230,6 +244,27 @@ function fmtTime(iso) {
     if (diff < 86400000) return Math.floor(diff / 3600000) + ' ชั่วโมงที่แล้ว'
     return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
   } catch { return '' }
+}
+
+function cardStyle(c) {
+  if (!c?.cardBgType) return {}
+  if (c.cardBgType === 'color') {
+    const color = CARD_COLOR_MAP[c.cardBgValue]
+    return color ? { background: color.css, borderColor: color.border } : {}
+  }
+  if (c.cardBgType === 'image') return { backgroundImage: `url('${c.cardBgValue}')`, backgroundSize: 'cover', backgroundPosition: 'center', borderColor: 'rgba(255,255,255,0.4)' }
+  return {}
+}
+
+function ctaStyle(c) {
+  if (c.cardBgType === 'color') {
+    const color = CARD_COLOR_MAP[c.cardBgValue]
+    if (color) return { background: color.ctaBg, color: color.ctaText, boxShadow: `0 2px 10px ${color.border}66` }
+  }
+  if (c.cardBgType === 'image') {
+    return { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', color: 'rgba(255,255,255,0.95)', boxShadow: 'none' }
+  }
+  return {}
 }
 
 function selectAdvisor(c) {
@@ -321,21 +356,29 @@ onMounted(() => mental.loadAdvisors())
   background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
   opacity: 0; transition: opacity 0.2s;
 }
-/* lemon scatter — full card */
-.mh-card::after {
-  content: '🍋  🍋  🍋  🍋  🍋\A  🍋  🍋  🍋  🍋  🍋\A🍋  🍋  🍋  🍋  🍋\A  🍋  🍋  🍋  🍋  🍋';
-  white-space: pre;
-  position: absolute; left: -20px; top: -20px;
-  font-size: 48px; line-height: 1.6;
-  opacity: 0.35; pointer-events: none; z-index: 0;
-  transform: rotate(14deg);
-  transform-origin: top left;
-  filter: drop-shadow(0 2px 4px rgba(180,120,0,0.2));
-  transition: opacity 0.2s;
+/* Custom bg — darken overlay so text stays readable */
+.mh-card--custom {
+  /* border-color set via inline style from cardStyle() */
 }
-.mh-card:hover::after { opacity: 0.55; }
+.mh-card--custom::before {
+  background: linear-gradient(135deg, rgba(0,0,0,0.35) 0%, rgba(20,10,0,0.45) 100%) !important;
+  opacity: 1 !important;
+}
+.mh-card--custom .mh-card-name { color: white !important; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+.mh-card--custom .mh-card-role { color: rgba(255,255,255,0.85) !important; }
+
+/* Emoji scatter overlay inside the card */
+.mh-card-emoji-bg {
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 0; overflow: hidden;
+  opacity: 0.38; transition: opacity 0.2s;
+}
+.mh-card:hover .mh-card-emoji-bg { opacity: 0.58; }
+.mh-emoji-dot {
+  position: absolute; font-size: 26px; line-height: 1;
+  display: block; user-select: none;
+}
 .mh-card:hover {
-  border-color: #D97706;
   transform: translateY(-3px);
   box-shadow: 0 12px 32px rgba(245,158,11,0.45), 0 2px 8px rgba(245,158,11,0.25);
 }
@@ -520,14 +563,6 @@ onMounted(() => mental.loadAdvisors())
   margin-bottom:14px;
   box-shadow: 0 4px 14px rgba(245,158,11,0.25);
   position: relative; overflow: hidden;
-}
-.mh-form-advisor::after {
-  content: '🍋  🍋  🍋\A  🍋  🍋  🍋\A🍋  🍋  🍋';
-  white-space: pre;
-  position: absolute; right: -16px; top: -16px;
-  font-size: 36px; line-height: 1.7;
-  opacity: 0.3; pointer-events: none;
-  transform: rotate(14deg);
 }
 
 .mh-anon-badge {

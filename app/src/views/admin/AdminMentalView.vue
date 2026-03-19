@@ -5,7 +5,7 @@
       <div class="al-page-header">
         <h2 class="al-page-title">💚 ที่ปรึกษาสุขภาพจิต</h2>
         <button v-if="tab === 'advisors'" class="al-btn al-btn-primary" @click="openAdd">+ เพิ่ม</button>
-        <button v-else class="al-btn al-btn-secondary" @click="loadRequests(true)">🔄 โหลดใหม่</button>
+        <button v-else-if="tab === 'requests'" class="al-btn al-btn-secondary" @click="loadRequests(true)">🔄 โหลดใหม่</button>
       </div>
 
       <!-- Tabs -->
@@ -61,6 +61,7 @@
           </ul>
         </div>
       </div>
+
 
       <!-- ── Tab: Requests ── -->
       <div v-else-if="tab === 'requests'">
@@ -139,6 +140,71 @@
           <input v-model.number="form.order" type="number" min="0" class="al-form-input" style="max-width:100px;" />
         </div>
 
+        <!-- Card BG -->
+        <div class="al-form-row">
+          <label class="al-form-label">🃏 พื้นหลัง Card</label>
+
+          <!-- Preview -->
+          <div class="mav-card-preview" :style="cardPreviewStyle">
+            <div v-if="form.cardBgEmoji" class="mav-card-emoji-scatter" aria-hidden="true">
+              <span v-for="(p, i) in emojiPositions(form.name || 'preview')" :key="i" class="mav-emoji-dot"
+                :style="{ left: p.left+'%', top: p.top+'%', transform: `rotate(${p.rotate}deg) scale(${p.scale})` }">{{ form.cardBgEmoji }}</span>
+            </div>
+            <div class="mav-card-preview-inner">
+              <div class="mav-card-av">{{ (form.name || 'ก').charAt(0) }}</div>
+              <div style="flex:1;min-width:0;">
+                <div class="mav-card-pv-name" :class="{ 'mav-card-pv-light': !!form.cardBgType }">{{ form.name || 'ชื่อที่ปรึกษา' }}</div>
+                <div class="mav-card-pv-role" :class="{ 'mav-card-pv-light': !!form.cardBgType }">{{ form.role || 'บทบาท' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BG type tabs (color/image only — emoji is independent below) -->
+          <div class="mav-bg-tabs">
+            <button type="button" class="mav-bg-tab" :class="{ active: !form.cardBgType }" @click="clearCardBg">✕ ค่าเริ่มต้น</button>
+            <button type="button" class="mav-bg-tab" :class="{ active: form.cardBgType === 'color' }" @click="form.cardBgType = 'color'">🎨 สี</button>
+            <button type="button" class="mav-bg-tab" :class="{ active: form.cardBgType === 'image' }" @click="form.cardBgType = 'image'">📷 รูป</button>
+          </div>
+
+          <!-- Color swatches -->
+          <div v-if="form.cardBgType === 'color'" class="mav-swatch-grid">
+            <button
+              v-for="c in CARD_COLORS" :key="c.key" type="button"
+              class="mav-swatch" :style="{ background: c.css }"
+              :class="{ selected: form.cardBgValue === c.key }"
+              @click="pickColor(c.key)"
+              :title="c.label"
+            ></button>
+          </div>
+
+          <!-- Image upload -->
+          <div v-else-if="form.cardBgType === 'image'" style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <label class="al-btn al-btn-secondary" :for="'cardBg_'+modal.mode" style="cursor:pointer;font-size:12px;padding:6px 12px;">
+              {{ cardBgUploading ? '⏳ อัปโหลด...' : '📷 เลือกรูป' }}
+            </label>
+            <input :id="'cardBg_'+modal.mode" type="file" accept="image/*" style="display:none" :disabled="cardBgUploading" @change="onCardBgChange" />
+            <span v-if="form.cardBgValue && form.cardBgType === 'image'" style="font-size:11px;color:#059669;">✅ มีรูปแล้ว</span>
+          </div>
+        </div>
+
+        <!-- Emoji overlay (independent from bg color/image) -->
+        <div class="al-form-row">
+          <label class="al-form-label">🍋 Emoji บนการ์ด <span style="font-weight:400;color:#9CA3AF;">(เลือกพร้อมกับสีได้)</span></label>
+          <div class="mav-emoji-grid">
+            <button
+              type="button" class="mav-emoji-btn mav-emoji-clear"
+              :class="{ selected: !form.cardBgEmoji }"
+              @click="clearEmoji"
+              title="ไม่มี Emoji"
+            >✕</button>
+            <button
+              v-for="e in BG_EMOJIS" :key="e" type="button"
+              class="mav-emoji-btn" :class="{ selected: form.cardBgEmoji === e }"
+              @click="pickEmoji(e)"
+            >{{ e }}</button>
+          </div>
+        </div>
+
         <div v-if="modal.error" class="al-error">⚠️ {{ modal.error }}</div>
 
         <div class="al-modal-footer">
@@ -176,6 +242,8 @@ import {
   getMentalAdvisors, addMentalAdvisor, updateMentalAdvisor, deleteMentalAdvisor,
   getConsultRequests,
 } from '../../services/adminService.js'
+import { uploadImage, deleteImage } from '../../services/edgeFunctions.js'
+import { CARD_COLORS, CARD_COLOR_MAP, emojiPositions } from '../../constants/mentalCardColors.js'
 
 const tab = ref('advisors')
 
@@ -184,7 +252,20 @@ const advisors  = ref([])
 const employees = ref([])
 const loading   = ref(true)
 const modal     = reactive({ open: false, mode: 'add', saving: false, error: '' })
-const form      = reactive({ id: '', name: '', role: '', employeeId: '', order: 0 })
+const form            = reactive({ id: '', name: '', role: '', employeeId: '', order: 0, cardBgType: '', cardBgValue: '', cardBgId: '', cardBgEmoji: '' })
+const cardBgUploading = ref(false)
+
+const cardPreviewStyle = computed(() => {
+  if (!form.cardBgType) return {}
+  if (form.cardBgType === 'color' && form.cardBgValue) {
+    const color = CARD_COLOR_MAP[form.cardBgValue]
+    return color ? { background: color.css, borderColor: color.border } : {}
+  }
+  if (form.cardBgType === 'image' && form.cardBgValue) return { backgroundImage: `url('${form.cardBgValue}')`, backgroundSize: 'cover', backgroundPosition: 'center' }
+  return {}
+})
+
+const BG_EMOJIS = ['🍋','🍓','🍊','🍇','🍑','🍍','🥭','🍎','🌸','⭐','🌿','💙','🌈','🦋','🌻','🎵']
 const delTarget = ref(null)
 const deleting  = ref(false)
 const empSearch = ref('')
@@ -222,13 +303,13 @@ onMounted(async () => {
 })
 
 function openAdd() {
-  Object.assign(form, { id: '', name: '', role: '', employeeId: '', order: advisors.value.length })
+  Object.assign(form, { id: '', name: '', role: '', employeeId: '', order: advisors.value.length, cardBgType: '', cardBgValue: '', cardBgId: '', cardBgEmoji: '' })
   empSearch.value = ''; showDrop.value = false
   modal.mode = 'add'; modal.error = ''; modal.open = true
 }
 
 function openEdit(a) {
-  Object.assign(form, { ...a })
+  Object.assign(form, { ...a, cardBgType: a.cardBgType || '', cardBgValue: a.cardBgValue || '', cardBgId: a.cardBgId || '', cardBgEmoji: a.cardBgEmoji || '' })
   empSearch.value = ''; showDrop.value = false
   modal.mode = 'edit'; modal.error = ''; modal.open = true
 }
@@ -254,7 +335,7 @@ async function doSave() {
   if (!form.name.trim()) { modal.error = 'กรุณากรอกชื่อ'; return }
   modal.saving = true; modal.error = ''
   try {
-    const payload = { name: form.name.trim(), role: form.role.trim(), employeeId: form.employeeId.trim(), order: form.order }
+    const payload = { name: form.name.trim(), role: form.role.trim(), employeeId: form.employeeId.trim(), order: form.order, cardBgType: form.cardBgType || null, cardBgValue: form.cardBgValue || null, cardBgId: form.cardBgId || null, cardBgEmoji: form.cardBgEmoji || null }
     if (modal.mode === 'add') {
       const created = await addMentalAdvisor(payload)
       advisors.value.push(created)
@@ -269,6 +350,67 @@ async function doSave() {
     modal.error = e.message || 'เกิดข้อผิดพลาด'
   } finally {
     modal.saving = false
+  }
+}
+
+function resizeBg(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image(), url = URL.createObjectURL(file)
+    img.onload = () => {
+      const MAX = 1200
+      let w = img.width, h = img.height
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX }
+      const c = document.createElement('canvas')
+      c.width = w; c.height = h
+      c.getContext('2d').drawImage(img, 0, 0, w, h)
+      URL.revokeObjectURL(url)
+      resolve(c.toDataURL('image/jpeg', 0.82))
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('load failed')) }
+    img.src = url
+  })
+}
+
+function pickColor(key) {
+  form.cardBgType  = 'color'
+  form.cardBgValue = key
+  form.cardBgId    = ''
+}
+
+function pickEmoji(emoji) {
+  form.cardBgEmoji = emoji
+}
+
+function clearEmoji() {
+  form.cardBgEmoji = ''
+}
+
+function clearCardBg() {
+  const oldId = form.cardBgId
+  if (oldId) deleteImage([oldId]).catch(() => {})
+  form.cardBgType  = ''
+  form.cardBgValue = ''
+  form.cardBgId    = ''
+}
+
+async function onCardBgChange(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  e.target.value = ''
+  modal.error = ''
+  cardBgUploading.value = true
+  try {
+    const b64  = await resizeBg(file)
+    const oldId = form.cardBgId
+    const res  = await uploadImage(b64, 'mental_card_bg.jpg', 'mental')
+    if (oldId && oldId !== res.id) deleteImage([oldId]).catch(() => {})
+    form.cardBgType  = 'image'
+    form.cardBgValue = res.url || b64
+    form.cardBgId    = res.id  || ''
+  } catch (err) {
+    modal.error = err.message || 'อัปโหลดรูปไม่สำเร็จ'
+  } finally {
+    cardBgUploading.value = false
   }
 }
 
@@ -363,6 +505,70 @@ function fmtTime(iso) {
 }
 .mav-req-msg  { font-size: 13px; color: #374151; line-height: 1.5; margin-bottom: 4px; }
 .mav-req-time { font-size: 10px; color: #9CA3AF; }
+
+/* ── Card preview ── */
+.mav-card-preview {
+  background: linear-gradient(135deg, #FBBF24 0%, #FCD34D 40%, #FDE68A 100%);
+  border: 2px solid #F59E0B; border-radius: 16px;
+  padding: 14px; display: flex; align-items: center; gap: 12px;
+  position: relative; overflow: hidden;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 14px rgba(245,158,11,0.3);
+  min-height: 72px;
+}
+.mav-card-emoji-scatter {
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 0; overflow: hidden;
+  opacity: 0.38;
+}
+.mav-emoji-dot {
+  position: absolute; font-size: 22px; line-height: 1;
+  display: block; user-select: none;
+}
+.mav-card-preview-inner {
+  position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; width: 100%;
+}
+.mav-card-av {
+  width: 48px; height: 48px; border-radius: 50%; background: #F59E0B;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 900; color: white;
+  border: 2px solid white; flex-shrink: 0;
+}
+.mav-card-pv-name { font-size: 13px; font-weight: 900; color: #78350F; }
+.mav-card-pv-role { font-size: 11px; color: #92400E; margin-top: 2px; }
+.mav-card-pv-light { color: white !important; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+
+/* Type tabs */
+.mav-bg-tabs { display: flex; gap: 4px; margin-bottom: 10px; flex-wrap: wrap; }
+.mav-bg-tab {
+  padding: 5px 11px; border-radius: 8px; border: 1.5px solid #E5E7EB;
+  font-size: 12px; font-weight: 700; color: #6B7280;
+  background: white; cursor: pointer; transition: all 0.12s;
+}
+.mav-bg-tab.active { background: #EEF2FF; color: #4F46E5; border-color: #C7D2FE; }
+
+/* Color swatches */
+.mav-swatch-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.mav-swatch {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 2.5px solid transparent; cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+.mav-swatch:hover { transform: scale(1.15); }
+.mav-swatch.selected { border-color: #1F2937; transform: scale(1.15); }
+
+/* Emoji grid */
+.mav-emoji-grid { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.mav-emoji-btn {
+  width: 38px; height: 38px; border-radius: 10px; border: 2px solid #E5E7EB;
+  font-size: 20px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; background: white; transition: all 0.12s;
+}
+.mav-emoji-btn:hover { background: #F3F4F6; transform: scale(1.1); }
+.mav-emoji-btn.selected { border-color: #6366F1; background: #EEF2FF; }
+.mav-emoji-clear { font-size: 13px; color: #9CA3AF; }
+.mav-emoji-clear.selected { border-color: #9CA3AF; background: #F3F4F6; color: #6B7280; }
 
 /* ── Employee autocomplete ── */
 .mav-drop {

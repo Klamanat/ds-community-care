@@ -11,6 +11,10 @@ function mapAdvisor(a) {
     imgId:      a.img_id      || '',
     imgUrl:     a.img_url     || '',
     order:      a.order       != null ? Number(a.order) : 0,
+    cardBgType:  a.card_bg_type  || '',
+    cardBgValue: a.card_bg_value || '',
+    cardBgId:    a.card_bg_id   || '',
+    cardBgEmoji: a.card_bg_emoji || '',
   }
 }
 
