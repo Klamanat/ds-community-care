@@ -29,6 +29,24 @@ export async function fetchMonth(monthIdx) {
     }
   })
 
+  // Fetch wish counts for all people this month in one query
+  if (people.length) {
+    const keys = people.map(p => p.key)
+    supabase.from('birthday_wishes').select('birthday_key').in('birthday_key', keys)
+      .then(({ data: wdata }) => {
+        if (!wdata?.length) return
+        const countMap = {}
+        wdata.forEach(w => { countMap[w.birthday_key] = (countMap[w.birthday_key] || 0) + 1 })
+        people.forEach(p => {
+          const n = countMap[p.key] || 0
+          if (n > 0 && p.wishes.length === 0) {
+            // Fill placeholder array so .length = count (items have no id — just for count display)
+            p.wishes = Array.from({ length: n }, () => ({}))
+          }
+        })
+      }).catch(() => {})
+  }
+
   const ids = [...new Set(people.map(p => p.imgId).filter(Boolean))]
   if (ids.length) fetchImages(ids).then(map => {
     people.forEach(p => { if (p.imgId && map[p.imgId]) p.photo = map[p.imgId] })

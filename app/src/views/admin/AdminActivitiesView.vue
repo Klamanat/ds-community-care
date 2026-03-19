@@ -269,8 +269,9 @@ async function onImgChange(e) {
     const b64 = await resizeToBase64(file, 1200, 600, 0.88)
     imgPreview.value = b64
     const res = await svc.uploadImage(b64, file.name, 'activities')
-    form.imgId  = res.data.id
-    form.imgUrl = ''
+    form.imgId  = res.id
+    form.imgUrl = res.url || ''
+    imgPreview.value = res.url || b64
   } catch (err) {
     modal.error = 'อัปโหลดรูปล้มเหลว: ' + (err.message || 'ลองใหม่')
     imgPreview.value = ''

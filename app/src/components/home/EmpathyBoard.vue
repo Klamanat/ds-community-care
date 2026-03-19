@@ -57,7 +57,7 @@ const GRADS = [
 // Map praisedPeople → shape EmpathyCard expects (max 12, sorted by latest comment from GAS)
 const posts = computed(() =>
   empathy.praisedPeople.slice(0, 12).map((person, idx) => {
-    const cl = empathy.channelLikes[person.id]
+    const cl = empathy.channelLikes[person.empCode || person.id]
     return {
       id:        person.id,
       recImg:    person.imgUrl || '',

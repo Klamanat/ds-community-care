@@ -61,7 +61,7 @@ returns table (
       'linear-gradient(135deg,#A5B4FC,#6366F1)'               as color
     from activities a
     where a.join_open = true
-      and a.month_idx = coalesce(p_month_idx, extract(month from now())::integer)
+      and a.month_idx = p_month_idx + 1  -- activities 1-indexed, employees 0-indexed
 
   )
   select

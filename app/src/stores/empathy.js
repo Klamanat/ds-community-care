@@ -111,6 +111,12 @@ export const useEmpathyStore = defineStore('empathy', () => {
       praisedPeople.value = [...merged, ...sessionOnly]
       lastPeopleFetched.value = Date.now()
       lsSet('empathy_people', stripBase64(merged, 'imgUrl'), 10 * 60 * 1000)
+      // Fetch channel like counts — use empCode as key (matches selectPerson channelId)
+      const userKey = useUserAuthStore().userId || ''
+      const channelKeys = merged.map(p => p.empCode || p.id).filter(Boolean)
+      if (channelKeys.length) svc.fetchChannelLikeCounts(channelKeys, userKey).then(map => {
+        Object.entries(map).forEach(([k, val]) => { channelLikes[k] = val })
+      }).catch(() => {})
       // Lazy-fetch Drive images after page renders
       const ids = [...new Set(merged.map(p => p.imgId).filter(Boolean))]
       if (ids.length) fetchImages(ids).then(map => {
@@ -191,13 +197,20 @@ export const useEmpathyStore = defineStore('empathy', () => {
     lsDel('empathy_people') // commentCount เปลี่ยน
     lastPeopleFetched.value = null // force re-fetch on next loadPeople
 
+    // Optimistic: increment commentCount immediately in praisedPeople
+    const person = praisedPeople.value.find(p =>
+      String(p.id) === String(channelId) || String(p.empCode) === String(channelId)
+    )
+    if (person) person.commentCount = (person.commentCount || 0) + 1
+
     try {
       const cm = await svc.addComment(channelId, text, authorName, parentId)
       const idx = postComments[channelId].findIndex(c => c.id === temp.id)
       if (idx !== -1) postComments[channelId].splice(idx, 1, { ...cm, likeCount: 0, _liked: false })
-      lsDel('dsc_cm_' + channelId) // invalidate — ป้องกัน LS เก่า serve บน reload
+      lsDel('dsc_cm_' + channelId)
     } catch {
       postComments[channelId] = postComments[channelId].filter(c => c.id !== temp.id)
+      if (person) person.commentCount = Math.max(0, (person.commentCount || 0) - 1)
       ui.showToast('ส่งความคิดเห็นไม่สำเร็จ')
     }
   }

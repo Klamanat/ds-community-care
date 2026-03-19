@@ -76,14 +76,19 @@ export async function updateActivity(id, fields) {
   const { data, error } = await supabase
     .from('activities')
     .update({
+      month_idx:     fields.monthIdx,
       name:          fields.name,
       emoji:         fields.emoji,
       date:          fields.date,
       date_end:      fields.dateEnd,
       loc:           fields.loc,
       desc:          fields.desc,
+      steps:         fields.steps,
+      join_url:      fields.joinUrl,
       join_open:     fields.joinOpen !== false,
       join_label:    fields.joinLabel,
+      join_open_at:  fields.joinOpenAt,
+      join_close_at: fields.joinCloseAt,
       feedback_url:  fields.feedbackUrl,
       img_url:       fields.imgUrl,
       img_id:        fields.imgId,

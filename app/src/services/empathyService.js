@@ -68,31 +68,34 @@ export async function addComment(postId, text, authorName, parentId = '') {
 }
 
 export async function toggleLike(postId, userKey) {
+  console.log('[toggleLike] called', postId, userKey)
   const { data, error } = await supabase.rpc('toggle_empathy_like', {
     p_post_id:  postId,
     p_user_key: userKey || 'anonymous',
   })
-  if (error) throw new Error(error.message)
+  if (error) { console.error('[toggleLike]', error); throw new Error(error.message) }
   const row = data?.[0] || {}
   return { postId, liked: row.liked, likeCount: Number(row.like_count) || 0 }
 }
 
 export async function toggleCommentLike(commentId, userKey) {
+  console.log('[toggleCommentLike] called', commentId, userKey)
   const { data, error } = await supabase.rpc('toggle_comment_like', {
     p_comment_id: commentId,
     p_user_key:   userKey || 'anonymous',
   })
-  if (error) throw new Error(error.message)
+  if (error) { console.error('[toggleCommentLike]', error); throw new Error(error.message) }
   const row = data?.[0] || {}
   return { commentId, liked: row.liked, likeCount: Number(row.like_count) || 0 }
 }
 
 export async function toggleChannelLike(channelId, userKey) {
+  console.log('[toggleChannelLike] called', channelId, userKey)
   const { data, error } = await supabase.rpc('toggle_channel_like', {
     p_channel_id: channelId,
     p_user_key:   userKey || 'anonymous',
   })
-  if (error) throw new Error(error.message)
+  if (error) { console.error('[toggleChannelLike]', error); throw new Error(error.message) }
   const row = data?.[0] || {}
   return { channelId, liked: row.liked, likeCount: Number(row.like_count) || 0 }
 }
@@ -109,6 +112,20 @@ export async function fetchChannelLike(channelId, userKey) {
     liked:     !!likes.find(l => l.user_key === userKey),
     likeCount: likes.length,
   }
+}
+
+export async function fetchChannelLikeCounts(channelIds, userKey = '') {
+  const { data } = await supabase
+    .from('channel_likes')
+    .select('channel_id, user_key')
+    .in('channel_id', channelIds)
+  const map = {}
+  ;(data || []).forEach(l => {
+    map[l.channel_id] = map[l.channel_id] || { count: 0, liked: false }
+    map[l.channel_id].count++
+    if (userKey && l.user_key === userKey) map[l.channel_id].liked = true
+  })
+  return map
 }
 
 export async function uploadEmpathyPhoto(base64, fileName) {
