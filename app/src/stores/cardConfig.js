@@ -7,7 +7,7 @@ export const CARD_DEFS = [
   { key: 'culture',   icon: '🤝', label: 'Team Culture',                desc: 'วัฒนธรรมองค์กร' },
   { key: 'training',  icon: '📚', label: 'Training',                    desc: 'การฝึกอบรม' },
   { key: 'reward',    icon: '🏆', label: 'DS Reward',                   desc: 'ระบบสะสมคะแนน' },
-  { key: 'monthly',   icon: '📅', label: 'Monthly Plan',                 desc: 'แผนกิจกรรมรายเดือน' },
+  { key: 'monthly',   icon: '📅', label: 'Monthly Plan',                 desc: 'ตารางเข้าออฟฟิศรายเดือน' },
   { key: 'market',    icon: '🛍️', label: 'ตลาดนัด',                     desc: 'ซื้อ-ขายของระหว่างพนักงาน' },
   { key: 'idea',      icon: '💡', label: 'เสนอไอเดีย',                  desc: 'ระบบส่งไอเดียพนักงาน' },
   { key: 'fortune',   icon: '🔮', label: 'สายมู',                       desc: 'ดูดวง, ฤกษ์มงคล, วันดีประจำสัปดาห์' },

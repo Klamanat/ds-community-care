@@ -97,7 +97,7 @@
              @click="cardClick('monthly', () => ui.openModal('modal-monthly-plan'))">
           <div class="ti">📅</div>
           <div class="tt">Monthly Plan</div>
-          <div class="ts">แผนกิจกรรม {{ currentYear }}</div>
+          <div class="ts">ตารางเข้าออฟฟิศ {{ currentYear }}</div>
           <div class="mp-months">
             <span v-for="m in monthDots" :key="m.i" class="mp-dot" :class="{ active: m.i === currentMonth }"></span>
           </div>

@@ -90,7 +90,7 @@
             <input
               v-model="form.title"
               class="al-form-input"
-              placeholder="เช่น แผนกิจกรรมมีนาคม 2026"
+              placeholder="เช่น ตารางเข้าออฟฟิศเดือนมีนาคม 2026"
               maxlength="200"
             />
           </div>

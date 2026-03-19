@@ -8,7 +8,7 @@
         <div class="mpl-header-icon">📋</div>
         <div>
           <div class="mpl-header-title">Monthly Plan</div>
-          <div class="mpl-header-sub">แผนกิจกรรมประจำเดือน</div>
+          <div class="mpl-header-sub">ตารางเข้าออฟฟิศรายเดือน</div>
         </div>
       </div>
     </div>
