@@ -38,13 +38,18 @@ const STORAGE_BASE = (import.meta.env.VITE_SUPABASE_URL || '') + '/storage/v1/ob
 
 // ── Public API ────────────────────────────────────────────────────────
 
+/** Encode a Supabase Storage path (each segment) but keep '/' separators */
+function encodeStoragePath(path) {
+  return path.split('/').map(encodeURIComponent).join('/')
+}
+
 /** Return cached URL/base64 for imgId synchronously ('' if not cached).
  *  For Supabase Storage paths (contain '/'), returns the public URL immediately. */
 export function getCached(imgId) {
   if (!imgId) return ''
   if (_mem.has(imgId)) return _mem.get(imgId)
-  // Storage path not yet in cache — construct public URL on-the-fly
-  if (imgId.includes('/') && !imgId.startsWith('http')) return STORAGE_BASE + imgId
+  // Storage path not yet in cache — construct public URL on-the-fly (encode spaces etc.)
+  if (imgId.includes('/') && !imgId.startsWith('http')) return STORAGE_BASE + encodeStoragePath(imgId)
   return ''
 }
 
@@ -80,9 +85,9 @@ async function _flush() {
     const httpIds = ids.filter(id => id.startsWith('http'))
     httpIds.forEach(id => { if (!_mem.has(id)) _mem.set(id, id) })
 
-    // Supabase Storage paths (contain '/' but not 'http') → build public URL
+    // Supabase Storage paths (contain '/' but not 'http') → build public URL (encode spaces etc.)
     const storageIds = ids.filter(id => id.includes('/') && !id.startsWith('http'))
-    storageIds.forEach(id => { if (!_mem.has(id)) _mem.set(id, STORAGE_BASE + id) })
+    storageIds.forEach(id => { if (!_mem.has(id)) _mem.set(id, STORAGE_BASE + encodeStoragePath(id)) })
 
     // IDs that look like Drive file IDs (no '/', no 'http') — fetch via Edge Function
     const driveIds = ids.filter(id => !id.includes('/') && !id.startsWith('http'))
@@ -92,9 +97,9 @@ async function _flush() {
         Object.entries(map).forEach(([id, b64]) => { if (b64) _mem.set(id, b64) })
         _scheduleSave()
       } catch { /* fall through to thumbnail fallback below */ }
-      // Fallback: use public thumbnail URL for Drive files
+      // Fallback: Drive thumbnail URL (works for "anyone with link" shared files)
       driveIds.forEach(id => {
-        if (!_mem.has(id)) _mem.set(id, `https://lh3.googleusercontent.com/d/${id}`)
+        if (!_mem.has(id)) _mem.set(id, `https://drive.google.com/thumbnail?id=${id}&sz=w800`)
       })
     }
   }

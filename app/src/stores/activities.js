@@ -40,11 +40,15 @@ export const useActivitiesStore = defineStore('activities', () => {
     try {
       const data = await svc.fetchAll()
       // Apply cached images immediately before lazy-fetch
-      all.value  = data.map(a => a.imgId ? { ...a, imgUrl: getCached(a.imgId) || a.imgUrl || '' } : a)
+      all.value  = data.map(a => {
+        if (!a.imgId) return a
+        if (a.imgUrl?.startsWith('http')) return a  // DB already has correct URL
+        return { ...a, imgUrl: getCached(a.imgId) || a.imgUrl || '' }
+      })
       loaded.value = true
       lsSet('activities', stripBase64(data, 'imgUrl'), TTL)
-      // Lazy-fetch Drive images after page renders
-      const ids = [...new Set(data.map(a => String(a.imgId || '')).filter(Boolean))]
+      // Lazy-fetch Drive images (only for Drive IDs, not Storage paths)
+      const ids = [...new Set(data.map(a => String(a.imgId || '')).filter(id => id && !id.includes('/')))]
       if (ids.length) fetchImages(ids).then(map => {
         all.value = all.value.map(a => (a.imgId && map[a.imgId]) ? { ...a, imgUrl: map[a.imgId] } : a)
       }).catch(() => {})
