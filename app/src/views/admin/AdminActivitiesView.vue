@@ -193,6 +193,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useActivitiesStore } from '../../stores/activities.js'
 import * as svc from '../../services/activitiesService.js'
 import { resizeToBase64 } from '../../composables/useImageCompress.js'
+import { deleteImage } from '../../services/edgeFunctions.js'
 
 const acts   = useActivitiesStore()
 
@@ -263,6 +264,7 @@ function joinDateTime(d, t) {
 async function onImgChange(e) {
   const file = e.target.files?.[0]
   if (!file) return
+  const oldImgId = form.imgId
   imgUploading.value = true
   modal.error = ''
   try {
@@ -272,6 +274,7 @@ async function onImgChange(e) {
     form.imgId  = res.id
     form.imgUrl = res.url || ''
     imgPreview.value = res.url || b64
+    if (oldImgId && oldImgId !== res.id) deleteImage([oldImgId]).catch(() => {})
   } catch (err) {
     modal.error = 'อัปโหลดรูปล้มเหลว: ' + (err.message || 'ลองใหม่')
     imgPreview.value = ''

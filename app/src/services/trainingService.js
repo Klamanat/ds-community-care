@@ -125,6 +125,7 @@ export async function fetchIdpPosters() {
     id:          p.id,
     title:       p.title       || '',
     imageUrl:    p.image_url   || '',
+    imageId:     p.image_id    || '',
     description: p.description || '',
     date:        p.date        || '',
     createdAt:   p.created_at  || '',
@@ -148,7 +149,7 @@ export async function adminUploadIdpImage(base64Data, _mimeType, fileName) {
 }
 
 function toPosterRow(f) {
-  return { title: f.title, image_url: f.imageUrl, description: f.description, date: f.date || null }
+  return { title: f.title, image_url: f.imageUrl, image_id: f.imageId || null, description: f.description, date: f.date || null }
 }
 function toVideoRow(f) {
   return { title: f.title, video_url: f.videoUrl, description: f.description }

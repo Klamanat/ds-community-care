@@ -29,6 +29,24 @@ export async function uploadImage(base64, fileName, folderType = 'empathy') {
 }
 
 /**
+ * Delete one or more files from Supabase Storage via Edge Function.
+ * Fire-and-forget: do not await unless you need confirmation.
+ * @param {string[]} paths  Storage paths, e.g. ['activities/1710425_file.jpg']
+ */
+export async function deleteImage(paths) {
+  if (!paths?.length) return
+  const res = await fetch(`${BASE}/delete-image`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${ANON}`,
+    },
+    body: JSON.stringify({ paths }),
+  })
+  if (!res.ok) throw new Error(`delete-image: ${res.status}`)
+}
+
+/**
  * Batch-fetch Drive images as base64 map via Edge Function.
  * Replaces gasGet('getImages', { imgIds: '...' })
  * @param {string[]} imgIds  Array of Drive file IDs

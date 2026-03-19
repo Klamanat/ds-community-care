@@ -264,6 +264,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import * as svc from '../../services/adminService.js'
 import { fetchImages } from '../../services/imageService.js'
+import { deleteImage } from '../../services/edgeFunctions.js'
 
 const route = useRoute()
 
@@ -427,11 +428,13 @@ async function saveInlineEdit(r) {
     let imgUrl = f.imgUrl, imgId = f.imgId
     if (f.imgPending) {
       editUploading[r.id] = true
+      const oldImgId = f.imgId
       try {
         const res = await svc.uploadProfileImage(r.id, f.imgPending, f.name + '_profile.jpg')
         imgUrl = f.imgPreview
         imgId  = res?.id || ''
         editUploadDone[r.id] = true
+        if (oldImgId && oldImgId !== imgId) deleteImage([oldImgId]).catch(() => {})
       } finally {
         editUploading[r.id] = false
       }

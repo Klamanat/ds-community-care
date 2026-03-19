@@ -161,6 +161,7 @@
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
 import * as svc from '../../../services/trainingService.js'
+import { deleteImage } from '../../../services/edgeFunctions.js'
 
 const subTab  = ref('poster')
 const loading = ref(false)
@@ -175,7 +176,7 @@ const delRow     = ref(null)
 const delType    = ref('poster')
 const deleting   = ref(false)
 
-const form      = reactive({ title: '', imageUrl: '', videoUrl: '', description: '', date: '' })
+const form      = reactive({ title: '', imageUrl: '', imageId: '', videoUrl: '', description: '', date: '' })
 const fileInput = ref(null)
 const uploading = ref(false)
 
@@ -194,6 +195,7 @@ function onImgError(e) { e.target.style.display = 'none' }
 async function onFileChange(e) {
   const file = e.target.files[0]
   if (!file) return
+  const oldImageId = form.imageId
   uploading.value = true
   try {
     const base64 = await new Promise((res, rej) => {
@@ -204,6 +206,8 @@ async function onFileChange(e) {
     })
     const result = await svc.adminUploadIdpImage(base64, file.type, file.name)
     form.imageUrl = result.url
+    form.imageId  = result.id || ''
+    if (oldImageId && oldImageId !== result.id) deleteImage([oldImageId]).catch(() => {})
   } catch (err) {
     alert('อัปโหลดไม่สำเร็จ: ' + (err?.message || err))
   } finally {
@@ -231,7 +235,7 @@ onMounted(() => loadAll())
 function switchSub(key) { subTab.value = key }
 
 function resetForm() {
-  Object.assign(form, { title: '', imageUrl: '', videoUrl: '', description: '', date: '' })
+  Object.assign(form, { title: '', imageUrl: '', imageId: '', videoUrl: '', description: '', date: '' })
 }
 
 function openAdd() {
@@ -247,6 +251,7 @@ function openEdit(row, type) {
   Object.assign(form, {
     title:       row.title       || '',
     imageUrl:    row.imageUrl    || '',
+    imageId:     row.imageId     || '',
     videoUrl:    row.videoUrl    || '',
     description: row.description || '',
     date:        row.date        || '',
@@ -264,7 +269,7 @@ async function doSave() {
   saving.value = true
   try {
     if (formType.value === 'poster') {
-      const p = { title: form.title.trim(), imageUrl: form.imageUrl.trim(), description: form.description.trim(), date: form.date.trim() }
+      const p = { title: form.title.trim(), imageUrl: form.imageUrl.trim(), imageId: form.imageId, description: form.description.trim(), date: form.date.trim() }
       if (editTarget.value) {
         await svc.adminUpdateIdpPoster(editTarget.value.id, p)
         Object.assign(editTarget.value, p)
