@@ -110,19 +110,38 @@
                 <div class="cm-bubble">
                   <span v-if="cm.tag" class="inline-block bg-pink/10 text-[#BE185D] text-[10px] font-extrabold px-2 py-0.5 rounded-full mb-1">{{ cm.tag }}</span>
                   <div class="cm-name">{{ cm.name }}</div>
-                  <div class="cm-text">{{ cm.text }}</div>
-                  <div class="flex items-center gap-3 mt-1.5">
-                    <span class="cm-time">{{ formatThaiDatetime(cm.time) }}</span>
-                    <button
-                      class="text-[11px] font-bold bg-transparent border-none cursor-pointer p-0 transition-colors"
-                      :class="cm._liked ? 'text-[#EC4899]' : 'text-[#C084C0]'"
-                      @click="empathy.toggleCommentLike(activePostId, cm.id)"
-                    >{{ cm._liked ? '❤️' : '🤍' }} {{ cm.likeCount || '' }}</button>
-                    <button
-                      class="text-[11px] font-bold text-[#BE185D] bg-transparent border-none cursor-pointer p-0"
-                      @click="toggleReply(cm.id)"
-                    >💬 ตอบกลับ</button>
-                  </div>
+
+                  <!-- Edit mode -->
+                  <template v-if="editingCmId === cm.id">
+                    <textarea v-model="editText" rows="2" maxlength="500"
+                      style="width:100%;border:1.5px solid #FBCFE8;border-radius:12px;padding:6px 10px;font-size:12px;color:#6B21A8;background:#FFF5FB;resize:none;outline:none;line-height:1.5;margin-top:4px;"
+                    ></textarea>
+                    <div style="display:flex;gap:8px;margin-top:6px;">
+                      <button style="font-size:11px;font-weight:800;background:linear-gradient(135deg,#EC4899,#7C3AED);color:white;border:none;border-radius:8px;padding:4px 14px;cursor:pointer;" @click="saveEdit(cm)">บันทึก</button>
+                      <button style="font-size:11px;font-weight:700;color:#9CA3AF;background:transparent;border:1px solid #E5E7EB;border-radius:8px;padding:4px 14px;cursor:pointer;" @click="cancelEdit">ยกเลิก</button>
+                    </div>
+                  </template>
+
+                  <!-- Normal view -->
+                  <template v-else>
+                    <div class="cm-text">{{ cm.text }}</div>
+                    <div class="flex items-center gap-3 mt-1.5">
+                      <span class="cm-time">{{ formatThaiDatetime(cm.time) }}</span>
+                      <button
+                        class="text-[11px] font-bold bg-transparent border-none cursor-pointer p-0 transition-colors"
+                        :class="cm._liked ? 'text-[#EC4899]' : 'text-[#C084C0]'"
+                        @click="empathy.toggleCommentLike(activePostId, cm.id)"
+                      >{{ cm._liked ? '❤️' : '🤍' }} {{ cm.likeCount || '' }}</button>
+                      <button
+                        class="text-[11px] font-bold text-[#BE185D] bg-transparent border-none cursor-pointer p-0"
+                        @click="toggleReply(cm.id)"
+                      >💬 ตอบกลับ</button>
+                      <template v-if="cm.name === userAuth.userName">
+                        <button class="cm-action-btn" @click="startEdit(cm)">✏️</button>
+                        <button class="cm-action-btn cm-action-del" @click="doDelete(cm)">🗑️</button>
+                      </template>
+                    </div>
+                  </template>
                 </div>
 
                 <!-- Inline reply box -->
@@ -150,15 +169,34 @@
                     </div>
                     <div class="cm-bubble !bg-[linear-gradient(135deg,#F5F3FF,#EDE9FE)] flex-1">
                       <div class="cm-name">{{ r.name }}</div>
-                      <div class="cm-text">{{ r.text }}</div>
-                      <div class="flex items-center gap-3 mt-1">
-                        <span class="cm-time">{{ formatThaiDatetime(r.time) }}</span>
-                        <button
-                          class="text-[11px] font-bold bg-transparent border-none cursor-pointer p-0 transition-colors"
-                          :class="r._liked ? 'text-[#EC4899]' : 'text-[#C084C0]'"
-                          @click="empathy.toggleCommentLike(activePostId, r.id)"
-                        >{{ r._liked ? '❤️' : '🤍' }} {{ r.likeCount || '' }}</button>
-                      </div>
+
+                      <!-- Edit mode -->
+                      <template v-if="editingCmId === r.id">
+                        <textarea v-model="editText" rows="2" maxlength="500"
+                          style="width:100%;border:1.5px solid #DDD6FE;border-radius:12px;padding:6px 10px;font-size:12px;color:#6B21A8;background:white;resize:none;outline:none;line-height:1.5;margin-top:4px;"
+                        ></textarea>
+                        <div style="display:flex;gap:8px;margin-top:6px;">
+                          <button style="font-size:11px;font-weight:800;background:linear-gradient(135deg,#EC4899,#7C3AED);color:white;border:none;border-radius:8px;padding:4px 14px;cursor:pointer;" @click="saveEdit(r)">บันทึก</button>
+                          <button style="font-size:11px;font-weight:700;color:#9CA3AF;background:transparent;border:1px solid #E5E7EB;border-radius:8px;padding:4px 14px;cursor:pointer;" @click="cancelEdit">ยกเลิก</button>
+                        </div>
+                      </template>
+
+                      <!-- Normal view -->
+                      <template v-else>
+                        <div class="cm-text">{{ r.text }}</div>
+                        <div class="flex items-center gap-3 mt-1">
+                          <span class="cm-time">{{ formatThaiDatetime(r.time) }}</span>
+                          <button
+                            class="text-[11px] font-bold bg-transparent border-none cursor-pointer p-0 transition-colors"
+                            :class="r._liked ? 'text-[#EC4899]' : 'text-[#C084C0]'"
+                            @click="empathy.toggleCommentLike(activePostId, r.id)"
+                          >{{ r._liked ? '❤️' : '🤍' }} {{ r.likeCount || '' }}</button>
+                          <template v-if="r.name === userAuth.userName">
+                            <button class="cm-action-btn" @click="startEdit(r)">✏️</button>
+                            <button class="cm-action-btn cm-action-del" @click="doDelete(r)">🗑️</button>
+                          </template>
+                        </div>
+                      </template>
                     </div>
                   </div>
                 </div>
@@ -299,6 +337,8 @@ const sending       = ref(false)
 const replyingTo    = ref(null)
 const replyText     = ref('')
 const replyRefs     = ref({})
+const editingCmId   = ref(null)
+const editText      = ref('')
 const threadScrollEl = ref(null)
 const composeEl      = ref(null)
 
@@ -371,14 +411,23 @@ function parseComment(cm) {
   return m ? { ...cm, tag: m[1], text: m[2] } : { ...cm, tag: '' }
 }
 
-// Build nested tree: top-level with .replies[]
+// Sort oldest→newest; Supabase may return "2026-03-20 10:30:00+07" (space, no T)
+function cmMs(t) {
+  if (!t || t === '') return 0
+  if (t === 'เมื่อกี้') return Infinity
+  const ms = Date.parse(String(t).replace(' ', 'T'))
+  return isNaN(ms) ? 0 : ms
+}
+function byCmTime(a, b) { return cmMs(a.time) - cmMs(b.time) }
+
+// Build nested tree: top-level with .replies[] — both sorted oldest→newest
 const threadComments = computed(() => {
   if (!activePostId.value) return []
-  const flat = empathy.postComments[activePostId.value] || []
+  const flat = [...(empathy.postComments[activePostId.value] || [])].sort(byCmTime)
   const top  = flat.filter(c => !c.parentId).map(parseComment)
   return top.map(cm => ({
     ...cm,
-    replies: flat.filter(r => r.parentId === cm.id)
+    replies: flat.filter(r => r.parentId === cm.id).sort(byCmTime)
   }))
 })
 
@@ -434,6 +483,26 @@ async function selectPerson(m) {
   loadingThread.value = false
   scrollBottom()
   nextTick(() => composeEl.value?.focus())
+}
+
+// ── Edit / Delete ───────────────────────────────────────────────────
+function startEdit(cm) {
+  editingCmId.value = cm.id
+  editText.value    = cm.text
+  replyingTo.value  = null
+}
+function cancelEdit() { editingCmId.value = null; editText.value = '' }
+
+async function saveEdit(cm) {
+  const text = editText.value.trim()
+  if (!text || text === cm.text) { cancelEdit(); return }
+  await empathy.editComment(activePostId.value, cm.id, text)
+  cancelEdit()
+}
+
+async function doDelete(cm) {
+  if (!confirm(`ลบ comment นี้?`)) return
+  await empathy.removeComment(activePostId.value, cm.id)
 }
 
 // ── Reply ──────────────────────────────────────────────────────────

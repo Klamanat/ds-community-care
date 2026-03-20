@@ -456,6 +456,19 @@
   .cm-name { @apply text-[11px] font-extrabold text-app-mid mb-0.5; }
   .cm-text { @apply text-[12px] text-app-dark leading-relaxed; }
   .cm-time { @apply text-[10px] text-app-light mt-1; }
+  .cm-action-btn {
+    @apply text-[11px] bg-transparent border-none cursor-pointer p-0 opacity-50
+           hover:opacity-100 transition-opacity;
+  }
+  .cm-action-del { @apply hover:text-red-500; }
+  .cm-edit-save {
+    @apply text-[11px] font-extrabold bg-[linear-gradient(135deg,#EC4899,#7C3AED)]
+           text-white border-none rounded-lg px-3 py-1 cursor-pointer;
+  }
+  .cm-edit-cancel {
+    @apply text-[11px] font-bold text-[#9CA3AF] bg-transparent border border-[#E5E7EB]
+           rounded-lg px-3 py-1 cursor-pointer;
+  }
   .cm-reply-bar {
     @apply flex gap-2 p-3 bg-[linear-gradient(135deg,#FFF5FB,#F5F0FF)]
            border-t border-pink/10 flex-shrink-0;

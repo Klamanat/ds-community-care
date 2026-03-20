@@ -17,7 +17,8 @@ export function formatThaiDatetime(value) {
     if (m) {
       date = new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5])
     } else {
-      date = new Date(str)
+      // Normalize Supabase "2026-03-20 10:30:00+07" → "2026-03-20T10:30:00+07"
+      date = new Date(str.replace(' ', 'T'))
     }
   }
 

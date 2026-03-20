@@ -67,6 +67,22 @@ export async function addComment(postId, text, authorName, parentId = '') {
   return { id: data.id, postId: data.post_id, parentId: data.parent_id || '', name: data.author_name, text: data.text, time: data.created_at }
 }
 
+export async function updateComment(id, text) {
+  const { error } = await supabase
+    .from('empathy_comments')
+    .update({ text })
+    .eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteComment(id) {
+  const { error } = await supabase
+    .from('empathy_comments')
+    .delete()
+    .eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
 export async function toggleLike(postId, userKey) {
   console.log('[toggleLike] called', postId, userKey)
   const { data, error } = await supabase.rpc('toggle_empathy_like', {

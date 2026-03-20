@@ -150,11 +150,18 @@ export const useEmpathyStore = defineStore('empathy', () => {
   // ── loadComments — fetch with userKey so GAS returns _liked per comment ─
   async function loadComments(channelId) {
     const userKey = useUserAuthStore().userId || ''
+    function sortByTime(arr) {
+      return arr.slice().sort((a, b) => {
+        const ta = a.time === 'เมื่อกี้' ? Infinity : (Date.parse(String(a.time || '').replace(' ', 'T')) || 0)
+        const tb = b.time === 'เมื่อกี้' ? Infinity : (Date.parse(String(b.time || '').replace(' ', 'T')) || 0)
+        return ta - tb
+      })
+    }
     // Hydrate from localStorage immediately (shows comments without waiting for GAS)
     if (!postComments[channelId]) {
       const cached = lsGet('dsc_cm_' + channelId)
       if (cached?.length) {
-        postComments[channelId] = cached
+        postComments[channelId] = sortByTime(cached)
         _applyCommentLikes(postComments[channelId])
       }
     }
@@ -167,7 +174,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
         if (cm._liked !== undefined)
           _saveCommentLike(cm.id, { liked: !!cm._liked, count: cm.likeCount || 0 })
       })
-      postComments[channelId] = arr
+      postComments[channelId] = sortByTime(arr)
       lsSet('dsc_cm_' + channelId, arr.map(c => ({ ...c, _liked: undefined })), 2 * 60 * 1000)
     } catch {
       if (!postComments[channelId]) postComments[channelId] = []
@@ -325,9 +332,47 @@ export const useEmpathyStore = defineStore('empathy', () => {
     }
   }
 
+  // ── editComment ────────────────────────────────────────────────
+  async function editComment(channelId, commentId, newText) {
+    const comments = postComments[channelId]
+    if (!comments) return
+    const cm = comments.find(c => c.id === commentId)
+    if (!cm) return
+    const oldText = cm.text
+    cm.text = newText          // optimistic
+    lsDel('dsc_cm_' + channelId)
+    try {
+      await svc.updateComment(commentId, newText)
+    } catch {
+      cm.text = oldText        // revert
+      useUiStore().showToast('แก้ไขไม่สำเร็จ')
+    }
+  }
+
+  // ── removeComment ──────────────────────────────────────────────
+  async function removeComment(channelId, commentId) {
+    const comments = postComments[channelId]
+    if (!comments) return
+    const idx = comments.findIndex(c => c.id === commentId)
+    if (idx === -1) return
+    const removed = comments.splice(idx, 1)[0]
+    lsDel('dsc_cm_' + channelId)
+    // decrement commentCount on praisedPeople
+    const person = praisedPeople.find(p => p.empCode === channelId || p.id === channelId)
+    if (person) person.commentCount = Math.max(0, (person.commentCount || 1) - 1)
+    try {
+      await svc.deleteComment(commentId)
+    } catch {
+      comments.splice(idx, 0, removed)   // revert
+      if (person) person.commentCount = (person.commentCount || 0) + 1
+      useUiStore().showToast('ลบไม่สำเร็จ')
+    }
+  }
+
   return {
     posts, isLoading, postComments, praisedPeople, channelLikes,
     loadPosts, loadPeople, addPost, recordPraise, loadComments, loadChannelLike, addComment,
     toggleLike, toggleCommentLike, toggleChannelLike, togglePostCommentLike, updatePersonImg,
+    editComment, removeComment,
   }
 })
