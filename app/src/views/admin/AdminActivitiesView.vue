@@ -274,7 +274,7 @@ async function onImgChange(e) {
     form.imgId  = res.id
     form.imgUrl = res.url || ''
     imgPreview.value = res.url || b64
-    if (oldImgId && oldImgId !== res.id) deleteImage([oldImgId]).catch(() => {})
+    if (oldImgId && oldImgId !== res.id) deleteImage([oldImgId]).catch(console.warn)
   } catch (err) {
     modal.error = 'อัปโหลดรูปล้มเหลว: ' + (err.message || 'ลองใหม่')
     imgPreview.value = ''
@@ -374,9 +374,11 @@ async function saveModal() {
 function confirmDelete(r) { delTarget.value = r }
 async function doDelete() {
   deleting.value = true
+  const target = delTarget.value
   try {
-    await svc.deleteActivity(delTarget.value.id)
-    acts.localDelete(delTarget.value.id)
+    if (target.imgId) deleteImage([target.imgId]).catch(console.warn)
+    await svc.deleteActivity(target.id)
+    acts.localDelete(target.id)
     delTarget.value = null
   } catch { } finally {
     deleting.value = false

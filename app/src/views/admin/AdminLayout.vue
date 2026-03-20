@@ -104,6 +104,7 @@ const navItems = [
   { to: '/admin/mental',       icon: '💚', label: 'Mental Health',      sub: 'ที่ปรึกษา' },
   { to: '/admin/home-cards',   icon: '🏠', label: 'Home Cards',         sub: 'เปิด-ปิด cards' },
   { to: '/admin/plans',        icon: '📋', label: 'Monthly Plans',       sub: 'แผนรายเดือน' },
+  { to: '/admin/migrate',      icon: '🔄', label: 'Migrate Images',       sub: 'Drive → Storage' },
 ]
 
 function isActive(item) {

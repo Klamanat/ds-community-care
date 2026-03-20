@@ -207,7 +207,7 @@ async function onFileChange(e) {
     const result = await svc.adminUploadIdpImage(base64, file.type, file.name)
     form.imageUrl = result.url
     form.imageId  = result.id || ''
-    if (oldImageId && oldImageId !== result.id) deleteImage([oldImageId]).catch(() => {})
+    if (oldImageId && oldImageId !== result.id) deleteImage([oldImageId]).catch(console.warn)
   } catch (err) {
     alert('อัปโหลดไม่สำเร็จ: ' + (err?.message || err))
   } finally {
@@ -297,13 +297,16 @@ async function doSave() {
 
 async function doDelete() {
   deleting.value = true
+  const row = delRow.value
+  const type = delType.value
   try {
-    if (delType.value === 'poster') {
-      await svc.adminDeleteIdpPoster(delRow.value.id)
-      posters.value = posters.value.filter(r => r.id !== delRow.value.id)
+    if (type === 'poster') {
+      if (row.imageId) deleteImage([row.imageId]).catch(console.warn)
+      await svc.adminDeleteIdpPoster(row.id)
+      posters.value = posters.value.filter(r => r.id !== row.id)
     } else {
-      await svc.adminDeleteIdpVideo(delRow.value.id)
-      videos.value = videos.value.filter(r => r.id !== delRow.value.id)
+      await svc.adminDeleteIdpVideo(row.id)
+      videos.value = videos.value.filter(r => r.id !== row.id)
     }
     delRow.value = null
   } catch { }

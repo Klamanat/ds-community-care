@@ -509,7 +509,7 @@ async function saveInlineEdit(r) {
         imgUrl = f.imgPreview
         imgId  = res?.id || ''
         editUploadDone[r.id] = true
-        if (oldImgId && oldImgId !== imgId) deleteImage([oldImgId]).catch(() => {})
+        if (oldImgId && oldImgId !== imgId) deleteImage([oldImgId]).catch(console.warn)
       } finally {
         editUploading[r.id] = false
       }
@@ -603,10 +603,12 @@ const deleting  = ref(false)
 function confirmDelete(r) { delTarget.value = r }
 async function doDelete() {
   deleting.value = true
+  const target = delTarget.value
   try {
-    await svc.deleteRow('Employees', 'id', delTarget.value.id)
-    cancelEdit(delTarget.value.id)
-    empRows.value = empRows.value.filter(r => r.id !== delTarget.value.id)
+    if (target.imgId) deleteImage([target.imgId]).catch(console.warn)
+    await svc.deleteRow('Employees', 'id', target.id)
+    cancelEdit(target.id)
+    empRows.value = empRows.value.filter(r => r.id !== target.id)
     delTarget.value = null
   } catch { } finally { deleting.value = false }
 }

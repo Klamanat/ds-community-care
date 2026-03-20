@@ -1,7 +1,10 @@
 import { getImages as edgeGetImages } from './edgeFunctions.js'
 
 // ── Constants ─────────────────────────────────────────────────────────
-const STORAGE_BASE = (import.meta.env.VITE_SUPABASE_URL || '') + '/storage/v1/object/public/images/'
+// VITE_STORAGE_CDN — optional Cloudflare CDN domain (e.g. https://cdn.example.com)
+// If set, all Storage image URLs are served via CDN instead of Supabase directly.
+// This eliminates Supabase egress bandwidth for repeat requests (CDN serves cached copy).
+const STORAGE_BASE = (import.meta.env.VITE_STORAGE_CDN || import.meta.env.VITE_SUPABASE_URL || '') + '/storage/v1/object/public/images/'
 const LS_KEY   = 'dsc_imgcache_v3'   // v3: Drive-IDs only (no Storage paths)
 const LS_TTL   = 60 * 60 * 1000      // 60 min
 const BATCH_MS = 50                   // coalesce calls within 50ms → 1 request

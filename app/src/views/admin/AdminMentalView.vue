@@ -385,12 +385,12 @@ function clearEmoji() {
   form.cardBgEmoji = ''
 }
 
-function clearCardBg() {
+async function clearCardBg() {
   const oldId = form.cardBgId
-  if (oldId) deleteImage([oldId]).catch(() => {})
   form.cardBgType  = ''
   form.cardBgValue = ''
   form.cardBgId    = ''
+  if (oldId) deleteImage([oldId]).catch(console.warn)
 }
 
 async function onCardBgChange(e) {
@@ -403,7 +403,7 @@ async function onCardBgChange(e) {
     const b64  = await resizeBg(file)
     const oldId = form.cardBgId
     const res  = await uploadImage(b64, 'mental_card_bg.jpg', 'mental')
-    if (oldId && oldId !== res.id) deleteImage([oldId]).catch(() => {})
+    if (oldId && oldId !== res.id) deleteImage([oldId]).catch(console.warn)
     form.cardBgType  = 'image'
     form.cardBgValue = res.url || b64
     form.cardBgId    = res.id  || ''
@@ -417,9 +417,11 @@ async function onCardBgChange(e) {
 function confirmDel(a) { delTarget.value = a }
 async function doDelete() {
   deleting.value = true
+  const target = delTarget.value
   try {
-    await deleteMentalAdvisor(delTarget.value.id)
-    advisors.value = advisors.value.filter(a => a.id !== delTarget.value.id)
+    if (target.cardBgId && target.cardBgType === 'image') deleteImage([target.cardBgId]).catch(console.warn)
+    await deleteMentalAdvisor(target.id)
+    advisors.value = advisors.value.filter(a => a.id !== target.id)
     delTarget.value = null
   } catch {} finally { deleting.value = false }
 }

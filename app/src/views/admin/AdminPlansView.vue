@@ -288,7 +288,7 @@ async function onImgChange(e) {
     form.posterId  = res.id
     form.posterUrl = res.url || ''
     imgPreview.value = res.url || b64
-    if (oldPosterId && oldPosterId !== res.id) deleteImage([oldPosterId]).catch(() => {})
+    if (oldPosterId && oldPosterId !== res.id) deleteImage([oldPosterId]).catch(console.warn)
   } catch (err) {
     modal.error = 'อัปโหลดรูปล้มเหลว: ' + (err.message || 'ลองใหม่')
     imgPreview.value = ''
@@ -340,9 +340,11 @@ function confirmDelete(p) {
 async function doDelete() {
   if (!delTarget.value) return
   deleting.value = true
+  const target = delTarget.value
   try {
-    await svc.deletePlan(delTarget.value.id)
-    plans.value = plans.value.filter(p => p.id !== delTarget.value.id)
+    if (target.posterId) deleteImage([target.posterId]).catch(console.warn)
+    await svc.deletePlan(target.id)
+    plans.value = plans.value.filter(p => p.id !== target.id)
     ui.showToast('ลบแผนแล้ว')
     delTarget.value = null
   } catch (err) {

@@ -35,7 +35,11 @@ Deno.serve(async (req: Request) => {
 
     const { error } = await supabase.storage
       .from('images')
-      .upload(storagePath, bytes, { contentType: mimeType, upsert: true })
+      .upload(storagePath, bytes, {
+        contentType: mimeType,
+        upsert: true,
+        cacheControl: '31536000',   // 1 year — enables browser + CDN caching
+      })
 
     if (error) throw new Error('Storage upload failed: ' + error.message)
 
