@@ -12,11 +12,8 @@ const LEVELS = [
 
 export async function fetchMyPoints(employeeName) {
   const [{ data: total, error }, { data: hist }] = await Promise.all([
-    supabase.rpc('get_my_points', { p_emp_name: employeeName }),
-    supabase.from('points').select('*')
-      .eq('employee_name', employeeName)
-      .order('created_at', { ascending: false })
-      .limit(50),
+    supabase.rpc('get_my_points',         { p_emp_name: employeeName }),
+    supabase.rpc('get_my_points_history', { p_emp_name: employeeName }),
   ])
   if (error) throw new Error(error.message)
   const pts = total || 0
@@ -26,8 +23,8 @@ export async function fetchMyPoints(employeeName) {
     type:         h.type,
     subtype:      h.subtype || '',
     amount:       h.amount  || 0,
-    desc:         h.desc    || '',
-    createdAt:    h.created_at || '',
+    desc:         h.description || '',
+    createdAt:    h.created_at  || '',
   }))
   return { total: pts, level: lv.level, levelName: lv.name, nextPts: lv.next, nextName: lv.nextName, history }
 }
