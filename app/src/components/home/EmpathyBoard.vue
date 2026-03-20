@@ -29,17 +29,17 @@
 
     <!-- Load more -->
     <button
-      v-if="!loading && posts.length > visibleCount"
+      v-if="!loading && posts.length > empPages * pageSize"
       class="emp-load-more"
-      @click="visibleCount += 6"
+      @click="empPages++"
     >
-      ดูเพิ่มเติม {{ posts.length - visibleCount }} คน ↓
+      ดูเพิ่มเติม {{ posts.length - empPages * pageSize }} คน ↓
     </button>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import EmpathyCard from './EmpathyCard.vue'
 import SkeletonCard from '../shared/SkeletonCard.vue'
 import { useEmpathyStore } from '../../stores/empathy.js'
@@ -49,11 +49,18 @@ const empathy = useEmpathyStore()
 const ui = useUiStore()
 const loading = ref(false)
 
+const _isMobile  = ref(window.innerWidth < 768)
+const _onResize  = () => { _isMobile.value = window.innerWidth < 768 }
+const pageSize   = computed(() => _isMobile.value ? 6 : 8)
+const empPages   = ref(1)
+
 onMounted(() => {
+  window.addEventListener('resize', _onResize)
   // ถ้ามี cache อยู่แล้ว → ไม่ต้อง spinner รอ GAS
   loading.value = !empathy.praisedPeople.length
   empathy.loadPeople().finally(() => { loading.value = false })
 })
+onUnmounted(() => window.removeEventListener('resize', _onResize))
 
 const GRADS = [
   'linear-gradient(135deg,#FBCFE8,#EC4899)',
@@ -62,8 +69,6 @@ const GRADS = [
   'linear-gradient(135deg,#A7F3D0,#34D399)',
   'linear-gradient(135deg,#FDE68A,#F59E0B)',
 ]
-
-const visibleCount = ref(6)
 
 // Map praisedPeople → shape EmpathyCard expects
 const posts = computed(() =>
@@ -83,7 +88,7 @@ const posts = computed(() =>
   })
 )
 
-const visiblePosts = computed(() => posts.value.slice(0, visibleCount.value))
+const visiblePosts = computed(() => posts.value.slice(0, empPages.value * pageSize.value))
 
 // Click card → open EmpathyModal thread for that person
 function openThread(person) {
