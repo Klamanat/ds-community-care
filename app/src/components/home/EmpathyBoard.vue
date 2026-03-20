@@ -11,14 +11,14 @@
       </div>
     </div>
 
-<div v-if="loading" class="grid grid-cols-3 gap-3">
+<div v-if="loading" class="grid grid-cols-3 md:grid-cols-4 gap-3">
       <SkeletonCard v-for="i in 6" :key="i" height="220px" radius="16px" />
     </div>
     <div v-else-if="!empathy.praisedPeople.length" class="text-center py-6 text-app-light text-[13px]">
       ยังไม่มีคำชื่นชม 💌<br>
       <span class="text-[11px]">กดปุ่มด้านบนเพื่อส่งคำชื่นชมคนแรก</span>
     </div>
-    <div v-else class="grid grid-cols-3 gap-3">
+    <div v-else class="grid grid-cols-3 md:grid-cols-4 gap-3">
       <EmpathyCard
         v-for="post in visiblePosts"
         :key="post.id"

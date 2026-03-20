@@ -864,7 +864,7 @@
           <div v-else-if="!rewardItems.length" class="rw-rewards-empty">ยังไม่มีของรางวัล</div>
           <div v-else class="rw-rewards-grid">
             <div
-              v-for="item in rewardItems"
+              v-for="item in visibleRewardItems"
               :key="item.id"
               class="rw-reward-card"
               :class="{ 'rw-reward-card--afford': reward.total >= item.ptsCost }"
@@ -872,7 +872,7 @@
               <div class="rw-reward-img-wrap">
                 <img v-if="item.imageUrl" :src="item.imageUrl" class="rw-reward-img" />
                 <div v-else class="rw-reward-img-placeholder">🎁</div>
-                <div v-if="reward.total >= item.ptsCost" class="rw-reward-afford-badge">✓ แลกได้</div>
+                <div v-if="reward.total >= item.ptsCost" class="rw-reward-afford-badge">⭐</div>
               </div>
               <div class="rw-reward-info">
                 <div class="rw-reward-name">{{ item.name }}</div>
@@ -884,6 +884,14 @@
               </div>
             </div>
           </div>
+          <button
+            v-if="!rewardsLoading && rewardItems.length > rewardPages * rewardPageSize"
+            class="rw-load-more-btn"
+            style="margin-top:8px;"
+            @click="rewardPages++"
+          >
+            ดูเพิ่มเติม {{ rewardItems.length - rewardPages * rewardPageSize }} รายการ ↓
+          </button>
         </div>
 
         <!-- ── How to earn section ── -->
@@ -912,7 +920,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import html2canvas from 'html2canvas'
 import BaseModal from '../shared/BaseModal.vue'
 import { useRewardStore }   from '../../stores/reward.js'
@@ -929,10 +937,17 @@ const shareOpen    = ref(false)
 const cardRef      = ref(null)
 const capturing    = ref(false)
 
-const rewardItems   = ref([])
-const rewardsLoading = ref(false)
+const rewardItems        = ref([])
+const rewardsLoading     = ref(false)
+const _isMobile = ref(window.innerWidth < 768)
+const _onResize = () => { _isMobile.value = window.innerWidth < 768 }
+onUnmounted(() => window.removeEventListener('resize', _onResize))
+const rewardPageSize = computed(() => _isMobile.value ? 6 : 8)
+const rewardPages    = ref(1)
+const visibleRewardItems = computed(() => rewardItems.value.slice(0, rewardPages.value * rewardPageSize.value))
 
 onMounted(async () => {
+  window.addEventListener('resize', _onResize)
   reward.load(userAuth.userName || '', true)
   rewardsLoading.value = true
   try { rewardItems.value = await fetchRewards() } catch {}
@@ -1266,10 +1281,18 @@ function formatTime(raw) {
   font-size: 40px;
 }
 .rw-reward-afford-badge {
-  position: absolute; bottom: 5px; right: 5px;
-  background: #22C55E; color: white;
-  font-size: 10px; font-weight: 800;
-  padding: 2px 8px; border-radius: 20px;
+  position: absolute; top: 6px; right: 6px;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FDE68A, #F59E0B);
+  box-shadow: 0 0 0 3px rgba(245,158,11,0.25), 0 2px 8px rgba(245,158,11,0.4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  animation: rw-star-pulse 1.8s ease-in-out infinite;
+}
+@keyframes rw-star-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(245,158,11,0.25), 0 2px 8px rgba(245,158,11,0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(245,158,11,0.15), 0 2px 16px rgba(245,158,11,0.6); }
 }
 .rw-reward-info {
   padding: 8px 10px 10px;
