@@ -166,11 +166,14 @@ export async function deleteChannel(channelId) {
 
 export async function saveAnnouncement(fields) {
   const rows = [
-    { key: 'ann_enabled', value: (fields.enabled === true || String(fields.enabled).toUpperCase() === 'TRUE') ? 'true' : 'false' },
-    { key: 'ann_id',      value: fields.id    || `ann_${Date.now()}` },
-    { key: 'ann_title',   value: fields.title || '' },
-    { key: 'ann_video',   value: fields.video || '' },
-    { key: 'ann_desc',    value: fields.desc  || '' },
+    { key: 'ann_enabled',      value: (fields.enabled === true || String(fields.enabled).toUpperCase() === 'TRUE') ? 'true' : 'false' },
+    { key: 'ann_id',           value: fields.id    || `ann_${Date.now()}` },
+    { key: 'ann_title',        value: fields.title || '' },
+    { key: 'ann_video',         value: fields.video || '' },
+    { key: 'ann_video_enabled', value: fields.videoEnabled !== false ? 'true' : 'false' },
+    { key: 'ann_desc',          value: fields.desc  || '' },
+    { key: 'ann_quiz_enabled',   value: fields.quizEnabled ? 'true' : 'false' },
+    { key: 'ann_quiz_questions', value: JSON.stringify(fields.quizQuestions || []) },
   ]
   const { error } = await supabase.from('settings').upsert(rows, { onConflict: 'key' })
   if (error) throw new Error(error.message)
@@ -178,6 +181,24 @@ export async function saveAnnouncement(fields) {
 
 export async function uploadAnnouncementVideo(base64, fileName, _mimeType) {
   return uploadImage(base64, fileName || 'announcement.mp4', 'announcements')
+}
+
+export async function fetchQuizAnswers(annId) {
+  const { data, error } = await supabase
+    .from('quiz_answers')
+    .select('employee_name, question_id, selected, created_at')
+    .eq('ann_id', annId)
+    .order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function deleteQuizAnswers(annId) {
+  const { error } = await supabase
+    .from('quiz_answers')
+    .delete()
+    .eq('ann_id', annId)
+  if (error) throw new Error(error.message)
 }
 
 // ── Mental Advisors ───────────────────────────────────────────

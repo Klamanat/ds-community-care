@@ -151,22 +151,31 @@
         </div>
         <div class="dash-chart-body">
           <div v-if="loading" class="dash-chart-skeleton"></div>
-          <div v-else-if="!topEarners.length" class="dash-chart-empty">ยังไม่มีข้อมูลคะแนน</div>
-          <div v-else class="dash-hbar-list">
-            <div v-for="(e, i) in topEarners" :key="e.name" class="dash-hbar-row">
-              <div class="dash-hbar-rank">{{ i + 1 }}</div>
-              <div class="dash-hbar-body">
-                <div class="dash-hbar-label">{{ e.name }}</div>
-                <div class="dash-hbar-track">
-                  <div
-                    class="dash-hbar-fill"
-                    :style="{ width: (e.total / topEarners[0].total * 100) + '%', background: RANK_COLORS[i] }"
-                  ></div>
+          <div v-else-if="!allTopEarners.length" class="dash-chart-empty">ยังไม่มีข้อมูลคะแนน</div>
+          <template v-else>
+            <div class="dash-hbar-list">
+              <div v-for="(e, i) in displayedEarners" :key="e.name" class="dash-hbar-row">
+                <div class="dash-hbar-rank">{{ i + 1 }}</div>
+                <div class="dash-hbar-body">
+                  <div class="dash-hbar-label">{{ e.name }}</div>
+                  <div class="dash-hbar-track">
+                    <div
+                      class="dash-hbar-fill"
+                      :style="{ width: (e.total / allTopEarners[0].total * 100) + '%', background: RANK_COLORS[i] }"
+                    ></div>
+                  </div>
                 </div>
+                <div class="dash-hbar-val" :style="{ color: RANK_COLORS[i] }">{{ e.total.toLocaleString() }}</div>
               </div>
-              <div class="dash-hbar-val" :style="{ color: RANK_COLORS[i] }">{{ e.total.toLocaleString() }}</div>
             </div>
-          </div>
+            <button
+              v-if="allTopEarners.length > 5"
+              class="dash-earners-more"
+              @click="showAllEarners = !showAllEarners"
+            >
+              {{ showAllEarners ? '▲ แสดงน้อยลง' : `▼ ดูทั้งหมด (${allTopEarners.length})` }}
+            </button>
+          </template>
         </div>
       </div>
 
@@ -268,13 +277,25 @@ let _presenceTimer = null
 
 const bdayByMonth = ref(Array(12).fill(0))
 const ideaCounts  = reactive({ pending: 0, reviewed: 0, approved: 0, rejected: 0 })
-const topEarners  = ref([])
+const allTopEarners  = ref([])
+const showAllEarners = ref(false)
+const displayedEarners = computed(() =>
+  showAllEarners.value ? allTopEarners.value : allTopEarners.value.slice(0, 5)
+)
 const empsByRole  = ref([])
 
 const MONTHS_TH    = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
 const MONTHS_SHORT = ['ม.ค','ก.พ','มี.ค','เม.ย','พ.ค','มิ.ย','ก.ค','ส.ค','ก.ย','ต.ค','พ.ย','ธ.ค']
 const DAYS_TH      = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัส','ศุกร์','เสาร์']
-const RANK_COLORS  = ['#F59E0B','#9CA3AF','#CD7F32','#6366F1','#10B981']
+const RANK_COLORS = [
+  '#F59E0B','#9CA3AF','#CD7F32',   // 1-3 gold/silver/bronze
+  '#6366F1','#10B981','#3B82F6',   // 4-6
+  '#EC4899','#8B5CF6','#F97316',   // 7-9
+  '#0EA5E9','#84CC16','#64748B',   // 10-12
+  '#A78BFA','#34D399','#FB923C',   // 13-15
+  '#60A5FA','#F472B6','#C084FC',   // 16-18
+  '#4ADE80','#FBBF24',             // 19-20
+]
 
 const currentMonth = new Date().getMonth()
 
@@ -370,9 +391,9 @@ onMounted(async () => {
     // points top earners
     const totals = {}
     pointsRes.forEach(p => { totals[p.employee_name] = (totals[p.employee_name] || 0) + (p.amount || 0) })
-    topEarners.value = Object.entries(totals)
+    allTopEarners.value = Object.entries(totals)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
+      .slice(0, 20)
       .map(([name, total]) => ({ name, total }))
 
   } catch { /* silent */ } finally {
@@ -506,6 +527,14 @@ onUnmounted(() => clearInterval(_presenceTimer))
 .dash-donut-leg-val   { font-weight: 800; color: #111827; }
 
 /* ── Horizontal bar (top earners) ── */
+.dash-earners-more {
+  display: block; width: 100%; margin-top: 10px;
+  background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px;
+  color: #6D28D9; font-size: 11px; font-weight: 700; cursor: pointer;
+  padding: 6px 0; text-align: center;
+  transition: background 0.15s;
+}
+.dash-earners-more:hover { background: #EDE9FE; }
 .dash-hbar-list { display: flex; flex-direction: column; gap: 8px; }
 .dash-hbar-row  { display: flex; align-items: center; gap: 7px; }
 .dash-hbar-rank { width: 16px; font-size: 11px; font-weight: 800; color: #9CA3AF; flex-shrink: 0; text-align: center; }
