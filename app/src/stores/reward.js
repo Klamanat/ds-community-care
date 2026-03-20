@@ -37,13 +37,16 @@ export const useRewardStore = defineStore('reward', () => {
   })
 
   async function load(employeeName, force = false) {
+    // Always ensure rules are loaded (needed for checkinPts / displayRules)
+    if (!rules.value.length) loadRules()
+
     if (loaded.value && !force) return
     if (!employeeName) return
     loading.value = true
     try {
       const [pts, ruleData] = await Promise.all([
         fetchMyPoints(employeeName),
-        rules.value.length ? Promise.resolve(null) : fetchRewardRules().catch(() => null),
+        force ? fetchRewardRules().catch(() => null) : (rules.value.length ? Promise.resolve(null) : fetchRewardRules().catch(() => null)),
       ])
       total.value     = pts.total     || 0
       level.value     = pts.level     || 0
@@ -54,7 +57,7 @@ export const useRewardStore = defineStore('reward', () => {
       if (ruleData) rules.value = ruleData
       loaded.value    = true
     } catch {
-      // silently fail — keep 0 pts (GAS may not be connected yet)
+      // silently fail — keep 0 pts
     } finally {
       loading.value = false
     }
@@ -72,13 +75,13 @@ export const useRewardStore = defineStore('reward', () => {
     checkinLoading.value = true
     try {
       const res = await postDailyCheckin(employeeName)
-      // ไม่ว่าจะเพิ่งเช็คอิน หรือ GAS บอกว่าเช็คอินแล้ว → ล็อกปุ่มทันที
       checkedInToday.value = true
       localStorage.setItem(CHECKIN_KEY, todayStr())
-      if (!res.alreadyCheckedIn) {
+      const alreadyCheckedIn = (res.pts === 0)
+      if (!alreadyCheckedIn) {
         await load(employeeName, true)
       }
-      return res
+      return { pts: res.pts, alreadyCheckedIn }
     } catch {
       return { alreadyCheckedIn: false, error: true }
     } finally {

@@ -64,3 +64,55 @@ export async function adminDeleteRewardRule(_token, id) {
   const { error } = await supabase.from('point_rules').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }
+
+// ── Reward items (ของรางวัล) ──────────────────────────────────
+
+function mapReward(r) {
+  return {
+    id:          r.id,
+    name:        r.name        || '',
+    description: r.description || '',
+    ptsCost:     r.pts_cost    || 0,
+    imageId:     r.image_id    || '',
+    imageUrl:    r.image_url   || '',
+    stock:       r.stock       ?? null,
+    active:      r.active      !== false,
+    createdAt:   r.created_at  || '',
+  }
+}
+
+export async function fetchRewards() {
+  const { data, error } = await supabase
+    .from('rewards')
+    .select('*')
+    .eq('active', true)
+    .order('pts_cost', { ascending: true })
+  if (error) throw new Error(error.message)
+  return (data || []).map(mapReward)
+}
+
+export async function adminFetchRewards() {
+  const { data, error } = await supabase
+    .from('rewards')
+    .select('*')
+    .order('pts_cost', { ascending: true })
+  if (error) throw new Error(error.message)
+  return (data || []).map(mapReward)
+}
+
+export async function adminAddReward(fields) {
+  const { data, error } = await supabase.from('rewards').insert(fields).select().single()
+  if (error) throw new Error(error.message)
+  return mapReward(data)
+}
+
+export async function adminUpdateReward(id, fields) {
+  const { data, error } = await supabase.from('rewards').update(fields).eq('id', id).select().single()
+  if (error) throw new Error(error.message)
+  return mapReward(data)
+}
+
+export async function adminDeleteReward(id) {
+  const { error } = await supabase.from('rewards').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}

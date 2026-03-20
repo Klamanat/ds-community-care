@@ -20,12 +20,21 @@
     </div>
     <div v-else class="grid grid-cols-3 gap-3">
       <EmpathyCard
-        v-for="post in posts"
+        v-for="post in visiblePosts"
         :key="post.id"
         :post="post"
         @click="openThread(empathy.praisedPeople.find(p => p.id === post.id))"
       />
     </div>
+
+    <!-- Load more -->
+    <button
+      v-if="!loading && posts.length > visibleCount"
+      class="emp-load-more"
+      @click="visibleCount += 6"
+    >
+      ดูเพิ่มเติม {{ posts.length - visibleCount }} คน ↓
+    </button>
   </div>
 </template>
 
@@ -54,9 +63,11 @@ const GRADS = [
   'linear-gradient(135deg,#FDE68A,#F59E0B)',
 ]
 
-// Map praisedPeople → shape EmpathyCard expects (max 12, sorted by latest comment from GAS)
+const visibleCount = ref(6)
+
+// Map praisedPeople → shape EmpathyCard expects
 const posts = computed(() =>
-  empathy.praisedPeople.slice(0, 12).map((person, idx) => {
+  empathy.praisedPeople.map((person, idx) => {
     const cl = empathy.channelLikes[person.empCode || person.id]
     return {
       id:        person.id,
@@ -72,9 +83,27 @@ const posts = computed(() =>
   })
 )
 
+const visiblePosts = computed(() => posts.value.slice(0, visibleCount.value))
+
 // Click card → open EmpathyModal thread for that person
 function openThread(person) {
   ui._empPreselect = person
   ui.openModal('modal-emp')
 }
 </script>
+
+<style scoped>
+.emp-load-more {
+  width: 100%;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1.5px dashed #FBCFE8;
+  background: #FFF7FB;
+  color: #BE185D;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.emp-load-more:hover { background: #FCE7F3; }
+</style>

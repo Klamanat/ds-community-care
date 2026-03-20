@@ -72,6 +72,11 @@ const routes = [
         component: () => import('../views/admin/AdminRewardRulesView.vue'),
       },
       {
+        path: 'rewards',
+        name: 'admin-rewards',
+        component: () => import('../views/admin/AdminRewardsView.vue'),
+      },
+      {
         path: 'training',
         name: 'admin-training',
         component: () => import('../views/admin/AdminTrainingView.vue'),

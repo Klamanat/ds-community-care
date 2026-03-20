@@ -49,7 +49,11 @@
       <div class="modal-body-scroll rw-body">
 
         <!-- ── Daily check-in card ── -->
-        <div class="rw-checkin-card" :class="{ done: reward.checkedInToday }">
+        <div
+          v-if="checkinRule"
+          class="rw-checkin-card"
+          :class="{ done: reward.checkedInToday }"
+        >
           <div class="rw-ci-left">
             <div class="rw-ci-icon">{{ reward.checkedInToday ? '✅' : '📅' }}</div>
             <div class="rw-ci-info">
@@ -69,7 +73,7 @@
               @click="handleCheckin"
             >
               <span v-if="reward.checkinLoading" class="rw-ci-spinner"></span>
-              <span v-else>รับ +{{ checkinPts }} pts</span>
+              <span v-else>รับ +{{ reward.loading ? '…' : checkinPts }} pts</span>
             </button>
           </div>
         </div>
@@ -84,6 +88,8 @@
             </span>
           </div>
 
+          <div class="rw-tree-row">
+          <div class="rw-tree-col-left">
           <div class="rw-tree-scene">
             <svg class="rw-tree-svg" viewBox="0 0 120 130" xmlns="http://www.w3.org/2000/svg">
               <defs>
@@ -413,7 +419,8 @@
 
             <div v-if="viewData.stage >= 5" class="rw-float-leaf rw-fl-3">✨</div>
           </div>
-
+          </div><!-- /col-left -->
+          <div class="rw-tree-col-right">
           <div class="rw-tree-prog-bar">
             <div class="rw-tree-prog-fill" :style="{ width: viewData.progress + '%', background: viewData.color }"></div>
           </div>
@@ -462,7 +469,9 @@
               </span>
               คะแนน {{ viewData.min.toLocaleString() }} – {{ viewData.max === Infinity ? '∞' : viewData.max.toLocaleString() }} pts
             </div>
-          </div>
+          </div><!-- /level-panel -->
+          </div><!-- /col-right -->
+          </div><!-- /tree-row -->
 
           <button class="rw-tree-share-btn" @click="shareOpen = true">📸 แชร์ต้นไม้</button>
         </div>
@@ -846,6 +855,37 @@
           <div v-for="i in 3" :key="i" class="rw-hist-skeleton"></div>
         </div>
 
+        <!-- ── Rewards catalog ── -->
+        <div class="rw-section">
+          <div class="rw-section-title">🎁 ของรางวัล</div>
+          <div v-if="rewardsLoading" class="rw-rewards-grid">
+            <div v-for="i in 3" :key="i" class="rw-reward-skeleton"></div>
+          </div>
+          <div v-else-if="!rewardItems.length" class="rw-rewards-empty">ยังไม่มีของรางวัล</div>
+          <div v-else class="rw-rewards-grid">
+            <div
+              v-for="item in rewardItems"
+              :key="item.id"
+              class="rw-reward-card"
+              :class="{ 'rw-reward-card--afford': reward.total >= item.ptsCost }"
+            >
+              <div class="rw-reward-img-wrap">
+                <img v-if="item.imageUrl" :src="item.imageUrl" class="rw-reward-img" />
+                <div v-else class="rw-reward-img-placeholder">🎁</div>
+                <div v-if="reward.total >= item.ptsCost" class="rw-reward-afford-badge">✓ แลกได้</div>
+              </div>
+              <div class="rw-reward-info">
+                <div class="rw-reward-name">{{ item.name }}</div>
+                <div v-if="item.description" class="rw-reward-desc">{{ item.description }}</div>
+                <div class="rw-reward-footer">
+                  <span class="rw-reward-pts">{{ item.ptsCost.toLocaleString() }} pts</span>
+                  <span v-if="item.stock !== null" class="rw-reward-stock">เหลือ {{ item.stock }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- ── How to earn section ── -->
         <div class="rw-section">
           <div class="rw-section-title">✨ วิธีสะสมคะแนน</div>
@@ -877,6 +917,7 @@ import html2canvas from 'html2canvas'
 import BaseModal from '../shared/BaseModal.vue'
 import { useRewardStore }   from '../../stores/reward.js'
 import { useUserAuthStore } from '../../stores/userAuth.js'
+import { fetchRewards } from '../../services/rewardService.js'
 
 const reward   = useRewardStore()
 const userAuth = useUserAuthStore()
@@ -888,8 +929,14 @@ const shareOpen    = ref(false)
 const cardRef      = ref(null)
 const capturing    = ref(false)
 
-onMounted(() => {
+const rewardItems   = ref([])
+const rewardsLoading = ref(false)
+
+onMounted(async () => {
   reward.load(userAuth.userName || '', true)
+  rewardsLoading.value = true
+  try { rewardItems.value = await fetchRewards() } catch {}
+  rewardsLoading.value = false
 })
 
 // Thai date for display
@@ -953,11 +1000,10 @@ function setPreview(stage) {
   previewStage.value = stage === treeData.value.stage ? null : stage
 }
 
-const checkinPts = computed(() => {
-  const rule = (reward.rules.length ? reward.rules : FALLBACK_RULES)
-    .find(r => r.type === 'daily_checkin' && !r.subtype)
-  return rule?.pts ?? 5
-})
+const checkinRule = computed(() =>
+  displayRules.value.find(r => r.type === 'daily_checkin' && !r.subtype)
+)
+const checkinPts = computed(() => checkinRule.value?.pts ?? 5)
 
 async function captureCard() {
   if (!cardRef.value || capturing.value) return
@@ -1184,6 +1230,72 @@ function formatTime(raw) {
   letter-spacing: 0.3px;
 }
 
+/* ── Rewards catalog ── */
+.rw-rewards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.rw-rewards-empty {
+  font-size: 13px; color: #9CA3AF; text-align: center; padding: 20px 0;
+}
+.rw-reward-card {
+  background: white;
+  border: 2px solid #E5E7EB;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.rw-reward-card--afford {
+  border-color: #86EFAC;
+  box-shadow: 0 2px 12px rgba(34,197,94,0.15);
+}
+.rw-reward-img-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #F9FAFB;
+  overflow: hidden;
+}
+.rw-reward-img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.rw-reward-img-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 40px;
+}
+.rw-reward-afford-badge {
+  position: absolute; bottom: 5px; right: 5px;
+  background: #22C55E; color: white;
+  font-size: 10px; font-weight: 800;
+  padding: 2px 8px; border-radius: 20px;
+}
+.rw-reward-info {
+  padding: 8px 10px 10px;
+}
+.rw-reward-name {
+  font-size: 13px; font-weight: 800; color: #111827; line-height: 1.3;
+}
+.rw-reward-desc {
+  font-size: 11px; color: #6B7280; margin-top: 3px; line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.rw-reward-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 6px;
+}
+.rw-reward-pts {
+  font-size: 13px; font-weight: 900; color: #7C3AED;
+}
+.rw-reward-stock {
+  font-size: 10px; color: #9CA3AF; font-weight: 600;
+}
+.rw-reward-skeleton {
+  height: 160px; background: #F3F4F6; border-radius: 16px;
+  animation: shimmer 1.5s infinite;
+}
+
 /* ── Daily check-in card ── */
 .rw-checkin-card {
   display: flex;
@@ -1370,9 +1482,9 @@ function formatTime(raw) {
 .rw-tree-card {
   background: linear-gradient(135deg, #F0FDF4, #DCFCE7);
   border: 2px solid #BBF7D0;
-  border-radius: 20px;
-  padding: 14px 16px 12px;
-  margin-bottom: 16px;
+  border-radius: 18px;
+  padding: 10px 12px 10px;
+  margin-bottom: 12px;
 }
 .rw-tree-top-row {
   display: flex; align-items: center; justify-content: space-between;
@@ -1384,30 +1496,42 @@ function formatTime(raw) {
   padding: 3px 12px; border-radius: 20px;
   transition: background 0.4s;
 }
+.rw-tree-row {
+  display: flex; gap: 8px; align-items: flex-start;
+}
+.rw-tree-col-left { flex-shrink: 0; width: 108px; }
+.rw-tree-col-right { flex: 1; min-width: 0; padding-top: 2px; }
 .rw-tree-scene {
   position: relative;
   display: flex; justify-content: center; align-items: flex-end;
-  height: 134px;
-  margin-bottom: 10px;
+  height: 116px;
+  margin-bottom: 0;
+  border-radius: 16px;
+  background: radial-gradient(ellipse at 50% 90%, rgba(74,222,128,0.35) 0%, rgba(187,247,208,0.25) 50%, transparent 75%);
   overflow: hidden;
 }
 .rw-tree-svg {
-  width: 120px; height: 130px;
-  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.18)) drop-shadow(0 2px 4px rgba(0,0,0,0.10));
+  width: 100px; height: 108px;
+  filter: drop-shadow(0 6px 14px rgba(20,83,45,0.30)) drop-shadow(0 2px 5px rgba(0,0,0,0.15));
+  animation: treeBreathe 4s ease-in-out infinite;
+}
+@keyframes treeBreathe {
+  0%, 100% { transform: scale(1)    translateY(0); }
+  50%       { transform: scale(1.03) translateY(-2px); }
 }
 .rw-float-leaf {
-  position: absolute; font-size: 14px; pointer-events: none;
+  position: absolute; font-size: 11px; pointer-events: none;
   animation: leafFloat 3s ease-in-out infinite;
 }
-.rw-fl-1 { top: 18px; left: 16px;  animation-delay: 0s;   animation-duration: 3.3s; }
-.rw-fl-2 { top: 38px; right: 16px; animation-delay: 0.9s; animation-duration: 2.9s; }
-.rw-fl-3 { top: 8px;  right: 28px; animation-delay: 0.4s; animation-duration: 3.6s; }
+.rw-fl-1 { top: 10px; left: 8px;   animation-delay: 0s;   animation-duration: 3.3s; }
+.rw-fl-2 { top: 26px; right: 8px;  animation-delay: 0.9s; animation-duration: 2.9s; }
+.rw-fl-3 { top: 4px;  right: 18px; animation-delay: 0.4s; animation-duration: 3.6s; }
 @keyframes leafFloat {
   0%, 100% { transform: translateY(0)    rotate(0deg);  opacity: 0.8; }
   50%       { transform: translateY(-9px) rotate(14deg); opacity: 1;   }
 }
 .rw-tree-prog-bar {
-  height: 7px; background: #BBF7D0; border-radius: 8px; overflow: hidden; margin-bottom: 5px;
+  height: 6px; background: #BBF7D0; border-radius: 8px; overflow: hidden; margin-bottom: 4px; margin-top: 4px;
 }
 .rw-tree-prog-fill {
   height: 100%; border-radius: 8px; transition: width 0.8s ease, background 0.4s;
@@ -1421,17 +1545,17 @@ function formatTime(raw) {
 .rw-level-panel {
   background: #F0FDF4;
   border: 1.5px solid #BBF7D0;
-  border-radius: 14px;
-  padding: 12px 16px 10px;
-  margin-top: 10px;
+  border-radius: 12px;
+  padding: 8px 10px 7px;
+  margin-top: 7px;
   text-align: center;
 }
 .rw-stage-nav {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   justify-content: center;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 .rw-stage-nav-btn {
   width: 28px; height: 28px; flex-shrink: 0;

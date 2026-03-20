@@ -762,6 +762,16 @@
 @media (min-width: 768px) { .adm-sb-close { display: none; } }
 
 /* ── Sidebar: Nav ── */
+.adm-sb-group-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  padding: 12px 10px 4px;
+  margin-top: 2px;
+}
+.adm-sb-group-label:first-child { padding-top: 4px; margin-top: 0; }
 .adm-sb-nav {
   flex: 1;
   padding: 10px 8px;

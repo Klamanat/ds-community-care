@@ -18,20 +18,23 @@
       </div>
 
       <nav class="adm-sb-nav">
-        <router-link
-          v-for="item in navItems"
-          :key="item.to"
-          :to="item.to"
-          class="adm-sb-item"
-          :class="{ active: isActive(item) }"
-          @click="sideOpen = false"
-        >
-          <span class="adm-sb-icon">{{ item.icon }}</span>
-          <div class="adm-sb-info">
-            <div class="adm-sb-label">{{ item.label }}</div>
-            <div class="adm-sb-sub">{{ item.sub }}</div>
-          </div>
-        </router-link>
+        <template v-for="group in navGroups" :key="group.group">
+          <div class="adm-sb-group-label">{{ group.group }}</div>
+          <router-link
+            v-for="item in group.items"
+            :key="item.to"
+            :to="item.to"
+            class="adm-sb-item"
+            :class="{ active: isActive(item) }"
+            @click="sideOpen = false"
+          >
+            <span class="adm-sb-icon">{{ item.icon }}</span>
+            <div class="adm-sb-info">
+              <div class="adm-sb-label">{{ item.label }}</div>
+              <div class="adm-sb-sub">{{ item.sub }}</div>
+            </div>
+          </router-link>
+        </template>
       </nav>
 
       <div class="adm-sb-footer">
@@ -92,20 +95,53 @@ const admin  = useAdminStore()
 
 const sideOpen = ref(false)
 
-const navItems = [
-  { to: '/admin',              icon: '🏠', label: 'Dashboard',         sub: 'Overview' },
-  { to: '/admin/employees',    icon: '👥', label: 'พนักงาน & วันเกิด', sub: 'Employees · Birthdays' },
-  { to: '/admin/empathy',      icon: '💌', label: 'Empathy',            sub: 'Posts · Kudos' },
-  { to: '/admin/ideas',        icon: '💡', label: 'ไอเดีย',             sub: 'Ideas' },
-  { to: '/admin/activities',   icon: '📅', label: 'กิจกรรม',            sub: 'Activities' },
-  { to: '/admin/announcement', icon: '📢', label: 'ประกาศ / Popup',     sub: 'Announcement' },
-  { to: '/admin/reward-rules', icon: '🏆', label: 'วิธีสะสมคะแนน',     sub: 'PointRules' },
-  { to: '/admin/training',     icon: '📚', label: 'Training',           sub: 'หลักสูตร' },
-  { to: '/admin/mental',       icon: '💚', label: 'Mental Health',      sub: 'ที่ปรึกษา' },
-  { to: '/admin/home-cards',   icon: '🏠', label: 'Home Cards',         sub: 'เปิด-ปิด cards' },
-  { to: '/admin/plans',        icon: '📋', label: 'Monthly Plans',       sub: 'แผนรายเดือน' },
-  { to: '/admin/migrate',      icon: '🔄', label: 'Migrate Images',       sub: 'Drive → Storage' },
+const navGroups = [
+  {
+    group: 'ภาพรวม',
+    items: [
+      { to: '/admin', icon: '🏠', label: 'Dashboard', sub: 'Overview' },
+    ],
+  },
+  {
+    group: 'พนักงาน',
+    items: [
+      { to: '/admin/employees', icon: '👥', label: 'พนักงาน & วันเกิด', sub: 'Employees · Birthdays' },
+    ],
+  },
+  {
+    group: 'ชุมชน',
+    items: [
+      { to: '/admin/empathy',      icon: '💌', label: 'Empathy',        sub: 'Posts · Kudos' },
+      { to: '/admin/ideas',        icon: '💡', label: 'ไอเดีย',         sub: 'Ideas' },
+      { to: '/admin/activities',   icon: '📅', label: 'กิจกรรม',        sub: 'Activities' },
+      { to: '/admin/announcement', icon: '📢', label: 'ประกาศ / Popup', sub: 'Announcement' },
+      { to: '/admin/plans',        icon: '📋', label: 'Monthly Plans',   sub: 'แผนรายเดือน' },
+    ],
+  },
+  {
+    group: 'พัฒนา',
+    items: [
+      { to: '/admin/training', icon: '📚', label: 'Training',      sub: 'หลักสูตร' },
+      { to: '/admin/mental',   icon: '💚', label: 'Mental Health', sub: 'ที่ปรึกษา' },
+    ],
+  },
+  {
+    group: 'คะแนน & รางวัล',
+    items: [
+      { to: '/admin/reward-rules', icon: '🏆', label: 'วิธีสะสมคะแนน', sub: 'PointRules' },
+      { to: '/admin/rewards',      icon: '🎁', label: 'ของรางวัล',      sub: 'Rewards' },
+    ],
+  },
+  {
+    group: 'ระบบ',
+    items: [
+      { to: '/admin/home-cards', icon: '🃏', label: 'Home Cards',     sub: 'เปิด-ปิด cards' },
+      { to: '/admin/migrate',    icon: '🔄', label: 'Migrate Images', sub: 'Drive → Storage' },
+    ],
+  },
 ]
+
+const navItems = navGroups.flatMap(g => g.items)
 
 function isActive(item) {
   if (item.to === '/admin') return route.path === '/admin'
