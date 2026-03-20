@@ -57,6 +57,21 @@ export async function fetchStarGang() {
   return (data || []).map(mapEmp)
 }
 
+export async function joinStarGang(fields) {
+  const { data, error } = await supabase
+    .from('employees')
+    .upsert({
+      id:           fields.id,
+      name:         fields.name,
+      role:         fields.role || '',
+      in_star_gang: true,
+    }, { onConflict: 'id' })
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return mapEmp(data)
+}
+
 export async function addToTeam(fields) {
   const { data, error } = await supabase
     .from('employees')
