@@ -51,19 +51,22 @@
 
         <!-- Quick links: 4-col on mobile, flex-col on PC -->
         <div class="grid grid-cols-3 gap-2 sm:flex sm:flex-col">
-          <div class="c-card ripple-host bg-[linear-gradient(135deg,#FF6B00,#FF3CAC,#A855F7,#3B82F6)] sm:flex-1"
+          <div class="c-card ripple-host sm:flex-1"
+               :style="{ background: cardConfig.getBg('culture') }"
                @click="cardClick('culture', () => ui.openModal('modal-culture'))">
             <div class="c-emo">🤝</div>
             <div class="c-lbl">Team Culture</div>
             <div class="c-sub">{{ cardConfig.isEnabled('culture') ? 'วัฒนธรรมองค์กร' : '🔜 เร็วๆ นี้' }}</div>
           </div>
-          <div class="c-card ripple-host bg-[linear-gradient(135deg,#FFD6DC,#FF8FA3,#FF4D6D)] sm:flex-1"
+          <div class="c-card ripple-host sm:flex-1"
+               :style="{ background: cardConfig.getBg('training') }"
                @click="cardClick('training', () => ui.openModal('modal-training'))">
             <div class="c-emo"><img src="/images/icon-training.png" style="width:26px;height:26px;object-fit:contain;" /></div>
             <div class="c-lbl">Training</div>
             <div class="c-sub">{{ cardConfig.isEnabled('training') ? 'การฝึกอบรม' : '🔜 เร็วๆ นี้' }}</div>
           </div>
-          <div class="c-card ripple-host bg-[linear-gradient(135deg,#06C755,#00A040)] sm:flex-1"
+          <div class="c-card ripple-host sm:flex-1"
+               :style="{ background: cardConfig.getBg('reward') }"
                @click="cardClick('reward', () => ui.openModal('modal-reward'))">
             <div class="c-emo">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
@@ -93,7 +96,8 @@
         <span class="sec-title">🛠 Other</span>
       </div>
       <div class="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-4">
-        <div class="tool-card org ripple-host flex-col items-start"
+        <div class="tool-card ripple-host flex-col items-start"
+             :style="{ background: cardConfig.getBg('monthly') }"
              @click="cardClick('monthly', () => ui.openModal('modal-monthly-plan'))">
           <div class="ti">📅</div>
           <div class="tt">Monthly Plan</div>
@@ -105,7 +109,8 @@
             <span class="etag">🔜 เร็วๆ นี้</span>
           </div>
         </div>
-        <div class="tool-card emp ripple-host flex-col items-start"
+        <div class="tool-card ripple-host flex-col items-start"
+             :style="{ background: cardConfig.getBg('market') }"
              @click="cardClick('market', () => {})">
           <div class="ti">🛍️</div>
           <div class="tt">ตลาดนัด</div>
@@ -114,7 +119,8 @@
             <span class="etag">🔜 เร็วๆ นี้</span>
           </div>
         </div>
-        <div class="tool-card org ripple-host flex-col items-start"
+        <div class="tool-card ripple-host flex-col items-start"
+             :style="{ background: cardConfig.getBg('idea') }"
              @click="cardClick('idea', () => router.push('/idea'))">
           <div class="ti">💡</div>
           <div class="tt">เสนอไอเดีย</div>
@@ -123,7 +129,8 @@
             <span class="etag">🔜 เร็วๆ นี้</span>
           </div>
         </div>
-        <div class="tool-card emp ripple-host flex-col items-start"
+        <div class="tool-card ripple-host flex-col items-start"
+             :style="{ background: cardConfig.getBg('fortune') }"
              @click="cardClick('fortune', () => {})">
           <div class="ti">🔮</div>
           <div class="tt">สายมู</div>

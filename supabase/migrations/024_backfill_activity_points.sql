@@ -1,6 +1,9 @@
 -- 024_backfill_activity_points.sql
 -- Backfill points for ALL types from existing data
--- Dedup: skip if matching points record already exists
+-- Dedup rules (updated to match triggers 025 & 026):
+--   join_activity, activity_checkin : ±1h timestamp window
+--   send_empathy  : once per (author_name, post_id)  — matches 025
+--   birthday_wish : once per (from_name, birthday_key, year) — matches 026
 
 do $$
 declare
@@ -70,36 +73,42 @@ begin
   end loop;
 
   -- ────────────────────────────────────────────────────────────
-  -- 3. send_empathy  (top-level comments only, parent_id is null/'')
+  -- 3. send_empathy  — once per (author_name, post_id)  [matches 025]
+  --    count distinct channels per author vs existing points
   -- ────────────────────────────────────────────────────────────
-  for rec in
-    select *
-    from empathy_comments
-    where author_name is not null and author_name != ''
-      and (parent_id is null or parent_id = '')
-      and not exists (
-        select 1 from points p
-        where p.employee_name = empathy_comments.author_name
-          and p.type          = 'send_empathy'
-          and p.created_at between empathy_comments.created_at - interval '1 hour'
-                               and empathy_comments.created_at + interval '1 hour'
+  select pts into v_pts
+  from point_rules
+  where type = 'send_empathy' and active = true limit 1;
+
+  if v_pts is not null and v_pts > 0 then
+    for rec in
+      select
+        author_name                                    as employee_name,
+        count(distinct post_id)                        as channel_count,
+        (select count(*) from points p
+         where p.employee_name = ec.author_name
+           and p.type = 'send_empathy')                as pts_count
+      from empathy_comments ec
+      where author_name is not null and author_name != ''
+        and (parent_id is null or parent_id = '')
+      group by author_name
+      having count(distinct post_id) > (
+        select count(*) from points p2
+        where p2.employee_name = ec.author_name
+          and p2.type = 'send_empathy'
       )
-  loop
-    select pts into v_pts
-    from point_rules
-    where type = 'send_empathy' and active = true limit 1;
-
-    if v_pts is not null and v_pts > 0 then
-      insert into points(employee_name, type, subtype, amount, "desc", created_at)
-      values (rec.author_name, 'send_empathy', '', v_pts,
-              'ส่ง Empathy ให้เพื่อน', rec.created_at);
-    end if;
-  end loop;
+    loop
+      v_need := rec.channel_count - rec.pts_count;
+      for i in 1..v_need loop
+        insert into points(employee_name, type, subtype, amount, "desc")
+        values (rec.employee_name, 'send_empathy', '', v_pts, 'ส่ง Empathy ให้เพื่อน');
+      end loop;
+    end loop;
+  end if;
 
   -- ────────────────────────────────────────────────────────────
-  -- 4. birthday_wish  (dedup by count: wishes sent vs points earned)
-  --    birthday_wishes.time is TEXT → can't use timestamp window
-  --    strategy: for each employee, award (wish_count - existing_points_count)
+  -- 4. birthday_wish  — once per (from_name, birthday_key, year)  [matches 026]
+  --    birthday_wishes.time is TEXT → use count distinct key+year vs existing points
   -- ────────────────────────────────────────────────────────────
   select pts into v_pts
   from point_rules
@@ -108,15 +117,15 @@ begin
   if v_pts is not null and v_pts > 0 then
     for rec in
       select
-        from_name                                    as employee_name,
-        count(*)                                     as wish_count,
+        from_name                                                        as employee_name,
+        count(distinct birthday_key || '|' || coalesce(year::text, '')) as wish_count,
         (select count(*) from points p
          where p.employee_name = bw.from_name
-           and p.type = 'birthday_wish')             as pts_count
+           and p.type = 'birthday_wish')                                 as pts_count
       from birthday_wishes bw
       where from_name is not null and from_name != ''
       group by from_name
-      having count(*) > (
+      having count(distinct birthday_key || '|' || coalesce(year::text, '')) > (
         select count(*) from points p2
         where p2.employee_name = bw.from_name
           and p2.type = 'birthday_wish'
