@@ -76,6 +76,7 @@ import { useUiStore }        from './stores/ui.js'
 import { useUserAuthStore }  from './stores/userAuth.js'
 import { useNotifStore }     from './stores/notif.js'
 import { useCardConfigStore } from './stores/cardConfig.js'
+import { pingPresence }      from './services/presenceService.js'
 
 const ui         = useUiStore()
 const userAuth   = useUserAuthStore()
@@ -125,6 +126,19 @@ function loadNotifs(immediate = false) {
 onMounted(() => loadNotifs(false))
 watch(() => userAuth.userName, () => loadNotifs(true))  // login/logout → immediate
 watch(() => notif.unreadCount, count => { ui.notifBadge = count }, { immediate: true })
+
+// Presence ping — update last_seen_at on mount + every 3 min (non-admin only)
+let _pingInterval = null
+function startPresencePing() {
+  if (!userAuth.userName || isAdmin.value) return
+  pingPresence(userAuth.userName, userAuth.userDept)
+  _pingInterval = setInterval(() => pingPresence(userAuth.userName, userAuth.userDept), 3 * 60 * 1000)
+}
+onMounted(() => startPresencePing())
+watch(() => userAuth.userName, () => {
+  clearInterval(_pingInterval)
+  startPresencePing()
+})
 </script>
 
 <style scoped>

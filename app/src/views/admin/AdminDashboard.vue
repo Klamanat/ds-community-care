@@ -26,6 +26,31 @@
       </router-link>
     </div>
 
+    <!-- Online users -->
+    <div class="al-card dash-online-card">
+      <div class="al-card-header">
+        <span class="al-card-title">🟢 ออนไลน์ตอนนี้</span>
+        <div class="dash-online-meta">
+          <span class="al-badge al-badge-green">{{ onlineUsers.length }} คน</span>
+          <span class="al-badge al-badge-gray">วันนี้ {{ todayUsers.length }} คน</span>
+          <button class="dash-online-refresh" @click="loadPresence" :disabled="presenceLoading">
+            {{ presenceLoading ? '⏳' : '↻' }}
+          </button>
+        </div>
+      </div>
+
+      <div v-if="presenceLoading && !onlineUsers.length" class="dash-online-empty">⏳ กำลังโหลด...</div>
+      <div v-else-if="!onlineUsers.length" class="dash-online-empty">ไม่มีผู้ใช้ออนไลน์ขณะนี้</div>
+      <div v-else class="dash-online-list">
+        <div v-for="u in onlineUsers" :key="u.employee_name" class="dash-online-item">
+          <span class="dash-online-dot"></span>
+          <span class="dash-online-name">{{ u.employee_name }}</span>
+          <span v-if="u.dept" class="dash-online-dept">{{ u.dept }}</span>
+          <span class="dash-online-time">{{ relTime(u.last_seen_at) }}</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Charts row 1 -->
     <div class="dash-charts-row">
 
@@ -200,10 +225,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useAdminStore } from '../../stores/admin.js'
 import * as svc from '../../services/adminService.js'
 import { supabase } from '../../services/supabase.js'
+import { fetchOnlineUsers, fetchTodayUsers } from '../../services/presenceService.js'
 
 const admin   = useAdminStore()
 const loading = ref(true)
@@ -214,6 +240,31 @@ const counts = reactive({
   ideasPending: 0, ideasTotal: 0,
   consultUnread: 0, consultTotal: 0,
 })
+
+// ── Presence ──────────────────────────────────────────────────
+const onlineUsers    = ref([])
+const todayUsers     = ref([])
+const presenceLoading = ref(false)
+
+async function loadPresence() {
+  presenceLoading.value = true
+  try {
+    const [online, today] = await Promise.all([fetchOnlineUsers(5), fetchTodayUsers()])
+    onlineUsers.value = online
+    todayUsers.value  = today
+  } catch { /* silent */ } finally {
+    presenceLoading.value = false
+  }
+}
+
+function relTime(iso) {
+  const diff = Math.round((Date.now() - new Date(iso)) / 1000)
+  if (diff < 60)  return `${diff}s`
+  if (diff < 3600) return `${Math.floor(diff / 60)}m`
+  return `${Math.floor(diff / 3600)}h`
+}
+
+let _presenceTimer = null
 
 const bdayByMonth = ref(Array(12).fill(0))
 const ideaCounts  = reactive({ pending: 0, reviewed: 0, approved: 0, rejected: 0 })
@@ -285,6 +336,8 @@ const statCards = computed(() => [
 
 // ── Load data ─────────────────────────────────────────────────
 onMounted(async () => {
+  loadPresence()
+  _presenceTimer = setInterval(loadPresence, 60 * 1000)  // refresh every 1 min
   try {
     const [emps, bdays, ideas, consults, pointsRes] = await Promise.all([
       svc.getEmployees(),
@@ -326,6 +379,7 @@ onMounted(async () => {
     loading.value = false
   }
 })
+onUnmounted(() => clearInterval(_presenceTimer))
 </script>
 
 <style scoped>
@@ -353,6 +407,34 @@ onMounted(async () => {
   color: rgba(255,255,255,0.9);
   white-space: nowrap; flex-shrink: 0;
 }
+
+/* ── Online users ── */
+.dash-online-card { padding: 0; }
+.dash-online-meta { display: flex; align-items: center; gap: 6px; }
+.dash-online-refresh {
+  background: none; border: 1px solid #E5E7EB; border-radius: 8px;
+  width: 28px; height: 28px; cursor: pointer; font-size: 14px; color: #6B7280;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.dash-online-refresh:hover { background: #F3F4F6; }
+.dash-online-empty { padding: 16px; font-size: 13px; color: #9CA3AF; text-align: center; }
+.dash-online-list  { display: flex; flex-direction: column; }
+.dash-online-item  {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 16px;
+  border-top: 1px solid #F3F4F6;
+  font-size: 13px;
+}
+.dash-online-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #22C55E;
+  box-shadow: 0 0 0 2px rgba(34,197,94,0.25);
+  flex-shrink: 0;
+}
+.dash-online-name { font-weight: 700; color: #111827; flex: 1; }
+.dash-online-dept { font-size: 11px; color: #6B7280; }
+.dash-online-time { font-size: 11px; color: #9CA3AF; margin-left: auto; flex-shrink: 0; }
 
 /* ── Stat cards ── */
 .dash-stats {
