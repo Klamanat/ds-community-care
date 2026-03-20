@@ -878,7 +878,7 @@
                 <div class="rw-reward-name">{{ item.name }}</div>
                 <div v-if="item.description" class="rw-reward-desc">{{ item.description }}</div>
                 <div class="rw-reward-footer">
-                  <span class="rw-reward-pts">{{ item.ptsCost.toLocaleString() }} pts</span>
+                  <span v-if="item.ptsCost" class="rw-reward-pts">{{ item.ptsCost.toLocaleString() }} pts</span>
                   <span v-if="item.stock !== null" class="rw-reward-stock">เหลือ {{ item.stock }}</span>
                 </div>
               </div>

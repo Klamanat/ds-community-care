@@ -4,7 +4,7 @@ create table if not exists rewards (
   id          text primary key default gen_random_uuid()::text,
   name        text not null,
   description text,
-  pts_cost    integer not null default 100,
+  pts_cost    integer not null default 0,
   image_id    text,          -- Storage path e.g. "rewards/1710425_item.jpg"
   image_url   text,          -- public URL
   stock       integer,       -- null = unlimited
@@ -13,5 +13,7 @@ create table if not exists rewards (
 );
 
 alter table rewards enable row level security;
+drop policy if exists "public read" on rewards;
+drop policy if exists "admin all"   on rewards;
 create policy "public read" on rewards for select using (true);
 create policy "admin all"   on rewards for all   using (is_admin());

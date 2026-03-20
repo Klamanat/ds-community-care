@@ -24,7 +24,7 @@
               <div class="al-item-title">{{ r.name }}</div>
               <div class="al-item-sub">{{ r.description }}</div>
               <div class="al-item-meta">
-                <span class="al-badge al-badge-purple">{{ r.ptsCost }} pts</span>
+                <span v-if="r.ptsCost" class="al-badge al-badge-purple">{{ r.ptsCost }} pts</span>
                 <span v-if="r.stock !== null" class="al-badge al-badge-blue">คงเหลือ {{ r.stock }}</span>
                 <span v-else class="al-badge al-badge-gray">ไม่จำกัด</span>
                 <span class="al-badge" :class="r.active ? 'al-badge-green' : 'al-badge-gray'">
@@ -59,8 +59,8 @@
         </div>
 
         <div class="al-form-row">
-          <label class="al-form-label">คะแนนที่ใช้แลก <span style="color:#EF4444;">*</span></label>
-          <input v-model.number="form.ptsCost" type="number" min="1" class="al-form-input" placeholder="100" />
+          <label class="al-form-label">คะแนนที่ใช้แลก</label>
+          <input v-model.number="form.ptsCost" type="number" min="0" class="al-form-input" placeholder="0 = ไม่จำกัดคะแนน" />
         </div>
 
         <div class="al-form-row">
@@ -190,12 +190,11 @@ function clearImg() {
 
 async function saveModal() {
   if (!form.name.trim()) { modal.error = 'กรุณากรอกชื่อของรางวัล'; return }
-  if (!form.ptsCost || form.ptsCost < 1) { modal.error = 'กรุณากรอกคะแนน'; return }
   modal.saving = true; modal.error = ''
   const fields = {
     name:        form.name.trim(),
     description: form.description.trim() || null,
-    pts_cost:    form.ptsCost,
+    pts_cost:    form.ptsCost || 0,
     stock:       form.stock ?? null,
     active:      form.active,
     image_id:    form.imageId || null,
