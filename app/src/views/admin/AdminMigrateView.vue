@@ -42,6 +42,42 @@
         </ul>
       </div>
 
+      <!-- ── Fix Cache section ── -->
+      <div class="al-card" style="margin-bottom:14px;">
+        <div class="al-card-header">
+          <span class="al-card-title">🔧 Fix Cache-Control (รูปเก่า)</span>
+        </div>
+        <div style="padding:12px 14px;font-size:12px;color:#6B7280;line-height:1.8;">
+          รูปที่อัปโหลดก่อนจะมี <code>cache-control: max-age=3600</code> (1 ชั่วโมง)<br>
+          กด Run เพื่อให้ Edge Function ดาวน์โหลดและ re-upload ทุกรูปด้วย <code>max-age=31536000</code> (1 ปี)<br>
+          <span style="color:#92400E;">ทำงานฝั่ง Server — ไม่กิน bandwidth</span>
+        </div>
+        <div style="padding:0 14px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <button
+            class="al-btn al-btn-primary"
+            :disabled="cacheFixing"
+            @click="runFixCache"
+            style="min-width:120px;"
+          >
+            <span v-if="cacheFixing">⏳ กำลังทำงาน...</span>
+            <span v-else>▶ Run Fix Cache</span>
+          </button>
+          <!-- Result -->
+          <span v-if="cacheResult" style="font-size:13px;font-weight:700;color:#15803D;">
+            ✅ แก้ไข {{ cacheResult.fixed }} รูป
+            <span v-if="cacheResult.failed" style="color:#DC2626;"> · ผิดพลาด {{ cacheResult.failed }} รูป</span>
+          </span>
+          <span v-if="cacheError" style="font-size:13px;color:#DC2626;">⚠️ {{ cacheError }}</span>
+        </div>
+        <!-- Error list -->
+        <div v-if="cacheResult?.errors?.length" style="padding:0 14px 14px;">
+          <div style="font-size:11px;font-weight:700;color:#DC2626;margin-bottom:4px;">รายการที่ผิดพลาด:</div>
+          <div v-for="err in cacheResult.errors" :key="err" style="font-size:11px;color:#DC2626;font-family:monospace;padding:2px 0;">
+            {{ err }}
+          </div>
+        </div>
+      </div>
+
       <div v-if="loadError" style="padding:14px;color:#DC2626;font-size:13px;">⚠️ {{ loadError }}</div>
       <div v-else-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
 
@@ -89,7 +125,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getEmployees, updateEmployee } from '../../services/adminService.js'
-import { getImages, uploadImage } from '../../services/edgeFunctions.js'
+import { getImages, uploadImage, fixCacheControl } from '../../services/edgeFunctions.js'
 
 const loading   = ref(true)
 const loadError = ref('')
@@ -147,6 +183,25 @@ async function migrateOne(emp) {
   } catch (e) {
     errors.value[emp.id] = e.message || 'ผิดพลาด'
     statuses.value[emp.id] = 'error'
+  }
+}
+
+// ── Fix Cache ──────────────────────────────────────────────────────────
+const cacheFixing  = ref(false)
+const cacheResult  = ref(null)   // { fixed, failed, errors[] } | null
+const cacheError   = ref('')
+
+async function runFixCache() {
+  if (cacheFixing.value) return
+  cacheFixing.value = true
+  cacheResult.value = null
+  cacheError.value  = ''
+  try {
+    cacheResult.value = await fixCacheControl()
+  } catch (e) {
+    cacheError.value = e.message || 'เกิดข้อผิดพลาด'
+  } finally {
+    cacheFixing.value = false
   }
 }
 

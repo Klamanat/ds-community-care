@@ -47,6 +47,28 @@ export async function deleteImage(paths) {
 }
 
 /**
+ * Fix cache-control on ALL existing images in Storage (one-time admin operation).
+ * Runs server-side — does not consume browser bandwidth.
+ * @returns {{ fixed: number, failed: number, errors: string[] }}
+ */
+export async function fixCacheControl() {
+  const res = await fetch(`${BASE}/fix-cache`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${ANON}`,
+    },
+    body: '{}',
+  })
+  if (!res.ok) throw new Error(`fix-cache: ${res.status}`)
+  const text = await res.text()
+  let data
+  try { data = JSON.parse(text) } catch { throw new Error('fix-cache: invalid response') }
+  if (!data.ok) throw new Error(data.error || 'fix-cache failed')
+  return data.data   // { fixed, failed, errors }
+}
+
+/**
  * Batch-fetch Drive images as base64 map via Edge Function.
  * Replaces gasGet('getImages', { imgIds: '...' })
  * @param {string[]} imgIds  Array of Drive file IDs
