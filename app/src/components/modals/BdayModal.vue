@@ -134,19 +134,10 @@
               :key="w.id ?? i"
               class="padlet-card-wrap"
             >
-              <div class="padlet-pin" :style="{ '--pin-color': CARD_ACCENTS[i % CARD_ACCENTS.length] }">
-                <div class="padlet-pin-shadow"></div>
-                <div class="padlet-pin-head"><div class="padlet-pin-shine"></div></div>
-                <div class="padlet-pin-stem"></div>
-              </div>
               <div class="padlet-card" :style="{ background: CARD_COLORS[i % CARD_COLORS.length] }">
-                <div v-if="!w._pinned && (canEdit(w) || canDelete(w))" class="padlet-actions">
-                  <button v-if="canEdit(w)" class="padlet-act-btn" @click.stop="editingWishId === w.id ? cancelEdit() : startEdit(w)">✏️</button>
-                  <button v-if="canDelete(w)" class="padlet-act-btn" @click.stop="doDelete(w)">🗑</button>
-                </div>
                 <template v-if="editingWishId === w.id">
                   <textarea v-model="editMsg" rows="3" maxlength="500" class="padlet-edit-area"></textarea>
-                  <div style="display:flex;gap:6px;margin-top:6px;">
+                  <div style="display:flex;gap:6px;margin-top:6px;padding:0 12px 8px;">
                     <button class="wi-save-btn" @click="saveEdit(w)">บันทึก</button>
                     <button class="wi-cancel-btn" @click="cancelEdit">ยกเลิก</button>
                   </div>
@@ -164,6 +155,10 @@
                     <div v-if="w.role" class="padlet-role">{{ w.role }}</div>
                     <div v-else class="padlet-time">{{ formatWishTime(w.time) }}</div>
                   </div>
+                  <div v-if="!w._pinned && (canEdit(w) || canDelete(w))" class="padlet-footer-actions">
+                    <button v-if="canEdit(w)" class="padlet-act-btn" @click.stop="editingWishId === w.id ? cancelEdit() : startEdit(w)">✏️</button>
+                    <button v-if="canDelete(w)" class="padlet-act-btn" @click.stop="doDelete(w)">🗑</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -177,19 +172,10 @@
               class="padlet-card-wrap"
               :class="{ 'padlet-card--new': justSent && i === 0 }"
             >
-              <div class="padlet-pin" :style="{ '--pin-color': CARD_ACCENTS[(i + PINNED_CODES.length) % CARD_ACCENTS.length] }">
-                <div class="padlet-pin-shadow"></div>
-                <div class="padlet-pin-head"><div class="padlet-pin-shine"></div></div>
-                <div class="padlet-pin-stem"></div>
-              </div>
               <div class="padlet-card" :style="{ background: CARD_COLORS[(i + PINNED_CODES.length) % CARD_COLORS.length] }">
-                <div v-if="!w._pinned && (canEdit(w) || canDelete(w))" class="padlet-actions">
-                  <button v-if="canEdit(w)" class="padlet-act-btn" @click.stop="editingWishId === w.id ? cancelEdit() : startEdit(w)">✏️</button>
-                  <button v-if="canDelete(w)" class="padlet-act-btn" @click.stop="doDelete(w)">🗑</button>
-                </div>
                 <template v-if="editingWishId === w.id">
                   <textarea v-model="editMsg" rows="3" maxlength="500" class="padlet-edit-area"></textarea>
-                  <div style="display:flex;gap:6px;margin-top:6px;">
+                  <div style="display:flex;gap:6px;margin-top:6px;padding:0 12px 8px;">
                     <button class="wi-save-btn" @click="saveEdit(w)">บันทึก</button>
                     <button class="wi-cancel-btn" @click="cancelEdit">ยกเลิก</button>
                   </div>
@@ -205,6 +191,10 @@
                   <div class="padlet-sender">
                     <div class="padlet-name">{{ w.from }}</div>
                     <div class="padlet-time">{{ formatWishTime(w.time) }}</div>
+                  </div>
+                  <div v-if="!w._pinned && (canEdit(w) || canDelete(w))" class="padlet-footer-actions">
+                    <button v-if="canEdit(w)" class="padlet-act-btn" @click.stop="editingWishId === w.id ? cancelEdit() : startEdit(w)">✏️</button>
+                    <button v-if="canDelete(w)" class="padlet-act-btn" @click.stop="doDelete(w)">🗑</button>
                   </div>
                 </div>
               </div>
@@ -785,18 +775,14 @@ function confirmPrize() {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-bottom: 10px;
-  padding-top: 14px;
 }
 .padlet-board {
   columns: 2;
   column-gap: 10px;
   margin-bottom: 16px;
-  padding-top: 14px;
 }
 .padlet-card-wrap {
   break-inside: avoid;
-  position: relative;
-  padding-top: 14px;
   margin-bottom: 10px;
 }
 .padlet-card {
@@ -819,75 +805,18 @@ function confirmPrize() {
 }
 .padlet-card-wrap:active .padlet-card { transform: scale(.97); }
 .padlet-card-wrap.padlet-card--new .padlet-card { animation: padletPop .4s cubic-bezier(.34,1.56,.64,1); }
+.padlet-card-wrap:hover .padlet-footer-actions { opacity: 1; }
+@media (hover: none) { .padlet-footer-actions { opacity: 1; } }
 @keyframes padletPop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-.padlet-pin {
-  position: absolute;
-  top: 2px;
-  left: 50%;
-  transform: translateX(-50%) rotate(-15deg);
-  z-index: 20;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.padlet-pin-shadow {
-  position: absolute;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%) scaleX(1.4);
-  width: 10px;
-  height: 5px;
-  background: rgba(0,0,0,0.18);
-  border-radius: 50%;
-  filter: blur(3px);
-}
-.padlet-pin-head {
-  width: 20px;
-  height: 20px;
-  border-radius: 50% 50% 50% 0;
-  transform: rotate(-45deg);
-  background: radial-gradient(circle at 38% 32%,
-    rgba(255,255,255,0.55) 0%,
-    var(--pin-color) 45%,
-    color-mix(in srgb, var(--pin-color) 70%, black) 100%
-  );
-  box-shadow:
-    inset -2px -2px 4px rgba(0,0,0,0.2),
-    inset 1px 1px 3px rgba(255,255,255,0.5),
-    0 3px 6px rgba(0,0,0,0.25);
-  position: relative;
-  flex-shrink: 0;
-}
-.padlet-pin-shine {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.65);
-  filter: blur(1px);
-}
-.padlet-pin-stem {
-  width: 2px;
-  height: 10px;
-  background: linear-gradient(to bottom, #9CA3AF 0%, #4B5563 100%);
-  border-radius: 0 0 2px 2px;
-  margin-top: -2px;
-  box-shadow: 1px 0 2px rgba(0,0,0,0.15);
-}
-.padlet-actions {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+.padlet-footer-actions {
   display: flex;
   gap: 2px;
+  flex-shrink: 0;
+  margin-left: auto;
   opacity: 0;
   transition: opacity .15s;
 }
-.padlet-card-wrap:hover .padlet-actions { opacity: 1; }
-@media (hover: none) { .padlet-actions { opacity: 1; } }
 .padlet-act-btn {
   background: rgba(255,255,255,0.8);
   border: none;
