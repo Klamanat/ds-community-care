@@ -179,7 +179,7 @@
         </div>
 
         <!-- Ticket section -->
-        <div class="al-form-row" style="border-top:1px solid #E5E7EB;padding-top:12px;margin-top:4px;">
+        <!-- <div class="al-form-row" style="border-top:1px solid #E5E7EB;padding-top:12px;margin-top:4px;">
           <label class="al-form-label" style="font-weight:600;">🎟 ระบบตั๋ว</label>
           <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
             <input type="checkbox" v-model="form.ticketEnabled" style="width:16px;height:16px;" />
@@ -210,7 +210,7 @@
             <label class="al-form-label">วิธีชำระเงิน / หมายเหตุ</label>
             <textarea v-model="form.ticketNote" class="al-form-textarea" rows="2" placeholder="เช่น โอนมาที่บัญชีธนาคาร xxx ก่อนวันงาน"></textarea>
           </div>
-        </div>
+        </div> -->
 
         <!-- Image upload -->
         <div class="al-form-row">
