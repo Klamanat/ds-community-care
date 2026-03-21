@@ -112,57 +112,106 @@
           </div>
 
           <!-- Divider -->
-          <div style="display:flex;align-items:center;gap:6px;margin:14px 0 10px;">
+          <div style="display:flex;align-items:center;gap:6px;margin:14px 0 12px;">
             <div style="flex:1;height:1px;background:#E5E7EB;"></div>
-            <div class="text-[11px] font-black text-app-mid whitespace-nowrap">💌 คำอวยพรจากเพื่อนๆ</div>
+            <div class="text-[11px] font-black text-app-mid whitespace-nowrap">💌 คำอวยพรจากเพื่อนๆ ({{ selectedPerson.wishes.length }})</div>
             <div style="flex:1;height:1px;background:#E5E7EB;"></div>
           </div>
 
-          <!-- Wish feed -->
-          <div style="display:flex;flex-direction:column;gap:8px;max-height:180px;overflow-y:auto;scrollbar-width:thin;margin-bottom:14px;">
-            <div v-if="wishesLoading" class="text-center py-5">
-              <div class="bday-spinner"></div>
-              <div class="text-[12px] font-bold mt-2 text-app-light">กำลังโหลดคำอวยพร...</div>
-            </div>
-            <div v-else-if="!selectedPerson.wishes.length" class="text-center py-5 text-app-light text-[13px]">
-              ยังไม่มีคำอวยพรค่ะ<br>เป็นคนแรกที่อวยพรได้เลย! 🎉
-            </div>
+          <!-- Loading -->
+          <div v-if="wishesLoading" class="padlet-loading">
+            <div class="bday-spinner"></div>
+            <div class="text-[12px] font-bold mt-2 text-app-light">กำลังโหลด...</div>
+          </div>
+
+          <!-- Padlet board (always shown when not loading) -->
+          <template v-else>
+
+          <!-- Pinned row: 2 คนนี้อยู่แถวเดียวกันเสมอ -->
+          <div v-if="displayWishes.some(w => w._pinnedSlot)" class="padlet-pinned-row">
             <div
-              v-for="(w, i) in wishesLoading ? [] : selectedPerson.wishes"
+              v-for="(w, i) in displayWishes.filter(w => w._pinnedSlot)"
               :key="w.id ?? i"
-              class="wish-item"
-              :class="{ 'wi-new': i === 0 && justSent }"
+              class="padlet-card-wrap"
             >
-              <div class="wi-header-row">
-                <div class="wi-av" :style="w.photo ? 'overflow:hidden;' : { background: bday.getSenderAvatar(w.avIdx).bg }">
-                  <img v-if="w.photo" :src="w.photo" style="width:100%;height:100%;object-fit:cover;" @error="e => e.target.style.display='none'" />
-                  <span v-else>{{ bday.getSenderAvatar(w.avIdx).av }}</span>
+              <div class="padlet-pin" :style="{ '--pin-color': CARD_ACCENTS[i % CARD_ACCENTS.length] }">
+                <div class="padlet-pin-shadow"></div>
+                <div class="padlet-pin-head"><div class="padlet-pin-shine"></div></div>
+                <div class="padlet-pin-stem"></div>
+              </div>
+              <div class="padlet-card" :style="{ background: CARD_COLORS[i % CARD_COLORS.length] }">
+                <div v-if="!w._pinned && (canEdit(w) || canDelete(w))" class="padlet-actions">
+                  <button v-if="canEdit(w)" class="padlet-act-btn" @click.stop="editingWishId === w.id ? cancelEdit() : startEdit(w)">✏️</button>
+                  <button v-if="canDelete(w)" class="padlet-act-btn" @click.stop="doDelete(w)">🗑</button>
                 </div>
-                <div class="wi-name">{{ w.from }}</div>
-                <div class="wi-time">{{ formatWishTime(w.time) }}</div>
-                <!-- action buttons -->
-                <div v-if="canEdit(w) || canDelete(w)" class="wi-actions">
-                  <button v-if="canEdit(w)" class="wi-act-btn" title="แก้ไข" @click.stop="editingWishId === w.id ? cancelEdit() : startEdit(w)">✏️</button>
-                  <button v-if="canDelete(w)" class="wi-act-btn" title="ลบ" @click.stop="doDelete(w)">🗑</button>
+                <template v-if="editingWishId === w.id">
+                  <textarea v-model="editMsg" rows="3" maxlength="500" class="padlet-edit-area"></textarea>
+                  <div style="display:flex;gap:6px;margin-top:6px;">
+                    <button class="wi-save-btn" @click="saveEdit(w)">บันทึก</button>
+                    <button class="wi-cancel-btn" @click="cancelEdit">ยกเลิก</button>
+                  </div>
+                </template>
+                <div v-else class="padlet-msg" :style="w._pinned && !w.msg ? 'color:#D1D5DB;font-style:italic;' : ''">
+                  {{ w._pinned && !w.msg ? (w._placeholder || 'ยังไม่ได้อวยพร...') : w.msg }}
+                </div>
+                <div class="padlet-footer">
+                  <div class="padlet-av" :style="w.photo ? 'overflow:hidden' : { background: bday.getSenderAvatar(w.avIdx).bg }">
+                    <img v-if="w.photo" :src="w.photo" style="width:100%;height:100%;object-fit:cover;" @error="e => e.target.style.display='none'" />
+                    <span v-else style="font-size:12px;">{{ bday.getSenderAvatar(w.avIdx).av }}</span>
+                  </div>
+                  <div class="padlet-sender">
+                    <div class="padlet-name">{{ w.from }}</div>
+                    <div v-if="w.role" class="padlet-role">{{ w.role }}</div>
+                    <div v-else class="padlet-time">{{ formatWishTime(w.time) }}</div>
+                  </div>
                 </div>
               </div>
-              <!-- inline edit -->
-              <template v-if="editingWishId === w.id">
-                <textarea
-                  v-model="editMsg"
-                  rows="2"
-                  maxlength="500"
-                  class="w-full rounded-xl p-2 text-[12px] text-app-dark bg-app-bg resize-none outline-none mt-1"
-                  style="border:1.5px solid #6366F1;"
-                ></textarea>
-                <div style="display:flex;gap:6px;margin-top:5px;">
-                  <button class="wi-save-btn" @click="saveEdit(w)">บันทึก</button>
-                  <button class="wi-cancel-btn" @click="cancelEdit">ยกเลิก</button>
-                </div>
-              </template>
-              <div v-else class="wi-msg">{{ w.msg }}</div>
             </div>
           </div>
+
+          <!-- Masonry: wishes ที่เหลือ -->
+          <div class="padlet-board">
+            <div
+              v-for="(w, i) in displayWishes.filter(w => !w._pinnedSlot)"
+              :key="w.id ?? i"
+              class="padlet-card-wrap"
+              :class="{ 'padlet-card--new': justSent && i === 0 }"
+            >
+              <div class="padlet-pin" :style="{ '--pin-color': CARD_ACCENTS[(i + PINNED_CODES.length) % CARD_ACCENTS.length] }">
+                <div class="padlet-pin-shadow"></div>
+                <div class="padlet-pin-head"><div class="padlet-pin-shine"></div></div>
+                <div class="padlet-pin-stem"></div>
+              </div>
+              <div class="padlet-card" :style="{ background: CARD_COLORS[(i + PINNED_CODES.length) % CARD_COLORS.length] }">
+                <div v-if="!w._pinned && (canEdit(w) || canDelete(w))" class="padlet-actions">
+                  <button v-if="canEdit(w)" class="padlet-act-btn" @click.stop="editingWishId === w.id ? cancelEdit() : startEdit(w)">✏️</button>
+                  <button v-if="canDelete(w)" class="padlet-act-btn" @click.stop="doDelete(w)">🗑</button>
+                </div>
+                <template v-if="editingWishId === w.id">
+                  <textarea v-model="editMsg" rows="3" maxlength="500" class="padlet-edit-area"></textarea>
+                  <div style="display:flex;gap:6px;margin-top:6px;">
+                    <button class="wi-save-btn" @click="saveEdit(w)">บันทึก</button>
+                    <button class="wi-cancel-btn" @click="cancelEdit">ยกเลิก</button>
+                  </div>
+                </template>
+                <div v-else class="padlet-msg" :style="w._pinned && !w.msg ? 'color:#D1D5DB;font-style:italic;' : ''">
+                  {{ w._pinned && !w.msg ? (w._placeholder || 'ยังไม่ได้อวยพร...') : w.msg }}
+                </div>
+                <div class="padlet-footer">
+                  <div class="padlet-av" :style="w.photo ? 'overflow:hidden' : { background: bday.getSenderAvatar(w.avIdx).bg }">
+                    <img v-if="w.photo" :src="w.photo" style="width:100%;height:100%;object-fit:cover;" @error="e => e.target.style.display='none'" />
+                    <span v-else style="font-size:12px;">{{ bday.getSenderAvatar(w.avIdx).av }}</span>
+                  </div>
+                  <div class="padlet-sender">
+                    <div class="padlet-name">{{ w.from }}</div>
+                    <div class="padlet-time">{{ formatWishTime(w.time) }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          </template>
 
           <!-- Wish composer -->
           <!-- blocked: self -->
@@ -447,7 +496,7 @@ import { useUiStore } from '../../stores/ui.js'
 import { useUserAuthStore } from '../../stores/userAuth.js'
 import { useAdminStore } from '../../stores/admin.js'
 import { useConfetti } from '../../composables/useConfetti.js'
-import { deleteWish as svcDeleteWish, updateWish as svcUpdateWish } from '../../services/birthdayService.js'
+import { deleteWish as svcDeleteWish, updateWish as svcUpdateWish, fetchEmployeeProfile } from '../../services/birthdayService.js'
 
 const bday     = useBirthdayStore()
 const ui       = useUiStore()
@@ -512,6 +561,9 @@ const PRIZES = [
   { icon: '🎁', name: 'สติ๊กเกอร์ + แต้ม 50 pts', desc: 'ได้ทั้งสติ๊กเกอร์ LINE และแต้มสะสมเลยค่ะ!', color: '#A855F7' },
 ]
 
+const CARD_COLORS  = ['#FFFFFF','#FFFFFF','#FFFFFF','#FFFFFF','#FFFFFF','#FFFFFF','#FFFFFF','#FFFFFF']
+const CARD_ACCENTS = ['#FBBF24','#60A5FA','#34D399','#C084FC','#FB7185','#38BDF8','#F472B6','#84CC16']
+
 const wishChips = ['🎉 สุขสันต์วันเกิดนะคะ!', '🌟 ขอให้โชคดีตลอดปีนะ!', '🎂 ขอให้มีความสุขมากๆ!', '💪 สุขภาพแข็งแรงนะ!']
 const emojiPicker = ['🎉', '🎂', '🌸', '✨', '🥳', '💖']
 
@@ -526,9 +578,23 @@ const monthFullNames = [
   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม',
 ]
 
+const PINNED_CODES = ['324008983', '11365145']  // ลำดับ 1, 2
+const PINNED_PLACEHOLDER = {
+  '324008983': 'พี่มะนาวอวยพร',
+  '11365145':  'พี่นิโคลอวยพร',
+}
+const pinnedProfiles = ref([])  // array ตามลำดับ PINNED_CODES
+
 const currentEmps = computed(() => {
   const emps = bday.allEmployees[selectedMonth.value - 1] || []
-  return [...emps].sort((a, b) => (parseInt(a.date) || 0) - (parseInt(b.date) || 0))
+  return [...emps].sort((a, b) => {
+    const ai = PINNED_CODES.indexOf(a.empCode)
+    const bi = PINNED_CODES.indexOf(b.empCode)
+    if (ai !== -1 && bi !== -1) return ai - bi
+    if (ai !== -1) return -1
+    if (bi !== -1) return 1
+    return (parseInt(a.date) || 0) - (parseInt(b.date) || 0)
+  })
 })
 
 // Local loading state — starts true, resolves after fetch
@@ -537,6 +603,8 @@ const loading = ref(true)
 onMounted(async () => {
   await bday.loadMonth(selectedMonth.value - 1)
   loading.value = false
+  Promise.all(PINNED_CODES.map(code => fetchEmployeeProfile(code).catch(() => null)))
+    .then(profiles => { pinnedProfiles.value = profiles.filter(Boolean) })
 })
 
 watch(selectedMonth, async (m) => {
@@ -559,14 +627,9 @@ const editingWishId = ref(null)
 const editMsg       = ref('')
 
 function canDelete(w) {
-  if (admin.isAuthenticated) return true
   const myName = userAuth.userName.trim()
   if (!myName) return false
-  // Own wish (sender name matches)
-  if ((w.from || '').trim() === myName) return true
-  // Birthday person can delete any wish on their own profile
-  if ((selectedPerson.value?.name || '').trim() === myName) return true
-  return false
+  return (w.from || '').trim() === myName
 }
 function canEdit(w) {
   const myName = userAuth.userName.trim()
@@ -598,16 +661,53 @@ async function saveEdit(w) {
 }
 async function doDelete(w) {
   if (!w.id) return
+  const fromName = userAuth.userName.trim() || null
   const prev = [...selectedPerson.value.wishes]
   selectedPerson.value.wishes = selectedPerson.value.wishes.filter(x => x.id !== w.id)
   try {
-    await svcDeleteWish(w.id)
+    await svcDeleteWish(w.id, fromName)
     ui.showToast('ลบคำอวยพรแล้ว')
   } catch {
     selectedPerson.value.wishes = prev
     ui.showToast('ลบไม่สำเร็จ กรุณาลองใหม่')
   }
 }
+
+// Pinned wish cards — ลำดับตาม PINNED_CODES (324008983 ก่อน, 11365145 ถัดมา)
+const displayWishes = computed(() => {
+  const wishes = selectedPerson.value?.wishes || []
+  const bdayName = (selectedPerson.value?.name || '').trim().toLowerCase()
+  const profiles = pinnedProfiles.value
+
+  let remaining = [...wishes]
+  const pinned = []
+
+  for (const sp of profiles) {
+    // ข้ามถ้าเจ้าของวันเกิดคือคนนั้นเอง
+    if (sp.name.trim().toLowerCase() === bdayName) continue
+
+    const idx = remaining.findIndex(w => (w.from || '').trim().toLowerCase() === sp.name.trim().toLowerCase())
+    if (idx !== -1) {
+      pinned.push({ ...remaining.splice(idx, 1)[0], _pinnedSlot: true, role: sp.role })
+    } else {
+      pinned.push({
+        id:           `pinned_${sp.empCode}`,
+        from:         sp.name,
+        role:         sp.role,
+        avIdx:        sp.fallbackIdx,
+        fromImgId:    sp.imgId,
+        photo:        sp.photo,
+        msg:          '',
+        time:         '',
+        _pinned:      true,
+        _pinnedSlot:  true,
+        _placeholder: PINNED_PLACEHOLDER[sp.empCode] || 'ยังไม่ได้อวยพร...',
+      })
+    }
+  }
+
+  return [...pinned, ...remaining]
+})
 
 async function openPerson(emp) {
   selectedPerson.value = emp
@@ -670,6 +770,201 @@ function confirmPrize() {
 </script>
 
 <style scoped>
+
+/* ── Padlet board ── */
+.padlet-loading, .padlet-empty {
+  text-align: center;
+  padding: 28px 16px;
+  color: #9CA3AF;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+.padlet-pinned-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-top: 14px;
+}
+.padlet-board {
+  columns: 2;
+  column-gap: 10px;
+  margin-bottom: 16px;
+  padding-top: 14px;
+}
+.padlet-card-wrap {
+  break-inside: avoid;
+  position: relative;
+  padding-top: 14px;
+  margin-bottom: 10px;
+}
+.padlet-card {
+  border-radius: 3px;
+  background: #fff;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.10),
+    0 6px 18px rgba(0,0,0,0.10),
+    2px 4px 0 rgba(0,0,0,0.04);
+  position: relative;
+  overflow: hidden;
+  transition: transform .15s, box-shadow .15s;
+}
+.padlet-card-wrap:hover .padlet-card {
+  transform: translateY(-2px) rotate(0.3deg);
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.12),
+    0 10px 28px rgba(0,0,0,0.13),
+    2px 6px 0 rgba(0,0,0,0.05);
+}
+.padlet-card-wrap:active .padlet-card { transform: scale(.97); }
+.padlet-card-wrap.padlet-card--new .padlet-card { animation: padletPop .4s cubic-bezier(.34,1.56,.64,1); }
+@keyframes padletPop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.padlet-pin {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-15deg);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.padlet-pin-shadow {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(1.4);
+  width: 10px;
+  height: 5px;
+  background: rgba(0,0,0,0.18);
+  border-radius: 50%;
+  filter: blur(3px);
+}
+.padlet-pin-head {
+  width: 20px;
+  height: 20px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: radial-gradient(circle at 38% 32%,
+    rgba(255,255,255,0.55) 0%,
+    var(--pin-color) 45%,
+    color-mix(in srgb, var(--pin-color) 70%, black) 100%
+  );
+  box-shadow:
+    inset -2px -2px 4px rgba(0,0,0,0.2),
+    inset 1px 1px 3px rgba(255,255,255,0.5),
+    0 3px 6px rgba(0,0,0,0.25);
+  position: relative;
+  flex-shrink: 0;
+}
+.padlet-pin-shine {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.65);
+  filter: blur(1px);
+}
+.padlet-pin-stem {
+  width: 2px;
+  height: 10px;
+  background: linear-gradient(to bottom, #9CA3AF 0%, #4B5563 100%);
+  border-radius: 0 0 2px 2px;
+  margin-top: -2px;
+  box-shadow: 1px 0 2px rgba(0,0,0,0.15);
+}
+.padlet-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.padlet-card-wrap:hover .padlet-actions { opacity: 1; }
+@media (hover: none) { .padlet-actions { opacity: 1; } }
+.padlet-act-btn {
+  background: rgba(255,255,255,0.8);
+  border: none;
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.padlet-msg {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1F2937;
+  line-height: 1.65;
+  padding: 14px 12px 8px;
+  word-break: break-word;
+  min-height: 56px;
+}
+.padlet-edit-area {
+  width: 100%;
+  margin: 8px 12px 0;
+  width: calc(100% - 24px);
+  border-radius: 8px;
+  border: 1.5px solid #6366F1;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: 'Sarabun', sans-serif;
+  resize: none;
+  background: rgba(255,255,255,0.7);
+  outline: none;
+  color: #1F2937;
+}
+.padlet-footer {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px 10px;
+  border-top: 1px solid #F3F4F6;
+  margin-top: 4px;
+}
+.padlet-av {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.padlet-sender { flex: 1; min-width: 0; }
+.padlet-name {
+  font-size: 10px;
+  font-weight: 800;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.padlet-time {
+  font-size: 9px;
+  color: #9CA3AF;
+  margin-top: 1px;
+}
+.padlet-role {
+  font-size: 9px;
+  color: #A78BFA;
+  font-weight: 600;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ── Wish blocked notice ── */
 .wish-blocked-notice {

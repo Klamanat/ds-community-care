@@ -18,6 +18,7 @@ export async function fetchMonth(monthIdx) {
     return {
       key:         `bday_${e.id}`,
       employeeId:  e.id,
+      empCode:     e.emp_code || '',
       name:        e.name,
       role:        e.role || '',
       date:        e.bd_date || '',
@@ -80,8 +81,10 @@ export async function fetchWishes(birthdayKey) {
   return wishes
 }
 
-export async function deleteWish(id) {
-  const { error } = await supabase.from('birthday_wishes').delete().eq('id', id)
+export async function deleteWish(id, fromName = null) {
+  let q = supabase.from('birthday_wishes').delete().eq('id', id)
+  if (fromName) q = q.eq('from_name', fromName)
+  const { error } = await q
   if (error) throw new Error(error.message)
 }
 
@@ -92,6 +95,30 @@ export async function updateWish(id, msg) {
 
 export async function uploadPhoto(birthdayKey, imageBase64) {
   return uploadImage(imageBase64, `birthday_${birthdayKey}_${Date.now()}.jpg`, 'profiles')
+}
+
+export async function fetchEmployeeProfile(empCode) {
+  const { data } = await supabase
+    .from('employees')
+    .select('id, emp_code, name, role, img_url, img_id, fallback_idx')
+    .eq('emp_code', empCode)
+    .maybeSingle()
+  if (!data) return null
+  const imgId = data.img_id || (data.img_url?.startsWith('drive:') ? data.img_url.slice(6) : '')
+  const photo = (data.img_url?.startsWith('http') ? data.img_url : '') || getCached(imgId) || ''
+  const ids = imgId ? [imgId] : []
+  if (ids.length) fetchImages(ids).then(map => {
+    if (map[imgId]) data._photo = map[imgId]
+  }).catch(() => {})
+  return {
+    employeeId:  data.id,
+    empCode:     data.emp_code || '',
+    name:        data.name || '',
+    role:        data.role || '',
+    fallbackIdx: Number(data.fallback_idx) || 0,
+    photo,
+    imgId,
+  }
 }
 
 export async function addWish(birthdayKey, msg, fromName, fromAvIdx, fromImgId = '') {
