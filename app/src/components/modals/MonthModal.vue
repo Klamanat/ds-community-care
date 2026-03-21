@@ -133,6 +133,11 @@
                 <span class="month-ev-stamped">✅ เข้าร่วมกิจกรรมแล้ว</span>
               </template>
 
+              <!-- Ticket booking -->
+              <button v-if="ev.ticketEnabled" class="month-ev-join" style="background:linear-gradient(135deg,#6366F1,#4F46E5);" @click="openTicket(ev)">
+                🎟 จองตั๋ว
+              </button>
+
               <!-- Feedback (แสดงทุกกิจกรรมที่มี feedbackUrl) -->
               <button v-if="ev.feedbackUrl" class="month-ev-feedback" @click="openLink(ev.feedbackUrl)">
                 📝 Feedback
@@ -286,6 +291,11 @@ onMounted(() => {
 watch(() => ui.activeModal, (val) => {
   if (val === 'modal-month') loadMyStamps()
 })
+
+function openTicket(ev) {
+  ui.ticketActivity = ev
+  ui.openModal('ticket-modal')
+}
 
 function openLink(url) {
   if (url) window.open(url, '_blank', 'noopener,noreferrer')

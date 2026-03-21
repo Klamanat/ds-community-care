@@ -967,3 +967,46 @@
   cursor: pointer;
 }
 .al-select-sm:focus { border-color: #6366F1; }
+
+/* ── Ticket registrant section ── */
+.al-registrant-section {
+  background: #F9FAFB;
+  border-top: 1px solid #E5E7EB;
+  padding: 10px 12px 12px;
+  margin: 0 -12px -12px;
+}
+.al-ticket-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.al-ticket-table th {
+  text-align: left;
+  color: #6B7280;
+  font-weight: 600;
+  padding: 4px 6px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.al-ticket-table td {
+  padding: 5px 6px;
+  border-bottom: 1px solid #F3F4F6;
+  vertical-align: middle;
+}
+
+/* ── Ticket count button (in activity list) ── */
+.al-ticket-count-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #EEF2FF;
+  color: #4F46E5;
+  border: 1.5px solid #C7D2FE;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Sarabun', sans-serif;
+  transition: background 0.15s;
+}
+.al-ticket-count-btn:hover { background: #E0E7FF; }

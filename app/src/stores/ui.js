@@ -6,6 +6,7 @@ export const useUiStore = defineStore('ui', () => {
   const selectedMonthIdx = ref(1)
   const notifBadge = ref(0)
   const currentUser = ref({ id: '', name: '', role: '', img: '', dept: '', emoji: '😊' })
+  const ticketActivity = ref(null)
   const toast = ref({ msg: '', visible: false })
   const modalKeys = reactive({})
   let _toastTimer = null
@@ -38,5 +39,5 @@ export const useUiStore = defineStore('ui', () => {
     notifBadge.value = 0
   }
 
-  return { activeModal, modalKeys, selectedMonthIdx, notifBadge, currentUser, toast, openModal, openMonthModal, closeModal, showToast, clearNotifBadge }
+  return { activeModal, modalKeys, selectedMonthIdx, notifBadge, currentUser, ticketActivity, toast, openModal, openMonthModal, closeModal, showToast, clearNotifBadge }
 })

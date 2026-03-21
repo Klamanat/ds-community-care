@@ -155,6 +155,7 @@
     <div class="sec">
       <div class="sec-hdr">
         <span class="sec-title">📅 Activities</span>
+        <router-link to="/tickets" style="font-size:12px;color:#6366F1;font-weight:600;text-decoration:none;">🎟 ตั๋วของฉัน →</router-link>
       </div>
       <MonthsGrid @month-click="(idx) => ui.openMonthModal(idx)" />
     </div>

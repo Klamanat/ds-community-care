@@ -17,6 +17,7 @@ const routes = [
   { path: '/idea',     name: 'idea',     component: () => import('../views/IdeaView.vue'),     meta: { requiresUser: true } },
   { path: '/bday',     name: 'bday',     component: () => import('../views/BdayView.vue'),     meta: { requiresUser: true } },
   { path: '/culture',    name: 'culture',    component: () => import('../views/CultureView.vue'),    meta: { requiresUser: true } },
+  { path: '/tickets',    name: 'tickets',    component: () => import('../views/ActivityTicketsView.vue'), meta: { requiresUser: true } },
 
   // Admin login (no layout)
   {
@@ -60,6 +61,11 @@ const routes = [
         path: 'activities',
         name: 'admin-activities',
         component: () => import('../views/admin/AdminActivitiesView.vue'),
+      },
+      {
+        path: 'activities/scan',
+        name: 'admin-ticket-scan',
+        component: () => import('../views/admin/AdminTicketScanView.vue'),
       },
       {
         path: 'announcement',

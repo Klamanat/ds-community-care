@@ -29,6 +29,7 @@
       <TrainingModal  :key="ui.modalKeys['modal-training']   || 0" />
       <RewardModal       :key="ui.modalKeys['modal-reward']      || 0" />
       <AnnouncementModal />
+      <ActivityTicketModal />
       <NotifModal  :key="ui.modalKeys['modal-notif'] || 0" />
       <BlogModal            :key="ui.modalKeys['modal-blog']             || 0" />
       <CounselorInboxModal :key="ui.modalKeys['modal-counselor-inbox'] || 0" />
@@ -68,6 +69,7 @@ import CultureModal from './components/modals/CultureModal.vue'
 import TrainingModal from './components/modals/TrainingModal.vue'
 import RewardModal from './components/modals/RewardModal.vue'
 import AnnouncementModal from './components/modals/AnnouncementModal.vue'
+import ActivityTicketModal from './components/modals/ActivityTicketModal.vue'
 import NotifModal       from './components/modals/NotifModal.vue'
 import BlogModal            from './components/modals/BlogModal.vue'
 import CounselorInboxModal  from './components/modals/CounselorInboxModal.vue'
