@@ -21,6 +21,10 @@
       <div class="scan-result-activity">{{ result.activityEmoji }} {{ result.activityName }}</div>
       <div class="scan-result-date" v-if="result.activityDate">📅 {{ result.activityDate }} · 📍 {{ result.activityLoc }}</div>
 
+      <div v-if="result.quantity > 1" class="scan-result-qty">
+        🎟 {{ result.quantity }} ที่นั่ง
+      </div>
+
       <div class="scan-result-status">
         {{ result.status === 'checked_in' ? '✅ เข้าร่วมแล้ว' : result.status === 'cancelled' ? '❌ ตั๋วถูกยกเลิก' : '⏳ รอ check-in' }}
       </div>
@@ -203,6 +207,16 @@ onUnmounted(() => {
 .scan-result-ticket  { font-size: 13px; font-weight: 700; color: #6366F1; letter-spacing: 1px; margin: 4px 0; }
 .scan-result-activity{ font-size: 14px; color: #374151; font-weight: 600; }
 .scan-result-date    { font-size: 12px; color: #9CA3AF; margin-top: 3px; }
+.scan-result-qty {
+  display: inline-block;
+  background: #EEF2FF;
+  color: #4F46E5;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-top: 8px;
+}
 .scan-result-status  { font-size: 13px; font-weight: 700; margin-top: 10px; }
 
 .scan-checkin-btn {
