@@ -775,15 +775,17 @@ function confirmPrize() {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-bottom: 10px;
+  align-items: start;
 }
 .padlet-board {
-  columns: 2;
-  column-gap: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
   margin-bottom: 16px;
+  align-items: start;
 }
 .padlet-card-wrap {
-  break-inside: avoid;
-  margin-bottom: 10px;
+  margin-bottom: 0;
 }
 .padlet-card {
   border-radius: 3px;
