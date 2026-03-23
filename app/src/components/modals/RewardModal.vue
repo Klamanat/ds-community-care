@@ -27,19 +27,19 @@
           </div>
           <div class="rw-pts-divider"></div>
           <div class="rw-pts-right">
-            <div class="rw-level-badge">{{ reward.levelName }}</div>
+            <div class="rw-level-badge" :style="{ background: treeData.color }">{{ treeData.name }}</div>
             <div class="rw-pts-label">ระดับปัจจุบัน</div>
           </div>
         </div>
 
         <!-- Progress bar -->
-        <div v-if="reward.nextName" class="rw-progress-wrap">
+        <div v-if="treeData.nextName" class="rw-progress-wrap">
           <div class="rw-progress-bar">
-            <div class="rw-progress-fill" :style="{ width: reward.progress + '%' }"></div>
+            <div class="rw-progress-fill" :style="{ width: treeData.progress + '%' }"></div>
           </div>
           <div class="rw-progress-label">
             <span>{{ reward.total }} pts</span>
-            <span>{{ reward.nextName }} ({{ reward.nextPts }} pts)</span>
+            <span>{{ treeData.nextName }} ({{ treeData.nextPts }} pts)</span>
           </div>
         </div>
         <div v-else class="rw-legend-label">🎉 คุณถึงระดับสูงสุดแล้ว!</div>
@@ -1146,7 +1146,7 @@ function formatTime(raw) {
 .rw-pts-num { font-size: 26px; font-weight: 900; color: #FFE566; line-height: 1; }
 .rw-skeleton-num { display: inline-block; width: 60px; height: 26px; background: rgba(255,255,255,0.2); border-radius: 6px; animation: shimmer 1.4s infinite; }
 .rw-pts-label { font-size: 10px; color: rgba(255,255,255,0.75); font-weight: 700; margin-top: 3px; }
-.rw-level-badge { font-size: 16px; font-weight: 800; color: white; }
+.rw-level-badge { display: inline-block; font-size: 13px; font-weight: 800; color: #fff; padding: 3px 12px; border-radius: 999px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); transition: background 0.4s; }
 
 /* Progress */
 .rw-progress-wrap { position: relative; z-index: 1; margin-top: 12px; }
