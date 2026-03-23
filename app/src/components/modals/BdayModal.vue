@@ -23,11 +23,13 @@
           v-if="isMyBirthday"
           class="bday-tab"
           :class="{ active: activeTab === 'surprise' }"
+          :disabled="!sbGifts.length"
           style="position:relative;"
-          @click="activeTab = 'surprise'; resetSurpriseView()"
+          @click="sbGifts.length && (activeTab = 'surprise', resetSurpriseView())"
         >
           🎁 Surprise Box
-          <span style="position:absolute;top:-4px;right:-2px;background:#FF4455;color:white;font-size:7px;font-weight:800;padding:1px 4px;border-radius:8px;line-height:1.5;">NEW</span>
+          <span v-if="sbGifts.length" style="position:absolute;top:-4px;right:-2px;background:#FF4455;color:white;font-size:7px;font-weight:800;padding:1px 4px;border-radius:8px;line-height:1.5;">NEW</span>
+          <span v-else style="position:absolute;top:-4px;right:-2px;background:#9CA3AF;color:white;font-size:7px;font-weight:800;padding:1px 4px;border-radius:8px;line-height:1.5;">—</span>
         </button>
       </div>
 
@@ -281,22 +283,23 @@
             <div style="flex:1;height:1px;background:#E5E7EB;"></div>
           </div>
 
-          <!-- Prize hint cards -->
-          <div class="flex gap-2 mb-5">
-            <div class="prize-hint">
-              <div class="text-[22px]">🏠</div>
-              <div class="ph-name">WFH พิเศษ</div>
-              <div class="ph-sub">1 วัน</div>
+          <!-- Real gifts from admin — 3-col grid -->
+          <div class="prize-grid mb-5">
+            <div v-for="g in sbGifts.slice(0, 6)" :key="g.id" class="prize-hint">
+              <img
+                v-if="g.imgUrl"
+                :src="g.imgUrl"
+                style="width:44px;height:44px;border-radius:10px;object-fit:cover;margin-bottom:4px;"
+                @error="e => e.target.style.display='none'"
+              />
+              <div v-else class="text-[26px] leading-none mb-1">{{ g.icon || '🎁' }}</div>
+              <div class="ph-name">{{ g.name }}</div>
+              <div v-if="g.description" class="ph-sub">{{ g.description }}</div>
             </div>
-            <div class="prize-hint">
-              <div class="text-[22px]">🎨</div>
-              <div class="ph-name">สติ๊กเกอร์ LINE</div>
-              <div class="ph-sub">Exclusive Pack</div>
-            </div>
-            <div class="prize-hint">
-              <div class="text-[22px]">⭐</div>
-              <div class="ph-name">แต้มสะสม</div>
-              <div class="ph-sub">+50 ~ +500 pts</div>
+            <div v-if="sbGifts.length > 6" class="prize-hint" style="justify-content:center;">
+              <div class="text-[22px] leading-none mb-1">🎁</div>
+              <div class="ph-name">+{{ sbGifts.length - 6 }}</div>
+              <div class="ph-sub">รายการ</div>
             </div>
           </div>
 
@@ -446,15 +449,25 @@
         </div>
 
         <!-- Prize reveal state -->
-        <div v-if="surpriseState === 'reveal'" class="text-center py-4">
+        <div v-if="surpriseState === 'reveal' && currentPrize" class="text-center py-4">
           <div class="text-[28px] mb-1" style="letter-spacing:6px;animation:floatY 1.5s ease-in-out infinite;">🎉 🎊 🎈</div>
           <div style="position:relative;display:inline-block;margin:12px 0;">
             <div class="prize-glow-aura"></div>
-            <div style="position:relative;z-index:1;font-size:72px;animation:prizePopIn 0.6s cubic-bezier(0.34,1.56,0.64,1);filter:drop-shadow(0 6px 20px rgba(255,150,0,0.5));">
-              {{ currentPrize.icon }}
+            <div style="position:relative;z-index:1;animation:prizePopIn 0.6s cubic-bezier(0.34,1.56,0.64,1);">
+              <img
+                v-if="currentPrize.imgUrl"
+                :src="currentPrize.imgUrl"
+                style="width:96px;height:96px;border-radius:18px;object-fit:cover;box-shadow:0 6px 24px rgba(255,150,0,0.45);"
+                @error="e => e.target.style.display='none'"
+              />
+              <div v-else style="font-size:72px;filter:drop-shadow(0 6px 20px rgba(255,150,0,0.5));">{{ currentPrize.icon }}</div>
             </div>
           </div>
           <div class="text-[20px] font-black mb-1" :style="{ color: currentPrize.color }">{{ currentPrize.name }}</div>
+          <div v-if="currentPrize.category || currentPrize.price" class="flex gap-1.5 justify-center mb-2 flex-wrap">
+            <span v-if="currentPrize.category" style="background:#EEF2FF;color:#4F46E5;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;">{{ currentPrize.category }}</span>
+            <span v-if="currentPrize.price" style="background:#FFFBEB;color:#D97706;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;">฿{{ currentPrize.price.toLocaleString() }}</span>
+          </div>
           <div class="text-[13px] text-app-mid mb-5 leading-relaxed">{{ currentPrize.desc }}</div>
           <div style="background:linear-gradient(135deg,#FFF7ED,#FFFBEB);border:2px solid #FCD34D;border-radius:18px;padding:14px 16px;margin-bottom:18px;position:relative;overflow:hidden;">
             <div style="position:absolute;top:-8px;right:-8px;font-size:40px;opacity:0.12;">🎁</div>
@@ -487,6 +500,7 @@ import { useUserAuthStore } from '../../stores/userAuth.js'
 import { useAdminStore } from '../../stores/admin.js'
 import { useConfetti } from '../../composables/useConfetti.js'
 import { deleteWish as svcDeleteWish, updateWish as svcUpdateWish, fetchEmployeeProfile } from '../../services/birthdayService.js'
+import { fetchAvailableGifts, checkSurpriseBoxClaim, claimSurpriseBox } from '../../services/giftService.js'
 
 const bday     = useBirthdayStore()
 const ui       = useUiStore()
@@ -541,15 +555,11 @@ const tapCount = ref(0)
 const showRays = ref(false)
 const flashScreen = ref(false)
 const currentPrize = ref(null)
+const sbGifts = ref([])
 const { launchConfetti } = useConfetti()
 
-const PRIZES = [
-  { icon: '🏠', name: 'WFH พิเศษ 1 วัน', desc: 'Work From Home ได้ 1 วัน เลือกวันได้เองภายใน 30 วัน', color: '#F59E0B' },
-  { icon: '🎨', name: 'สติ๊กเกอร์ LINE Exclusive', desc: 'DS Community Care Edition พิเศษสำหรับพนักงานเท่านั้น!', color: '#6366F1' },
-  { icon: '⭐', name: 'แต้มสะสม +200 pts', desc: 'แต้มจะถูกเพิ่มในแอปภายใน 24 ชั่วโมง', color: '#10B981' },
-  { icon: '🌟', name: 'แต้มสะสม +500 pts 🎰', desc: 'แจ็คพ็อต!! แต้มพิเศษจะถูกเพิ่มในแอปภายใน 24 ชั่วโมง', color: '#EC4899' },
-  { icon: '🎁', name: 'สติ๊กเกอร์ + แต้ม 50 pts', desc: 'ได้ทั้งสติ๊กเกอร์ LINE และแต้มสะสมเลยค่ะ!', color: '#A855F7' },
-]
+const sbYear = new Date().getFullYear()
+const sbClaimedKey = `bday_gift_claimed_${sbYear}`
 
 const CARD_COLORS  = ['#FFFFFF','#FFFFFF','#FFFFFF','#FFFFFF','#FFFFFF','#FFFFFF','#FFFFFF','#FFFFFF']
 const CARD_ACCENTS = ['#FBBF24','#60A5FA','#34D399','#C084FC','#FB7185','#38BDF8','#F472B6','#84CC16']
@@ -595,6 +605,21 @@ onMounted(async () => {
   loading.value = false
   Promise.all(PINNED_CODES.map(code => fetchEmployeeProfile(code).catch(() => null)))
     .then(profiles => { pinnedProfiles.value = profiles.filter(Boolean) })
+
+  // Surprise box: fetch available gifts + check existing claim
+  sbGifts.value = await fetchAvailableGifts().catch(() => [])
+  if (isMyBirthday.value && userAuth.userId) {
+    if (localStorage.getItem(sbClaimedKey)) {
+      surpriseState.value = 'used'
+    } else {
+      const claim = await checkSurpriseBoxClaim(userAuth.userId).catch(() => null)
+      if (claim) {
+        currentPrize.value = { name: claim.gift_name || '', imgUrl: '', desc: '', category: '', price: null, icon: '🎁', color: '#F59E0B' }
+        surpriseState.value = 'used'
+        localStorage.setItem(sbClaimedKey, '1')
+      }
+    }
+  }
 })
 
 watch(selectedMonth, async (m) => {
@@ -733,25 +758,50 @@ function resetSurpriseView() {
   // Keep current state — don't reset if already used/revealed
 }
 
-function openBox() {
+async function openBox() {
   if (boxOpened.value || lidLifting.value || isShaking.value) return
   isShaking.value = true
-  setTimeout(() => {
-    isShaking.value = false
-    showRays.value = true
-    flashScreen.value = true
-    setTimeout(() => { flashScreen.value = false }, 350)
-    lidLifting.value = true
-    setTimeout(() => {
-      boxOpened.value = true
-      const prize = PRIZES[Math.floor(Math.random() * PRIZES.length)]
-      currentPrize.value = prize
-      setTimeout(() => {
-        surpriseState.value = 'reveal'
-        launchConfetti({ count: 120, colors: ['#EE4D2D','#FF6840','#FFE566','#FBBF24','#FF3CAC','#44AAFF','#44DD88'] })
-      }, 400)
-    }, 650)
-  }, 500)
+
+  await new Promise(r => setTimeout(r, 500))
+  isShaking.value = false
+  showRays.value = true
+  flashScreen.value = true
+  setTimeout(() => { flashScreen.value = false }, 350)
+  lidLifting.value = true
+
+  // Run DB claim + lid animation in parallel
+  const [result] = await Promise.all([
+    claimSurpriseBox(userAuth.userId, userAuth.userName).catch(e => ({ error: e.message })),
+    new Promise(r => setTimeout(r, 650)),
+  ])
+
+  boxOpened.value = true
+
+  if (result.alreadyClaimed) {
+    localStorage.setItem(sbClaimedKey, '1')
+    surpriseState.value = 'used'
+    return
+  }
+
+  // Map result to prize — fallback to random sbGifts or generic on error/noGifts
+  if (result.gift) {
+    const g = result.gift
+    currentPrize.value = { icon: g.icon || '🎁', imgUrl: g.imgUrl || '', name: g.name, desc: g.description || '', color: '#F59E0B', category: g.category || '', price: g.price || null }
+    localStorage.setItem(sbClaimedKey, '1')
+  } else {
+    // noGifts or DB error — pick from already-loaded sbGifts if possible
+    const pool = sbGifts.value
+    if (pool.length) {
+      const g = pool[Math.floor(Math.random() * pool.length)]
+      currentPrize.value = { icon: g.icon || '🎁', imgUrl: g.imgUrl || '', name: g.name, desc: g.description || '', color: '#F59E0B', category: g.category || '', price: g.price || null }
+    } else {
+      currentPrize.value = { icon: '🎁', imgUrl: '', name: 'ของขวัญพิเศษ', desc: 'กรุณาติดต่อ HR เพื่อรับของขวัญ', color: '#F59E0B', category: '', price: null }
+    }
+  }
+
+  await new Promise(r => setTimeout(r, 400))
+  surpriseState.value = 'reveal'
+  launchConfetti({ count: 120, colors: ['#EE4D2D','#FF6840','#FFE566','#FBBF24','#FF3CAC','#44AAFF','#44DD88'] })
 }
 
 function confirmPrize() {

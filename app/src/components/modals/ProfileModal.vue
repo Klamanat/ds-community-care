@@ -208,33 +208,58 @@ function triggerUpload() {
   fileInput.value?.click()
 }
 
+/** Resize image to maxPx on longest side, return JPEG base64 data URL */
+function resizeImage(file, maxPx = 800, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('อ่านไฟล์ไม่ได้')) }
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      let { width, height } = img
+      if (width > maxPx || height > maxPx) {
+        if (width >= height) { height = Math.round(height * maxPx / width); width = maxPx }
+        else                 { width  = Math.round(width  * maxPx / height); height = maxPx }
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width; canvas.height = height
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+      resolve(canvas.toDataURL('image/jpeg', quality))
+    }
+    img.src = url
+  })
+}
+
 async function onFileChange(e) {
   const file = e.target.files?.[0]
   if (!file) return
   uploading.value = true; uploadError.value = ''
+  const oldUrl = userAuth.userImgUrl
   try {
-    const b64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onerror = () => reject(new Error('อ่านไฟล์ไม่ได้'))
-      reader.onload  = ev => resolve(ev.target.result)
-      reader.readAsDataURL(file)
-    })
+    // Resize ก่อน upload (ป้องกัน payload ใหญ่เกิน Edge Function limit)
+    const b64 = await resizeImage(file)
+
+    // แสดง preview ทันที (เก็บใน ref เท่านั้น ไม่เก็บ base64 ใน localStorage)
     userAuth.userImgUrl = b64
-    localStorage.setItem('user_img', b64)
-    ui.currentUser.img = b64
+    imgError.value = false
+
+    // Upload ไป Supabase Storage (await — ไม่ใช่ fire-and-forget)
+    const res = await driveUpload(b64, file.name, 'profiles')
+
+    // อัปเดต store + localStorage ด้วย URL จริง
+    userAuth.userImgId  = res.id
+    userAuth.userImgUrl = res.url
+    localStorage.setItem('user_imgid', res.id)
+    localStorage.setItem('user_img',   res.url)
+    ui.currentUser.img = res.url
+
+    // บันทึกลง DB (fire-and-forget)
+    updateSelf(userAuth.userId, { imgId: res.id, imgUrl: res.url }).catch(() => {})
+
     ui.showToast('อัปโหลดรูปสำเร็จ 📷')
-    driveUpload(b64, file.name, 'profiles')
-      .then(async res => {
-        await updateSelf(userAuth.userId, { imgId: res.id, imgUrl: res.url })
-        // Update store + localStorage with real URL (replace temporary base64)
-        userAuth.userImgId  = res.id
-        userAuth.userImgUrl = res.url || b64
-        localStorage.setItem('user_imgid', res.id)
-        localStorage.setItem('user_img',   res.url || b64)
-      })
-      .catch(() => {})
   } catch (err) {
     uploadError.value = err.message || 'อัปโหลดไม่สำเร็จ'
+    userAuth.userImgUrl = oldUrl  // revert preview
   } finally {
     uploading.value = false
     e.target.value = ''

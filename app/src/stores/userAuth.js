@@ -14,6 +14,7 @@ export const useUserAuthStore = defineStore('userAuth', () => {
   const userImgUrl = ref(localStorage.getItem('user_img')    || getCached(localStorage.getItem('user_imgid') || '') || '')
   const userDept   = ref(localStorage.getItem('user_dept')   || '')
   const userSlogan = ref(localStorage.getItem('user_slogan') || '')
+  const userBdDate = ref(localStorage.getItem('user_bddate') || '')
   const isLoading  = ref(false)
   const error      = ref('')
 
@@ -84,6 +85,7 @@ export const useUserAuthStore = defineStore('userAuth', () => {
       userImgUrl.value = m.img_url || m.imgUrl || getCached(userImgId.value) || ''
       userDept.value   = m.dept    || ''
       userSlogan.value = m.star_gang_slogan || m.starGangSlogan || ''
+      userBdDate.value = m.bd_date || m.bdDate || ''
       _saveLocal()
     }
   }
@@ -95,6 +97,7 @@ export const useUserAuthStore = defineStore('userAuth', () => {
     userRole.value    = emp.role   || ''
     userDept.value    = emp.dept           || ''
     userSlogan.value  = emp.star_gang_slogan || emp.starGangSlogan || ''
+    userBdDate.value  = emp.bdDate || emp.bd_date || ''
 
     const newImgId  = emp.img_id || emp.imgId || ''
     const imgChanged = newImgId !== userImgId.value
@@ -124,11 +127,13 @@ export const useUserAuthStore = defineStore('userAuth', () => {
     localStorage.setItem('user_img',    userImgUrl.value)
     localStorage.setItem('user_dept',   userDept.value)
     localStorage.setItem('user_slogan', userSlogan.value)
+    localStorage.setItem('user_bddate', userBdDate.value)
   }
 
   function _clearLocal() {
     userId.value = ''; userEmpCode.value = ''; userName.value = ''; userRole.value = ''
     userImgId.value = ''; userImgUrl.value = ''; userDept.value = ''; userSlogan.value = ''
+    userBdDate.value = ''
   }
 
   async function logout() {
@@ -137,5 +142,5 @@ export const useUserAuthStore = defineStore('userAuth', () => {
     ;['user_id','user_empcode','user_name','user_role','user_imgid','user_img','user_dept','user_slogan','dsc_ann_seen'].forEach(k => localStorage.removeItem(k))
   }
 
-  return { userId, userEmpCode, userName, userRole, userImgId, userImgUrl, userDept, userSlogan, isLoading, error, isAuthenticated, checkEmployee, setPasscode, loginWithEmployee, logout }
+  return { userId, userEmpCode, userName, userRole, userImgId, userImgUrl, userDept, userSlogan, userBdDate, isLoading, error, isAuthenticated, checkEmployee, setPasscode, loginWithEmployee, logout }
 })

@@ -116,6 +116,7 @@ const navGroups = [
       { to: '/admin/activities',   icon: '📅', label: 'กิจกรรม',        sub: 'Activities' },
       { to: '/admin/announcement', icon: '📢', label: 'ประกาศ / Popup', sub: 'Announcement' },
       { to: '/admin/plans',        icon: '📋', label: 'Monthly Plans',   sub: 'แผนรายเดือน' },
+      { to: '/admin/gifts',        icon: '🎁', label: 'ของขวัญ',         sub: 'จัดการรายการ' },
     ],
   },
   {

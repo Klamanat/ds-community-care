@@ -107,6 +107,11 @@ const routes = [
         name: 'admin-migrate',
         component: () => import('../views/admin/AdminMigrateView.vue'),
       },
+      {
+        path: 'gifts',
+        name: 'admin-gifts',
+        component: () => import('../views/admin/AdminGiftsView.vue'),
+      },
     ],
   },
 ]
