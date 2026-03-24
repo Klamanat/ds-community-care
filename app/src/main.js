@@ -8,6 +8,7 @@ import { inject } from '@vercel/analytics'
 inject()
 
 // ล้าง localStorage cache เก่าที่อาจมี base64 images ขนาดใหญ่
+
 // เพิ่ม version ทุกครั้งที่ cache structure เปลี่ยน
 ;(function purgeLegacyCache() {
   const CACHE_VER = 'dsc_v2'
