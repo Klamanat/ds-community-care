@@ -88,20 +88,20 @@ export async function addToTeam(fields) {
   return mapEmp(data)
 }
 
-export async function updateSelf(employeeId, fields) {
+export async function updateSelf(empCode, fields) {
+  const payload = {}
+  if (fields.name           != null) payload.name             = fields.name
+  if (fields.role           != null) payload.role             = fields.role
+  if (fields.dept           != null) payload.dept             = fields.dept
+  if (fields.imgUrl         != null) payload.img_url          = fields.imgUrl
+  if (fields.imgId          != null) payload.img_id           = fields.imgId
+  if (fields.starGangSlogan != null) payload.star_gang_slogan = fields.starGangSlogan
   const { data, error } = await supabase
     .from('employees')
-    .update({
-      name:              fields.name,
-      role:              fields.role,
-      dept:              fields.dept,
-      img_url:           fields.imgUrl,
-      img_id:            fields.imgId,
-      star_gang_slogan:  fields.starGangSlogan,
-    })
-    .eq('id', employeeId)
+    .update(payload)
+    .eq('emp_code', String(empCode).trim())
     .select()
-    .single()
+    .maybeSingle()
   if (error) throw new Error(error.message)
-  return mapEmp(data)
+  return data ? mapEmp(data) : null
 }

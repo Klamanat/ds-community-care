@@ -254,7 +254,7 @@ async function onFileChange(e) {
     ui.currentUser.img = res.url
 
     // บันทึกลง DB (fire-and-forget)
-    updateSelf(userAuth.userId, { imgId: res.id, imgUrl: res.url }).catch(() => {})
+    updateSelf(userAuth.userEmpCode, { imgId: res.id, imgUrl: res.url }).catch(() => {})
 
     ui.showToast('อัปโหลดรูปสำเร็จ 📷')
   } catch (err) {
@@ -296,7 +296,7 @@ async function saveEdit() {
   localStorage.setItem('user_dept',   userAuth.userDept)
   localStorage.setItem('user_slogan', userAuth.userSlogan)
   ui.currentUser.name = name; ui.currentUser.role = userAuth.userRole
-  updateSelf(userAuth.userId, { name, role: userAuth.userRole, dept: userAuth.userDept, starGangSlogan: userAuth.userSlogan }).catch(() => {})
+  updateSelf(userAuth.userEmpCode, { name, role: userAuth.userRole, dept: userAuth.userDept, starGangSlogan: userAuth.userSlogan }).catch(() => {})
   saving.value = false; editing.value = false
   ui.showToast('บันทึกข้อมูลสำเร็จ ✅')
 }
