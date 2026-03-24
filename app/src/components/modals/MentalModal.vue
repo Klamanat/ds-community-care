@@ -356,16 +356,16 @@ onMounted(() => mental.loadAdvisors())
   background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
   opacity: 0; transition: opacity 0.2s;
 }
-/* Custom bg — darken overlay so text stays readable */
+/* Custom bg — light overlay so text stays readable */
 .mh-card--custom {
   /* border-color set via inline style from cardStyle() */
 }
 .mh-card--custom::before {
-  background: linear-gradient(135deg, rgba(0,0,0,0.35) 0%, rgba(20,10,0,0.45) 100%) !important;
+  background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.35) 100%) !important;
   opacity: 1 !important;
 }
-.mh-card--custom .mh-card-name { color: white !important; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
-.mh-card--custom .mh-card-role { color: rgba(255,255,255,0.85) !important; }
+.mh-card--custom .mh-card-name { color: #1a1a2e !important; text-shadow: 0 1px 3px rgba(255,255,255,0.6); }
+.mh-card--custom .mh-card-role { color: rgba(30,30,60,0.75) !important; }
 
 /* Emoji scatter overlay inside the card */
 .mh-card-emoji-bg {
