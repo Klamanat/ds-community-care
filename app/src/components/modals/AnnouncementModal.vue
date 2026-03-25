@@ -35,7 +35,6 @@
               class="ann-iframe"
               autoplay
               loop
-              muted
               playsinline
               style="object-fit:contain;cursor:pointer;"
               @canplay="playVideo"
@@ -221,7 +220,6 @@ const myName  = computed(() => ui.currentUser?.name || '')
 function playVideo() {
   const el = videoRef.value
   if (!el) return
-  el.muted = true
   el.loop  = true
   el.play().catch(() => {})
   vidPaused.value = false
@@ -253,7 +251,7 @@ const embedUrl = computed(() => {
   if (!url) return ''
   // YouTube
   const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/)
-  if (yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1&loop=1&playlist=${yt[1]}&mute=1&controls=1&rel=0&modestbranding=1`
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1&loop=1&playlist=${yt[1]}&controls=1&rel=0&modestbranding=1`
   // Google Drive — use /preview iframe (Drive doesn't support HTML5 video streaming)
   const drive = url.match(/drive\.google\.com\/file\/d\/([^/]+)/)
   if (drive) return `https://drive.google.com/file/d/${drive[1]}/preview`
