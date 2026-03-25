@@ -37,7 +37,7 @@
               loop
               muted
               playsinline
-              style="object-fit:cover;cursor:pointer;"
+              style="object-fit:contain;cursor:pointer;"
               @canplay="playVideo"
               @loadeddata="playVideo"
               @click="toggleVideoPlay"
@@ -59,15 +59,6 @@
             <!-- Close button -->
             <button class="ann-close-btn" @click="close">✕</button>
 
-            <!-- Hide video button -->
-            <button class="ann-hide-video-btn" @click="videoHidden = true">⊟ ซ่อนวิดีโอ</button>
-
-            <!-- Floating actions -->
-            <div class="ann-actions">
-              <button class="ann-btn-ghost" @click="closeDontShow">ไม่แสดงอีก 7 วัน</button>
-              <button class="ann-btn-primary" @click="closeAck">รับทราบ ✓</button>
-            </div>
-
           </div>
 
           <!-- ══ VIDEO collapsed bar ══════════════════════════════ -->
@@ -82,7 +73,7 @@
           </template><!-- end v-if videoEnabled -->
 
           <!-- ══ QUIZ panel ══════════════════════════════════════ -->
-          <div v-if="hasQuiz" class="ann-quiz-panel">
+          <div v-if="hasQuiz && !quizPanelHidden" class="ann-quiz-panel">
 
             <!-- Loading -->
             <div v-if="quizLoading && !allSubmitted" class="ann-quiz-loading">
@@ -205,7 +196,8 @@ const dismissed  = ref(false)   // ปิดแล้วใน session นี้
 const ann        = ref({ title: '', videoUrl: '', desc: '', id: '', quiz: null })
 const vidPaused   = ref(false)
 const showHint    = ref(false)
-const videoHidden = ref(false)
+const videoHidden    = ref(false)
+const quizPanelHidden = ref(false)
 let   _hintTimer  = null
 
 // ── Quiz state ──
@@ -248,7 +240,8 @@ function toggleVideoPlay() {
 // เมื่อ modal เปิด — รอ DOM แล้ว play
 watch(show, async (val) => {
   if (!val) return
-  videoHidden.value = false
+  videoHidden.value    = false
+  quizPanelHidden.value = false
   quizPage.value    = 0
   await nextTick()
   playVideo()
@@ -311,10 +304,14 @@ async function loadQuiz() {
     const checks = await Promise.all(
       ann.value.quiz.map(q => getMyQuizAnswer(ann.value.id, myName.value, q.id))
     )
-    // If every question already answered → mark seen + close
+    // If every question already answered → check video before closing
     if (checks.every(ans => ans !== null)) {
-      setSeen(ann.value.id, 365)
-      show.value = false
+      if (ann.value.videoEnabled !== false) {
+        quizPanelHidden.value = true   // มี video section → ซ่อน quiz, คงไว้ดู video
+      } else {
+        setSeen(ann.value.id, 365)
+        show.value = false
+      }
       return
     }
     // Load results for already-answered questions
@@ -362,8 +359,15 @@ async function submitQuiz() {
         quizState.value[q.id].results   = results
       })
     )
-    setSeen(ann.value.id, 365)
-    setTimeout(() => { show.value = false }, 2500)
+    const hasVideoSection = ann.value.videoEnabled !== false
+    setTimeout(() => {
+      if (hasVideoSection) {
+        quizPanelHidden.value = true   // มี video section → ซ่อน quiz, คงไว้ดู video
+      } else {
+        setSeen(ann.value.id, 365)     // ไม่มี video → mark seen แล้วปิด modal
+        show.value = false
+      }
+    }, 2500)
   } catch {
     quizErr.value = 'ส่งคำตอบไม่สำเร็จ กรุณาลองใหม่'
   } finally {
@@ -440,16 +444,22 @@ onMounted(async () => {
 @media (min-width: 600px) {
   .ann-overlay { align-items: center; padding: 24px; }
 }
+@media (min-width: 900px) {
+  .ann-overlay { padding: 40px; }
+}
 
 /* ── Card ────────────────────────────────────────────── */
 .ann-card {
   width: 100%;
   max-width: 460px;
+  max-height: 92svh;
   border-radius: 28px 28px 0 0;
   overflow: hidden;
   background: #0D0820;
   padding-bottom: env(safe-area-inset-bottom);
   position: relative;
+  display: flex;
+  flex-direction: column;
   box-shadow:
     0 -2px 0 rgba(244, 114, 182, 0.4),
     0 -8px 40px rgba(168, 85, 247, 0.25),
@@ -469,9 +479,16 @@ onMounted(async () => {
 @media (min-width: 600px) {
   .ann-card {
     border-radius: 28px;
+    max-height: calc(100dvh - 48px);
     box-shadow:
       0 28px 80px rgba(168, 85, 247, 0.3),
       0 0 0 1px rgba(255,255,255,0.1);
+  }
+}
+@media (min-width: 900px) {
+  .ann-card {
+    max-width: 720px;
+    max-height: calc(100dvh - 80px);
   }
 }
 
@@ -503,12 +520,11 @@ onMounted(async () => {
 .ann-video-wrap {
   width: 100%;
   aspect-ratio: 16 / 9;
-  max-height: 56dvh;
   background: #060310;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
-@media (min-width: 600px) { .ann-video-wrap { max-height: none; } }
 .ann-iframe {
   position: absolute;
   inset: 0;
@@ -541,72 +557,6 @@ onMounted(async () => {
   gap: 8px;
   color: rgba(255,255,255,0.4);
 }
-
-/* ── Action buttons (floating on video) ──────────────── */
-.ann-actions {
-  position: absolute;
-  bottom: 16px;
-  left: 14px;
-  right: 14px;
-  z-index: 10;
-  display: flex;
-  gap: 8px;
-}
-.ann-btn-ghost {
-  flex: 1;
-  padding: 10px 8px;
-  border-radius: 20px;
-  border: 1.5px solid rgba(255,255,255,0.2);
-  background: rgba(0,0,0,0.38);
-  backdrop-filter: blur(14px);
-  color: rgba(255,255,255,0.75);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: 'Sarabun', sans-serif;
-  transition: all 0.2s;
-  -webkit-tap-highlight-color: transparent;
-}
-.ann-btn-ghost:hover { background: rgba(255,255,255,0.1); color: white; }
-
-.ann-btn-primary {
-  flex: 2;
-  padding: 11px 8px;
-  border-radius: 20px;
-  border: none;
-  background: linear-gradient(135deg, #EC4899, #A855F7, #6366F1);
-  color: white;
-  font-size: 13px;
-  font-weight: 900;
-  cursor: pointer;
-  font-family: 'Sarabun', sans-serif;
-  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.5);
-  transition: all 0.2s;
-  -webkit-tap-highlight-color: transparent;
-}
-.ann-btn-primary:hover  { box-shadow: 0 6px 26px rgba(236, 72, 153, 0.6); transform: translateY(-1px); }
-.ann-btn-primary:active { transform: scale(0.96); }
-
-/* ── Hide/collapsed video controls ──────────────────── */
-.ann-hide-video-btn {
-  position: absolute;
-  bottom: 16px;
-  left: 14px;
-  z-index: 10;
-  padding: 5px 12px;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.16);
-  background: rgba(0,0,0,0.35);
-  backdrop-filter: blur(12px);
-  color: rgba(255,255,255,0.5);
-  font-size: 10px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: 'Sarabun', sans-serif;
-  transition: all 0.2s;
-  -webkit-tap-highlight-color: transparent;
-}
-.ann-hide-video-btn:hover { color: rgba(255,255,255,0.85); background: rgba(0,0,0,0.55); }
 
 .ann-video-collapsed {
   display: flex;
@@ -690,18 +640,8 @@ onMounted(async () => {
 @keyframes ann-shimmer { from { background-position: 0 0; } to { background-position: 300% 0; } }
 
 /* ── Card + quiz layout ──────────────────────────────── */
-.ann-card.ann-has-quiz {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
 .ann-card.ann-has-quiz .ann-video-wrap {
-  aspect-ratio: 16 / 9;
-  height: auto;
-  max-height: 38dvh;
   flex-shrink: 0;
-}
-@media (min-width: 600px) {
-  .ann-card.ann-has-quiz .ann-video-wrap { height: 240px; max-height: 240px; }
 }
 
 /* ── Quiz panel ──────────────────────────────────────── */
@@ -712,6 +652,10 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
 }
 .ann-quiz-loading {
   display: flex;
