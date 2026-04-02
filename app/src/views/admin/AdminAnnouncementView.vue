@@ -256,115 +256,197 @@
           </div>
         </div>
 
-        <!-- ── Video ───────────────────────────────────────────── -->
+        <!-- ── สื่อประกอบ ────────────────────────────────────── -->
         <div class="al-card">
           <div class="al-card-header">
-            <div class="al-card-title">วิดีโอ</div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <label class="ann-toggle-wrap">
-                <input type="checkbox" v-model="form.videoEnabled" />
-                <span class="ann-track"><span class="ann-thumb"></span></span>
-                <span :style="`font-size:12px;font-weight:700;color:${form.videoEnabled?'#059669':'#9CA3AF'}`">
-                  {{ form.videoEnabled ? 'เปิด' : 'ปิด' }}
-                </span>
-              </label>
-              <div style="display:flex;gap:4px;">
-                <button
-                  v-for="t in videoTabs" :key="t.id"
-                  class="al-btn"
-                  :style="videoTab===t.id
-                    ? 'background:#EEF2FF;color:#4F46E5;border:1.5px solid #C7D2FE;padding:5px 12px;font-size:12px;'
-                    : 'background:#F3F4F6;color:#6B7280;border:1.5px solid #E5E7EB;padding:5px 12px;font-size:12px;'"
-                  @click="videoTab = t.id"
-                >{{ t.label }}</button>
-              </div>
+            <div class="al-card-title">📎 สื่อประกอบ</div>
+            <div style="display:flex;gap:4px;">
+              <button
+                v-for="t in mediaTabs" :key="t.id"
+                class="al-btn"
+                :style="mediaType===t.id
+                  ? 'background:#EEF2FF;color:#4F46E5;border:1.5px solid #C7D2FE;padding:5px 12px;font-size:12px;'
+                  : 'background:#F3F4F6;color:#6B7280;border:1.5px solid #E5E7EB;padding:5px 12px;font-size:12px;'"
+                @click="mediaType = t.id"
+              >{{ t.label }}</button>
             </div>
           </div>
 
-          <div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
-
-            <!-- Link tab -->
-            <template v-if="videoTab === 'link'">
-              <div>
-                <label class="al-form-label">URL วิดีโอ</label>
-                <input v-model="form.video" class="al-form-input"
-                  placeholder="https://youtu.be/xxxxx หรือ Google Drive link" />
-                <div style="font-size:11px;color:#9CA3AF;margin-top:5px;">
-                  รองรับ YouTube · Google Drive · ลิงก์วิดีโอทั่วไป (MP4 ฯลฯ)
-                </div>
-              </div>
-            </template>
-
-            <!-- Upload tab -->
-            <template v-else>
-              <!-- Drop zone -->
-              <div
-                class="ann-drop-zone"
-                :class="{ 'ann-drop-active': isDragging }"
-                @click="fileInput?.click()"
-                @dragover.prevent="isDragging = true"
-                @dragleave.prevent="isDragging = false"
-                @drop.prevent="onDrop"
-              >
-                <input ref="fileInput" type="file" accept="video/*" style="display:none;" @change="onFileChange" />
-                <template v-if="!selectedFile">
-                  <div style="font-size:32px;">🎬</div>
-                  <div style="font-size:13px;font-weight:700;color:#374151;margin-top:8px;">คลิกหรือลากไฟล์มาวาง</div>
-                  <div style="font-size:11px;color:#9CA3AF;margin-top:4px;">MP4 · MOV · WebM · สูงสุด 35 MB</div>
-                </template>
-                <template v-else>
-                  <div style="font-size:26px;">🎬</div>
-                  <div style="font-size:13px;font-weight:700;color:#374151;margin-top:6px;word-break:break-all;text-align:center;max-width:100%;">
-                    {{ selectedFile.name }}
-                  </div>
-                  <div style="font-size:11px;color:#6B7280;margin-top:3px;">{{ fileSizeMb }} MB</div>
-                  <div v-if="selectedFile.size > 20 * 1024 * 1024"
-                       style="font-size:11px;color:#D97706;margin-top:4px;">
-                    ⚠️ ไฟล์ค่อนข้างใหญ่ แนะนำอัปโหลด YouTube แล้วใช้ลิงก์แทน
-                  </div>
-                </template>
-              </div>
-
-              <div v-if="uploadErr" class="al-error">{{ uploadErr }}</div>
-
-              <div v-if="uploadStatus" style="font-size:12px;color:#6B7280;text-align:center;padding:2px 0;">
-                {{ uploadStatus }}
-              </div>
-
-              <button
-                class="al-btn al-btn-primary"
-                style="width:100%;padding:11px;"
-                :disabled="!selectedFile || uploading"
-                @click="doUpload"
-              >
-                <span v-if="uploading">{{ uploadStatus || 'กำลังอัปโหลด...' }}</span>
-                <span v-else>🚀 อัปโหลดสู่ Google Drive</span>
-              </button>
-            </template>
-
-            <!-- Preview -->
-            <template v-if="form.video">
-              <div style="font-size:11px;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:1px;">ตัวอย่าง</div>
-              <div style="width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden;position:relative;">
-                <iframe
-                  v-if="embedUrl"
-                  :src="embedUrl"
-                  style="position:absolute;inset:0;width:100%;height:100%;"
-                  frameborder="0"
-                  allowfullscreen
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                ></iframe>
-                <video
-                  v-else
-                  :src="form.video"
-                  style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;"
-                  controls
-                  playsinline
-                ></video>
-              </div>
-            </template>
-
+          <!-- None -->
+          <div
+            v-if="mediaType === 'none'"
+            style="padding:12px 16px;font-size:12px;color:#9CA3AF;background:#F9FAFB;border-top:1px solid #F3F4F6;"
+          >
+            ไม่มีสื่อประกอบ — Popup จะแสดงแค่หัวข้อและ Quiz
           </div>
+
+          <!-- Video -->
+          <template v-else-if="mediaType === 'video'">
+            <div style="padding:4px 16px 0;display:flex;gap:4px;border-top:1px solid #F3F4F6;">
+              <button
+                v-for="t in videoTabs" :key="t.id"
+                class="al-btn"
+                :style="videoTab===t.id
+                  ? 'background:#EEF2FF;color:#4F46E5;border:1.5px solid #C7D2FE;padding:5px 12px;font-size:12px;margin-top:10px;'
+                  : 'background:#F3F4F6;color:#6B7280;border:1.5px solid #E5E7EB;padding:5px 12px;font-size:12px;margin-top:10px;'"
+                @click="videoTab = t.id"
+              >{{ t.label }}</button>
+            </div>
+            <div style="padding:12px 16px 16px;display:flex;flex-direction:column;gap:14px;">
+
+              <!-- Link tab -->
+              <template v-if="videoTab === 'link'">
+                <div>
+                  <label class="al-form-label">URL วิดีโอ</label>
+                  <input v-model="form.video" class="al-form-input"
+                    placeholder="https://youtu.be/xxxxx หรือ Google Drive link" />
+                  <div style="font-size:11px;color:#9CA3AF;margin-top:5px;">
+                    รองรับ YouTube · Google Drive · ลิงก์วิดีโอทั่วไป (MP4 ฯลฯ)
+                  </div>
+                </div>
+              </template>
+
+              <!-- Upload tab -->
+              <template v-else>
+                <div
+                  class="ann-drop-zone"
+                  :class="{ 'ann-drop-active': isDragging }"
+                  @click="fileInput?.click()"
+                  @dragover.prevent="isDragging = true"
+                  @dragleave.prevent="isDragging = false"
+                  @drop.prevent="onDrop"
+                >
+                  <input ref="fileInput" type="file" accept="video/*" style="display:none;" @change="onFileChange" />
+                  <template v-if="!selectedFile">
+                    <div style="font-size:32px;">🎬</div>
+                    <div style="font-size:13px;font-weight:700;color:#374151;margin-top:8px;">คลิกหรือลากไฟล์มาวาง</div>
+                    <div style="font-size:11px;color:#9CA3AF;margin-top:4px;">MP4 · MOV · WebM · สูงสุด 35 MB</div>
+                  </template>
+                  <template v-else>
+                    <div style="font-size:26px;">🎬</div>
+                    <div style="font-size:13px;font-weight:700;color:#374151;margin-top:6px;word-break:break-all;text-align:center;max-width:100%;">
+                      {{ selectedFile.name }}
+                    </div>
+                    <div style="font-size:11px;color:#6B7280;margin-top:3px;">{{ fileSizeMb }} MB</div>
+                    <div v-if="selectedFile.size > 20 * 1024 * 1024"
+                         style="font-size:11px;color:#D97706;margin-top:4px;">
+                      ⚠️ ไฟล์ค่อนข้างใหญ่ แนะนำอัปโหลด YouTube แล้วใช้ลิงก์แทน
+                    </div>
+                  </template>
+                </div>
+                <div v-if="uploadErr" class="al-error">{{ uploadErr }}</div>
+                <div v-if="uploadStatus" style="font-size:12px;color:#6B7280;text-align:center;padding:2px 0;">{{ uploadStatus }}</div>
+                <button
+                  class="al-btn al-btn-primary"
+                  style="width:100%;padding:11px;"
+                  :disabled="!selectedFile || uploading"
+                  @click="doUpload"
+                >
+                  <span v-if="uploading">{{ uploadStatus || 'กำลังอัปโหลด...' }}</span>
+                  <span v-else>🚀 อัปโหลดสู่ Google Drive</span>
+                </button>
+              </template>
+
+              <!-- Video preview -->
+              <template v-if="form.video">
+                <div style="font-size:11px;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:1px;">ตัวอย่าง</div>
+                <div style="width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden;position:relative;">
+                  <iframe
+                    v-if="embedUrl"
+                    :src="embedUrl"
+                    style="position:absolute;inset:0;width:100%;height:100%;"
+                    frameborder="0" allowfullscreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  ></iframe>
+                  <video
+                    v-else
+                    :src="form.video"
+                    style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;"
+                    controls playsinline
+                  ></video>
+                </div>
+              </template>
+
+            </div>
+          </template>
+
+          <!-- Image -->
+          <template v-else-if="mediaType === 'image'">
+            <div style="padding:4px 16px 0;display:flex;gap:4px;border-top:1px solid #F3F4F6;">
+              <button
+                v-for="t in imageTabs" :key="t.id"
+                class="al-btn"
+                :style="imageTab===t.id
+                  ? 'background:#EEF2FF;color:#4F46E5;border:1.5px solid #C7D2FE;padding:5px 12px;font-size:12px;margin-top:10px;'
+                  : 'background:#F3F4F6;color:#6B7280;border:1.5px solid #E5E7EB;padding:5px 12px;font-size:12px;margin-top:10px;'"
+                @click="imageTab = t.id"
+              >{{ t.label }}</button>
+            </div>
+            <div style="padding:12px 16px 16px;display:flex;flex-direction:column;gap:14px;">
+
+              <!-- Link tab -->
+              <template v-if="imageTab === 'link'">
+                <div>
+                  <label class="al-form-label">URL รูปภาพ</label>
+                  <input v-model="form.image" class="al-form-input"
+                    placeholder="https://example.com/image.jpg" />
+                  <div style="font-size:11px;color:#9CA3AF;margin-top:5px;">
+                    รองรับ JPG · PNG · GIF · WebP · ลิงก์ตรง
+                  </div>
+                </div>
+              </template>
+
+              <!-- Upload tab -->
+              <template v-else>
+                <div
+                  class="ann-drop-zone"
+                  :class="{ 'ann-drop-active': isImageDragging }"
+                  @click="imageFileInput?.click()"
+                  @dragover.prevent="isImageDragging = true"
+                  @dragleave.prevent="isImageDragging = false"
+                  @drop.prevent="onImageDrop"
+                >
+                  <input ref="imageFileInput" type="file" accept="image/*" style="display:none;" @change="onImageFileChange" />
+                  <template v-if="!selectedImageFile">
+                    <div style="font-size:32px;">🖼</div>
+                    <div style="font-size:13px;font-weight:700;color:#374151;margin-top:8px;">คลิกหรือลากไฟล์มาวาง</div>
+                    <div style="font-size:11px;color:#9CA3AF;margin-top:4px;">JPG · PNG · GIF · WebP · สูงสุด 5 MB</div>
+                  </template>
+                  <template v-else>
+                    <div style="font-size:26px;">🖼</div>
+                    <div style="font-size:13px;font-weight:700;color:#374151;margin-top:6px;word-break:break-all;text-align:center;max-width:100%;">
+                      {{ selectedImageFile.name }}
+                    </div>
+                    <div style="font-size:11px;color:#6B7280;margin-top:3px;">{{ imageFileSizeMb }} MB</div>
+                  </template>
+                </div>
+                <div v-if="imageUploadErr" class="al-error">{{ imageUploadErr }}</div>
+                <div v-if="imageUploadStatus" style="font-size:12px;color:#6B7280;text-align:center;padding:2px 0;">{{ imageUploadStatus }}</div>
+                <button
+                  class="al-btn al-btn-primary"
+                  style="width:100%;padding:11px;"
+                  :disabled="!selectedImageFile || imageUploading"
+                  @click="doImageUpload"
+                >
+                  <span v-if="imageUploading">{{ imageUploadStatus || 'กำลังอัปโหลด...' }}</span>
+                  <span v-else>🚀 อัปโหลดรูปภาพ</span>
+                </button>
+              </template>
+
+              <!-- Image preview -->
+              <template v-if="form.image">
+                <div style="font-size:11px;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:1px;">ตัวอย่าง</div>
+                <div style="width:100%;border-radius:10px;overflow:hidden;background:#F3F4F6;">
+                  <img :src="form.image" style="width:100%;display:block;max-height:300px;object-fit:contain;" />
+                </div>
+                <button class="al-btn al-btn-delete" style="align-self:flex-start;font-size:12px;" @click="form.image = ''">
+                  🗑 ลบรูปภาพ
+                </button>
+              </template>
+
+            </div>
+          </template>
+
         </div>
 
         <!-- ── Save ────────────────────────────────────────────── -->
@@ -420,11 +502,27 @@ const videoTab          = ref('link')
 const isDragging        = ref(false)
 const selectedFile      = ref(null)
 const fileInput         = ref(null)
+const imageTab          = ref('link')
+const isImageDragging   = ref(false)
+const selectedImageFile = ref(null)
+const imageFileInput    = ref(null)
+const imageUploading    = ref(false)
+const imageUploadStatus = ref('')
+const imageUploadErr    = ref('')
 const quizAnswers        = ref([])
 const quizAnswersLoading = ref(false)
 const quizResetting      = ref(false)
 
+const mediaTabs = [
+  { id: 'none',  label: 'ปิด'       },
+  { id: 'video', label: '🎬 วิดีโอ'  },
+  { id: 'image', label: '🖼 รูปภาพ'  },
+]
 const videoTabs = [
+  { id: 'link',   label: '🔗 ลิงก์'  },
+  { id: 'upload', label: '📁 อัปโหลด' },
+]
+const imageTabs = [
   { id: 'link',   label: '🔗 ลิงก์'  },
   { id: 'upload', label: '📁 อัปโหลด' },
 ]
@@ -435,6 +533,8 @@ const form = reactive({
   title:        '',
   video:        '',
   videoEnabled: true,
+  image:        '',
+  imageEnabled: true,
   desc:         '',
   quizEnabled:   false,
   quizQuestions: [{ id: 'q1', question: '', type: 'single', options: [{ id: 'a', text: '' }, { id: 'b', text: '' }] }],
@@ -453,6 +553,22 @@ const embedUrl = computed(() => {
 const fileSizeMb = computed(() =>
   selectedFile.value ? (selectedFile.value.size / 1024 / 1024).toFixed(1) : '0'
 )
+const imageFileSizeMb = computed(() =>
+  selectedImageFile.value ? (selectedImageFile.value.size / 1024 / 1024).toFixed(1) : '0'
+)
+
+// ── Media type (video | image | none) — mutually exclusive ─────────
+const mediaType = computed({
+  get() {
+    if (form.videoEnabled) return 'video'
+    if (form.imageEnabled) return 'image'
+    return 'none'
+  },
+  set(val) {
+    form.videoEnabled = val === 'video'
+    form.imageEnabled = val === 'image'
+  },
+})
 
 // ── Load ───────────────────────────────────────────────────────────
 onMounted(async () => {
@@ -466,6 +582,8 @@ onMounted(async () => {
       form.title        = kv.ann_title || ''
       form.video        = kv.ann_video || ''
       form.videoEnabled = kv.ann_video_enabled !== 'false'
+      form.image        = kv.ann_image || ''
+      form.imageEnabled = kv.ann_image_enabled !== 'false'
       form.desc         = kv.ann_desc  || ''
       form.quizEnabled  = kv.ann_quiz_enabled === 'true'
       try {
@@ -529,6 +647,52 @@ function setFile(f) {
     return
   }
   selectedFile.value = f
+}
+
+// ── Image file ─────────────────────────────────────────────────────
+const IMG_MAX_BYTES = 5 * 1024 * 1024
+
+function onImageFileChange(e) {
+  const f = e.target.files?.[0]
+  if (f) setImageFile(f)
+}
+function onImageDrop(e) {
+  isImageDragging.value = false
+  const f = e.dataTransfer.files?.[0]
+  if (!f) return
+  if (!f.type.startsWith('image/')) { imageUploadErr.value = 'กรุณาเลือกไฟล์รูปภาพเท่านั้น'; return }
+  setImageFile(f)
+}
+function setImageFile(f) {
+  imageUploadErr.value = ''
+  if (f.size > IMG_MAX_BYTES) {
+    imageUploadErr.value = `ไฟล์ใหญ่เกินไป (${(f.size/1024/1024).toFixed(1)} MB) — สูงสุด 5 MB`
+    return
+  }
+  selectedImageFile.value = f
+}
+
+// ── Image upload ────────────────────────────────────────────────────
+async function doImageUpload() {
+  if (!selectedImageFile.value || imageUploading.value) return
+  imageUploading.value    = true
+  imageUploadErr.value    = ''
+  imageUploadStatus.value = 'กำลังอ่านไฟล์...'
+  try {
+    const base64 = await fileToBase64(selectedImageFile.value)
+    imageUploadStatus.value = 'กำลังอัปโหลด...'
+    const result = await svc.uploadAnnouncementImage(base64, selectedImageFile.value.name)
+    if (!result?.url) throw new Error('ไม่ได้รับ URL')
+    form.image              = result.url
+    imageUploadStatus.value = '✓ อัปโหลดสำเร็จ'
+    selectedImageFile.value = null
+    imageTab.value          = 'link'
+  } catch (e) {
+    imageUploadErr.value    = e.message || 'อัปโหลดล้มเหลว'
+    imageUploadStatus.value = ''
+  } finally {
+    imageUploading.value = false
+  }
 }
 
 // ── Upload ─────────────────────────────────────────────────────────
@@ -631,6 +795,8 @@ async function doSave() {
       title:        form.title,
       video:        form.video,
       videoEnabled: form.videoEnabled,
+      image:        form.image,
+      imageEnabled: form.imageEnabled,
       desc:         form.desc,
       quizEnabled:   form.quizEnabled,
       quizQuestions: form.quizQuestions
@@ -642,7 +808,7 @@ async function doSave() {
     if (form.quizEnabled && form.id) loadQuizAnswers()
 
     // 1) เขียน cache ใหม่ทันที → popup อ่านจาก localStorage ได้เลยโดยไม่รอ GAS
-    const annData = { id: form.id, title: form.title, videoUrl: form.video, desc: form.desc }
+    const annData = { id: form.id, title: form.title, videoUrl: form.video, videoEnabled: form.videoEnabled, imageUrl: form.image, imageEnabled: form.imageEnabled, desc: form.desc }
     try {
       if (form.enabled && form.id) {
         localStorage.setItem('dsc_ann_data', JSON.stringify(annData))

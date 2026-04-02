@@ -71,6 +71,12 @@
 
           </template><!-- end v-if videoEnabled -->
 
+          <!-- ══ IMAGE (แสดงเมื่อ videoEnabled ปิดเท่านั้น) ══════ -->
+          <div v-if="ann.imageEnabled === true && ann.imageUrl && ann.videoEnabled === false" class="ann-image-wrap">
+            <img :src="ann.imageUrl" class="ann-img" alt="" />
+            <button class="ann-close-btn" @click="close">✕</button>
+          </div>
+
           <!-- ══ QUIZ panel ══════════════════════════════════════ -->
           <div v-if="hasQuiz && !quizPanelHidden" class="ann-quiz-panel">
 
@@ -192,7 +198,7 @@ const show       = ref(false)
 const loading    = ref(false)
 const videoRef   = ref(null)
 const dismissed  = ref(false)   // ปิดแล้วใน session นี้ → ไม่เปิดซ้ำ
-const ann        = ref({ title: '', videoUrl: '', desc: '', id: '', quiz: null })
+const ann        = ref({ title: '', videoUrl: '', videoEnabled: true, imageUrl: '', imageEnabled: true, desc: '', id: '', quiz: null })
 const vidPaused   = ref(false)
 const showHint    = ref(false)
 const videoHidden    = ref(false)
@@ -593,6 +599,21 @@ onMounted(async () => {
   -webkit-tap-highlight-color: transparent;
 }
 .ann-close-btn-sm:hover { background: rgba(167,139,250,0.22); color: #C4B5FD; }
+
+/* ── Image wrap ──────────────────────────────────────── */
+.ann-image-wrap {
+  width: 100%;
+  background: #060310;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.ann-img {
+  width: 100%;
+  display: block;
+  max-height: 280px;
+  object-fit: contain;
+}
 
 /* ── Transitions ─────────────────────────────────────── */
 .ann-fade-enter-active { transition: opacity 0.3s ease; }

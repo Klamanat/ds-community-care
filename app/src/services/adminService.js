@@ -174,6 +174,8 @@ export async function saveAnnouncement(fields) {
     { key: 'ann_desc',          value: fields.desc  || '' },
     { key: 'ann_quiz_enabled',   value: fields.quizEnabled ? 'true' : 'false' },
     { key: 'ann_quiz_questions', value: JSON.stringify(fields.quizQuestions || []) },
+    { key: 'ann_image',          value: fields.image || '' },
+    { key: 'ann_image_enabled',  value: fields.imageEnabled !== false ? 'true' : 'false' },
   ]
   const { error } = await supabase.from('settings').upsert(rows, { onConflict: 'key' })
   if (error) throw new Error(error.message)
@@ -181,6 +183,10 @@ export async function saveAnnouncement(fields) {
 
 export async function uploadAnnouncementVideo(base64, fileName, _mimeType) {
   return uploadImage(base64, fileName || 'announcement.mp4', 'announcements')
+}
+
+export async function uploadAnnouncementImage(base64, fileName) {
+  return uploadImage(base64, fileName || 'announcement.jpg', 'announcements')
 }
 
 export async function fetchQuizAnswers(annId) {

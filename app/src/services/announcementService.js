@@ -4,7 +4,7 @@ import { supabase } from './supabase.js'
 
 const ALL_KEYS = [
   'ann_enabled', 'ann_id', 'ann_title', 'ann_video', 'ann_video_enabled', 'ann_desc',
-  'ann_quiz_enabled', 'ann_quiz_questions',
+  'ann_quiz_enabled', 'ann_quiz_questions', 'ann_image', 'ann_image_enabled',
 ]
 
 export async function fetchAnnouncement() {
@@ -30,6 +30,8 @@ export async function fetchAnnouncement() {
     title:        kv.ann_title || '',
     videoUrl:     kv.ann_video || '',
     videoEnabled: kv.ann_video_enabled !== 'false',
+    imageUrl:     kv.ann_image || '',
+    imageEnabled: kv.ann_image_enabled !== 'false',
     desc:         kv.ann_desc  || '',
     quiz,
   }
