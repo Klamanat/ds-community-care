@@ -1,8 +1,11 @@
 <template>
   <!-- Site Visit cards -->
   <div class="al-card">
-    <div v-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
-    <div v-else-if="!rows.length" class="al-empty">📭 ยังไม่มีสถานที่</div>
+    <div v-if="loading" class="al-loading-skeletons">
+      <SkeletonCard height="68px" />
+      <SkeletonCard height="68px" />
+    </div>
+    <EmptyState v-else-if="!rows.length" title="ยังไม่มีสถานที่" />
     <div v-else>
       <div class="al-item" v-for="s in rows" :key="s.id">
         <div class="atr-dot" :style="{ background: s.color || '#0EA5E9' }"></div>
@@ -27,12 +30,12 @@
     <span>💡 ข้อเสนอแนะจากพนักงาน</span>
     <span class="al-badge al-badge-pending">{{ suggestions.length }}</span>
   </div>
-  <div v-if="sugLoading" class="al-loading" style="padding:12px 0;">⏳</div>
+  <div v-if="sugLoading" class="al-loading py-3">⏳</div>
   <div v-else-if="!suggestions.length" class="atr-sug-empty">ยังไม่มีข้อเสนอแนะ</div>
   <div v-else class="al-card">
     <div v-for="s in suggestions" :key="s.id" class="atr-sug-row">
       <div class="atr-sug-av">{{ (s.employeeName || '?').charAt(0) }}</div>
-      <div style="flex:1;min-width:0;">
+      <div class="flex-1 min-w-0">
         <div class="atr-sug-top">
           <span class="atr-sug-name">{{ s.employeeName }}</span>
           <span class="atr-sug-date">{{ fmtDate(s.createdAt) }}</span>
@@ -43,30 +46,36 @@
   </div>
 
   <!-- Voters Modal -->
-  <div v-if="votersOpen" class="al-modal-overlay" @click.self="votersOpen = false">
-    <div class="al-modal" style="max-height:80vh;overflow-y:auto;">
-      <div class="al-modal-handle"></div>
-      <div class="al-modal-title">👥 ผู้โหวต — {{ votersSite?.title }}</div>
-      <div v-if="votersLoading" class="al-loading">⏳ กำลังโหลด...</div>
-      <div v-else-if="!voters.length" class="al-empty">ยังไม่มีผู้โหวต</div>
-      <div v-else>
-        <div style="font-size:12px;color:#6B7280;margin-bottom:10px;">{{ voters.length }} คน</div>
-        <div v-for="(v, i) in voters" :key="v.id" class="atr-voter-row">
-          <span class="atr-voter-num">{{ i + 1 }}</span>
-          <span class="atr-voter-name">{{ v.employeeName || v.employeeId }}</span>
-          <span class="atr-voter-date">{{ fmtDate(v.votedAt) }}</span>
-        </div>
-      </div>
-      <div class="al-modal-footer">
-        <button class="al-btn al-btn-cancel" @click="votersOpen = false">ปิด</button>
+  <BaseModal padded modal-id="admin-site-voters" sheet-class="modal-sheet-lg">
+    <div class="al-modal-title">👥 ผู้โหวต — {{ votersSite?.title }}</div>
+    <div v-if="votersLoading" class="al-loading-skeletons">
+      <SkeletonCard height="56px" />
+      <SkeletonCard height="56px" />
+    </div>
+    <EmptyState v-else-if="!voters.length" title="ยังไม่มีผู้โหวต" />
+    <div v-else>
+      <div class="text-xs text-gray-500 mb-2.5">{{ voters.length }} คน</div>
+      <div v-for="(v, i) in voters" :key="v.id" class="atr-voter-row">
+        <span class="atr-voter-num">{{ i + 1 }}</span>
+        <span class="atr-voter-name">{{ v.employeeName || v.employeeId }}</span>
+        <span class="atr-voter-date">{{ fmtDate(v.votedAt) }}</span>
       </div>
     </div>
-  </div>
+    <div class="al-modal-footer">
+      <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ปิด</button>
+    </div>
+  </BaseModal>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import * as svc from '../../../services/trainingService.js'
+import * as svc from '../../../features/training/trainingService.js'
+import { useUiStore } from '../../../core/stores/ui.js'
+import BaseModal from '../../../shared/components/BaseModal.vue'
+import SkeletonCard from '../../../shared/components/SkeletonCard.vue'
+import EmptyState from '../../../shared/components/EmptyState.vue'
+
+const ui = useUiStore()
 
 defineProps({
   rows:       { type: Array,   default: () => [] },
@@ -84,7 +93,7 @@ const votersLoading = ref(false)
 
 async function openVoters(site) {
   votersSite.value    = site
-  votersOpen.value    = true
+  ui.openModal('admin-site-voters')
   votersLoading.value = true
   voters.value        = []
   try {

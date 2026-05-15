@@ -28,8 +28,8 @@
       <CultureModal   :key="ui.modalKeys['modal-culture']    || 0" />
       <TrainingModal  :key="ui.modalKeys['modal-training']   || 0" />
       <RewardModal       :key="ui.modalKeys['modal-reward']      || 0" />
-      <AnnouncementModal />
-      <ActivityTicketModal />
+      <AnnouncementModal   :key="ui.modalKeys['modal-announcement']    || 0" />
+      <ActivityTicketModal :key="ui.modalKeys['modal-activity-ticket'] || 0" />
       <NotifModal  :key="ui.modalKeys['modal-notif'] || 0" />
       <BlogModal            :key="ui.modalKeys['modal-blog']             || 0" />
       <CounselorInboxModal :key="ui.modalKeys['modal-counselor-inbox'] || 0" />
@@ -52,33 +52,34 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter, RouterView } from 'vue-router'
-import AppHeader from './components/layout/AppHeader.vue'
-import AppSidebar from './components/layout/AppSidebar.vue'
-import AppBottomNav from './components/layout/AppBottomNav.vue'
-import BdayModal from './components/modals/BdayModal.vue'
-import EmpathyModal from './components/modals/EmpathyModal.vue'
-import EmpDetailModal from './components/modals/EmpDetailModal.vue'
-import FinancialModal from './components/modals/FinancialModal.vue'
-import MentalModal from './components/modals/MentalModal.vue'
-import OrgModal from './components/modals/OrgModal.vue'
-import ProfileModal from './components/modals/ProfileModal.vue'
-import MonthModal from './components/modals/MonthModal.vue'
-import CultureModal from './components/modals/CultureModal.vue'
-import TrainingModal from './components/modals/TrainingModal.vue'
-import RewardModal from './components/modals/RewardModal.vue'
-import AnnouncementModal from './components/modals/AnnouncementModal.vue'
-import ActivityTicketModal from './components/modals/ActivityTicketModal.vue'
-import NotifModal       from './components/modals/NotifModal.vue'
-import BlogModal            from './components/modals/BlogModal.vue'
-import CounselorInboxModal  from './components/modals/CounselorInboxModal.vue'
-import MonthlyPlanModal    from './components/modals/MonthlyPlanModal.vue'
-import { useUiStore }        from './stores/ui.js'
-import { useUserAuthStore }  from './stores/userAuth.js'
-import { useNotifStore }     from './stores/notif.js'
-import { useCardConfigStore } from './stores/cardConfig.js'
-import { pingPresence }      from './services/presenceService.js'
+import AppHeader from './core/layout/AppHeader.vue'
+import AppSidebar from './core/layout/AppSidebar.vue'
+import AppBottomNav from './core/layout/AppBottomNav.vue'
+
+const BdayModal           = defineAsyncComponent(() => import('./features/birthday/BdayModal.vue'))
+const EmpathyModal        = defineAsyncComponent(() => import('./features/empathy/EmpathyModal.vue'))
+const EmpDetailModal      = defineAsyncComponent(() => import('./features/empathy/EmpDetailModal.vue'))
+const FinancialModal      = defineAsyncComponent(() => import('./features/financial/FinancialModal.vue'))
+const MentalModal         = defineAsyncComponent(() => import('./features/mental/MentalModal.vue'))
+const OrgModal            = defineAsyncComponent(() => import('./features/team/OrgModal.vue'))
+const ProfileModal        = defineAsyncComponent(() => import('./features/team/ProfileModal.vue'))
+const MonthModal          = defineAsyncComponent(() => import('./features/plans/MonthModal.vue'))
+const CultureModal        = defineAsyncComponent(() => import('./features/culture/CultureModal.vue'))
+const TrainingModal       = defineAsyncComponent(() => import('./features/training/TrainingModal.vue'))
+const RewardModal         = defineAsyncComponent(() => import('./features/rewards/RewardModal.vue'))
+const AnnouncementModal   = defineAsyncComponent(() => import('./features/announcements/AnnouncementModal.vue'))
+const ActivityTicketModal = defineAsyncComponent(() => import('./features/activities/ActivityTicketModal.vue'))
+const NotifModal          = defineAsyncComponent(() => import('./features/notifications/NotifModal.vue'))
+const BlogModal           = defineAsyncComponent(() => import('./features/blog/BlogModal.vue'))
+const CounselorInboxModal = defineAsyncComponent(() => import('./features/mental/CounselorInboxModal.vue'))
+const MonthlyPlanModal    = defineAsyncComponent(() => import('./features/plans/MonthlyPlanModal.vue'))
+import { useUiStore }        from './core/stores/ui.js'
+import { useUserAuthStore }  from './core/stores/userAuth.js'
+import { useNotifStore }     from './features/notifications/notif.store.js'
+import { useCardConfigStore } from './core/stores/cardConfig.js'
+import { pingPresence }      from './core/services/presenceService.js'
 
 const ui         = useUiStore()
 const userAuth   = useUserAuthStore()

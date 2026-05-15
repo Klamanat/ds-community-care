@@ -87,8 +87,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useUiStore } from '../stores/ui.js'
-import * as svc from '../services/activitiesService.js'
+import { useUiStore } from '../core/stores/ui.js'
+import * as svc from '../features/activities/activitiesService.js'
 
 const ui      = useUiStore()
 const tickets = ref([])

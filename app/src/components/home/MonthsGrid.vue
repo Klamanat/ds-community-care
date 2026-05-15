@@ -31,7 +31,7 @@
 
 <script setup>
 import { computed, onMounted } from 'vue'
-import { useActivitiesStore } from '../../stores/activities.js'
+import { useActivitiesStore } from '../../features/activities/activities.store.js'
 
 defineEmits(['month-click'])
 

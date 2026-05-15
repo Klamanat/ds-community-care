@@ -1,14 +1,10 @@
 <template>
   <div>
+    <AdminPageHeader title="📅 กิจกรรม" sub="Activities">
+      <router-link to="/admin/activities/scan" class="al-btn al-btn-secondary">📷 สแกน QR</router-link>
+      <button class="al-btn al-btn-primary" @click="openAdd">+ เพิ่มกิจกรรม</button>
+    </AdminPageHeader>
     <main class="al-main">
-
-      <div class="al-page-header">
-        <h2 class="al-page-title">📅 กิจกรรม</h2>
-        <div style="display:flex;gap:8px;">
-          <router-link to="/admin/activities/scan" class="al-btn" style="font-size:12px;padding:7px 12px;">📷 สแกน QR</router-link>
-          <button class="al-btn al-btn-primary" @click="openAdd">+ เพิ่มกิจกรรม</button>
-        </div>
-      </div>
 
       <!-- Month filter chips -->
       <div class="al-filters">
@@ -25,18 +21,23 @@
         >{{ m.short }}</button>
       </div>
 
+      <div class="al-body">
       <div class="al-card">
         <div class="al-card-header">
           <span class="al-card-title">กิจกรรม</span>
           <span class="al-badge al-badge-blue">{{ filtered.length }} รายการ</span>
         </div>
 
-        <div v-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
-        <div v-else-if="!filtered.length" class="al-empty">📭 ไม่มีกิจกรรม</div>
+        <div v-if="loading" class="al-loading-skeletons">
+          <SkeletonCard height="68px" />
+          <SkeletonCard height="68px" />
+          <SkeletonCard height="68px" />
+        </div>
+        <EmptyState v-else-if="!filtered.length" title="ไม่มีกิจกรรม" />
 
         <div v-else>
           <div v-for="r in filtered" :key="r.id">
-            <div class="al-item">
+            <div class="al-item fade-in" @click="handleRippleClick">
               <img v-if="r.imgUrl" :src="r.imgUrl" class="al-item-thumb" />
               <div v-else class="al-item-avatar">{{ r.emoji || '📅' }}</div>
               <div class="al-item-body">
@@ -58,220 +59,195 @@
               </div>
             </div>
 
-          <!-- Registrant list (expandable) -->
-          <div v-if="r.ticketEnabled && expandedId === r.id" class="al-registrant-section">
-            <div v-if="!ticketRegs[r.id]" style="font-size:12px;color:#9CA3AF;padding:8px 0;">⏳ กำลังโหลด...</div>
-            <div v-else-if="!ticketRegs[r.id].length" style="font-size:12px;color:#9CA3AF;padding:8px 0;">ยังไม่มีผู้จอง</div>
-            <table v-else class="al-ticket-table">
-              <thead>
-                <tr><th>ชื่อ</th><th>ตั๋วเลขที่</th><th>จำนวน</th><th>สถานะ</th><th>สลิป</th><th></th></tr>
-              </thead>
-              <tbody>
-                <tr v-for="t in ticketRegs[r.id]" :key="t.id">
-                  <td>{{ t.employeeName }}</td>
-                  <td>{{ t.ticketNo }}</td>
-                  <td style="text-align:center;font-weight:700;color:#7C3AED;">{{ t.quantity || 1 }}</td>
-                  <td>
-                    <span :style="{ color: t.status === 'checked_in' ? '#10B981' : t.status === 'cancelled' ? '#EF4444' : t.status === 'pending_slip' ? '#F59E0B' : '#6B7280' }">
-                      {{ t.status === 'checked_in' ? '✅ เข้าแล้ว' : t.status === 'cancelled' ? '❌ ยกเลิก' : t.status === 'pending_slip' ? '⏳ รอสลิป' : '🎟 รอ check-in' }}
-                    </span>
-                  </td>
-                  <td>
-                    <a v-if="t.slipUrl" :href="t.slipUrl" target="_blank" style="font-size:11px;color:#6366F1;font-weight:600;">ดูสลิป 🧾</a>
-                    <span v-else style="font-size:11px;color:#D1D5DB;">—</span>
-                  </td>
-                  <td>
-                    <button v-if="t.status === 'booked'" class="al-btn al-btn-edit" style="font-size:11px;padding:3px 8px;" @click="doCheckIn(t.qrToken, r.id)">✓ Check-in</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <!-- Registrant list (expandable) -->
+            <div v-if="r.ticketEnabled && expandedId === r.id" class="al-registrant-section">
+              <div v-if="!ticketRegs[r.id]" class="text-xs text-app-light py-2">⏳ กำลังโหลด...</div>
+              <div v-else-if="!ticketRegs[r.id].length" class="text-xs text-app-light py-2">ยังไม่มีผู้จอง</div>
+              <table v-else class="al-ticket-table">
+                <thead>
+                  <tr><th>ชื่อ</th><th>ตั๋วเลขที่</th><th>จำนวน</th><th>สถานะ</th><th>สลิป</th><th></th></tr>
+                </thead>
+                <tbody>
+                  <tr v-for="t in ticketRegs[r.id]" :key="t.id">
+                    <td>{{ t.employeeName }}</td>
+                    <td>{{ t.ticketNo }}</td>
+                    <td class="text-center font-bold text-purple">{{ t.quantity || 1 }}</td>
+                    <td>
+                      <span :class="statusClass(t.status)">
+                        {{ statusLabel(t.status) }}
+                      </span>
+                    </td>
+                    <td>
+                      <a v-if="t.slipUrl" :href="t.slipUrl" target="_blank" class="text-xs text-indigo font-semibold">ดูสลิป 🧾</a>
+                      <span v-else class="text-xs text-app-light">—</span>
+                    </td>
+                    <td>
+                      <button v-if="t.status === 'booked'" class="al-btn al-btn-edit text-[11px] py-0.5 px-2" @click="doCheckIn(t.qrToken, r.id)">✓ Check-in</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      </div>
     </main>
 
     <!-- Add/Edit Modal -->
-    <div v-if="modal.open" class="al-modal-overlay" @click.self="modal.open=false">
-      <div class="al-modal">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">{{ modal.mode === 'add' ? '+ เพิ่มกิจกรรม' : '✏️ แก้ไขกิจกรรม' }}</div>
+    <BaseModal padded modal-id="admin-activities-form" sheet-class="modal-sheet-full">
+      <div class="al-modal-title">{{ modal.mode === 'add' ? '+ เพิ่มกิจกรรม' : '✏️ แก้ไขกิจกรรม' }}</div>
 
-        <div class="al-form-2col">
-          <div class="al-form-row">
-            <label class="al-form-label">เดือน *</label>
-            <select v-model="form.monthIdx" class="al-form-select">
-              <option v-for="m in MONTHS" :key="m.idx" :value="String(m.idx)">{{ m.idx }}. {{ m.name }}</option>
-            </select>
-          </div>
-          <div class="al-form-row">
-            <label class="al-form-label">Emoji</label>
-            <input v-model="form.emoji" class="al-form-input" placeholder="🎉" maxlength="4" />
-          </div>
+      <div class="al-form-2col">
+        <div class="al-form-row">
+          <label class="al-form-label">เดือน *</label>
+          <select v-model="form.monthIdx" class="al-form-select">
+            <option v-for="m in MONTHS" :key="m.idx" :value="String(m.idx)">{{ m.idx }}. {{ m.name }}</option>
+          </select>
         </div>
+        <div class="al-form-row">
+          <label class="al-form-label">Emoji</label>
+          <input v-model="form.emoji" class="al-form-input" placeholder="🎉" maxlength="4" />
+        </div>
+      </div>
 
-        <div class="al-form-row">
-          <label class="al-form-label">ชื่อกิจกรรม *</label>
-          <input v-model="form.name" class="al-form-input" placeholder="ชื่อกิจกรรม" />
-        </div>
-        <div class="al-form-row">
-          <label class="al-form-label">วันที่</label>
-          <input v-model="dateInput" type="date" class="al-form-input" />
-          <div v-if="dateInput" style="font-size:11px;color:#6B7280;margin-top:4px;">{{ isoToThai(dateInput) }}</div>
-        </div>
-        <div class="al-form-row">
-          <label class="al-form-label">วันสิ้นสุด (ถ้าเป็นช่วงหลายวัน)</label>
-          <input v-model="dateEndInput" type="date" class="al-form-input" />
-          <div v-if="dateEndInput" style="font-size:11px;color:#6B7280;margin-top:4px;">{{ isoToThai(dateEndInput) }}</div>
-        </div>
-        <div class="al-form-row">
-          <label class="al-form-label">สถานที่</label>
-          <input v-model="form.loc" class="al-form-input" placeholder="ห้อง / Online" />
-        </div>
-        <div class="al-form-row">
-          <label class="al-form-label">รายละเอียด</label>
-          <textarea v-model="form.desc" class="al-form-textarea" placeholder="รายละเอียดกิจกรรม"></textarea>
-        </div>
-        <div class="al-form-row">
-          <label class="al-form-label">ขั้นตอนกิจกรรม (แต่ละขั้นขึ้นบรรทัดใหม่)</label>
-          <textarea v-model="form.steps" class="al-form-textarea" rows="4" placeholder="1. ลงทะเบียน&#10;2. รับเอกสาร&#10;3. เข้าร่วมกิจกรรม"></textarea>
-        </div>
-        <div class="al-form-row">
-          <label class="al-form-label">Activity URL (ถ้ามี)</label>
-          <input v-model="form.joinUrl" class="al-form-input" placeholder="https://..." />
-        </div>
-        <div class="al-form-row">
-          <label class="al-form-label">ปุ่ม Control</label>
-          <div class="join-label-options">
-            <label v-for="opt in JOIN_LABEL_OPTIONS" :key="opt.value" class="join-label-opt">
-              <input type="radio" v-model="form.joinLabel" :value="opt.value" />
-              <div>
-                <div>{{ opt.label }}</div>
-                <div style="font-size:10px;color:#9CA3AF;margin-top:1px;">{{ opt.desc }}</div>
-              </div>
-            </label>
-          </div>
-        </div>
-
-        <div class="al-form-2col">
-          <div class="al-form-row">
-            <label class="al-form-label">วันที่เริ่มกิจกรรม</label>
-            <div style="display:flex;gap:6px;">
-              <input v-model="joinOpenDate" type="date" class="al-form-input" style="flex:1;" />
-              <input :value="joinOpenTime" type="text" class="al-form-input" style="width:80px;text-align:center;" placeholder="09:00" maxlength="5" @input="fmtTime($event,'joinOpenTime')" />
+      <div class="al-form-row">
+        <label class="al-form-label">ชื่อกิจกรรม *</label>
+        <input v-model="form.name" class="al-form-input" placeholder="ชื่อกิจกรรม" />
+      </div>
+      <div class="al-form-row">
+        <label class="al-form-label">วันที่</label>
+        <input v-model="dateInput" type="date" class="al-form-input" />
+        <div v-if="dateInput" class="text-xs text-app-light mt-1">{{ isoToThai(dateInput) }}</div>
+      </div>
+      <div class="al-form-row">
+        <label class="al-form-label">วันสิ้นสุด (ถ้าเป็นช่วงหลายวัน)</label>
+        <input v-model="dateEndInput" type="date" class="al-form-input" />
+        <div v-if="dateEndInput" class="text-xs text-app-light mt-1">{{ isoToThai(dateEndInput) }}</div>
+      </div>
+      <div class="al-form-row">
+        <label class="al-form-label">สถานที่</label>
+        <input v-model="form.loc" class="al-form-input" placeholder="ห้อง / Online" />
+      </div>
+      <div class="al-form-row">
+        <label class="al-form-label">รายละเอียด</label>
+        <textarea v-model="form.desc" class="al-form-textarea" placeholder="รายละเอียดกิจกรรม"></textarea>
+      </div>
+      <div class="al-form-row">
+        <label class="al-form-label">ขั้นตอนกิจกรรม (แต่ละขั้นขึ้นบรรทัดใหม่)</label>
+        <textarea v-model="form.steps" class="al-form-textarea" rows="4" placeholder="1. ลงทะเบียน&#10;2. รับเอกสาร&#10;3. เข้าร่วมกิจกรรม"></textarea>
+      </div>
+      <div class="al-form-row">
+        <label class="al-form-label">Activity URL (ถ้ามี)</label>
+        <input v-model="form.joinUrl" class="al-form-input" placeholder="https://..." />
+      </div>
+      <div class="al-form-row">
+        <label class="al-form-label">ปุ่ม Control</label>
+        <div class="join-label-options">
+          <label v-for="opt in JOIN_LABEL_OPTIONS" :key="opt.value" class="join-label-opt">
+            <input type="radio" v-model="form.joinLabel" :value="opt.value" />
+            <div>
+              <div>{{ opt.label }}</div>
+              <div class="text-[10px] text-app-light mt-0.5">{{ opt.desc }}</div>
             </div>
-            <div style="font-size:10px;color:#9CA3AF;margin-top:3px;">เว้นว่าง = เปิดทันที</div>
-          </div>
-          <div class="al-form-row">
-            <label class="al-form-label">วันสิ้นสุดกิจกรรม</label>
-            <div style="display:flex;gap:6px;">
-              <input v-model="joinCloseDate" type="date" class="al-form-input" style="flex:1;" />
-              <input :value="joinCloseTime" type="text" class="al-form-input" style="width:80px;text-align:center;" placeholder="17:00" maxlength="5" @input="fmtTime($event,'joinCloseTime')" />
-            </div>
-            <div style="font-size:10px;color:#9CA3AF;margin-top:3px;">เว้นว่าง = ไม่มีกำหนด</div>
-          </div>
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">Feedback URL (ถ้ามี)</label>
-          <input v-model="form.feedbackUrl" class="al-form-input" placeholder="https://forms.google.com/..." />
-        </div>
-
-        <!-- Ticket section -->
-        <!-- <div class="al-form-row" style="border-top:1px solid #E5E7EB;padding-top:12px;margin-top:4px;">
-          <label class="al-form-label" style="font-weight:600;">🎟 ระบบตั๋ว</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-            <input type="checkbox" v-model="form.ticketEnabled" style="width:16px;height:16px;" />
-            เปิดใช้ระบบจองตั๋ว
           </label>
         </div>
-        <div v-if="form.ticketEnabled">
-          <div class="al-form-row">
-            <label class="al-form-label">ชื่อตั๋ว</label>
-            <input v-model="form.ticketTitle" class="al-form-input" placeholder="เช่น บัตรเข้างาน / VIP / ทั่วไป" />
-          </div>
-          <div class="al-form-2col">
-            <div class="al-form-row">
-              <label class="al-form-label">ราคา (บาท)</label>
-              <input v-model.number="form.ticketPrice" type="number" min="0" class="al-form-input" placeholder="0 = ฟรี" />
-            </div>
-            <div class="al-form-row">
-              <label class="al-form-label">จำนวนที่นั่ง</label>
-              <input v-model.number="form.ticketCapacity" type="number" min="1" class="al-form-input" placeholder="ว่าง = ไม่จำกัด" />
-            </div>
-          </div>
-          <div class="al-form-row">
-            <label class="al-form-label">เปิดจองตั้งแต่</label>
-            <input v-model="form.ticketOpenAt" type="datetime-local" class="al-form-input" />
-            <div style="font-size:11px;color:#9CA3AF;margin-top:3px;">ว่าง = เปิดจองทันที</div>
-          </div>
-          <div class="al-form-row">
-            <label class="al-form-label">วิธีชำระเงิน / หมายเหตุ</label>
-            <textarea v-model="form.ticketNote" class="al-form-textarea" rows="2" placeholder="เช่น โอนมาที่บัญชีธนาคาร xxx ก่อนวันงาน"></textarea>
-          </div>
-        </div> -->
+      </div>
 
-        <!-- Image upload -->
+      <div class="al-form-2col">
         <div class="al-form-row">
-          <label class="al-form-label">รูป Header (ถ้ามี)</label>
-          <div class="act-upload-zone" :style="imgUploading?'opacity:.6;cursor:default;':''" @click="!imgUploading && imgFileInput.click()">
-            <img v-if="imgPreview && !imgUploading" :src="imgPreview" class="act-upload-preview" />
-            <div v-else-if="imgUploading" class="act-upload-placeholder">
-              <span style="font-size:22px;">⏳</span>
-              <span style="font-size:12px;color:#6B7280;margin-top:4px;">กำลังอัปโหลด...</span>
-            </div>
-            <div v-else class="act-upload-placeholder">
-              <span style="font-size:28px;">🖼️</span>
-              <span style="font-size:12px;color:#9CA3AF;margin-top:4px;">คลิกเพื่ออัปโหลด → Google Drive</span>
-            </div>
+          <label class="al-form-label">วันที่เริ่มกิจกรรม</label>
+          <div class="flex gap-1.5">
+            <input v-model="joinOpenDate" type="date" class="al-form-input flex-1" />
+            <input :value="joinOpenTime" type="text" class="al-form-input w-20 text-center" placeholder="09:00" maxlength="5" @input="fmtTime($event,'joinOpenTime')" />
           </div>
-          <button v-if="imgPreview && !imgUploading" class="al-btn al-btn-delete" style="margin-top:6px;width:100%;" @click.stop="clearImg">🗑️ ลบรูป</button>
-          <input ref="imgFileInput" type="file" accept="image/*" style="display:none" @change="onImgChange" />
+          <div class="text-[10px] text-app-light mt-0.5">เว้นว่าง = เปิดทันที</div>
         </div>
-
-        <div v-if="modal.error" class="al-error">⚠️ {{ modal.error }}</div>
-
-        <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="modal.open=false">ยกเลิก</button>
-          <button class="al-btn al-btn-save" :disabled="modal.saving || imgUploading" @click="saveModal">
-            {{ modal.saving ? 'กำลังบันทึก...' : imgUploading ? 'รอรูป...' : '✅ บันทึก' }}
-          </button>
+        <div class="al-form-row">
+          <label class="al-form-label">วันสิ้นสุดกิจกรรม</label>
+          <div class="flex gap-1.5">
+            <input v-model="joinCloseDate" type="date" class="al-form-input flex-1" />
+            <input :value="joinCloseTime" type="text" class="al-form-input w-20 text-center" placeholder="17:00" maxlength="5" @input="fmtTime($event,'joinCloseTime')" />
+          </div>
+          <div class="text-[10px] text-app-light mt-0.5">เว้นว่าง = ไม่มีกำหนด</div>
         </div>
       </div>
-    </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">Feedback URL (ถ้ามี)</label>
+        <input v-model="form.feedbackUrl" class="al-form-input" placeholder="https://forms.google.com/..." />
+      </div>
+
+      <!-- Image upload -->
+      <div class="al-form-row">
+        <label class="al-form-label">รูป Header (ถ้ามี)</label>
+        <div
+          class="act-upload-zone"
+          :class="{ 'opacity-60 cursor-default': imgUploading }"
+          @click="!imgUploading && imgFileInput.click()"
+        >
+          <img v-if="imgPreview && !imgUploading" :src="imgPreview" class="act-upload-preview" />
+          <div v-else-if="imgUploading" class="act-upload-placeholder">
+            <span class="text-2xl">⏳</span>
+            <span class="text-xs text-app-light mt-1">กำลังอัปโหลด...</span>
+          </div>
+          <div v-else class="act-upload-placeholder">
+            <span class="text-3xl">🖼️</span>
+            <span class="text-xs text-app-light mt-1">คลิกเพื่ออัปโหลด → Google Drive</span>
+          </div>
+        </div>
+        <button v-if="imgPreview && !imgUploading" class="al-btn al-btn-delete mt-1.5 w-full" @click.stop="clearImg">🗑️ ลบรูป</button>
+        <input ref="imgFileInput" type="file" accept="image/*" class="hidden" @change="onImgChange" />
+      </div>
+
+      <div v-if="modal.error" class="al-error">⚠️ {{ modal.error }}</div>
+
+      <div class="al-modal-footer">
+        <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
+        <button class="al-btn al-btn-save" :disabled="modal.saving || imgUploading" @click="saveModal">
+          {{ modal.saving ? 'กำลังบันทึก...' : imgUploading ? 'รอรูป...' : '✅ บันทึก' }}
+        </button>
+      </div>
+    </BaseModal>
 
     <!-- Delete Confirm -->
-    <div v-if="delTarget" class="al-modal-overlay" @click.self="delTarget=null">
-      <div class="al-modal">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
-        <p style="font-size:13px;color:#374151;margin:0 0 16px;">
-          ลบกิจกรรม "<strong>{{ delTarget.name }}</strong>" ใช่หรือไม่?
-        </p>
-        <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="delTarget=null">ยกเลิก</button>
-          <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
-            {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
-          </button>
-        </div>
+    <BaseModal padded modal-id="admin-activities-del">
+      <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
+      <p class="text-sm text-app-mid mb-4">
+        ลบกิจกรรม "<strong>{{ delTarget?.name }}</strong>" ใช่หรือไม่?
+      </p>
+      <div class="al-modal-footer">
+        <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
+        <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
+          {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
+        </button>
       </div>
-    </div>
+    </BaseModal>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useActivitiesStore } from '../../stores/activities.js'
-import * as svc from '../../services/activitiesService.js'
-import { resizeToBase64 } from '../../composables/useImageCompress.js'
-import { deleteImage } from '../../services/edgeFunctions.js'
+import { useActivitiesStore } from '../../features/activities/activities.store.js'
+import * as svc from '../../features/activities/activitiesService.js'
+import { resizeToBase64 } from '../../core/composables/useImageCompress.js'
+import { deleteImage } from '../../core/services/edgeFunctions.js'
+import { useUiStore } from '../../core/stores/ui.js'
+import AdminPageHeader from './AdminPageHeader.vue'
+import BaseModal from '../../shared/components/BaseModal.vue'
+import SkeletonCard from '../../shared/components/SkeletonCard.vue'
+import EmptyState from '../../shared/components/EmptyState.vue'
+import { useRipple } from '../../core/composables/useRipple.js'
+import { useFadeIn } from '../../core/composables/useFadeIn.js'
 
-const acts   = useActivitiesStore()
+const ui  = useUiStore()
+const acts = useActivitiesStore()
+const { handleRippleClick } = useRipple()
+useFadeIn('.fade-in')
 
 const loading     = ref(true)
 const filterMonth = ref(0)
-const modal  = reactive({ open: false, mode: 'add', saving: false, error: '' })
+const modal  = reactive({ mode: 'add', saving: false, error: '' })
 const form   = reactive({ id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', dateEnd:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', joinOpenAt:'', joinCloseAt:'', feedbackUrl:'', imgUrl:'', imgId:'', ticketEnabled:false, ticketTitle:'', ticketPrice:0, ticketCapacity:null, ticketNote:'', ticketOpenAt:'' })
 
 const JOIN_LABEL_OPTIONS = [
@@ -307,13 +283,11 @@ const imgPreview    = ref('')
 const imgUploading  = ref(false)
 const dateEndInput  = ref('')
 
-// joinOpenAt / joinCloseAt — แยก date+time เพื่อให้ browser แสดง 24HR
 const joinOpenDate  = ref('')
 const joinOpenTime  = ref('')
 const joinCloseDate = ref('')
 const joinCloseTime = ref('')
 
-// auto-format HH:MM as user types
 function fmtTime(e, field) {
   const digits = e.target.value.replace(/[^0-9]/g, '').slice(0, 4)
   let v = digits
@@ -392,6 +366,20 @@ const filtered = computed(() =>
     : acts.all.filter(a => String(a.monthIdx) === String(filterMonth.value))
 )
 
+function statusClass(s) {
+  if (s === 'checked_in')  return 'text-mint font-semibold'
+  if (s === 'cancelled')   return 'text-coral font-semibold'
+  if (s === 'pending_slip') return 'text-amber font-semibold'
+  return 'text-app-light font-semibold'
+}
+
+function statusLabel(s) {
+  if (s === 'checked_in')   return '✅ เข้าแล้ว'
+  if (s === 'cancelled')    return '❌ ยกเลิก'
+  if (s === 'pending_slip') return '⏳ รอสลิป'
+  return '🎟 รอ check-in'
+}
+
 onMounted(async () => {
   await acts.load(true)
   loading.value = false
@@ -404,7 +392,8 @@ function openAdd() {
   Object.assign(form, { id:'', monthIdx:'1', name:'', emoji:'🎉', date:'', dateEnd:'', loc:'', desc:'', steps:'', joinUrl:'', joinLabel:'stamp', joinOpenAt:'', joinCloseAt:'', feedbackUrl:'', imgUrl:'', imgId:'', ticketEnabled:false, ticketTitle:'', ticketPrice:0, ticketCapacity:null, ticketNote:'', ticketOpenAt:'' })
   dateInput.value = ''; dateEndInput.value = ''; imgPreview.value = ''; imgUploading.value = false
   joinOpenDate.value = ''; joinOpenTime.value = ''; joinCloseDate.value = ''; joinCloseTime.value = ''
-  modal.mode = 'add'; modal.error = ''; modal.open = true
+  modal.mode = 'add'; modal.error = ''
+  ui.openModal('admin-activities-form')
 }
 
 function openEdit(r) {
@@ -419,7 +408,8 @@ function openEdit(r) {
   const ca = splitDateTime(r.joinCloseAt || '')
   joinOpenDate.value = oa.d; joinOpenTime.value = oa.t
   joinCloseDate.value = ca.d; joinCloseTime.value = ca.t
-  modal.mode = 'edit'; modal.error = ''; modal.open = true
+  modal.mode = 'edit'; modal.error = ''
+  ui.openModal('admin-activities-form')
 }
 
 async function saveModal() {
@@ -435,7 +425,6 @@ async function saveModal() {
       acts.localAdd({ ...form, id: res.data?.id || Date.now().toString(), imgUrl: imgPreview.value })
     } else {
       await svc.updateActivity(form.id, { ...form })
-      // Preserve existing Drive image if no new preview (don't overwrite with empty)
       let localImgUrl = imgPreview.value
       if (!localImgUrl && form.imgId) {
         localImgUrl = acts.all.find(a => a.id === form.id)?.imgUrl || ''
@@ -444,14 +433,13 @@ async function saveModal() {
       }
       acts.localUpdate(form.id, { ...form, imgUrl: localImgUrl })
     }
-    modal.open = false
+    ui.closeModal()
   } catch (e) {
     modal.error = e.message || 'เกิดข้อผิดพลาด'
   } finally {
     modal.saving = false
   }
 }
-
 
 // ── Ticket registrant section ────────────────────────────────────
 const bookedCounts = ref({})
@@ -462,7 +450,7 @@ async function toggleRegistrants(actId) {
   if (expandedId.value === actId) { expandedId.value = null; return }
   expandedId.value = actId
   if (!ticketRegs.value[actId]) {
-    ticketRegs.value[actId] = null // show loading
+    ticketRegs.value[actId] = null
     ticketRegs.value[actId] = await svc.getActivityTickets(actId)
   }
 }
@@ -470,7 +458,6 @@ async function toggleRegistrants(actId) {
 async function doCheckIn(qrToken, actId) {
   try {
     await svc.checkInTicket(qrToken)
-    // refresh list
     ticketRegs.value[actId] = await svc.getActivityTickets(actId)
     bookedCounts.value[actId] = await svc.getActivityBookedCount(actId)
   } catch (e) {
@@ -478,7 +465,11 @@ async function doCheckIn(qrToken, actId) {
   }
 }
 
-function confirmDelete(r) { delTarget.value = r }
+function confirmDelete(r) {
+  delTarget.value = r
+  ui.openModal('admin-activities-del')
+}
+
 async function doDelete() {
   deleting.value = true
   const target = delTarget.value
@@ -486,12 +477,12 @@ async function doDelete() {
     if (target.imgId) deleteImage([target.imgId]).catch(console.warn)
     await svc.deleteActivity(target.id)
     acts.localDelete(target.id)
+    ui.closeModal()
     delTarget.value = null
   } catch { } finally {
     deleting.value = false
   }
 }
-
 </script>
 
 <style scoped>

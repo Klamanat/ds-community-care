@@ -1,7 +1,10 @@
 <template>
   <div class="al-card">
-    <div v-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
-    <div v-else-if="!rows.length" class="al-empty">📭 ไม่มีหลักสูตรในหมวดนี้</div>
+    <div v-if="loading" class="al-loading-skeletons">
+      <SkeletonCard height="68px" />
+      <SkeletonCard height="68px" />
+    </div>
+    <EmptyState v-else-if="!rows.length" title="ไม่มีหลักสูตรในหมวดนี้" />
     <div v-else>
       <div class="al-item" v-for="r in rows" :key="r.id">
         <div class="al-item-body">
@@ -23,6 +26,9 @@
 </template>
 
 <script setup>
+import SkeletonCard from '../../../shared/components/SkeletonCard.vue'
+import EmptyState from '../../../shared/components/EmptyState.vue'
+
 defineProps({
   rows:    { type: Array,   default: () => [] },
   loading: { type: Boolean, default: false },

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#4F52C8"/>
+      <stop offset="52%"  stop-color="#7C3AC2"/>
+      <stop offset="100%" stop-color="#C83D8E"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="rgba(255,255,255,0.18)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+    <linearGradient id="txt" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#4F52C8"/>
+      <stop offset="100%" stop-color="#C83D8E"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Icon box -->
+  <rect x="0" y="4" width="40" height="40" rx="10" fill="url(#g)"/>
+  <rect x="0" y="4" width="40" height="20" rx="10" fill="url(#shine)"/>
+
+  <!-- Heart inside icon -->
+  <path d="M20 34
+    C 19.2 33.3 10 28 10 22
+    C 10 19.2 12.2 17 15 17
+    C 16.8 17 18.3 18 20 19.8
+    C 21.7 18 23.2 17 25 17
+    C 27.8 17 30 19.2 30 22
+    C 30 28 20.8 33.3 20 34Z"
+    fill="white"/>
+
+  <!-- DS text in icon -->
+  <text x="20" y="43"
+    text-anchor="middle"
+    font-family="'Arial Black', Arial, sans-serif"
+    font-size="7"
+    font-weight="900"
+    letter-spacing="0.5"
+    fill="rgba(255,255,255,0.85)">DS</text>
+
+  <!-- App name -->
+  <text x="52" y="24"
+    font-family="'Arial Black', 'Sarabun', Arial, sans-serif"
+    font-size="17"
+    font-weight="900"
+    letter-spacing="-0.3"
+    fill="url(#txt)">DS Community</text>
+  <text x="52" y="40"
+    font-family="'Sarabun', Arial, sans-serif"
+    font-size="12"
+    font-weight="700"
+    letter-spacing="0.5"
+    fill="#7C3AC2">Care  ♥</text>
+</svg>

@@ -29,8 +29,8 @@
 </template>
 
 <script setup>
-import { useUiStore } from '../../stores/ui.js'
-import { useCardConfigStore } from '../../stores/cardConfig.js'
+import { useUiStore } from '../../core/stores/ui.js'
+import { useCardConfigStore } from '../../core/stores/cardConfig.js'
 
 const ui         = useUiStore()
 const cardConfig = useCardConfigStore()

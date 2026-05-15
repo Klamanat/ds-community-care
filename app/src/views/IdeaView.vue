@@ -122,11 +122,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import SkeletonCard from '../components/shared/SkeletonCard.vue'
-import { useIdeasStore } from '../stores/ideas.js'
-import { useUiStore } from '../stores/ui.js'
-import { useUserAuthStore } from '../stores/userAuth.js'
-import { useFadeIn } from '../composables/useFadeIn.js'
+import SkeletonCard from '../shared/components/SkeletonCard.vue'
+import { useIdeasStore } from '../features/ideas/ideas.store.js'
+import { useUiStore } from '../core/stores/ui.js'
+import { useUserAuthStore } from '../core/stores/userAuth.js'
+import { useFadeIn } from '../core/composables/useFadeIn.js'
 
 const ideas      = useIdeasStore()
 const ui         = useUiStore()

@@ -19,8 +19,11 @@
 
     <!-- ── Posters ── -->
     <div v-if="subTab === 'poster'">
-      <div v-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
-      <div v-else-if="!posters.length" class="al-empty">📭 ยังไม่มีโปสเตอร์</div>
+      <div v-if="loading" class="al-loading-skeletons">
+        <SkeletonCard height="68px" />
+        <SkeletonCard height="68px" />
+      </div>
+      <EmptyState v-else-if="!posters.length" title="ยังไม่มีโปสเตอร์" />
       <div v-else class="al-card">
         <div v-for="p in posters" :key="p.id" class="al-item">
           <div class="aidp-poster-thumb">
@@ -30,7 +33,7 @@
           <div class="al-item-body">
             <div class="al-item-title">{{ p.title }}</div>
             <div v-if="p.date" class="al-item-sub">📅 {{ p.date }}</div>
-            <div v-if="p.description" class="al-item-sub" style="color:#6B7280;">{{ p.description }}</div>
+            <div v-if="p.description" class="al-item-sub">{{ p.description }}</div>
             <div class="al-item-sub aidp-url-preview">🔗 {{ p.imageUrl }}</div>
           </div>
           <div class="al-item-actions">
@@ -43,8 +46,11 @@
 
     <!-- ── Videos ── -->
     <div v-else>
-      <div v-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
-      <div v-else-if="!videos.length" class="al-empty">📭 ยังไม่มีวิดีโอ</div>
+      <div v-if="loading" class="al-loading-skeletons">
+        <SkeletonCard height="68px" />
+        <SkeletonCard height="68px" />
+      </div>
+      <EmptyState v-else-if="!videos.length" title="ยังไม่มีวิดีโอ" />
       <div v-else class="al-card">
         <div v-for="v in videos" :key="v.id" class="al-item">
           <div class="aidp-video-thumb">
@@ -58,7 +64,7 @@
           </div>
           <div class="al-item-body">
             <div class="al-item-title">{{ v.title }}</div>
-            <div v-if="v.description" class="al-item-sub" style="color:#6B7280;">{{ v.description }}</div>
+            <div v-if="v.description" class="al-item-sub">{{ v.description }}</div>
             <div class="al-item-sub aidp-url-preview">🔗 {{ v.videoUrl }}</div>
           </div>
           <div class="al-item-actions">
@@ -70,105 +76,105 @@
     </div>
 
     <!-- ── Add/Edit Modal ── -->
-    <div v-if="formOpen" class="al-modal-overlay" @click.self="formOpen = false">
-      <div class="al-modal" style="max-height:90vh;overflow-y:auto;">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">
-          {{ editTarget ? '✏️ แก้ไข' : '+ เพิ่ม' }} {{ formType === 'poster' ? 'โปสเตอร์' : 'วิดีโอ' }}
-        </div>
-
-        <!-- Poster form -->
-        <template v-if="formType === 'poster'">
-          <div class="al-form-row">
-            <label class="al-form-label">ชื่อโปสเตอร์ *</label>
-            <input class="al-form-input" v-model="form.title" placeholder="ชื่อโปสเตอร์" maxlength="200" />
-          </div>
-          <div class="al-form-row">
-            <label class="al-form-label">รูปภาพ *</label>
-            <input ref="fileInput" type="file" accept="image/*" style="display:none" @change="onFileChange" />
-            <button class="al-btn al-btn-save aidp-upload-btn" :disabled="uploading" @click="fileInput.click()">
-              {{ uploading ? '⏳ กำลังอัปโหลด...' : '📤 อัปโหลดจากเครื่อง' }}
-            </button>
-            <div class="aidp-or-divider">— หรือใส่ URL —</div>
-            <input class="al-form-input" v-model="form.imageUrl" placeholder="https://drive.google.com/..." />
-          </div>
-          <div class="al-form-row">
-            <label class="al-form-label">เดือน/ปี (ไม่บังคับ)</label>
-            <input class="al-form-input" v-model="form.date" placeholder="2026-01" maxlength="7" />
-            <small style="font-size:11px;color:#9CA3AF;margin-top:4px;display:block;">รูปแบบ: YYYY-MM เช่น 2026-03</small>
-          </div>
-          <div class="al-form-row">
-            <label class="al-form-label">รายละเอียด</label>
-            <textarea class="al-form-input" v-model="form.description" rows="2"
-              placeholder="อธิบายเพิ่มเติม" maxlength="300" style="resize:none;"></textarea>
-          </div>
-          <!-- Preview -->
-          <div v-if="form.imageUrl" class="aidp-img-preview">
-            <img :src="form.imageUrl" alt="preview" @error="onImgError" />
-          </div>
-        </template>
-
-        <!-- Video form -->
-        <template v-else>
-          <div class="al-form-row">
-            <label class="al-form-label">ชื่อวิดีโอ *</label>
-            <input class="al-form-input" v-model="form.title" placeholder="ชื่อวิดีโอ" maxlength="200" />
-          </div>
-          <div class="al-form-row">
-            <label class="al-form-label">URL วิดีโอ * <small style="font-weight:400;color:#9CA3AF;">(YouTube)</small></label>
-            <input class="al-form-input" v-model="form.videoUrl" placeholder="https://youtube.com/watch?v=..." />
-          </div>
-          <div class="al-form-row">
-            <label class="al-form-label">รายละเอียด</label>
-            <textarea class="al-form-input" v-model="form.description" rows="2"
-              placeholder="อธิบายเนื้อหาวิดีโอ" maxlength="300" style="resize:none;"></textarea>
-          </div>
-          <!-- YouTube thumbnail preview -->
-          <div v-if="getYtId(form.videoUrl)" class="aidp-yt-preview">
-            <img :src="`https://img.youtube.com/vi/${getYtId(form.videoUrl)}/hqdefault.jpg`" alt="YouTube thumbnail" />
-            <div class="aidp-yt-play">▶</div>
-          </div>
-        </template>
-
-        <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="formOpen = false">ยกเลิก</button>
-          <button class="al-btn al-btn-save" :disabled="saving || !form.title || !fieldRequired" @click="doSave">
-            {{ saving ? 'กำลังบันทึก...' : '✅ บันทึก' }}
-          </button>
-        </div>
+    <BaseModal padded modal-id="admin-idp-form" sheet-class="modal-sheet-lg">
+      <div class="al-modal-title">
+        {{ editTarget ? '✏️ แก้ไข' : '+ เพิ่ม' }} {{ formType === 'poster' ? 'โปสเตอร์' : 'วิดีโอ' }}
       </div>
-    </div>
+
+      <!-- Poster form -->
+      <template v-if="formType === 'poster'">
+        <div class="al-form-row">
+          <label class="al-form-label">ชื่อโปสเตอร์ *</label>
+          <input class="al-form-input" v-model="form.title" placeholder="ชื่อโปสเตอร์" maxlength="200" />
+        </div>
+        <div class="al-form-row">
+          <label class="al-form-label">รูปภาพ *</label>
+          <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
+          <button class="al-btn al-btn-save aidp-upload-btn" :disabled="uploading" @click="fileInput.click()">
+            {{ uploading ? '⏳ กำลังอัปโหลด...' : '📤 อัปโหลดจากเครื่อง' }}
+          </button>
+          <div class="aidp-or-divider">— หรือใส่ URL —</div>
+          <input class="al-form-input" v-model="form.imageUrl" placeholder="https://drive.google.com/..." />
+        </div>
+        <div class="al-form-row">
+          <label class="al-form-label">เดือน/ปี (ไม่บังคับ)</label>
+          <input class="al-form-input" v-model="form.date" placeholder="2026-01" maxlength="7" />
+          <small class="text-[11px] text-app-light mt-1 block">รูปแบบ: YYYY-MM เช่น 2026-03</small>
+        </div>
+        <div class="al-form-row">
+          <label class="al-form-label">รายละเอียด</label>
+          <textarea class="al-form-input resize-none" v-model="form.description" rows="2"
+            placeholder="อธิบายเพิ่มเติม" maxlength="300"></textarea>
+        </div>
+        <!-- Preview -->
+        <div v-if="form.imageUrl" class="aidp-img-preview">
+          <img :src="form.imageUrl" alt="preview" @error="onImgError" />
+        </div>
+      </template>
+
+      <!-- Video form -->
+      <template v-else>
+        <div class="al-form-row">
+          <label class="al-form-label">ชื่อวิดีโอ *</label>
+          <input class="al-form-input" v-model="form.title" placeholder="ชื่อวิดีโอ" maxlength="200" />
+        </div>
+        <div class="al-form-row">
+          <label class="al-form-label">URL วิดีโอ * <small class="font-normal text-app-light">(YouTube)</small></label>
+          <input class="al-form-input" v-model="form.videoUrl" placeholder="https://youtube.com/watch?v=..." />
+        </div>
+        <div class="al-form-row">
+          <label class="al-form-label">รายละเอียด</label>
+          <textarea class="al-form-input resize-none" v-model="form.description" rows="2"
+            placeholder="อธิบายเนื้อหาวิดีโอ" maxlength="300"></textarea>
+        </div>
+        <!-- YouTube thumbnail preview -->
+        <div v-if="getYtId(form.videoUrl)" class="aidp-yt-preview">
+          <img :src="`https://img.youtube.com/vi/${getYtId(form.videoUrl)}/hqdefault.jpg`" alt="YouTube thumbnail" />
+          <div class="aidp-yt-play">▶</div>
+        </div>
+      </template>
+
+      <div class="al-modal-footer">
+        <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
+        <button class="al-btn al-btn-save" :disabled="saving || !form.title || !fieldRequired" @click="doSave">
+          {{ saving ? 'กำลังบันทึก...' : '✅ บันทึก' }}
+        </button>
+      </div>
+    </BaseModal>
 
     <!-- ── Delete Confirm ── -->
-    <div v-if="delRow" class="al-modal-overlay" @click.self="delRow = null">
-      <div class="al-modal">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
-        <p style="font-size:13px;color:#374151;margin:0 0 16px;">
-          ลบ "<strong>{{ delRow.title }}</strong>" ใช่หรือไม่?
-        </p>
-        <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="delRow = null">ยกเลิก</button>
-          <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
-            {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
-          </button>
-        </div>
+    <BaseModal padded modal-id="admin-idp-del">
+      <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
+      <p class="text-sm text-gray-700 mb-4">
+        ลบ "<strong>{{ delRow?.title }}</strong>" ใช่หรือไม่?
+      </p>
+      <div class="al-modal-footer">
+        <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
+        <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
+          {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
+        </button>
       </div>
-    </div>
+    </BaseModal>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
-import * as svc from '../../../services/trainingService.js'
-import { deleteImage } from '../../../services/edgeFunctions.js'
+import * as svc from '../../../features/training/trainingService.js'
+import { deleteImage } from '../../../core/services/edgeFunctions.js'
+import { useUiStore } from '../../../core/stores/ui.js'
+import BaseModal from '../../../shared/components/BaseModal.vue'
+import SkeletonCard from '../../../shared/components/SkeletonCard.vue'
+import EmptyState from '../../../shared/components/EmptyState.vue'
+
+const ui = useUiStore()
 
 const subTab  = ref('poster')
 const loading = ref(false)
 const posters = ref([])
 const videos  = ref([])
 
-const formOpen   = ref(false)
+const formOpen   = ref(false)  // kept for compat; modal driven by ui store
 const formType   = ref('poster')  // 'poster' | 'video'
 const saving     = ref(false)
 const editTarget = ref(null)
@@ -242,7 +248,7 @@ function openAdd() {
   editTarget.value = null
   formType.value   = subTab.value
   resetForm()
-  formOpen.value   = true
+  ui.openModal('admin-idp-form')
 }
 
 function openEdit(row, type) {
@@ -256,12 +262,13 @@ function openEdit(row, type) {
     description: row.description || '',
     date:        row.date        || '',
   })
-  formOpen.value = true
+  ui.openModal('admin-idp-form')
 }
 
 function confirmDel(row, type) {
   delRow.value  = row
   delType.value = type
+  ui.openModal('admin-idp-del')
 }
 
 async function doSave() {
@@ -287,7 +294,7 @@ async function doSave() {
         videos.value.unshift(created)
       }
     }
-    formOpen.value = false
+    ui.closeModal()
   } catch (e) {
     alert('เกิดข้อผิดพลาด: ' + (e?.message || e))
   } finally {
@@ -309,6 +316,7 @@ async function doDelete() {
       videos.value = videos.value.filter(r => r.id !== row.id)
     }
     delRow.value = null
+    ui.closeModal()
   } catch { }
   finally { deleting.value = false }
 }

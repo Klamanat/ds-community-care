@@ -1,135 +1,147 @@
 <template>
   <div>
+    <AdminPageHeader title="🎁 ของรางวัล" sub="Rewards">
+      <button class="al-btn al-btn-primary" @click="openAdd">+ เพิ่มของรางวัล</button>
+    </AdminPageHeader>
+
     <main class="al-main">
+      <div class="al-body">
+        <div class="al-card">
+          <div class="al-card-header">
+            <span class="al-card-title">รายการของรางวัล</span>
+            <span class="al-badge al-badge-blue">{{ rewards.length }} รายการ</span>
+          </div>
 
-      <div class="al-page-header">
-        <h2 class="al-page-title">🎁 ของรางวัล</h2>
-        <button class="al-btn al-btn-primary" @click="openAdd">+ เพิ่มของรางวัล</button>
-      </div>
+          <div v-if="loading" class="al-loading-skeletons">
+            <SkeletonCard height="68px" />
+            <SkeletonCard height="68px" />
+            <SkeletonCard height="68px" />
+          </div>
+          <EmptyState v-else-if="!rewards.length" title="ยังไม่มีของรางวัล" sub="กด + เพิ่มของรางวัล เพื่อเริ่มต้น" />
 
-      <div class="al-card">
-        <div class="al-card-header">
-          <span class="al-card-title">รายการของรางวัล</span>
-          <span class="al-badge al-badge-blue">{{ rewards.length }} รายการ</span>
-        </div>
-
-        <div v-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
-        <div v-else-if="!rewards.length" class="al-empty">📭 ยังไม่มีของรางวัล</div>
-
-        <div v-else>
-          <div class="al-item" v-for="r in rewards" :key="r.id">
-            <img v-if="r.imageUrl" :src="r.imageUrl" class="al-item-thumb" />
-            <div v-else class="al-item-avatar">🎁</div>
-            <div class="al-item-body">
-              <div class="al-item-title">{{ r.name }}</div>
-              <div class="al-item-sub">{{ r.description }}</div>
-              <div class="al-item-meta">
-                <span v-if="r.ptsCost" class="al-badge al-badge-purple">{{ r.ptsCost }} pts</span>
-                <span v-if="r.stock !== null" class="al-badge al-badge-blue">คงเหลือ {{ r.stock }}</span>
-                <span v-else class="al-badge al-badge-gray">ไม่จำกัด</span>
-                <span class="al-badge" :class="r.active ? 'al-badge-green' : 'al-badge-gray'">
-                  {{ r.active ? 'เปิด' : 'ปิด' }}
-                </span>
+          <div v-else>
+            <div class="al-item fade-in" v-for="r in rewards" :key="r.id" @click="handleRippleClick">
+              <img v-if="r.imageUrl" :src="r.imageUrl" class="al-item-thumb" />
+              <div v-else class="al-item-avatar">🎁</div>
+              <div class="al-item-body">
+                <div class="al-item-title">{{ r.name }}</div>
+                <div class="al-item-sub">{{ r.description }}</div>
+                <div class="al-item-meta">
+                  <span v-if="r.ptsCost" class="al-badge al-badge-purple">{{ r.ptsCost }} pts</span>
+                  <span v-if="r.stock !== null" class="al-badge al-badge-blue">คงเหลือ {{ r.stock }}</span>
+                  <span v-else class="al-badge al-badge-gray">ไม่จำกัด</span>
+                  <span class="al-badge" :class="r.active ? 'al-badge-green' : 'al-badge-gray'">
+                    {{ r.active ? 'เปิด' : 'ปิด' }}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div class="al-item-actions">
-              <button class="al-btn al-btn-edit" @click="openEdit(r)">แก้ไข</button>
-              <button class="al-btn al-btn-delete" @click="confirmDelete(r)">ลบ</button>
+              <div class="al-item-actions" @click.stop>
+                <button class="al-btn al-btn-edit" @click="openEdit(r)">แก้ไข</button>
+                <button class="al-btn al-btn-delete" @click="confirmDelete(r)">ลบ</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
     </main>
 
     <!-- Add / Edit Modal -->
-    <div v-if="modal.open" class="al-modal-overlay" @click.self="modal.open = false">
-      <div class="al-modal">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">{{ modal.mode === 'add' ? '+ เพิ่มของรางวัล' : '✏️ แก้ไขของรางวัล' }}</div>
+    <BaseModal padded modal-id="admin-rewards-form" sheet-class="modal-sheet-lg">
+      <div class="al-modal-title">{{ modal.mode === 'add' ? '+ เพิ่มของรางวัล' : '✏️ แก้ไขของรางวัล' }}</div>
 
-        <div class="al-form-row">
-          <label class="al-form-label">ชื่อของรางวัล <span style="color:#EF4444;">*</span></label>
-          <input v-model="form.name" class="al-form-input" placeholder="เช่น กระเป๋า DS" />
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">คำอธิบาย</label>
-          <textarea v-model="form.description" class="al-form-input" rows="2" placeholder="รายละเอียดของรางวัล"></textarea>
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">คะแนนที่ใช้แลก</label>
-          <input v-model.number="form.ptsCost" type="number" min="0" class="al-form-input" placeholder="0 = ไม่จำกัดคะแนน" />
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">จำนวนสต็อก (เว้นว่าง = ไม่จำกัด)</label>
-          <input v-model.number="form.stock" type="number" min="0" class="al-form-input" placeholder="ไม่จำกัด" />
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">สถานะ</label>
-          <select v-model="form.active" class="al-form-select">
-            <option :value="true">เปิด (แสดงในแอป)</option>
-            <option :value="false">ปิด (ซ่อน)</option>
-          </select>
-        </div>
-
-        <!-- Image upload -->
-        <div class="al-form-row">
-          <label class="al-form-label">รูปของรางวัล</label>
-          <div class="act-upload-zone" :style="imgUploading ? 'opacity:.6;cursor:default;' : ''" @click="!imgUploading && imgFileInput.click()">
-            <img v-if="imgPreview && !imgUploading" :src="imgPreview" class="act-upload-preview" />
-            <div v-else-if="imgUploading" class="act-upload-placeholder">
-              <span style="font-size:22px;">⏳</span>
-              <span style="font-size:12px;color:#6B7280;margin-top:4px;">กำลังอัปโหลด...</span>
-            </div>
-            <div v-else class="act-upload-placeholder">
-              <span style="font-size:28px;">🎁</span>
-              <span style="font-size:12px;color:#9CA3AF;margin-top:4px;">คลิกเพื่ออัปโหลดรูป</span>
-            </div>
-          </div>
-          <button v-if="imgPreview && !imgUploading" class="al-btn al-btn-delete" style="margin-top:6px;width:100%;" @click.stop="clearImg">🗑️ ลบรูป</button>
-          <input ref="imgFileInput" type="file" accept="image/*" style="display:none" @change="onImgChange" />
-        </div>
-
-        <div v-if="modal.error" class="al-error">⚠️ {{ modal.error }}</div>
-
-        <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="modal.open = false">ยกเลิก</button>
-          <button class="al-btn al-btn-save" :disabled="modal.saving || imgUploading" @click="saveModal">
-            {{ modal.saving ? 'กำลังบันทึก...' : imgUploading ? 'รอรูป...' : '✅ บันทึก' }}
-          </button>
-        </div>
+      <div class="al-form-row">
+        <label class="al-form-label">ชื่อของรางวัล <span class="text-coral">*</span></label>
+        <input v-model="form.name" class="al-form-input" placeholder="เช่น กระเป๋า DS" />
       </div>
-    </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">คำอธิบาย</label>
+        <textarea v-model="form.description" class="al-form-input" rows="2" placeholder="รายละเอียดของรางวัล"></textarea>
+      </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">คะแนนที่ใช้แลก</label>
+        <input v-model.number="form.ptsCost" type="number" min="0" class="al-form-input" placeholder="0 = ไม่จำกัดคะแนน" />
+      </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">จำนวนสต็อก (เว้นว่าง = ไม่จำกัด)</label>
+        <input v-model.number="form.stock" type="number" min="0" class="al-form-input" placeholder="ไม่จำกัด" />
+      </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">สถานะ</label>
+        <select v-model="form.active" class="al-form-select">
+          <option :value="true">เปิด (แสดงในแอป)</option>
+          <option :value="false">ปิด (ซ่อน)</option>
+        </select>
+      </div>
+
+      <!-- Image upload -->
+      <div class="al-form-row">
+        <label class="al-form-label">รูปของรางวัล</label>
+        <div
+          class="act-upload-zone"
+          :class="{ 'opacity-60 cursor-default': imgUploading }"
+          @click="!imgUploading && imgFileInput.click()"
+        >
+          <img v-if="imgPreview && !imgUploading" :src="imgPreview" class="act-upload-preview" />
+          <div v-else-if="imgUploading" class="act-upload-placeholder">
+            <span class="text-2xl">⏳</span>
+            <span class="text-xs text-app-light mt-1">กำลังอัปโหลด...</span>
+          </div>
+          <div v-else class="act-upload-placeholder">
+            <span class="text-3xl">🎁</span>
+            <span class="text-xs text-app-light mt-1">คลิกเพื่ออัปโหลดรูป</span>
+          </div>
+        </div>
+        <button v-if="imgPreview && !imgUploading" class="al-btn al-btn-delete mt-1.5 w-full" @click.stop="clearImg">🗑️ ลบรูป</button>
+        <input ref="imgFileInput" type="file" accept="image/*" class="hidden" @change="onImgChange" />
+      </div>
+
+      <div v-if="modal.error" class="al-error">⚠️ {{ modal.error }}</div>
+
+      <div class="al-modal-footer">
+        <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
+        <button class="al-btn al-btn-save" :disabled="modal.saving || imgUploading" @click="saveModal">
+          {{ modal.saving ? 'กำลังบันทึก...' : imgUploading ? 'รอรูป...' : '✅ บันทึก' }}
+        </button>
+      </div>
+    </BaseModal>
 
     <!-- Delete confirm -->
-    <div v-if="delTarget" class="al-modal-overlay" @click.self="delTarget = null">
-      <div class="al-modal al-modal--sm">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">🗑️ ลบของรางวัล</div>
-        <p style="font-size:14px;color:#374151;margin:12px 0;">
-          ยืนยันลบ <strong>{{ delTarget.name }}</strong>?
-        </p>
-        <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="delTarget = null">ยกเลิก</button>
-          <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
-            {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
-          </button>
-        </div>
+    <BaseModal padded modal-id="admin-rewards-del">
+      <div class="al-modal-title">🗑️ ลบของรางวัล</div>
+      <p class="text-sm text-app-mid my-3">
+        ยืนยันลบ <strong>{{ delTarget?.name }}</strong>?
+      </p>
+      <div class="al-modal-footer">
+        <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
+        <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
+          {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
+        </button>
       </div>
-    </div>
+    </BaseModal>
 
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { adminFetchRewards, adminAddReward, adminUpdateReward, adminDeleteReward } from '../../services/rewardService.js'
-import { resizeToBase64 } from '../../composables/useImageCompress.js'
-import { uploadImage, deleteImage } from '../../services/edgeFunctions.js'
+import { adminFetchRewards, adminAddReward, adminUpdateReward, adminDeleteReward } from '../../features/rewards/rewardService.js'
+import { resizeToBase64 } from '../../core/composables/useImageCompress.js'
+import { uploadImage, deleteImage } from '../../core/services/edgeFunctions.js'
+import { useUiStore } from '../../core/stores/ui.js'
+import AdminPageHeader from './AdminPageHeader.vue'
+import BaseModal from '../../shared/components/BaseModal.vue'
+import SkeletonCard from '../../shared/components/SkeletonCard.vue'
+import EmptyState from '../../shared/components/EmptyState.vue'
+import { useRipple } from '../../core/composables/useRipple.js'
+import { useFadeIn } from '../../core/composables/useFadeIn.js'
+
+const ui = useUiStore()
+const { handleRippleClick } = useRipple()
+useFadeIn('.fade-in')
 
 const loading  = ref(true)
 const rewards  = ref([])
@@ -140,7 +152,7 @@ onMounted(async () => {
 })
 
 // ── Modal ──────────────────────────────────────────────────────
-const modal = reactive({ open: false, mode: 'add', saving: false, error: '' })
+const modal = reactive({ mode: 'add', saving: false, error: '' })
 const form  = reactive({ id: '', name: '', description: '', ptsCost: 100, stock: null, active: true, imageId: '', imageUrl: '' })
 
 const imgFileInput = ref(null)
@@ -150,13 +162,15 @@ const imgUploading = ref(false)
 function openAdd() {
   Object.assign(form, { id: '', name: '', description: '', ptsCost: 100, stock: null, active: true, imageId: '', imageUrl: '' })
   imgPreview.value = ''; imgUploading.value = false
-  modal.mode = 'add'; modal.error = ''; modal.open = true
+  modal.mode = 'add'; modal.error = ''
+  ui.openModal('admin-rewards-form')
 }
 
 function openEdit(r) {
   Object.assign(form, { id: r.id, name: r.name, description: r.description, ptsCost: r.ptsCost, stock: r.stock, active: r.active, imageId: r.imageId, imageUrl: r.imageUrl })
   imgPreview.value = r.imageUrl || ''; imgUploading.value = false
-  modal.mode = 'edit'; modal.error = ''; modal.open = true
+  modal.mode = 'edit'; modal.error = ''
+  ui.openModal('admin-rewards-form')
 }
 
 async function onImgChange(e) {
@@ -209,7 +223,7 @@ async function saveModal() {
       const idx = rewards.value.findIndex(r => r.id === form.id)
       if (idx >= 0) rewards.value.splice(idx, 1, updated)
     }
-    modal.open = false
+    ui.closeModal()
   } catch (err) {
     modal.error = err.message || 'บันทึกล้มเหลว'
   } finally {
@@ -221,7 +235,10 @@ async function saveModal() {
 const delTarget = ref(null)
 const deleting  = ref(false)
 
-function confirmDelete(r) { delTarget.value = r }
+function confirmDelete(r) {
+  delTarget.value = r
+  ui.openModal('admin-rewards-del')
+}
 
 async function doDelete() {
   if (!delTarget.value) return
@@ -231,6 +248,7 @@ async function doDelete() {
     if (target.imageId) deleteImage([target.imageId]).catch(console.warn)
     await adminDeleteReward(target.id)
     rewards.value = rewards.value.filter(r => r.id !== target.id)
+    ui.closeModal()
     delTarget.value = null
   } catch (err) {
     alert('ลบล้มเหลว: ' + err.message)

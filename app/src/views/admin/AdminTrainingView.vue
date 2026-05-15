@@ -1,25 +1,21 @@
 <template>
   <div>
+    <AdminPageHeader title="📚 Training & Development" sub="หลักสูตร · IDP · Site Visits" />
     <main class="al-main">
-
-      <div class="al-page-header">
-        <h2 class="al-page-title">📚 Training & Development</h2>
-      </div>
+      <div class="al-body">
 
       <!-- ── Tab bar ── -->
-      <div class="atr-tabbar-wrap">
-        <div class="atr-tabbar">
-          <button
-            v-for="t in ALL_TABS" :key="t.key"
-            class="atr-tab"
-            :class="{ active: activeTab === t.key }"
-            @click="switchTab(t.key)"
-          >
-            <span class="atr-tab-icon">{{ t.icon }}</span>
-            <span class="atr-tab-label">{{ t.label }}</span>
-            <span v-if="tabCount(t.key)" class="atr-tab-count">{{ tabCount(t.key) }}</span>
-          </button>
-        </div>
+      <div class="al-tab-bar">
+        <button
+          v-for="t in ALL_TABS" :key="t.key"
+          class="al-tab-btn"
+          :class="{ active: activeTab === t.key }"
+          @click="switchTab(t.key)"
+        >
+          <span>{{ t.icon }}</span>
+          <span>{{ t.label }}</span>
+          <span v-if="tabCount(t.key)" class="al-tab-btn-count">{{ tabCount(t.key) }}</span>
+        </button>
       </div>
 
       <!-- ── Toolbar (hidden for IDP — it has its own add button inside) ── -->
@@ -50,13 +46,12 @@
         @edit="openEdit"
         @delete="confirmDel"
       />
+      </div>
     </main>
 
     <!-- ── Add/Edit Modal ── -->
-    <div v-if="formOpen" class="al-modal-overlay" @click.self="formOpen = false">
-      <div class="al-modal" style="max-height:90vh;overflow-y:auto;">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">
+    <BaseModal padded modal-id="admin-training-form" sheet-class="modal-sheet-lg">
+      <div class="al-modal-title">
           {{ editTarget ? '✏️ แก้ไข' : '+ เพิ่ม' }} {{ activeTab === 'site' ? 'Site Visit' : activeDef?.label }}
         </div>
 
@@ -68,8 +63,8 @@
           </div>
           <div class="al-form-row">
             <label class="al-form-label">รายละเอียด</label>
-            <textarea class="al-form-input" v-model="form.description" rows="3"
-              placeholder="รายละเอียด เช่น ที่อยู่ กิจกรรม" maxlength="500" style="resize:none;"></textarea>
+            <textarea class="al-form-input resize-none" v-model="form.description" rows="3"
+              placeholder="รายละเอียด เช่น ที่อยู่ กิจกรรม" maxlength="500"></textarea>
           </div>
           <div class="al-form-row">
             <label class="al-form-label">ผู้ดูแล / ติดต่อ</label>
@@ -97,8 +92,8 @@
           </div>
           <div class="al-form-row">
             <label class="al-form-label">รายละเอียด</label>
-            <textarea class="al-form-input" v-model="form.description" rows="3"
-              placeholder="รายละเอียดหลักสูตร" maxlength="500" style="resize:none;"></textarea>
+            <textarea class="al-form-input resize-none" v-model="form.description" rows="3"
+              placeholder="รายละเอียดหลักสูตร" maxlength="500"></textarea>
           </div>
           <div class="al-form-2col">
             <div class="al-form-row">
@@ -118,39 +113,40 @@
         </template>
 
         <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="formOpen = false">ยกเลิก</button>
+          <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
           <button class="al-btn al-btn-save" :disabled="saving || !form.title" @click="doSave">
             {{ saving ? 'กำลังบันทึก...' : '✅ บันทึก' }}
           </button>
         </div>
-      </div>
-    </div>
+    </BaseModal>
 
     <!-- ── Delete Confirm ── -->
-    <div v-if="delRow" class="al-modal-overlay" @click.self="delRow = null">
-      <div class="al-modal">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
-        <p style="font-size:13px;color:#374151;margin:0 0 16px;">
-          ลบ "<strong>{{ delRow.title }}</strong>" ใช่หรือไม่?
-        </p>
-        <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="delRow = null">ยกเลิก</button>
-          <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
-            {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
-          </button>
-        </div>
+    <BaseModal padded modal-id="admin-training-del">
+      <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
+      <p class="text-sm text-gray-700 mb-4">
+        ลบ "<strong>{{ delRow?.title }}</strong>" ใช่หรือไม่?
+      </p>
+      <div class="al-modal-footer">
+        <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
+        <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
+          {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
+        </button>
       </div>
-    </div>
+    </BaseModal>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
-import * as svc from '../../services/trainingService.js'
+import { useUiStore } from '../../core/stores/ui.js'
+import BaseModal from '../../shared/components/BaseModal.vue'
+import * as svc from '../../features/training/trainingService.js'
 import AdminCourseTab from './training/AdminCourseTab.vue'
 import AdminSiteTab   from './training/AdminSiteTab.vue'
 import AdminIdpTab    from './training/AdminIdpTab.vue'
+import AdminPageHeader from './AdminPageHeader.vue'
+
+const ui = useUiStore()
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 const ALL_TABS = [
@@ -226,7 +222,7 @@ async function loadSite() {
 }
 
 // ── Form ──────────────────────────────────────────────────────────────────────
-const formOpen   = ref(false)
+const formOpen   = ref(false)  // kept for template compatibility
 const saving     = ref(false)
 const editTarget = ref(null)
 const delRow     = ref(null)
@@ -251,7 +247,7 @@ function resetForm() {
 function openAdd() {
   editTarget.value = null
   resetForm()
-  formOpen.value = true
+  ui.openModal('admin-training-form')
 }
 
 function openEdit(row) {
@@ -263,10 +259,10 @@ function openEdit(row) {
     section:     row.section     || '',
     color:       row.color       || '',
   })
-  formOpen.value = true
+  ui.openModal('admin-training-form')
 }
 
-function confirmDel(row) { delRow.value = row }
+function confirmDel(row) { delRow.value = row; ui.openModal('admin-training-del') }
 
 async function doSave() {
   if (!form.title.trim()) return
@@ -293,7 +289,7 @@ async function doSave() {
         courseCache[cat].unshift({ ...created })
       }
     }
-    formOpen.value = false
+    ui.closeModal()
   } catch (e) {
     alert('เกิดข้อผิดพลาด: ' + (e?.message || e))
   } finally {
@@ -313,6 +309,7 @@ async function doDelete() {
       courseCache[cat] = (courseCache[cat] || []).filter(r => r.id !== delRow.value.id)
     }
     delRow.value = null
+    ui.closeModal()
   } catch { }
   finally { deleting.value = false }
 }
@@ -321,40 +318,6 @@ async function doDelete() {
 
 <style scoped>
 @import './admin.css';
-
-/* ── Tab bar ── */
-.atr-tabbar-wrap {
-  overflow-x: auto; -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; margin: 0 -16px; padding: 0 16px;
-}
-.atr-tabbar-wrap::-webkit-scrollbar { display: none; }
-.atr-tabbar {
-  display: flex; gap: 6px; padding-bottom: 4px;
-  width: max-content; min-width: 100%;
-}
-.atr-tab {
-  display: flex; align-items: center; gap: 5px;
-  padding: 8px 14px; border-radius: 20px;
-  border: 1.5px solid #E5E7EB; background: white;
-  font-size: 12px; font-weight: 700;
-  font-family: 'Sarabun', sans-serif;
-  color: #6B7280; cursor: pointer; transition: all 0.15s;
-  white-space: nowrap; flex-shrink: 0;
-}
-.atr-tab:hover  { border-color: #6366F1; color: #4F46E5; }
-.atr-tab.active {
-  background: linear-gradient(135deg, #6366F1, #4F46E5);
-  border-color: #4F46E5; color: white;
-  box-shadow: 0 2px 8px rgba(99,102,241,0.3);
-}
-.atr-tab-icon  { font-size: 14px; line-height: 1; }
-.atr-tab-label { font-size: 12px; }
-.atr-tab-count {
-  font-size: 10px; font-weight: 800;
-  background: rgba(0,0,0,0.1); padding: 1px 6px; border-radius: 10px;
-  min-width: 16px; text-align: center;
-}
-.atr-tab.active .atr-tab-count { background: rgba(255,255,255,0.25); }
 
 /* ── Toolbar ── */
 .atr-toolbar {

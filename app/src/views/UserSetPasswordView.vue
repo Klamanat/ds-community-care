@@ -3,7 +3,7 @@
     <div class="sp-card">
       <!-- Logo -->
       <div class="sp-logo-wrap">
-        <div class="sp-logo-icon">🔑</div>
+        <img src="/favicon.svg" alt="DS" class="sp-logo-icon" />
         <div class="sp-logo-title">ตั้งรหัสผ่านครั้งแรก</div>
         <div class="sp-logo-sub">กรุณาตั้งรหัสผ่านส่วนตัวของคุณ</div>
       </div>
@@ -86,7 +86,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useUserAuthStore } from '../stores/userAuth.js'
+import { useUserAuthStore } from '../core/stores/userAuth.js'
 
 const auth     = useUserAuthStore()
 const router   = useRouter()
@@ -125,7 +125,7 @@ function goLogin() {
   box-shadow: 0 24px 64px rgba(0,0,0,0.3);
 }
 .sp-logo-wrap { text-align: center; margin-bottom: 24px; }
-.sp-logo-icon  { font-size: 48px; margin-bottom: 8px; }
+.sp-logo-icon  { width: 48px; height: 48px; margin: 0 auto 10px; display: block; }
 .sp-logo-title { font-size: 20px; font-weight: 900; color: #1F2937; }
 .sp-logo-sub   { font-size: 13px; color: #6B7280; margin-top: 4px; }
 .sp-label {

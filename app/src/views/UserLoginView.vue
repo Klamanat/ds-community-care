@@ -4,8 +4,7 @@
 
       <!-- Logo -->
       <div class="ul-logo-wrap">
-        <div class="ul-logo-icon">🌟</div>
-        <div class="ul-logo-title">DS Community Care</div>
+        <img src="/logo.svg" alt="DS Community Care" class="ul-logo-img" />
         <div class="ul-logo-sub">ระบบดูแลชุมชน DS</div>
       </div>
 
@@ -95,7 +94,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserAuthStore } from '../stores/userAuth.js'
+import { useUserAuthStore } from '../core/stores/userAuth.js'
 
 const auth       = useUserAuthStore()
 const router     = useRouter()
@@ -165,8 +164,7 @@ async function doLogin() {
   box-shadow: 0 24px 64px rgba(0,0,0,0.35);
 }
 .ul-logo-wrap { text-align: center; margin-bottom: 28px; }
-.ul-logo-icon  { font-size: 52px; margin-bottom: 8px; }
-.ul-logo-title { font-size: 22px; font-weight: 900; color: #1F2937; }
+.ul-logo-img  { height: 48px; margin: 0 auto 10px; display: block; }
 .ul-logo-sub   { font-size: 13px; color: #6B7280; margin-top: 4px; }
 .ul-label {
   display: block; font-size: 12px; font-weight: 700; color: #374151;

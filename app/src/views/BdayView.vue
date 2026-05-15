@@ -184,8 +184,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useBirthdayStore } from '../stores/birthday.js'
-import { useUiStore } from '../stores/ui.js'
+import { useBirthdayStore } from '../features/birthday/birthday.store.js'
+import { useUiStore } from '../core/stores/ui.js'
 
 const bday = useBirthdayStore()
 const ui = useUiStore()

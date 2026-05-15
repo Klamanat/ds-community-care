@@ -1,16 +1,15 @@
 <template>
   <div>
+    <AdminPageHeader title="🔄 Migrate Images" sub="Google Drive → Supabase Storage">
+      <button
+        v-if="pending.length && !running"
+        class="al-btn al-btn-primary"
+        @click="startMigration"
+      >▶ เริ่ม Migrate</button>
+      <button v-else-if="running" class="al-btn al-btn-secondary" disabled>⏳ กำลังทำงาน...</button>
+    </AdminPageHeader>
     <main class="al-main">
-      <div class="al-page-header">
-        <h2 class="al-page-title">🔄 Migrate Drive → Storage</h2>
-        <button
-          v-if="pending.length && !running"
-          class="al-btn al-btn-primary"
-          @click="startMigration"
-        >▶ เริ่ม Migrate</button>
-        <button v-else-if="running" class="al-btn al-btn-secondary" disabled>⏳ กำลังทำงาน...</button>
-      </div>
-
+      <div class="al-body">
       <!-- Summary cards -->
       <div class="mg-summary-row">
         <div class="mg-stat">
@@ -32,9 +31,9 @@
       </div>
 
       <!-- Info box -->
-      <div class="al-info-box" style="margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:800;color:#3730A3;margin-bottom:6px;">📋 ข้อมูล</div>
-        <ul style="font-size:12px;color:#4338CA;line-height:2;padding-left:16px;margin:0;">
+      <div class="al-info-box mb-3">
+        <div class="text-xs font-extrabold text-indigo mb-1.5">📋 ข้อมูล</div>
+        <ul class="text-xs text-indigo/80 leading-loose pl-4 m-0">
           <li>ดึงรูปจาก Google Drive ผ่าน Edge Function → อัปโหลดไปยัง Supabase Storage</li>
           <li>หลัง migrate สำเร็จ: <code>img_id</code> และ <code>img_url</code> ของพนักงานจะอัปเดตเป็น Storage path</li>
           <li>ลด Edge Function invocations (get-images) ได้มากหลัง migrate เสร็จ</li>
@@ -43,52 +42,52 @@
       </div>
 
       <!-- ── Fix Cache section ── -->
-      <div class="al-card" style="margin-bottom:14px;">
+      <div class="al-card mb-3.5">
         <div class="al-card-header">
           <span class="al-card-title">🔧 Fix Cache-Control (รูปเก่า)</span>
         </div>
-        <div style="padding:12px 14px;font-size:12px;color:#6B7280;line-height:1.8;">
+        <div class="p-3 text-xs text-gray-500 leading-loose">
           รูปที่อัปโหลดก่อนจะมี <code>cache-control: max-age=3600</code> (1 ชั่วโมง)<br>
           กด Run เพื่อให้ Edge Function ดาวน์โหลดและ re-upload ทุกรูปด้วย <code>max-age=31536000</code> (1 ปี)<br>
-          <span style="color:#92400E;">ทำงานฝั่ง Server — ไม่กิน bandwidth</span>
+          <span class="text-amber-800">ทำงานฝั่ง Server — ไม่กิน bandwidth</span>
         </div>
-        <div style="padding:0 14px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="px-3.5 pb-3.5 flex items-center gap-2.5 flex-wrap">
           <button
-            class="al-btn al-btn-primary"
+            class="al-btn al-btn-primary min-w-[120px]"
             :disabled="cacheFixing"
             @click="runFixCache"
-            style="min-width:120px;"
           >
             <span v-if="cacheFixing">⏳ กำลังทำงาน...</span>
             <span v-else>▶ Run Fix Cache</span>
           </button>
           <!-- Result -->
-          <span v-if="cacheResult" style="font-size:13px;font-weight:700;color:#15803D;">
+          <span v-if="cacheResult" class="text-sm font-bold text-green-700">
             ✅ แก้ไข {{ cacheResult.fixed }} รูป
-            <span v-if="cacheResult.failed" style="color:#DC2626;"> · ผิดพลาด {{ cacheResult.failed }} รูป</span>
+            <span v-if="cacheResult.failed" class="text-red-600"> · ผิดพลาด {{ cacheResult.failed }} รูป</span>
           </span>
-          <span v-if="cacheError" style="font-size:13px;color:#DC2626;">⚠️ {{ cacheError }}</span>
+          <span v-if="cacheError" class="text-sm text-red-600">⚠️ {{ cacheError }}</span>
         </div>
         <!-- Error list -->
-        <div v-if="cacheResult?.errors?.length" style="padding:0 14px 14px;">
-          <div style="font-size:11px;font-weight:700;color:#DC2626;margin-bottom:4px;">รายการที่ผิดพลาด:</div>
-          <div v-for="err in cacheResult.errors" :key="err" style="font-size:11px;color:#DC2626;font-family:monospace;padding:2px 0;">
+        <div v-if="cacheResult?.errors?.length" class="px-3.5 pb-3.5">
+          <div class="text-[11px] font-bold text-red-600 mb-1">รายการที่ผิดพลาด:</div>
+          <div v-for="err in cacheResult.errors" :key="err" class="text-[11px] text-red-600 font-mono py-0.5">
             {{ err }}
           </div>
         </div>
       </div>
 
-      <div v-if="loadError" style="padding:14px;color:#DC2626;font-size:13px;">⚠️ {{ loadError }}</div>
-      <div v-else-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
+      <div v-if="loadError" class="p-3.5 text-red-600 text-sm">⚠️ {{ loadError }}</div>
+      <div v-else-if="loading" class="al-loading-skeletons">
+        <SkeletonCard height="68px" />
+        <SkeletonCard height="68px" />
+      </div>
 
       <template v-else>
         <!-- All done -->
-        <div v-if="!pending.length && !rows.length" class="al-empty" style="padding:48px;">
-          ✅ ทุกรูปอยู่ใน Supabase Storage แล้ว ไม่มีอะไรต้อง migrate
-        </div>
+        <EmptyState v-if="!pending.length && !rows.length" icon="✅" title="ทุกรูปอยู่ใน Supabase Storage แล้ว" sub="ไม่มีอะไรต้อง migrate" />
 
         <!-- Pending list -->
-        <div v-if="pending.length" class="al-card" style="margin-bottom:12px;">
+        <div v-if="pending.length" class="al-card mb-3">
           <div class="al-card-header">
             <span class="al-card-title">รอ Migrate</span>
             <span class="al-badge al-badge-yellow">{{ pending.length }} คน</span>
@@ -97,8 +96,8 @@
             <div class="mg-status-icon">{{ statusIcon(r.id) }}</div>
             <div class="al-item-body">
               <div class="al-item-title">{{ r.name }}</div>
-              <div class="al-item-sub">{{ r.role }} · Drive ID: <code style="font-size:10px;">{{ r.imgId.slice(0,16) }}…</code></div>
-              <div v-if="errors[r.id]" style="font-size:11px;color:#DC2626;margin-top:2px;">❌ {{ errors[r.id] }}</div>
+              <div class="al-item-sub">{{ r.role }} · Drive ID: <code class="text-[10px]">{{ r.imgId.slice(0,16) }}…</code></div>
+              <div v-if="errors[r.id]" class="text-[11px] text-red-600 mt-0.5">❌ {{ errors[r.id] }}</div>
             </div>
           </div>
         </div>
@@ -113,19 +112,23 @@
             <div class="mg-status-icon">✅</div>
             <div class="al-item-body">
               <div class="al-item-title">{{ r.name }}</div>
-              <div class="al-item-sub" style="color:#059669;">Storage: {{ r.imgId }}</div>
+              <div class="al-item-sub text-mint">Storage: {{ r.imgId }}</div>
             </div>
           </div>
         </div>
       </template>
+      </div>
     </main>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { getEmployees, updateEmployee } from '../../services/adminService.js'
-import { getImages, uploadImage, fixCacheControl } from '../../services/edgeFunctions.js'
+import SkeletonCard from '../../shared/components/SkeletonCard.vue'
+import EmptyState from '../../shared/components/EmptyState.vue'
+import { getEmployees, updateEmployee } from '../../core/services/adminService.js'
+import { getImages, uploadImage, fixCacheControl } from '../../core/services/edgeFunctions.js'
+import AdminPageHeader from './AdminPageHeader.vue'
 
 const loading   = ref(true)
 const loadError = ref('')

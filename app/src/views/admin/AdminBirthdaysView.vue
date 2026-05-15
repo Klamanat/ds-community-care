@@ -1,16 +1,21 @@
 <template>
   <div>
-    <main class="al-main">
-      <h2 class="al-page-title">🎂 จัดการวันเกิด</h2>
+    <AdminPageHeader title="🎂 วันเกิด" sub="Birthday Management" />
 
+    <main class="al-main">
+      <div class="al-body">
       <div class="al-card">
         <div class="al-card-header">
           <span class="al-card-title">พนักงานทั้งหมด ({{ rows.length }})</span>
-          <span style="font-size:12px;color:#6B7280;">มีวันเกิด {{ birthdayCount }} คน</span>
+          <span class="text-xs text-app-light font-semibold">มีวันเกิด {{ birthdayCount }} คน</span>
         </div>
 
-        <div v-if="loading" class="al-loading">กำลังโหลด...</div>
-        <div v-else-if="rows.length === 0" class="al-empty">ไม่มีข้อมูลพนักงาน</div>
+        <div v-if="loading" class="al-loading-skeletons">
+          <SkeletonCard height="68px" />
+          <SkeletonCard height="68px" />
+          <SkeletonCard height="68px" />
+        </div>
+        <EmptyState v-else-if="rows.length === 0" title="ไม่มีข้อมูลพนักงาน" />
         <div v-else class="al-table-wrap">
           <table class="al-table">
             <thead>
@@ -23,12 +28,12 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="r in rows" :key="r.id" :style="r.bdDate ? '' : 'opacity:0.55'">
-                <td style="font-weight:700;">{{ r.name }}</td>
+              <tr v-for="r in rows" :key="r.id" :class="{ 'opacity-50': !r.bdDate }">
+                <td class="font-bold">{{ r.name }}</td>
                 <td>{{ r.role }}</td>
                 <td>{{ r.bdDate || '—' }}</td>
                 <td>{{ r.bdDate ? monthName(monthFromDate(r.bdDate, r.monthIdx)) : '—' }}</td>
-                <td style="display:flex;gap:6px;">
+                <td class="flex gap-1.5">
                   <button class="al-btn al-btn-edit" @click="openEdit(r)">{{ r.bdDate ? 'แก้ไข' : 'ตั้งค่า' }}</button>
                   <button v-if="r.bdDate" class="al-btn al-btn-delete" @click="confirmDelete(r)">ลบ</button>
                 </td>
@@ -37,61 +42,65 @@
           </table>
         </div>
       </div>
+      </div>
     </main>
 
     <!-- Edit Modal -->
-    <div v-if="modal.open" class="al-modal-overlay" @click.self="modal.open=false">
-      <div class="al-modal">
-        <div class="al-modal-title">✏️ {{ form.bdDate ? 'แก้ไข' : 'ตั้งค่า' }}วันเกิด — {{ form.name }}</div>
+    <BaseModal padded modal-id="admin-bday-edit" sheet-class="modal-sheet-lg">
+      <div class="al-modal-title">✏️ {{ form.bdDate ? 'แก้ไข' : 'ตั้งค่า' }}วันเกิด — {{ form.name }}</div>
 
-        <div class="al-form-row">
-          <label class="al-form-label">วันเกิด</label>
-          <input v-model="dateInput" type="date" class="al-form-input" @change="onDateChange" />
-          <div v-if="dateInput" style="font-size:11px;color:#6B7280;margin-top:4px;">{{ isoToThaiShort(dateInput) }}</div>
-        </div>
-        <div class="al-form-row">
-          <label class="al-form-label">เดือน (ปรับอัตโนมัติเมื่อเลือกวันเกิด)</label>
-          <select v-model="form.monthIdx" class="al-form-select">
-            <option v-for="(m,i) in MONTHS" :key="i" :value="String(i)">{{ m }}</option>
-          </select>
-        </div>
-        <div class="al-form-row">
-          <label class="al-form-label">Fallback Index (avatar fallback)</label>
-          <input v-model="form.fallbackIdx" class="al-form-input" type="number" min="0" />
-        </div>
-
-        <div v-if="modal.error" style="color:#DC2626;font-size:12px;margin-bottom:10px;">{{ modal.error }}</div>
-
-        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
-          <button class="al-btn" style="background:#F3F4F6;color:#374151;" @click="modal.open=false">ยกเลิก</button>
-          <button class="al-btn al-btn-save" :disabled="modal.saving" @click="saveModal">
-            {{ modal.saving ? 'กำลังบันทึก...' : 'บันทึก' }}
-          </button>
-        </div>
+      <div class="al-form-row">
+        <label class="al-form-label">วันเกิด</label>
+        <input v-model="dateInput" type="date" class="al-form-input" @change="onDateChange" />
+        <div v-if="dateInput" class="text-xs text-app-light mt-1">{{ isoToThaiShort(dateInput) }}</div>
       </div>
-    </div>
+      <div class="al-form-row">
+        <label class="al-form-label">เดือน (ปรับอัตโนมัติเมื่อเลือกวันเกิด)</label>
+        <select v-model="form.monthIdx" class="al-form-select">
+          <option v-for="(m,i) in MONTHS" :key="i" :value="String(i)">{{ m }}</option>
+        </select>
+      </div>
+      <div class="al-form-row">
+        <label class="al-form-label">Fallback Index (avatar fallback)</label>
+        <input v-model="form.fallbackIdx" class="al-form-input" type="number" min="0" />
+      </div>
+
+      <div v-if="modal.error" class="al-error">{{ modal.error }}</div>
+
+      <div class="al-modal-footer">
+        <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
+        <button class="al-btn al-btn-save" :disabled="modal.saving" @click="saveModal">
+          {{ modal.saving ? 'กำลังบันทึก...' : 'บันทึก' }}
+        </button>
+      </div>
+    </BaseModal>
 
     <!-- Delete Confirm -->
-    <div v-if="delTarget" class="al-modal-overlay" @click.self="delTarget=null">
-      <div class="al-modal" style="max-width:360px;">
-        <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
-        <p style="font-size:13px;color:#374151;margin:0 0 16px;">
-          ลบข้อมูลวันเกิดของ "<strong>{{ delTarget.name }}</strong>" ใช่หรือไม่?
-        </p>
-        <div style="display:flex;gap:8px;justify-content:flex-end;">
-          <button class="al-btn" style="background:#F3F4F6;color:#374151;" @click="delTarget=null">ยกเลิก</button>
-          <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
-            {{ deleting ? 'กำลังลบ...' : 'ลบ' }}
-          </button>
-        </div>
+    <BaseModal padded modal-id="admin-bday-del">
+      <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
+      <p class="text-sm text-app-mid mb-4">
+        ลบข้อมูลวันเกิดของ "<strong>{{ delTarget?.name }}</strong>" ใช่หรือไม่?
+      </p>
+      <div class="al-modal-footer">
+        <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
+        <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
+          {{ deleting ? 'กำลังลบ...' : 'ลบ' }}
+        </button>
       </div>
-    </div>
+    </BaseModal>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import * as svc from '../../services/adminService.js'
+import * as svc from '../../core/services/adminService.js'
+import { useUiStore } from '../../core/stores/ui.js'
+import AdminPageHeader from './AdminPageHeader.vue'
+import BaseModal from '../../shared/components/BaseModal.vue'
+import SkeletonCard from '../../shared/components/SkeletonCard.vue'
+import EmptyState from '../../shared/components/EmptyState.vue'
+
+const ui = useUiStore()
 
 const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
 function monthName(idx) { return MONTHS[Number(idx)] ?? '—' }
@@ -112,7 +121,7 @@ const loading = ref(true)
 
 const birthdayCount = computed(() => rows.value.filter(r => r.bdDate).length)
 
-const modal     = reactive({ open: false, saving: false, error: '' })
+const modal     = reactive({ saving: false, error: '' })
 const form      = reactive({ id:'', name:'', bdDate:'', monthIdx:'0', fallbackIdx:'0' })
 const dateInput = ref('')
 
@@ -144,7 +153,6 @@ const deleting  = ref(false)
 
 onMounted(async () => {
   try {
-    // Load all employees — admin can set birthday for any employee
     const data = await svc.getEmployees()
     rows.value = (data || []).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'th'))
   } catch {
@@ -161,7 +169,8 @@ function openEdit(r) {
   form.monthIdx   = String(monthFromDate(r.bdDate, r.monthIdx) ?? 0)
   form.fallbackIdx = String(r.fallbackIdx || '0')
   dateInput.value = thaiShortToIso(r.bdDate)
-  modal.error = ''; modal.open = true
+  modal.error = ''
+  ui.openModal('admin-bday-edit')
 }
 
 async function saveModal() {
@@ -176,7 +185,7 @@ async function saveModal() {
     if (idx >= 0) {
       rows.value[idx] = { ...rows.value[idx], bdDate, monthIdx: form.monthIdx, fallbackIdx: form.fallbackIdx }
     }
-    modal.open = false
+    ui.closeModal()
   } catch (e) {
     modal.error = e.message || 'เกิดข้อผิดพลาด'
   } finally {
@@ -184,7 +193,11 @@ async function saveModal() {
   }
 }
 
-function confirmDelete(r) { delTarget.value = r }
+function confirmDelete(r) {
+  delTarget.value = r
+  ui.openModal('admin-bday-del')
+}
+
 async function doDelete() {
   deleting.value = true
   try {
@@ -193,12 +206,12 @@ async function doDelete() {
     })
     const idx = rows.value.findIndex(r => (r.id || r.key) === (delTarget.value.id || delTarget.value.key))
     if (idx >= 0) rows.value[idx] = { ...rows.value[idx], bdDate: '', monthIdx: '', fallbackIdx: '' }
+    ui.closeModal()
     delTarget.value = null
   } catch { } finally {
     deleting.value = false
   }
 }
-
 </script>
 
 <style scoped>

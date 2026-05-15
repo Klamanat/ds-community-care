@@ -1,12 +1,13 @@
 <template>
   <div>
+    <AdminPageHeader title="📢 ประกาศ / Popup" sub="Announcement" />
     <main class="al-main">
+      <div class="al-body">
 
-      <div class="al-page-header">
-        <h1 class="al-page-title">📢 จัดการประกาศ</h1>
+      <div v-if="loading" class="al-loading-skeletons">
+        <SkeletonCard height="80px" />
+        <SkeletonCard height="80px" />
       </div>
-
-      <div v-if="loading" class="al-loading">กำลังโหลดข้อมูล...</div>
 
       <template v-else>
 
@@ -17,16 +18,16 @@
             <label class="ann-toggle-wrap">
               <input type="checkbox" v-model="form.enabled" />
               <span class="ann-track"><span class="ann-thumb"></span></span>
-              <span :style="`font-size:12px;font-weight:700;color:${form.enabled?'#059669':'#9CA3AF'}`">
+              <span class="text-xs font-bold" :class="form.enabled ? 'text-mint' : 'text-app-light'">
                 {{ form.enabled ? 'เปิดใช้งาน' : 'ปิดใช้งาน' }}
               </span>
             </label>
           </div>
           <div
-            style="padding:10px 16px;font-size:12px;"
-            :style="form.enabled
-              ? 'color:#059669;background:#F0FDF4;border-top:1px solid #D1FAE5;'
-              : 'color:#9CA3AF;background:#F9FAFB;border-top:1px solid #F3F4F6;'"
+            class="py-2.5 px-4 text-xs border-t"
+            :class="form.enabled
+              ? 'text-mint bg-green-50 border-green-200'
+              : 'text-app-light bg-gray-50 border-gray-100'"
           >
             {{ form.enabled
               ? '✓ Popup จะแสดงให้ผู้ใช้ทุกคนที่ยังไม่ปิด'
@@ -39,17 +40,17 @@
           <div class="al-card-header">
             <div class="al-card-title">รายละเอียดประกาศ</div>
           </div>
-          <div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+          <div class="p-4 flex flex-col gap-3.5">
 
             <!-- ID -->
             <div>
               <label class="al-form-label">
                 Announcement ID
-                <span style="color:#9CA3AF;font-weight:400;text-transform:none;letter-spacing:0;">(เปลี่ยน ID = ผู้ใช้เห็น popup อีกครั้ง)</span>
+                <span class="text-app-light font-normal normal-case tracking-normal">(เปลี่ยน ID = ผู้ใช้เห็น popup อีกครั้ง)</span>
               </label>
-              <div style="display:flex;gap:8px;align-items:center;">
-                <input v-model="form.id" class="al-form-input" style="flex:1;" placeholder="ann_2026_03_13" />
-                <button class="al-btn al-btn-edit" style="flex-shrink:0;white-space:nowrap;" @click="regenerateId">🔄 สร้างใหม่</button>
+              <div class="flex gap-2 items-center">
+                <input v-model="form.id" class="al-form-input flex-1" placeholder="ann_2026_03_13" />
+                <button class="al-btn al-btn-edit flex-shrink-0 whitespace-nowrap" @click="regenerateId">🔄 สร้างใหม่</button>
               </div>
             </div>
 
@@ -61,7 +62,7 @@
 
             <!-- Desc -->
             <div>
-              <label class="al-form-label">รายละเอียด <span style="color:#9CA3AF;font-weight:400;text-transform:none;">(ไม่บังคับ)</span></label>
+              <label class="al-form-label">รายละเอียด <span class="text-app-light font-normal normal-case">(ไม่บังคับ)</span></label>
               <textarea v-model="form.desc" class="al-form-textarea" rows="3" maxlength="500"
                 placeholder="คำอธิบายเพิ่มเติมใต้วิดีโอ"></textarea>
             </div>
@@ -76,14 +77,14 @@
             <label class="ann-toggle-wrap">
               <input type="checkbox" v-model="form.quizEnabled" />
               <span class="ann-track"><span class="ann-thumb"></span></span>
-              <span :style="`font-size:12px;font-weight:700;color:${form.quizEnabled?'#059669':'#9CA3AF'}`">
+              <span class="text-xs font-bold" :class="form.quizEnabled ? 'text-mint' : 'text-app-light'">
                 {{ form.quizEnabled ? 'เปิด' : 'ปิด' }}
               </span>
             </label>
           </div>
 
           <template v-if="form.quizEnabled">
-            <div style="padding:16px;display:flex;flex-direction:column;gap:16px;">
+            <div class="p-4 flex flex-col gap-4">
 
               <!-- Each question block -->
               <div
@@ -92,12 +93,11 @@
                 class="qz-question-block"
               >
                 <!-- Question header -->
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                  <div style="font-size:12px;font-weight:800;color:#4338CA;">คำถามที่ {{ qi + 1 }}</div>
+                <div class="flex items-center justify-between mb-2.5">
+                  <div class="text-xs font-extrabold text-indigo/80">คำถามที่ {{ qi + 1 }}</div>
                   <button
                     v-if="form.quizQuestions.length > 1"
-                    class="al-btn al-btn-delete"
-                    style="padding:4px 10px;font-size:11px;"
+                    class="al-btn al-btn-delete text-[11px]"
                     @click="removeQuestion(qi)"
                   >🗑 ลบ</button>
                 </div>
@@ -114,49 +114,46 @@
                 </div>
 
                 <!-- Type -->
-                <div style="margin-top:10px;">
+                <div class="mt-2.5">
                   <label class="al-form-label">ประเภทคำตอบ</label>
-                  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                  <div class="flex gap-2.5 flex-wrap">
                     <label class="qz-type-opt" :class="{ active: q.type === 'single' }">
-                      <input type="radio" v-model="q.type" value="single" style="display:none;" />
+                      <input type="radio" v-model="q.type" value="single" class="hidden" />
                       ⬤ เลือกได้ 1 ข้อ
                     </label>
                     <label class="qz-type-opt" :class="{ active: q.type === 'multi' }">
-                      <input type="radio" v-model="q.type" value="multi" style="display:none;" />
+                      <input type="radio" v-model="q.type" value="multi" class="hidden" />
                       ☑ เลือกได้หลายข้อ
                     </label>
                   </div>
                 </div>
 
                 <!-- Options -->
-                <div style="margin-top:10px;">
+                <div class="mt-2.5">
                   <label class="al-form-label">ตัวเลือก (2–4 ข้อ)</label>
-                  <div style="display:flex;flex-direction:column;gap:8px;">
+                  <div class="flex flex-col gap-2">
                     <div
                       v-for="(opt, idx) in q.options"
                       :key="opt.id"
-                      style="display:flex;gap:8px;align-items:center;"
+                      class="flex gap-2 items-center"
                     >
                       <div class="qz-opt-num">{{ idx + 1 }}</div>
                       <input
                         v-model="opt.text"
-                        class="al-form-input"
+                        class="al-form-input flex-1"
                         :placeholder="`ตัวเลือกที่ ${idx + 1}`"
                         maxlength="100"
-                        style="flex:1;"
                       />
                       <button
                         v-if="q.options.length > 2"
-                        class="al-btn al-btn-delete"
-                        style="padding:7px 10px;flex-shrink:0;"
+                        class="al-btn al-btn-delete flex-shrink-0"
                         @click="removeOption(q, idx)"
                       >✕</button>
                     </div>
                   </div>
                   <button
                     v-if="q.options.length < 4"
-                    class="al-btn al-btn-edit"
-                    style="margin-top:10px;"
+                    class="al-btn al-btn-edit mt-2.5"
                     @click="addOption(q)"
                   >+ เพิ่มตัวเลือก</button>
                 </div>
@@ -165,14 +162,13 @@
               <!-- Add question button -->
               <button
                 v-if="form.quizQuestions.length < 5"
-                class="al-btn al-btn-edit"
-                style="align-self:flex-start;"
+                class="al-btn al-btn-edit self-start"
                 @click="addQuestion"
               >+ เพิ่มคำถาม</button>
 
               <!-- Load results button -->
-              <div v-if="form.id" style="display:flex;justify-content:flex-end;">
-                <button class="al-btn al-btn-edit" style="font-size:11px;padding:5px 12px;" @click="loadQuizAnswers" :disabled="quizAnswersLoading">
+              <div v-if="form.id" class="flex justify-end">
+                <button class="al-btn al-btn-edit text-[11px]" @click="loadQuizAnswers" :disabled="quizAnswersLoading">
                   {{ quizAnswersLoading ? '⏳ กำลังโหลด...' : '📊 โหลดผลโหวต' }}
                 </button>
               </div>
@@ -182,7 +178,7 @@
 
           <div
             v-else
-            style="padding:12px 16px;font-size:12px;color:#9CA3AF;background:#F9FAFB;border-top:1px solid #F3F4F6;"
+            class="py-3 px-4 text-xs text-app-light bg-gray-50 border-t border-gray-100"
           >
             เปิดใช้งานเพื่อเพิ่มคำถามให้ผู้ใช้ร่วมสนุกใน Popup
           </div>
@@ -192,10 +188,10 @@
         <div v-if="form.quizEnabled && totalRespondents > 0" class="al-card">
           <div class="al-card-header">
             <div class="al-card-title">📊 ผลโหวต</div>
-            <div style="display:flex;align-items:center;gap:8px;">
+            <div class="flex items-center gap-2">
               <span class="al-badge al-badge-blue">{{ totalRespondents }} คน</span>
-              <button class="al-btn al-btn-edit" style="font-size:11px;padding:5px 10px;" @click="loadQuizAnswers" :disabled="quizAnswersLoading">↻</button>
-              <button class="al-btn al-btn-delete" style="font-size:11px;padding:5px 10px;" @click="resetQuiz" :disabled="quizResetting">
+              <button class="al-btn al-btn-edit text-[11px]" @click="loadQuizAnswers" :disabled="quizAnswersLoading">↻</button>
+              <button class="al-btn al-btn-delete text-[11px]" @click="resetQuiz" :disabled="quizResetting">
                 {{ quizResetting ? '...' : '🗑 Reset' }}
               </button>
             </div>
@@ -205,53 +201,53 @@
           <div
             v-for="(q, qi) in form.quizQuestions"
             :key="q.id"
-            style="padding:12px 16px;border-bottom:1px solid #F3F4F6;"
+            class="py-3 px-4 border-b border-gray-100"
           >
-            <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:2px;">{{ qi + 1 }}. {{ q.question || `คำถามที่ ${qi + 1}` }}</div>
-            <div style="font-size:11px;color:#9CA3AF;margin-bottom:8px;">{{ quizQTotal(q.id) }} คนตอบ</div>
-            <div style="display:flex;flex-direction:column;gap:8px;">
-              <div v-for="opt in q.options" :key="opt.id" style="display:flex;align-items:center;gap:10px;">
-                <div style="width:22px;height:22px;border-radius:50%;background:#EEF2FF;color:#4F46E5;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <div class="text-xs font-bold text-gray-700 mb-0.5">{{ qi + 1 }}. {{ q.question || `คำถามที่ ${qi + 1}` }}</div>
+            <div class="text-[11px] text-app-light mb-2">{{ quizQTotal(q.id) }} คนตอบ</div>
+            <div class="flex flex-col gap-2">
+              <div v-for="opt in q.options" :key="opt.id" class="flex items-center gap-2.5">
+                <div class="w-[22px] h-[22px] rounded-full bg-indigo/10 text-indigo text-[10px] font-extrabold flex items-center justify-center flex-shrink-0">
                   {{ opt.id.toUpperCase() }}
                 </div>
-                <div style="flex:1;min-width:0;">
-                  <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ opt.text || `ตัวเลือก ${opt.id.toUpperCase()}` }}</div>
-                  <div style="height:6px;background:#F3F4F6;border-radius:4px;overflow:hidden;">
-                    <div style="height:100%;border-radius:4px;background:linear-gradient(90deg,#6366F1,#A855F7);transition:width 0.6s ease;"
+                <div class="flex-1 min-w-0">
+                  <div class="text-[11px] font-bold text-gray-700 mb-[3px] overflow-hidden text-ellipsis whitespace-nowrap">{{ opt.text || `ตัวเลือก ${opt.id.toUpperCase()}` }}</div>
+                  <div class="h-1.5 bg-gray-100 rounded overflow-hidden">
+                    <div class="h-full rounded bg-gradient-to-r from-indigo to-purple transition-[width] duration-[600ms] ease-in-out"
                          :style="{ width: quizQTotal(q.id) ? (quizOptCount(q.id, opt.id) / quizQTotal(q.id) * 100) + '%' : '0%' }"></div>
                   </div>
                 </div>
-                <div style="font-size:12px;font-weight:800;color:#4F46E5;flex-shrink:0;min-width:40px;text-align:right;">
+                <div class="text-xs font-extrabold text-indigo flex-shrink-0 min-w-[40px] text-right">
                   {{ quizQTotal(q.id) ? Math.round(quizOptCount(q.id, opt.id) / quizQTotal(q.id) * 100) : 0 }}%
-                  <span style="font-size:10px;color:#9CA3AF;font-weight:600;">({{ quizOptCount(q.id, opt.id) }})</span>
+                  <span class="text-[10px] text-app-light font-semibold">({{ quizOptCount(q.id, opt.id) }})</span>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Respondents list (grouped by employee) -->
-          <div style="padding:8px 0;max-height:280px;overflow-y:auto;">
+          <div class="py-2 max-h-[280px] overflow-y-auto">
             <div
               v-for="r in respondentMap"
               :key="r.name"
-              style="display:flex;align-items:flex-start;gap:10px;padding:8px 16px;border-bottom:1px solid #F7F7FF;"
+              class="flex items-start gap-2.5 py-2 px-4 border-b border-[#F7F7FF]"
             >
-              <div style="width:30px;height:30px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#4F46E5;flex-shrink:0;margin-top:1px;">
+              <div class="w-[30px] h-[30px] rounded-full bg-indigo/10 flex items-center justify-center text-sm font-extrabold text-indigo flex-shrink-0 mt-px">
                 {{ r.name?.[0] || '?' }}
               </div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-size:12px;font-weight:700;color:#111827;">{{ r.name }}</div>
+              <div class="flex-1 min-w-0">
+                <div class="text-xs font-bold text-gray-900">{{ r.name }}</div>
                 <div
                   v-for="(q, qi) in form.quizQuestions"
                   :key="q.id"
-                  style="font-size:11px;color:#6B7280;margin-top:2px;"
+                  class="text-[11px] text-gray-500 mt-0.5"
                 >
                   <template v-if="r.answers[q.id]?.length">
                     {{ form.quizQuestions.length > 1 ? `Q${qi + 1}: ` : '' }}{{ (r.answers[q.id] || []).map(id => optLabel(q, id)).join(' · ') }}
                   </template>
                 </div>
               </div>
-              <div style="font-size:10px;color:#9CA3AF;flex-shrink:0;">{{ fmtDate(r.createdAt) }}</div>
+              <div class="text-[10px] text-app-light flex-shrink-0">{{ fmtDate(r.createdAt) }}</div>
             </div>
           </div>
         </div>
@@ -260,13 +256,13 @@
         <div class="al-card">
           <div class="al-card-header">
             <div class="al-card-title">📎 สื่อประกอบ</div>
-            <div style="display:flex;gap:4px;">
+            <div class="flex gap-1">
               <button
                 v-for="t in mediaTabs" :key="t.id"
-                class="al-btn"
-                :style="mediaType===t.id
-                  ? 'background:#EEF2FF;color:#4F46E5;border:1.5px solid #C7D2FE;padding:5px 12px;font-size:12px;'
-                  : 'background:#F3F4F6;color:#6B7280;border:1.5px solid #E5E7EB;padding:5px 12px;font-size:12px;'"
+                class="al-btn text-xs px-3 py-[5px]"
+                :class="mediaType === t.id
+                  ? 'bg-indigo/10 text-indigo border-indigo/30'
+                  : 'bg-gray-100 text-gray-500 border-gray-200'"
                 @click="mediaType = t.id"
               >{{ t.label }}</button>
             </div>
@@ -275,24 +271,24 @@
           <!-- None -->
           <div
             v-if="mediaType === 'none'"
-            style="padding:12px 16px;font-size:12px;color:#9CA3AF;background:#F9FAFB;border-top:1px solid #F3F4F6;"
+            class="py-3 px-4 text-xs text-app-light bg-gray-50 border-t border-gray-100"
           >
             ไม่มีสื่อประกอบ — Popup จะแสดงแค่หัวข้อและ Quiz
           </div>
 
           <!-- Video -->
           <template v-else-if="mediaType === 'video'">
-            <div style="padding:4px 16px 0;display:flex;gap:4px;border-top:1px solid #F3F4F6;">
+            <div class="pt-1 px-4 flex gap-1 border-t border-gray-100">
               <button
                 v-for="t in videoTabs" :key="t.id"
-                class="al-btn"
-                :style="videoTab===t.id
-                  ? 'background:#EEF2FF;color:#4F46E5;border:1.5px solid #C7D2FE;padding:5px 12px;font-size:12px;margin-top:10px;'
-                  : 'background:#F3F4F6;color:#6B7280;border:1.5px solid #E5E7EB;padding:5px 12px;font-size:12px;margin-top:10px;'"
+                class="al-btn text-xs px-3 py-[5px] mt-2.5"
+                :class="videoTab === t.id
+                  ? 'bg-indigo/10 text-indigo border-indigo/30'
+                  : 'bg-gray-100 text-gray-500 border-gray-200'"
                 @click="videoTab = t.id"
               >{{ t.label }}</button>
             </div>
-            <div style="padding:12px 16px 16px;display:flex;flex-direction:column;gap:14px;">
+            <div class="py-3 px-4 pb-4 flex flex-col gap-3.5">
 
               <!-- Link tab -->
               <template v-if="videoTab === 'link'">
@@ -300,7 +296,7 @@
                   <label class="al-form-label">URL วิดีโอ</label>
                   <input v-model="form.video" class="al-form-input"
                     placeholder="https://youtu.be/xxxxx หรือ Google Drive link" />
-                  <div style="font-size:11px;color:#9CA3AF;margin-top:5px;">
+                  <div class="text-[11px] text-app-light mt-1.5">
                     รองรับ YouTube · Google Drive · ลิงก์วิดีโอทั่วไป (MP4 ฯลฯ)
                   </div>
                 </div>
@@ -316,29 +312,27 @@
                   @dragleave.prevent="isDragging = false"
                   @drop.prevent="onDrop"
                 >
-                  <input ref="fileInput" type="file" accept="video/*" style="display:none;" @change="onFileChange" />
+                  <input ref="fileInput" type="file" accept="video/*" class="hidden" @change="onFileChange" />
                   <template v-if="!selectedFile">
-                    <div style="font-size:32px;">🎬</div>
-                    <div style="font-size:13px;font-weight:700;color:#374151;margin-top:8px;">คลิกหรือลากไฟล์มาวาง</div>
-                    <div style="font-size:11px;color:#9CA3AF;margin-top:4px;">MP4 · MOV · WebM · สูงสุด 35 MB</div>
+                    <div class="text-4xl">🎬</div>
+                    <div class="text-sm font-bold text-gray-700 mt-2">คลิกหรือลากไฟล์มาวาง</div>
+                    <div class="text-[11px] text-app-light mt-1">MP4 · MOV · WebM · สูงสุด 35 MB</div>
                   </template>
                   <template v-else>
-                    <div style="font-size:26px;">🎬</div>
-                    <div style="font-size:13px;font-weight:700;color:#374151;margin-top:6px;word-break:break-all;text-align:center;max-width:100%;">
+                    <div class="text-3xl">🎬</div>
+                    <div class="text-sm font-bold text-gray-700 mt-1.5 break-all text-center max-w-full">
                       {{ selectedFile.name }}
                     </div>
-                    <div style="font-size:11px;color:#6B7280;margin-top:3px;">{{ fileSizeMb }} MB</div>
-                    <div v-if="selectedFile.size > 20 * 1024 * 1024"
-                         style="font-size:11px;color:#D97706;margin-top:4px;">
+                    <div class="text-[11px] text-gray-500 mt-[3px]">{{ fileSizeMb }} MB</div>
+                    <div v-if="selectedFile.size > 20 * 1024 * 1024" class="text-[11px] text-amber mt-1">
                       ⚠️ ไฟล์ค่อนข้างใหญ่ แนะนำอัปโหลด YouTube แล้วใช้ลิงก์แทน
                     </div>
                   </template>
                 </div>
                 <div v-if="uploadErr" class="al-error">{{ uploadErr }}</div>
-                <div v-if="uploadStatus" style="font-size:12px;color:#6B7280;text-align:center;padding:2px 0;">{{ uploadStatus }}</div>
+                <div v-if="uploadStatus" class="text-xs text-gray-500 text-center py-0.5">{{ uploadStatus }}</div>
                 <button
-                  class="al-btn al-btn-primary"
-                  style="width:100%;padding:11px;"
+                  class="al-btn al-btn-primary w-full"
                   :disabled="!selectedFile || uploading"
                   @click="doUpload"
                 >
@@ -349,19 +343,19 @@
 
               <!-- Video preview -->
               <template v-if="form.video">
-                <div style="font-size:11px;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:1px;">ตัวอย่าง</div>
-                <div style="width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden;position:relative;">
+                <div class="text-[11px] font-extrabold text-app-light uppercase tracking-[1px]">ตัวอย่าง</div>
+                <div class="w-full aspect-video bg-black rounded-[10px] overflow-hidden relative">
                   <iframe
                     v-if="embedUrl"
                     :src="embedUrl"
-                    style="position:absolute;inset:0;width:100%;height:100%;"
+                    class="absolute inset-0 w-full h-full"
                     frameborder="0" allowfullscreen
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   ></iframe>
                   <video
                     v-else
                     :src="form.video"
-                    style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;"
+                    class="absolute inset-0 w-full h-full object-contain"
                     controls playsinline
                   ></video>
                 </div>
@@ -372,17 +366,17 @@
 
           <!-- Image -->
           <template v-else-if="mediaType === 'image'">
-            <div style="padding:4px 16px 0;display:flex;gap:4px;border-top:1px solid #F3F4F6;">
+            <div class="pt-1 px-4 flex gap-1 border-t border-gray-100">
               <button
                 v-for="t in imageTabs" :key="t.id"
-                class="al-btn"
-                :style="imageTab===t.id
-                  ? 'background:#EEF2FF;color:#4F46E5;border:1.5px solid #C7D2FE;padding:5px 12px;font-size:12px;margin-top:10px;'
-                  : 'background:#F3F4F6;color:#6B7280;border:1.5px solid #E5E7EB;padding:5px 12px;font-size:12px;margin-top:10px;'"
+                class="al-btn text-xs px-3 py-[5px] mt-2.5"
+                :class="imageTab === t.id
+                  ? 'bg-indigo/10 text-indigo border-indigo/30'
+                  : 'bg-gray-100 text-gray-500 border-gray-200'"
                 @click="imageTab = t.id"
               >{{ t.label }}</button>
             </div>
-            <div style="padding:12px 16px 16px;display:flex;flex-direction:column;gap:14px;">
+            <div class="py-3 px-4 pb-4 flex flex-col gap-3.5">
 
               <!-- Link tab -->
               <template v-if="imageTab === 'link'">
@@ -390,7 +384,7 @@
                   <label class="al-form-label">URL รูปภาพ</label>
                   <input v-model="form.image" class="al-form-input"
                     placeholder="https://example.com/image.jpg" />
-                  <div style="font-size:11px;color:#9CA3AF;margin-top:5px;">
+                  <div class="text-[11px] text-app-light mt-1.5">
                     รองรับ JPG · PNG · GIF · WebP · ลิงก์ตรง
                   </div>
                 </div>
@@ -406,25 +400,24 @@
                   @dragleave.prevent="isImageDragging = false"
                   @drop.prevent="onImageDrop"
                 >
-                  <input ref="imageFileInput" type="file" accept="image/*" style="display:none;" @change="onImageFileChange" />
+                  <input ref="imageFileInput" type="file" accept="image/*" class="hidden" @change="onImageFileChange" />
                   <template v-if="!selectedImageFile">
-                    <div style="font-size:32px;">🖼</div>
-                    <div style="font-size:13px;font-weight:700;color:#374151;margin-top:8px;">คลิกหรือลากไฟล์มาวาง</div>
-                    <div style="font-size:11px;color:#9CA3AF;margin-top:4px;">JPG · PNG · GIF · WebP · สูงสุด 5 MB</div>
+                    <div class="text-4xl">🖼</div>
+                    <div class="text-sm font-bold text-gray-700 mt-2">คลิกหรือลากไฟล์มาวาง</div>
+                    <div class="text-[11px] text-app-light mt-1">JPG · PNG · GIF · WebP · สูงสุด 5 MB</div>
                   </template>
                   <template v-else>
-                    <div style="font-size:26px;">🖼</div>
-                    <div style="font-size:13px;font-weight:700;color:#374151;margin-top:6px;word-break:break-all;text-align:center;max-width:100%;">
+                    <div class="text-3xl">🖼</div>
+                    <div class="text-sm font-bold text-gray-700 mt-1.5 break-all text-center max-w-full">
                       {{ selectedImageFile.name }}
                     </div>
-                    <div style="font-size:11px;color:#6B7280;margin-top:3px;">{{ imageFileSizeMb }} MB</div>
+                    <div class="text-[11px] text-gray-500 mt-[3px]">{{ imageFileSizeMb }} MB</div>
                   </template>
                 </div>
                 <div v-if="imageUploadErr" class="al-error">{{ imageUploadErr }}</div>
-                <div v-if="imageUploadStatus" style="font-size:12px;color:#6B7280;text-align:center;padding:2px 0;">{{ imageUploadStatus }}</div>
+                <div v-if="imageUploadStatus" class="text-xs text-gray-500 text-center py-0.5">{{ imageUploadStatus }}</div>
                 <button
-                  class="al-btn al-btn-primary"
-                  style="width:100%;padding:11px;"
+                  class="al-btn al-btn-primary w-full"
                   :disabled="!selectedImageFile || imageUploading"
                   @click="doImageUpload"
                 >
@@ -435,11 +428,11 @@
 
               <!-- Image preview -->
               <template v-if="form.image">
-                <div style="font-size:11px;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:1px;">ตัวอย่าง</div>
-                <div style="width:100%;border-radius:10px;overflow:hidden;background:#F3F4F6;">
-                  <img :src="form.image" style="width:100%;display:block;max-height:300px;object-fit:contain;" />
+                <div class="text-[11px] font-extrabold text-app-light uppercase tracking-[1px]">ตัวอย่าง</div>
+                <div class="w-full rounded-[10px] overflow-hidden bg-gray-100">
+                  <img :src="form.image" class="w-full block max-h-[300px] object-contain" />
                 </div>
-                <button class="al-btn al-btn-delete" style="align-self:flex-start;font-size:12px;" @click="form.image = ''">
+                <button class="al-btn al-btn-delete self-start text-xs" @click="form.image = ''">
                   🗑 ลบรูปภาพ
                 </button>
               </template>
@@ -450,21 +443,19 @@
         </div>
 
         <!-- ── Save ────────────────────────────────────────────── -->
-        <div v-if="saveErr" class="al-error" style="text-align:center;">{{ saveErr }}</div>
+        <div v-if="saveErr" class="al-error text-center">{{ saveErr }}</div>
 
         <!-- Success + preview button -->
-        <div v-if="saveOk"
-             style="background:#F0FDF4;border:1.5px solid #A7F3D0;border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-          <div style="font-size:13px;font-weight:700;color:#059669;">✓ บันทึกสำเร็จแล้ว</div>
+        <div v-if="saveOk" class="bg-green-50 border border-green-200 rounded-md py-3.5 px-4 flex items-center justify-between gap-2.5 flex-wrap">
+          <div class="text-sm font-bold text-mint">✓ บันทึกสำเร็จแล้ว</div>
           <a href="#/" target="_blank"
-             style="display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:linear-gradient(135deg,#6366F1,#A855F7);color:white;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none;">
+             class="inline-flex items-center gap-1.5 py-2 px-3.5 bg-gradient-to-br from-indigo to-purple text-white rounded-[10px] text-xs font-bold no-underline">
             🔍 ดูตัวอย่าง Popup
           </a>
         </div>
 
         <button
-          class="al-btn al-btn-save"
-          style="width:100%;padding:13px;font-size:14px;"
+          class="al-btn al-btn-save w-full py-3 text-sm"
           :disabled="saving"
           @click="doSave"
         >
@@ -472,9 +463,9 @@
         </button>
 
         <!-- Info -->
-        <div class="al-info-box" style="font-size:12px;color:#4338CA;line-height:1.9;">
-          <div style="font-weight:800;margin-bottom:4px;">ℹ️ วิธีทดสอบ</div>
-          <ul style="padding-left:16px;margin:0;">
+        <div class="al-info-box text-xs text-indigo/80 leading-loose">
+          <div class="font-extrabold mb-1">ℹ️ วิธีทดสอบ</div>
+          <ul class="pl-4 m-0">
             <li>กด <strong>บันทึก</strong> แล้วกด <strong>ดูตัวอย่าง Popup</strong> เพื่อเปิดหน้า user ในแท็บใหม่</li>
             <li>Popup แสดงเฉพาะหน้า <strong>user</strong> (ไม่แสดงในหน้า admin)</li>
             <li>ถ้า Popup ไม่ขึ้น ให้ตรวจสอบว่า <strong>เปิดใช้งาน</strong> อยู่และ login ด้วย user account ด้วย</li>
@@ -482,13 +473,16 @@
         </div>
 
       </template>
+      </div>
     </main>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import * as svc from '../../services/adminService.js'
+import * as svc from '../../core/services/adminService.js'
+import AdminPageHeader from './AdminPageHeader.vue'
+import SkeletonCard from '../../shared/components/SkeletonCard.vue'
 
 // ── State ──────────────────────────────────────────────────────────
 const loading           = ref(true)

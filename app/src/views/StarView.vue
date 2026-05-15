@@ -122,10 +122,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useTeamStore } from '../stores/team.js'
-import { useUiStore } from '../stores/ui.js'
-import { useUserAuthStore } from '../stores/userAuth.js'
-import { useFadeIn } from '../composables/useFadeIn.js'
+import { useTeamStore } from '../features/team/team.store.js'
+import { useUiStore } from '../core/stores/ui.js'
+import { useUserAuthStore } from '../core/stores/userAuth.js'
+import { useFadeIn } from '../core/composables/useFadeIn.js'
 
 const team = useTeamStore()
 const ui = useUiStore()

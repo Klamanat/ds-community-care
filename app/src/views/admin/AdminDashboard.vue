@@ -1,5 +1,6 @@
 <template>
   <main class="al-main">
+    <div class="al-body">
 
     <!-- Welcome banner -->
     <div class="dash-welcome">
@@ -64,7 +65,7 @@
         </div>
       </div>
       <div class="dau-body">
-        <div v-if="dauLoading" class="dash-chart-skeleton" style="margin:8px 12px 12px;"></div>
+        <div v-if="dauLoading" class="dash-chart-skeleton mt-2 mx-3 mb-3"></div>
         <template v-else>
           <!-- Summary pills -->
           <div class="dau-summary">
@@ -98,8 +99,8 @@
 
               <!-- Y-axis labels + grid lines -->
               <g v-for="(tick, ti) in dauTicks" :key="ti">
-                <line x1="34" :y1="tick.y" x2="556" :y2="tick.y" stroke="#F3F4F6" stroke-width="1"/>
-                <text x="28" :y="tick.y + 3" text-anchor="end" font-size="7" fill="#D1D5DB" font-weight="600">{{ tick.val }}</text>
+                <line x1="34" :y1="tick.y" x2="556" :y2="tick.y" stroke="#E2DCFB" stroke-width="1"/>
+                <text x="28" :y="tick.y + 3" text-anchor="end" font-size="7" fill="#9B8FBB" font-weight="600">{{ tick.val }}</text>
               </g>
 
               <!-- Bars -->
@@ -109,7 +110,7 @@
                   :y="dauBarTop(d.count)"
                   :width="dauBarW"
                   :height="dauBarH(d.count) || 2"
-                  :fill="dauIsToday(d.date) ? 'url(#dauGrad)' : d.count === dauMax && dauMax > 0 ? '#A78BFA' : '#E0E7FF'"
+                  :fill="dauIsToday(d.date) ? 'url(#dauGrad)' : d.count === dauMax && dauMax > 0 ? '#A855F7' : '#E2DCFB'"
                   :opacity="d.count === 0 ? 0.25 : 1"
                   rx="3"
                 />
@@ -120,7 +121,7 @@
                   :y="dauBarTop(d.count) - 3"
                   text-anchor="middle"
                   font-size="7"
-                  :fill="dauIsToday(d.date) ? '#4338CA' : '#6366F1'"
+                  :fill="dauIsToday(d.date) ? '#A855F7' : '#6366F1'"
                   font-weight="800"
                 >{{ d.count }}</text>
                 <!-- Date label -->
@@ -130,16 +131,16 @@
                   y="101"
                   text-anchor="middle"
                   font-size="7"
-                  :fill="dauIsToday(d.date) ? '#4F46E5' : '#9CA3AF'"
+                  :fill="dauIsToday(d.date) ? '#A855F7' : '#9B8FBB'"
                   :font-weight="dauIsToday(d.date) ? '800' : '400'"
                 >{{ dauIsToday(d.date) ? 'วันนี้' : dauDayLabel(d.date) }}</text>
               </g>
             </svg>
           </div>
-          <div class="dash-chart-legend" style="padding:0 12px 12px;">
-            <span class="dash-leg-dot" style="background:#6366F1;"></span>วันนี้
-            <span class="dash-leg-dot" style="background:#A78BFA;margin-left:10px;"></span>สูงสุด
-            <span class="dash-leg-dot" style="background:#E0E7FF;margin-left:10px;"></span>วันอื่น
+          <div class="dash-chart-legend dau-legend">
+            <span class="dash-leg-dot bg-indigo"></span>วันนี้
+            <span class="dash-leg-dot bg-purple ml-2.5"></span>สูงสุด
+            <span class="dash-leg-dot bg-app-border ml-2.5"></span>วันอื่น
           </div>
         </template>
       </div>
@@ -164,7 +165,7 @@
                 :y="68 - barH(cnt)"
                 :width="18"
                 :height="barH(cnt) || 2"
-                :fill="i === currentMonth ? '#4F46E5' : '#E0E7FF'"
+                :fill="i === currentMonth ? '#6366F1' : '#E2DCFB'"
                 :opacity="cnt === 0 ? 0.4 : 1"
                 rx="3"
               />
@@ -175,7 +176,7 @@
                 :y="65 - barH(cnt)"
                 text-anchor="middle"
                 font-size="7"
-                :fill="i === currentMonth ? '#4F46E5' : '#9CA3AF'"
+                :fill="i === currentMonth ? '#6366F1' : '#9B8FBB'"
                 font-weight="700"
               >{{ cnt }}</text>
             </g>
@@ -186,13 +187,13 @@
               y="80"
               text-anchor="middle"
               font-size="7"
-              :fill="i === currentMonth ? '#4F46E5' : '#9CA3AF'"
+              :fill="i === currentMonth ? '#A855F7' : '#9B8FBB'"
               :font-weight="i === currentMonth ? '800' : '500'"
             >{{ m }}</text>
           </svg>
           <div class="dash-chart-legend">
-            <span class="dash-leg-dot" style="background:#4F46E5;"></span>เดือนปัจจุบัน
-            <span class="dash-leg-dot" style="background:#E0E7FF;margin-left:10px;"></span>เดือนอื่น
+            <span class="dash-leg-dot bg-indigo"></span>เดือนปัจจุบัน
+            <span class="dash-leg-dot bg-app-border ml-2.5"></span>เดือนอื่น
           </div>
         </div>
       </div>
@@ -207,7 +208,7 @@
           <div v-if="loading" class="dash-chart-skeleton"></div>
           <template v-else-if="counts.ideasTotal > 0">
             <svg viewBox="0 0 120 120" class="dash-donut-svg" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="60" cy="60" r="44" fill="none" stroke="#F3F4F6" stroke-width="14"/>
+              <circle cx="60" cy="60" r="44" fill="none" stroke="#E2DCFB" stroke-width="14"/>
               <circle
                 v-for="seg in ideaSegments" :key="seg.status"
                 cx="60" cy="60" r="44"
@@ -219,8 +220,8 @@
                 stroke-linecap="round"
                 style="transform:rotate(-90deg);transform-origin:60px 60px;"
               />
-              <text x="60" y="56" text-anchor="middle" font-size="18" font-weight="900" fill="#111827">{{ counts.ideasTotal }}</text>
-              <text x="60" y="70" text-anchor="middle" font-size="9" fill="#9CA3AF">รายการ</text>
+              <text x="60" y="56" text-anchor="middle" font-size="18" font-weight="900" fill="#1A1235">{{ counts.ideasTotal }}</text>
+              <text x="60" y="70" text-anchor="middle" font-size="9" fill="#9B8FBB">รายการ</text>
             </svg>
             <div class="dash-donut-legend">
               <div v-for="seg in ideaSegments" :key="seg.status" class="dash-donut-leg-row">
@@ -284,25 +285,25 @@
             <!-- Team ratio ring -->
             <div class="dash-ratio-wrap">
               <svg viewBox="0 0 80 80" class="dash-ratio-svg" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="40" cy="40" r="30" fill="none" stroke="#E5E7EB" stroke-width="10"/>
+                <circle cx="40" cy="40" r="30" fill="none" stroke="#E2DCFB" stroke-width="10"/>
                 <circle
                   cx="40" cy="40" r="30"
-                  fill="none" stroke="#4F46E5" stroke-width="10"
+                  fill="none" stroke="#6366F1" stroke-width="10"
                   :stroke-dasharray="`${inTeamPct * 188.5 / 100} 188.5`"
                   stroke-linecap="round"
                   style="transform:rotate(-90deg);transform-origin:40px 40px;"
                 />
-                <text x="40" y="37" text-anchor="middle" font-size="13" font-weight="900" fill="#111827">{{ counts.inTeam }}</text>
-                <text x="40" y="49" text-anchor="middle" font-size="7" fill="#9CA3AF">ในทีม</text>
+                <text x="40" y="37" text-anchor="middle" font-size="13" font-weight="900" fill="#1A1235">{{ counts.inTeam }}</text>
+                <text x="40" y="49" text-anchor="middle" font-size="7" fill="#9B8FBB">ในทีม</text>
               </svg>
               <div class="dash-ratio-info">
                 <div class="dash-ratio-row">
-                  <span class="dash-leg-dot" style="background:#4F46E5;"></span>
+                  <span class="dash-leg-dot bg-indigo"></span>
                   <span>ในทีม</span>
                   <strong>{{ counts.inTeam }}</strong>
                 </div>
                 <div class="dash-ratio-row">
-                  <span class="dash-leg-dot" style="background:#E5E7EB;"></span>
+                  <span class="dash-leg-dot bg-app-border"></span>
                   <span>ทั้งหมด</span>
                   <strong>{{ counts.employees }}</strong>
                 </div>
@@ -324,15 +325,16 @@
       </div>
     </div>
 
+    </div>
   </main>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { useAdminStore } from '../../stores/admin.js'
-import * as svc from '../../services/adminService.js'
-import { supabase } from '../../services/supabase.js'
-import { fetchOnlineUsers, fetchTodayUsers, fetchDailyActiveUsers } from '../../services/presenceService.js'
+import { useAdminStore } from '../../core/stores/admin.js'
+import * as svc from '../../core/services/adminService.js'
+import { supabase } from '../../core/services/supabase.js'
+import { fetchOnlineUsers, fetchTodayUsers, fetchDailyActiveUsers } from '../../core/services/presenceService.js'
 
 const admin   = useAdminStore()
 const loading = ref(true)
@@ -484,12 +486,12 @@ const roleBreakdown = computed(() => {
 
 // ── Stat cards ────────────────────────────────────────────────
 const statCards = computed(() => [
-  { key: 'emp',    icon: '👥', label: 'พนักงาน',       to: '/admin/employees',         value: counts.employees,    sub: `${counts.inTeam} ในทีม`,             bg: '#EEF2FF', color: '#4F46E5' },
-  { key: 'bday',   icon: '🎂', label: 'วันเกิดเดือนนี้', to: '/admin/employees',        value: counts.bdayThisMonth, sub: 'คน',                                bg: '#FDF2F8', color: '#DB2777' },
-  { key: 'idea',   icon: '💡', label: 'ไอเดียรอรีวิว',  to: '/admin/ideas',             value: counts.ideasPending, sub: `${counts.ideasTotal} ทั้งหมด`,       bg: '#FFFBEB', color: '#D97706' },
-  { key: 'consult',icon: '💚', label: 'Consult รอตอบ',  to: '/admin/mental',            value: counts.consultUnread, sub: `${counts.consultTotal} ทั้งหมด`,    bg: '#F0FDFA', color: '#0D9488' },
-  { key: 'reward', icon: '🎁', label: 'ของรางวัล',      to: '/admin/rewards',           value: '›',                 sub: 'จัดการ',                             bg: '#FFF7ED', color: '#EA580C' },
-  { key: 'ann',    icon: '📢', label: 'ประกาศ / Popup', to: '/admin/announcement',      value: '›',                 sub: 'จัดการ',                             bg: '#F0F9FF', color: '#0284C7' },
+  { key: 'emp',    icon: '👥', label: 'พนักงาน',        to: '/admin/employees',    value: counts.employees,     sub: `${counts.inTeam} ในทีม`,          bg: 'rgba(99,102,241,0.1)',  color: '#6366F1' },
+  { key: 'bday',   icon: '🎂', label: 'วันเกิดเดือนนี้', to: '/admin/employees',   value: counts.bdayThisMonth, sub: 'คน',                               bg: 'rgba(236,72,153,0.1)',  color: '#EC4899' },
+  { key: 'idea',   icon: '💡', label: 'ไอเดียรอรีวิว',   to: '/admin/ideas',       value: counts.ideasPending,  sub: `${counts.ideasTotal} ทั้งหมด`,    bg: 'rgba(245,158,11,0.1)',  color: '#F59E0B' },
+  { key: 'consult',icon: '💚', label: 'Consult รอตอบ',   to: '/admin/mental',      value: counts.consultUnread, sub: `${counts.consultTotal} ทั้งหมด`,  bg: 'rgba(16,185,129,0.1)',  color: '#10B981' },
+  { key: 'reward', icon: '🎁', label: 'ของรางวัล',       to: '/admin/rewards',     value: '›',                  sub: 'จัดการ',                           bg: 'rgba(168,85,247,0.1)',  color: '#A855F7' },
+  { key: 'ann',    icon: '📢', label: 'ประกาศ / Popup',  to: '/admin/announcement', value: '›',                 sub: 'จัดการ',                           bg: 'rgba(255,107,107,0.1)', color: '#FF6B6B' },
 ])
 
 // ── Load data ─────────────────────────────────────────────────
@@ -544,110 +546,148 @@ onUnmounted(() => clearInterval(_presenceTimer))
 <style scoped>
 @import './admin.css';
 
-/* ── Welcome ── */
+/* ── Welcome banner ── */
 .dash-welcome {
-  background: linear-gradient(135deg, #1E1B4B 0%, #4338CA 60%, #7C3AED 100%);
-  border-radius: 16px;
-  padding: 20px;
+  background: linear-gradient(135deg, #4F52C8 0%, #7C3AC2 50%, #C83D8E 100%);
+  border-radius: 20px;
+  padding: 22px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  box-shadow: 0 4px 24px rgba(67,56,202,0.3);
+  box-shadow: 0 10px 36px rgba(99,102,241,0.32);
+  position: relative;
+  overflow: hidden;
 }
-.dash-welcome-title { font-size: 19px; font-weight: 900; color: white; margin-bottom: 4px; }
-.dash-welcome-sub   { font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 600; }
+.dash-welcome::before {
+  content: '';
+  position: absolute;
+  right: -30px; top: -30px;
+  width: 140px; height: 140px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+  pointer-events: none;
+}
+.dash-welcome::after {
+  content: '';
+  position: absolute;
+  left: -20px; bottom: -25px;
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  pointer-events: none;
+}
+.dash-welcome-title { font-size: 20px; font-weight: 900; color: white; margin-bottom: 4px; letter-spacing: -0.02em; }
+.dash-welcome-sub   { font-size: 12px; color: rgba(255,255,255,0.70); font-weight: 600; }
 .dash-welcome-badge {
-  padding: 5px 14px;
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.22);
-  border-radius: 20px;
+  padding: 6px 16px;
+  background: rgba(255,255,255,0.20);
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 9999px;
   font-size: 12px; font-weight: 800;
-  color: rgba(255,255,255,0.9);
+  color: rgba(255,255,255,0.95);
   white-space: nowrap; flex-shrink: 0;
+  backdrop-filter: blur(8px);
 }
+
+/* ── Stat cards ── */
+.dash-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (min-width: 480px) {
+  .dash-stats { grid-template-columns: 1fr 1fr 1fr; }
+}
+.dash-stat-card {
+  background: white;
+  border-radius: 16px;
+  border: 1.5px solid #E2DCFB;
+  padding: 16px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.22s, transform 0.22s;
+  box-shadow: 0 4px 14px rgba(99,102,241,0.09);
+  position: relative;
+  overflow: hidden;
+}
+.dash-stat-card:hover { box-shadow: 0 10px 30px rgba(99,102,241,0.18); transform: translateY(-3px); }
+.dash-stat-icon {
+  width: 42px; height: 42px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px; flex-shrink: 0;
+}
+.dash-stat-body { flex: 1; min-width: 0; }
+.dash-stat-num  { font-size: 24px; font-weight: 900; color: #1A1235; line-height: 1; margin-bottom: 4px; }
+.dash-stat-loading {
+  display: inline-block; width: 28px; height: 20px;
+  background: #E2DCFB; border-radius: 5px;
+  animation: dash-pulse 1.2s ease-in-out infinite;
+}
+@keyframes dash-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.dash-stat-label { font-size: 11px; font-weight: 700; color: #52497A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dash-stat-sub   { font-size: 10px; color: #9B8FBB; margin-top: 2px; }
+.dash-stat-arrow { position: absolute; right: 10px; bottom: 10px; font-size: 16px; color: #E2DCFB; }
 
 /* ── Online users ── */
 .dash-online-card { padding: 0; }
 .dash-online-meta { display: flex; align-items: center; gap: 6px; }
 .dash-online-refresh {
-  background: none; border: 1px solid #E5E7EB; border-radius: 8px;
-  width: 28px; height: 28px; cursor: pointer; font-size: 14px; color: #6B7280;
+  background: none;
+  border: 1.5px solid #E2DCFB;
+  border-radius: 9px;
+  width: 30px; height: 30px;
+  cursor: pointer; font-size: 15px; color: #9B8FBB;
   display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s;
 }
-.dash-online-refresh:hover { background: #F3F4F6; }
-.dash-online-empty { padding: 16px; font-size: 13px; color: #9CA3AF; text-align: center; }
+.dash-online-refresh:hover { background: #F2F0FB; border-color: #6366F1; color: #6366F1; }
+.dash-online-empty { padding: 20px; font-size: 13px; color: #9B8FBB; text-align: center; }
 .dash-online-list  { display: flex; flex-direction: column; }
 .dash-online-item  {
-  display: flex; align-items: center; gap: 8px;
-  padding: 9px 16px;
-  border-top: 1px solid #F3F4F6;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 18px;
+  border-top: 1px solid #F2F0FB;
   font-size: 13px;
+  transition: background 0.12s;
 }
+.dash-online-item:hover { background: rgba(99,102,241,0.03); }
 .dash-online-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: #22C55E;
-  box-shadow: 0 0 0 2px rgba(34,197,94,0.25);
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.22);
   flex-shrink: 0;
 }
-.dash-online-name { font-weight: 700; color: #111827; flex: 1; }
-.dash-online-dept { font-size: 11px; color: #6B7280; }
-.dash-online-time { font-size: 11px; color: #9CA3AF; margin-left: auto; flex-shrink: 0; }
-
-/* ── Stat cards ── */
-.dash-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-}
-.dash-stat-card {
-  background: white; border-radius: 14px; border: 1px solid #EBEBF4;
-  padding: 12px; display: flex; align-items: flex-start; gap: 10px;
-  text-decoration: none; color: inherit;
-  transition: box-shadow 0.15s, transform 0.15s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-  position: relative; overflow: hidden;
-}
-.dash-stat-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); transform: translateY(-2px); }
-.dash-stat-icon {
-  width: 36px; height: 36px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; flex-shrink: 0;
-}
-.dash-stat-body { flex: 1; min-width: 0; }
-.dash-stat-num  { font-size: 22px; font-weight: 900; color: #111827; line-height: 1; margin-bottom: 3px; }
-.dash-stat-loading {
-  display: inline-block; width: 24px; height: 18px;
-  background: #E5E7EB; border-radius: 4px;
-  animation: dash-pulse 1.2s ease-in-out infinite;
-}
-@keyframes dash-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-.dash-stat-label { font-size: 10px; font-weight: 700; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dash-stat-sub   { font-size: 9px; color: #9CA3AF; margin-top: 1px; }
-.dash-stat-arrow { position: absolute; right: 8px; bottom: 8px; font-size: 14px; color: #D1D5DB; }
+.dash-online-name { font-weight: 700; color: #1A1235; flex: 1; }
+.dash-online-dept { font-size: 11px; color: #9B8FBB; }
+.dash-online-time { font-size: 11px; color: #9B8FBB; margin-left: auto; flex-shrink: 0; }
 
 /* ── Charts layout ── */
 .dash-charts-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
 }
 @media (max-width: 480px) { .dash-charts-row { grid-template-columns: 1fr; } }
 
 .dash-chart-card { flex: 1; }
-.dash-chart-body { padding: 8px 12px 12px; }
+.dash-chart-body { padding: 10px 14px 14px; }
 .dash-chart-skeleton {
-  height: 110px; background: #F3F4F6; border-radius: 10px;
+  height: 120px;
+  background: #F2F0FB;
+  border-radius: 12px;
   animation: dash-pulse 1.4s ease-in-out infinite;
 }
-.dash-chart-empty { text-align: center; padding: 28px 0; font-size: 12px; color: #9CA3AF; }
+.dash-chart-empty { text-align: center; padding: 32px 0; font-size: 12px; color: #9B8FBB; }
 
 /* ── Bar chart ── */
 .dash-bar-svg { width: 100%; display: block; }
 .dash-chart-legend {
   display: flex; align-items: center; gap: 4px;
-  font-size: 10px; color: #6B7280; margin-top: 4px;
+  font-size: 10px; color: #9B8FBB; margin-top: 4px;
 }
 .dash-leg-dot {
   width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; display: inline-block;
@@ -659,26 +699,28 @@ onUnmounted(() => clearInterval(_presenceTimer))
 .dash-donut-legend { flex: 1; display: flex; flex-direction: column; gap: 5px; }
 .dash-donut-leg-row {
   display: flex; align-items: center; gap: 5px;
-  font-size: 11px; color: #374151;
+  font-size: 11px; color: #52497A;
 }
 .dash-donut-leg-label { flex: 1; }
-.dash-donut-leg-val   { font-weight: 800; color: #111827; }
+.dash-donut-leg-val   { font-weight: 800; color: #1A1235; }
 
 /* ── Horizontal bar (top earners) ── */
 .dash-earners-more {
   display: block; width: 100%; margin-top: 10px;
-  background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px;
-  color: #6D28D9; font-size: 11px; font-weight: 700; cursor: pointer;
+  background: rgba(168,85,247,0.07);
+  border: 1px solid rgba(168,85,247,0.18);
+  border-radius: 10px;
+  color: #A855F7; font-size: 11px; font-weight: 700; cursor: pointer;
   padding: 6px 0; text-align: center;
   transition: background 0.15s;
 }
-.dash-earners-more:hover { background: #EDE9FE; }
+.dash-earners-more:hover { background: rgba(168,85,247,0.14); }
 .dash-hbar-list { display: flex; flex-direction: column; gap: 8px; }
 .dash-hbar-row  { display: flex; align-items: center; gap: 7px; }
-.dash-hbar-rank { width: 16px; font-size: 11px; font-weight: 800; color: #9CA3AF; flex-shrink: 0; text-align: center; }
+.dash-hbar-rank { width: 16px; font-size: 11px; font-weight: 800; color: #9B8FBB; flex-shrink: 0; text-align: center; }
 .dash-hbar-body { flex: 1; min-width: 0; }
-.dash-hbar-label { font-size: 11px; font-weight: 700; color: #374151; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dash-hbar-track { height: 6px; background: #F3F4F6; border-radius: 4px; overflow: hidden; }
+.dash-hbar-label { font-size: 11px; font-weight: 700; color: #52497A; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dash-hbar-track { height: 6px; background: #F2F0FB; border-radius: 4px; overflow: hidden; }
 .dash-hbar-fill  { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
 .dash-hbar-val   { font-size: 11px; font-weight: 800; flex-shrink: 0; }
 
@@ -686,41 +728,40 @@ onUnmounted(() => clearInterval(_presenceTimer))
 .dash-ratio-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .dash-ratio-svg  { width: 80px; height: 80px; flex-shrink: 0; }
 .dash-ratio-info { flex: 1; display: flex; flex-direction: column; gap: 5px; }
-.dash-ratio-row  { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #374151; }
-.dash-ratio-row strong { margin-left: auto; font-weight: 800; color: #111827; }
-.dash-ratio-pct  { font-size: 20px; font-weight: 900; color: #4F46E5; line-height: 1; }
+.dash-ratio-row  { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #52497A; }
+.dash-ratio-row strong { margin-left: auto; font-weight: 800; color: #1A1235; }
+.dash-ratio-pct  { font-size: 20px; font-weight: 900; color: #6366F1; line-height: 1; }
 
 /* ── Daily Active Users ── */
-.dau-card { }
 .dau-header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.dau-range-tabs { display: flex; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; }
+.dau-range-tabs { display: flex; border: 1px solid #E2DCFB; border-radius: 10px; overflow: hidden; }
 .dau-tab {
   padding: 4px 10px; font-size: 11px; font-weight: 700; border: none; cursor: pointer;
-  background: white; color: #6B7280; font-family: 'Sarabun', sans-serif;
-  transition: background .15s;
+  background: white; color: #9B8FBB; font-family: 'Sarabun', sans-serif;
+  transition: background 0.15s;
 }
-.dau-tab.active { background: #4F46E5; color: white; }
-.dau-body { }
+.dau-tab.active { background: #6366F1; color: white; }
 .dau-summary {
   display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 8px; padding: 8px 12px 12px;
+  gap: 8px; padding: 10px 14px 14px;
 }
 .dau-pill {
-  background: #F9FAFB; border-radius: 10px; padding: 8px;
-  text-align: center; border: 1px solid #F3F4F6;
+  background: #F2F0FB; border-radius: 12px; padding: 10px 8px;
+  text-align: center; border: 1.5px solid #E2DCFB;
 }
-.dau-pill--accent { background: #EEF2FF; border-color: #C7D2FE; }
-.dau-pill-val { font-size: 18px; font-weight: 900; color: #111827; line-height: 1; }
-.dau-pill--accent .dau-pill-val { color: #4F46E5; }
-.dau-pill-label { font-size: 10px; color: #9CA3AF; margin-top: 2px; font-weight: 600; }
-.dau-chart-wrap { padding: 0 12px; }
+.dau-pill--accent { background: rgba(99,102,241,0.09); border-color: rgba(99,102,241,0.22); }
+.dau-pill-val { font-size: 19px; font-weight: 900; color: #1A1235; line-height: 1; }
+.dau-pill--accent .dau-pill-val { color: #6366F1; }
+.dau-pill-label { font-size: 10px; color: #9B8FBB; margin-top: 3px; font-weight: 600; }
+.dau-chart-wrap { padding: 0 14px; }
 .dau-svg { width: 100%; height: auto; display: block; }
+.dau-legend { padding: 0 14px 14px; }
 
 /* ── Role bars ── */
 .dash-role-list { display: flex; flex-direction: column; gap: 6px; }
 .dash-role-row  { display: flex; align-items: center; gap: 6px; }
-.dash-role-label { font-size: 10px; color: #6B7280; width: 72px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
-.dash-role-track { flex: 1; height: 5px; background: #F3F4F6; border-radius: 3px; overflow: hidden; }
+.dash-role-label { font-size: 10px; color: #9B8FBB; width: 72px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.dash-role-track { flex: 1; height: 5px; background: #F2F0FB; border-radius: 3px; overflow: hidden; }
 .dash-role-fill  { height: 100%; border-radius: 3px; }
-.dash-role-val   { font-size: 10px; font-weight: 700; color: #374151; flex-shrink: 0; }
+.dash-role-val   { font-size: 10px; font-weight: 700; color: #52497A; flex-shrink: 0; }
 </style>

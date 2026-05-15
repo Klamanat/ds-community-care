@@ -169,9 +169,9 @@ import { useRouter } from 'vue-router'
 import ConsultCards from '../components/home/ConsultCards.vue'
 import MonthsGrid from '../components/home/MonthsGrid.vue'
 import EmpathyBoard from '../components/home/EmpathyBoard.vue'
-import { useUiStore } from '../stores/ui.js'
-import { useBirthdayStore } from '../stores/birthday.js'
-import { useCardConfigStore } from '../stores/cardConfig.js'
+import { useUiStore } from '../core/stores/ui.js'
+import { useBirthdayStore } from '../features/birthday/birthday.store.js'
+import { useCardConfigStore } from '../core/stores/cardConfig.js'
 
 const router = useRouter()
 const ui = useUiStore()

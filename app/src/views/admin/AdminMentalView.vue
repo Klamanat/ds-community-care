@@ -1,25 +1,23 @@
 <template>
   <div>
+    <AdminPageHeader title="💚 Mental Health" sub="ที่ปรึกษาสุขภาพจิต">
+      <button v-if="tab === 'advisors'" class="al-btn al-btn-primary" @click="openAdd">+ เพิ่ม</button>
+      <button v-else-if="tab === 'requests'" class="al-btn al-btn-secondary" @click="loadRequests(true)">🔄 โหลดใหม่</button>
+    </AdminPageHeader>
     <main class="al-main">
 
-      <div class="al-page-header">
-        <h2 class="al-page-title">💚 ที่ปรึกษาสุขภาพจิต</h2>
-        <button v-if="tab === 'advisors'" class="al-btn al-btn-primary" @click="openAdd">+ เพิ่ม</button>
-        <button v-else-if="tab === 'requests'" class="al-btn al-btn-secondary" @click="loadRequests(true)">🔄 โหลดใหม่</button>
-      </div>
-
       <!-- Tabs -->
-      <div class="mav-tabs">
-        <button class="mav-tab" :class="{ active: tab === 'advisors' }" @click="tab = 'advisors'">
+      <div class="al-body">
+      <div class="al-tab-bar">
+        <button class="al-tab-btn" :class="{ active: tab === 'advisors' }" @click="tab = 'advisors'">
           👥 ที่ปรึกษา
-          <span class="mav-tab-badge">{{ advisors.length }}</span>
+          <span class="al-tab-btn-count">{{ advisors.length }}</span>
         </button>
-        <button class="mav-tab" :class="{ active: tab === 'requests' }" @click="switchToRequests">
+        <button class="al-tab-btn" :class="{ active: tab === 'requests' }" @click="switchToRequests">
           📥 ข้อความ
-          <span v-if="requests.length" class="mav-tab-badge mav-tab-badge-green">{{ requests.length }}</span>
+          <span v-if="requests.length" class="al-tab-btn-count" style="background:#DCFCE7;color:#15803D;">{{ requests.length }}</span>
         </button>
       </div>
-
       <!-- ── Tab: Advisors ── -->
       <div v-if="tab === 'advisors'">
         <div class="al-card">
@@ -28,20 +26,23 @@
             <span class="al-badge al-badge-blue">{{ advisors.length }} คน</span>
           </div>
 
-          <div v-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
-          <div v-else-if="!advisors.length" class="al-empty">📭 ยังไม่มีที่ปรึกษา — กด "+ เพิ่ม" เพื่อเริ่มต้น</div>
+          <div v-if="loading" class="al-loading-skeletons">
+            <SkeletonCard height="68px" />
+            <SkeletonCard height="68px" />
+          </div>
+          <EmptyState v-else-if="!advisors.length" title="ยังไม่มีที่ปรึกษา" sub="กด + เพิ่ม เพื่อเริ่มต้น" />
 
           <div v-else>
-            <div class="al-item" v-for="a in advisors" :key="a.id">
+            <div class="al-item fade-in" v-for="a in advisors" :key="a.id" @click="handleRippleClick">
               <div class="al-item-avatar" :style="{ background: grad(a.name) }">
-                <span style="font-size:20px;color:white;font-weight:800;">{{ (a.name||'?').charAt(0) }}</span>
+                <span class="text-xl text-white font-extrabold">{{ (a.name||'?').charAt(0) }}</span>
               </div>
               <div class="al-item-body">
                 <div class="al-item-title">{{ a.name }}</div>
                 <div class="al-item-sub">{{ a.role || '—' }}</div>
                 <div class="al-item-meta">
-                  <span v-if="a.employeeId" style="color:#6B7280;">🪪 ID: {{ a.employeeId }}</span>
-                  <span v-else style="color:#EF4444;font-size:11px;">⚠️ ยังไม่ได้เลือกพนักงาน</span>
+                  <span v-if="a.employeeId" class="text-gray-500">🪪 ID: {{ a.employeeId }}</span>
+                  <span v-else class="text-coral text-[11px]">⚠️ ยังไม่ได้เลือกพนักงาน</span>
                 </div>
               </div>
               <div class="al-item-actions">
@@ -52,9 +53,9 @@
           </div>
         </div>
 
-        <div class="al-info-box" style="margin-top:12px;">
-          <div style="font-size:12px;font-weight:800;color:#3730A3;margin-bottom:6px;">📋 วิธีใช้งาน</div>
-          <ul style="font-size:12px;color:#4338CA;line-height:2;padding-left:16px;margin:0;">
+        <div class="al-info-box mt-3">
+          <div class="text-xs font-extrabold text-indigo mb-1.5">📋 วิธีใช้งาน</div>
+          <ul class="text-xs text-indigo/80 leading-loose pl-4 m-0">
             <li>เพิ่มที่ปรึกษาและค้นหาพนักงานที่จะรับหน้าที่นี้</li>
             <li>พนักงานที่ถูกเลือกจะเห็นกล่องข้อความใน Profile</li>
             <li>ลำดับ (Order) ใช้ควบคุมการเรียงแสดงใน Modal</li>
@@ -71,9 +72,12 @@
             <span class="al-badge al-badge-blue">{{ requests.length }} ข้อความ</span>
           </div>
 
-          <div v-if="reqLoading" class="al-loading">⏳ กำลังโหลด...</div>
-          <div v-else-if="reqError" style="padding:16px;color:#DC2626;font-size:13px;">⚠️ {{ reqError }}</div>
-          <div v-else-if="!requests.length" class="al-empty">📭 ยังไม่มีข้อความ</div>
+          <div v-if="reqLoading" class="al-loading-skeletons">
+            <SkeletonCard height="68px" />
+            <SkeletonCard height="68px" />
+          </div>
+          <div v-else-if="reqError" class="p-4 text-red-600 text-sm">⚠️ {{ reqError }}</div>
+          <EmptyState v-else-if="!requests.length" title="ยังไม่มีข้อความ" sub="" />
 
           <div v-else>
             <div v-for="r in requests" :key="r.id" class="mav-req-item" :class="{ 'mav-req-unread': r.isRead !== 'true' }">
@@ -89,13 +93,12 @@
           </div>
         </div>
       </div>
+      </div>
     </main>
 
     <!-- ── Add / Edit Modal ── -->
-    <div v-if="modal.open" class="al-modal-overlay" @click.self="modal.open=false">
-      <div class="al-modal">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">{{ modal.mode === 'add' ? '+ เพิ่มที่ปรึกษา' : '✏️ แก้ไขที่ปรึกษา' }}</div>
+    <BaseModal padded modal-id="admin-mental-form" sheet-class="modal-sheet-lg">
+      <div class="al-modal-title">{{ modal.mode === 'add' ? '+ เพิ่มที่ปรึกษา' : '✏️ แก้ไขที่ปรึกษา' }}</div>
 
         <div class="al-form-row">
           <label class="al-form-label">ชื่อ *</label>
@@ -108,7 +111,7 @@
         </div>
 
         <!-- Employee autocomplete -->
-        <div class="al-form-row" style="position:relative;">
+        <div class="al-form-row relative">
           <label class="al-form-label">พนักงานที่รับคำปรึกษา (ระบบจะแสดงกล่องข้อความให้พนักงานนี้)</label>
           <input
             v-model="empSearch"
@@ -137,7 +140,7 @@
 
         <div class="al-form-row">
           <label class="al-form-label">ลำดับการแสดง (Order)</label>
-          <input v-model.number="form.order" type="number" min="0" class="al-form-input" style="max-width:100px;" />
+          <input v-model.number="form.order" type="number" min="0" class="al-form-input max-w-[100px]" />
         </div>
 
         <!-- Card BG -->
@@ -152,7 +155,7 @@
             </div>
             <div class="mav-card-preview-inner">
               <div class="mav-card-av">{{ (form.name || 'ก').charAt(0) }}</div>
-              <div style="flex:1;min-width:0;">
+              <div class="flex-1 min-w-0">
                 <div class="mav-card-pv-name" :class="{ 'mav-card-pv-light': !!form.cardBgType }">{{ form.name || 'ชื่อที่ปรึกษา' }}</div>
                 <div class="mav-card-pv-role" :class="{ 'mav-card-pv-light': !!form.cardBgType }">{{ form.role || 'บทบาท' }}</div>
               </div>
@@ -178,18 +181,18 @@
           </div>
 
           <!-- Image upload -->
-          <div v-else-if="form.cardBgType === 'image'" style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <label class="al-btn al-btn-secondary" :for="'cardBg_'+modal.mode" style="cursor:pointer;font-size:12px;padding:6px 12px;">
+          <div v-else-if="form.cardBgType === 'image'" class="mt-2 flex gap-2 items-center flex-wrap">
+            <label class="al-btn al-btn-secondary cursor-pointer text-xs" :for="'cardBg_'+modal.mode">
               {{ cardBgUploading ? '⏳ อัปโหลด...' : '📷 เลือกรูป' }}
             </label>
-            <input :id="'cardBg_'+modal.mode" type="file" accept="image/*" style="display:none" :disabled="cardBgUploading" @change="onCardBgChange" />
-            <span v-if="form.cardBgValue && form.cardBgType === 'image'" style="font-size:11px;color:#059669;">✅ มีรูปแล้ว</span>
+            <input :id="'cardBg_'+modal.mode" type="file" accept="image/*" class="hidden" :disabled="cardBgUploading" @change="onCardBgChange" />
+            <span v-if="form.cardBgValue && form.cardBgType === 'image'" class="text-[11px] text-mint">✅ มีรูปแล้ว</span>
           </div>
         </div>
 
         <!-- Emoji overlay (independent from bg color/image) -->
         <div class="al-form-row">
-          <label class="al-form-label">🍋 Emoji บนการ์ด <span style="font-weight:400;color:#9CA3AF;">(เลือกพร้อมกับสีได้)</span></label>
+          <label class="al-form-label">🍋 Emoji บนการ์ด <span class="font-normal text-app-light">(เลือกพร้อมกับสีได้)</span></label>
           <div class="mav-emoji-grid">
             <button
               type="button" class="mav-emoji-btn mav-emoji-clear"
@@ -208,30 +211,26 @@
         <div v-if="modal.error" class="al-error">⚠️ {{ modal.error }}</div>
 
         <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="modal.open=false">ยกเลิก</button>
+          <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
           <button class="al-btn al-btn-save" :disabled="modal.saving" @click="doSave">
             {{ modal.saving ? 'กำลังบันทึก...' : '✅ บันทึก' }}
           </button>
         </div>
-      </div>
-    </div>
+    </BaseModal>
 
     <!-- ── Delete Confirm ── -->
-    <div v-if="delTarget" class="al-modal-overlay" @click.self="delTarget=null">
-      <div class="al-modal">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
-        <p style="font-size:13px;color:#374151;margin:0 0 16px;">
-          ลบ "<strong>{{ delTarget.name }}</strong>" ออกจากรายชื่อที่ปรึกษา?
-        </p>
-        <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="delTarget=null">ยกเลิก</button>
-          <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
-            {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
-          </button>
-        </div>
+    <BaseModal padded modal-id="admin-mental-del">
+      <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
+      <p class="text-sm text-gray-700 mb-4">
+        ลบ "<strong>{{ delTarget?.name }}</strong>" ออกจากรายชื่อที่ปรึกษา?
+      </p>
+      <div class="al-modal-footer">
+        <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
+        <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
+          {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
+        </button>
       </div>
-    </div>
+    </BaseModal>
   </div>
 </template>
 
@@ -241,17 +240,27 @@ import {
   getEmployees,
   getMentalAdvisors, addMentalAdvisor, updateMentalAdvisor, deleteMentalAdvisor,
   getConsultRequests,
-} from '../../services/adminService.js'
-import { uploadImage, deleteImage } from '../../services/edgeFunctions.js'
-import { CARD_COLORS, CARD_COLOR_MAP, emojiPositions } from '../../constants/mentalCardColors.js'
+} from '../../core/services/adminService.js'
+import { uploadImage, deleteImage } from '../../core/services/edgeFunctions.js'
+import { CARD_COLORS, CARD_COLOR_MAP, emojiPositions } from '../../core/constants/mentalCardColors.js'
+import AdminPageHeader from './AdminPageHeader.vue'
+import SkeletonCard from '../../shared/components/SkeletonCard.vue'
+import EmptyState from '../../shared/components/EmptyState.vue'
+import { useRipple } from '../../core/composables/useRipple.js'
+import { useFadeIn } from '../../core/composables/useFadeIn.js'
+import { useUiStore } from '../../core/stores/ui.js'
+import BaseModal from '../../shared/components/BaseModal.vue'
 
 const tab = ref('advisors')
+const ui = useUiStore()
+const { handleRippleClick } = useRipple()
+useFadeIn('.fade-in')
 
 // ── Advisors ─────────────────────────────────────────────────────────────
 const advisors  = ref([])
 const employees = ref([])
 const loading   = ref(true)
-const modal     = reactive({ open: false, mode: 'add', saving: false, error: '' })
+const modal     = reactive({ mode: 'add', saving: false, error: '' })
 const form            = reactive({ id: '', name: '', role: '', employeeId: '', order: 0, cardBgType: '', cardBgValue: '', cardBgId: '', cardBgEmoji: '' })
 const cardBgUploading = ref(false)
 
@@ -305,13 +314,13 @@ onMounted(async () => {
 function openAdd() {
   Object.assign(form, { id: '', name: '', role: '', employeeId: '', order: advisors.value.length, cardBgType: '', cardBgValue: '', cardBgId: '', cardBgEmoji: '' })
   empSearch.value = ''; showDrop.value = false
-  modal.mode = 'add'; modal.error = ''; modal.open = true
+  modal.mode = 'add'; modal.error = ''; ui.openModal('admin-mental-form')
 }
 
 function openEdit(a) {
   Object.assign(form, { ...a, cardBgType: a.cardBgType || '', cardBgValue: a.cardBgValue || '', cardBgId: a.cardBgId || '', cardBgEmoji: a.cardBgEmoji || '' })
   empSearch.value = ''; showDrop.value = false
-  modal.mode = 'edit'; modal.error = ''; modal.open = true
+  modal.mode = 'edit'; modal.error = ''; ui.openModal('admin-mental-form')
 }
 
 function pickEmployee(e) {
@@ -345,7 +354,7 @@ async function doSave() {
       if (idx >= 0) advisors.value[idx] = updated
     }
     advisors.value.sort((a, b) => (a.order || 0) - (b.order || 0))
-    modal.open = false
+    ui.closeModal()
   } catch (e) {
     modal.error = e.message || 'เกิดข้อผิดพลาด'
   } finally {
@@ -414,7 +423,7 @@ async function onCardBgChange(e) {
   }
 }
 
-function confirmDel(a) { delTarget.value = a }
+function confirmDel(a) { delTarget.value = a; ui.openModal('admin-mental-del') }
 async function doDelete() {
   deleting.value = true
   const target = delTarget.value
@@ -423,6 +432,7 @@ async function doDelete() {
     await deleteMentalAdvisor(target.id)
     advisors.value = advisors.value.filter(a => a.id !== target.id)
     delTarget.value = null
+    ui.closeModal()
   } catch {} finally { deleting.value = false }
 }
 
@@ -466,26 +476,6 @@ function fmtTime(iso) {
 
 <style scoped>
 @import './admin.css';
-
-/* ── Tabs ── */
-.mav-tabs {
-  display: flex; gap: 4px;
-  background: #F3F4F6; border-radius: 12px; padding: 4px;
-  margin-bottom: 12px;
-}
-.mav-tab {
-  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 8px 12px; border: none; border-radius: 9px;
-  font-size: 13px; font-weight: 700; color: #6B7280;
-  background: none; cursor: pointer; transition: all 0.15s;
-}
-.mav-tab.active { background: white; color: #111827; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-.mav-tab-badge {
-  font-size: 10px; font-weight: 800; min-width: 18px; height: 18px;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: #E5E7EB; color: #374151; border-radius: 9px; padding: 0 5px;
-}
-.mav-tab-badge-green { background: #DCFCE7; color: #15803D; }
 
 /* ── Request items ── */
 .mav-req-item {

@@ -1,26 +1,37 @@
 <template>
   <div>
-    <main class="al-main">
+    <!-- Sticky header: banner + search + filters all in one block -->
+    <div class="emp-sticky-top">
+      <AdminPageHeader title="👥 พนักงาน" sub="Employee Management">
+        <button class="al-btn al-btn-primary" @click="openAdd">+ เพิ่ม</button>
+      </AdminPageHeader>
 
-      <!-- Toolbar (sticky) -->
-      <div class="emp-toolbar emp-toolbar--sticky">
-        <input v-model="search" class="emp-search" placeholder="🔍 ค้นหา ชื่อ / รหัส / ตำแหน่ง / แผนก..." />
-        <div class="emp-toolbar-right">
-          <span class="al-badge al-badge-blue">{{ filteredRows.length }}/{{ empRows.length }}</span>
-          <button class="al-btn al-btn-primary" @click="openAdd">+ เพิ่ม</button>
+      <div class="emp-search-bar">
+        <div class="emp-search-bar-inner">
+          <div class="emp-toolbar">
+            <input v-model="search" class="emp-search" placeholder="🔍 ค้นหา ชื่อ / รหัส / ตำแหน่ง / แผนก..." />
+            <div class="emp-toolbar-right">
+              <span class="al-badge al-badge-blue">{{ filteredRows.length }}/{{ empRows.length }}</span>
+            </div>
+          </div>
+          <div class="al-filters">
+            <button class="al-chip" :class="{ active: filterMode === 'all' }"  @click="filterMode = 'all'">👥 ทั้งหมด</button>
+            <button class="al-chip" :class="{ active: filterMode === 'bday' }" @click="filterMode = 'bday'">🎂 วันเกิดเดือนนี้</button>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- Filter chips -->
-      <div class="al-filters">
-        <button class="al-chip" :class="{ active: filterMode === 'all' }"  @click="filterMode = 'all'">👥 ทั้งหมด</button>
-        <button class="al-chip" :class="{ active: filterMode === 'bday' }" @click="filterMode = 'bday'">🎂 วันเกิดเดือนนี้</button>
-      </div>
-
+    <main class="al-main">
+      <div class="al-body">
       <!-- States -->
-      <div v-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
-      <div v-else-if="!empRows.length" class="al-empty">📭 ไม่มีข้อมูล</div>
-      <div v-else-if="!filteredRows.length" class="al-empty">🔍 ไม่พบ "{{ search }}"</div>
+      <div v-if="loading" class="al-loading-skeletons">
+        <SkeletonCard height="68px" />
+        <SkeletonCard height="68px" />
+        <SkeletonCard height="68px" />
+      </div>
+      <EmptyState v-else-if="!empRows.length" title="ไม่มีข้อมูลพนักงาน" />
+      <EmptyState v-else-if="!filteredRows.length" :title="'ไม่พบ ' + search" />
 
       <!-- Employee list — inline editing, multiple rows can expand simultaneously -->
       <div v-else class="emp-list">
@@ -35,14 +46,14 @@
           <div v-if="!editForms[r.id]" class="emp-row" @click="startEdit(r)">
             <div class="emp-avatar" :style="!r.imgUrl ? `background:${r.grad||'#EEF2FF'}` : ''">
               <img v-if="r.imgUrl" :src="r.imgUrl" />
-              <span v-else style="font-size:18px;">👤</span>
+              <span v-else class="text-lg">👤</span>
             </div>
             <div class="emp-info">
               <div class="emp-name-line">
                 <span class="emp-name">{{ r.name }}</span>
                 <span v-if="r.empCode" class="emp-code">{{ r.empCode }}</span>
               </div>
-              <div class="emp-sub">{{ r.role }}<span v-if="r.dept" style="color:#9CA3AF;"> · {{ r.dept }}</span></div>
+              <div class="emp-sub">{{ r.role }}<span v-if="r.dept" class="text-app-light"> · {{ r.dept }}</span></div>
               <div class="emp-meta">
                 <span class="al-badge" :class="isTrue(r.inTeam) ? 'al-badge-yes' : 'al-badge-no'">
                   {{ isTrue(r.inTeam) ? '✓ Team' : 'No team' }}
@@ -66,17 +77,17 @@
               <div class="emp-photo-col">
                 <div class="emp-edit-avatar">
                   <img v-if="editForms[r.id].imgPreview" :src="editForms[r.id].imgPreview" />
-                  <span v-else style="font-size:22px;">👤</span>
+                  <span v-else class="text-2xl">👤</span>
                 </div>
                 <label class="emp-photo-btn" :for="'img_'+r.id">📷</label>
-                <input :id="'img_'+r.id" type="file" accept="image/*" style="display:none" @change="e => pickEditImage(e, r.id)" />
-                <span v-if="editUploading[r.id]"  style="font-size:10px;color:#9CA3AF;margin-top:2px;">⏳</span>
-                <span v-if="editUploadDone[r.id]" style="font-size:10px;color:#059669;margin-top:2px;">✅</span>
+                <input :id="'img_'+r.id" type="file" accept="image/*" class="hidden" @change="e => pickEditImage(e, r.id)" />
+                <span v-if="editUploading[r.id]"  class="text-[10px] text-app-light mt-0.5">⏳</span>
+                <span v-if="editUploadDone[r.id]" class="text-[10px] text-mint mt-0.5">✅</span>
               </div>
               <div class="emp-namecode-col">
                 <div class="emp-field-label">ชื่อ *</div>
                 <input v-model="editForms[r.id].name" class="al-form-input emp-input-name" placeholder="ชื่อพนักงาน" />
-                <div class="emp-field-label" style="margin-top:6px;">รหัสพนักงาน</div>
+                <div class="emp-field-label mt-1.5">รหัสพนักงาน</div>
                 <input v-model="editForms[r.id].empCode" class="al-form-input" placeholder="DS001" />
               </div>
             </div>
@@ -94,7 +105,7 @@
             </div>
 
             <!-- ── Section C: inTeam toggle + Birthday ── -->
-            <div class="emp-edit-2col" style="align-items:flex-start;">
+            <div class="emp-edit-2col items-start">
               <div>
                 <div class="emp-field-label">อยู่ใน Team</div>
                 <div
@@ -108,7 +119,7 @@
               </div>
               <div>
                 <div class="emp-field-label">🎂 วันเกิด</div>
-                <div style="display:flex;gap:6px;">
+                <div class="flex gap-1.5">
                   <input
                     v-model="editForms[r.id].bdayDay"
                     type="number" min="1" max="31"
@@ -129,10 +140,10 @@
             <!-- ── Section D: Passcode ── -->
             <details class="emp-stargng">
               <summary>🔐 Passcode</summary>
-              <div style="margin-top:10px;">
+              <div class="mt-2.5">
                 <!-- Toggle: enable / disable passcode requirement -->
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                  <div class="emp-field-label" style="margin:0;">ต้องการรหัสผ่าน</div>
+                <div class="flex items-center gap-2.5 mb-2.5">
+                  <div class="emp-field-label m-0">ต้องการรหัสผ่าน</div>
                   <div
                     class="emp-toggle emp-toggle-sm"
                     :class="{ on: editForms[r.id].passcode !== null }"
@@ -140,24 +151,23 @@
                   >
                     <div class="emp-toggle-knob"></div>
                   </div>
-                  <span style="font-size:11px;color:#6B7280;">
+                  <span class="text-[11px] text-gray-500">
                     {{ editForms[r.id].passcode !== null ? 'เปิดใช้งาน' : 'ปิด (ไม่ต้องใส่รหัส)' }}
                   </span>
                 </div>
 
                 <!-- Status when enabled -->
                 <template v-if="editForms[r.id].passcode !== null">
-                  <div v-if="editForms[r.id].passcode" style="font-size:12px;color:#059669;margin-bottom:8px;">
+                  <div v-if="editForms[r.id].passcode" class="text-xs text-mint mb-2">
                     🔐 ผู้ใช้ตั้งรหัสผ่านแล้ว
                   </div>
-                  <div v-else style="font-size:12px;color:#F59E0B;margin-bottom:8px;">
+                  <div v-else class="text-xs text-amber mb-2">
                     ⏳ รอผู้ใช้ตั้งรหัสผ่านเมื่อ Login ครั้งแรก
                   </div>
                   <button
                     v-if="editForms[r.id].passcode"
                     type="button"
-                    class="al-btn al-btn-cancel"
-                    style="font-size:12px;padding:6px 12px;"
+                    class="al-btn al-btn-cancel text-xs"
                     :disabled="resetingPasscode[r.id]"
                     @click.prevent="resetPasscode(r)"
                   >
@@ -170,7 +180,7 @@
             <!-- ── Section E: StarGang (collapsible) ── -->
             <details class="emp-stargng">
               <summary>⭐ StarGang & Slogan</summary>
-              <div style="margin-top:10px;">
+              <div class="mt-2.5">
                 <div class="emp-edit-2col">
                   <div>
                     <div class="emp-field-label">StarGang Name</div>
@@ -181,8 +191,8 @@
                     <input v-model="editForms[r.id].starGangRole" class="al-form-input" placeholder="บทบาท" />
                   </div>
                 </div>
-                <div style="margin-top:8px;display:flex;align-items:center;gap:10px;">
-                  <div class="emp-field-label" style="margin:0;white-space:nowrap;">อยู่ใน StarGang</div>
+                <div class="mt-2 flex items-center gap-2.5">
+                  <div class="emp-field-label m-0 whitespace-nowrap">อยู่ใน StarGang</div>
                   <div
                     class="emp-toggle emp-toggle-sm"
                     :class="{ on: editForms[r.id].inStarGang === 'true' }"
@@ -191,7 +201,7 @@
                     <div class="emp-toggle-knob"></div>
                   </div>
                 </div>
-                <div style="margin-top:8px;">
+                <div class="mt-2">
                   <div class="emp-field-label">Slogan</div>
                   <input v-model="editForms[r.id].starGangSlogan" class="al-form-input" placeholder="สโลแกน..." maxlength="100" />
                 </div>
@@ -212,22 +222,21 @@
 
         </div>
       </div>
+      </div>
     </main>
 
     <!-- ══ Add New Modal ══ -->
-    <div v-if="addModal.open" class="al-modal-overlay" @click.self="addModal.open=false">
-      <div class="al-modal amg-modal-scroll">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">+ เพิ่มพนักงานใหม่</div>
+    <BaseModal padded modal-id="admin-emp-add" sheet-class="modal-sheet-lg">
+      <div class="al-modal-title">+ เพิ่มพนักงานใหม่</div>
 
         <div class="amg-img-upload-row">
           <div class="amg-img-preview">
             <img v-if="addImgPreview" :src="addImgPreview" />
-            <span v-else style="font-size:28px;">👤</span>
+            <span v-else class="text-[28px]">👤</span>
           </div>
           <div>
             <label class="amg-pick-btn" for="addEmpImg">📷 เลือกรูปภาพ</label>
-            <input id="addEmpImg" type="file" accept="image/*" style="display:none" @change="pickAddImage" />
+            <input id="addEmpImg" type="file" accept="image/*" class="hidden" @change="pickAddImage" />
             <div v-if="addImgUploading" class="amg-upload-status">⏳ กำลังอัปโหลด...</div>
           </div>
         </div>
@@ -261,42 +270,38 @@
         </div>
 
         <div class="amg-section-label">🎂 วันเกิด (optional)</div>
-        <div style="display:flex;gap:8px;">
-          <input v-model="addBdayDay" type="number" min="1" max="31" class="al-form-input" style="width:80px;text-align:center;" placeholder="วัน" />
+        <div class="flex gap-2">
+          <input v-model="addBdayDay" type="number" min="1" max="31" class="al-form-input w-20 text-center" placeholder="วัน" />
           <select v-model="addForm.monthIdx" class="al-form-select">
             <option value="">— เดือน —</option>
             <option v-for="(m, i) in MONTHS" :key="i" :value="String(i)">{{ m }}</option>
           </select>
         </div>
 
-        <div v-if="addModal.error" class="al-error" style="margin-top:12px;">⚠️ {{ addModal.error }}</div>
+        <div v-if="addModal.error" class="al-error mt-3">⚠️ {{ addModal.error }}</div>
 
         <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="addModal.open=false">ยกเลิก</button>
+          <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
           <button class="al-btn al-btn-save" :disabled="addModal.saving" @click="doAddSave">
             {{ addModal.saving ? 'กำลังบันทึก...' : '✅ เพิ่มพนักงาน' }}
           </button>
         </div>
-      </div>
-    </div>
+    </BaseModal>
 
     <!-- ══ Delete Confirm ══ -->
-    <div v-if="delTarget" class="al-modal-overlay" @click.self="delTarget=null">
-      <div class="al-modal">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
-        <p style="font-size:13px;color:#374151;margin:0 0 8px;">
-          ลบพนักงาน "<strong>{{ delTarget.name }}</strong>" ใช่หรือไม่?
-        </p>
-        <p style="font-size:12px;color:#DC2626;margin:0 0 16px;">⚠️ การกระทำนี้ไม่สามารถย้อนกลับได้</p>
-        <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="delTarget=null">ยกเลิก</button>
-          <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
-            {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
-          </button>
-        </div>
+    <BaseModal padded modal-id="admin-emp-del">
+      <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
+      <p class="text-sm text-gray-700 mb-2">
+        ลบพนักงาน "<strong>{{ delTarget?.name }}</strong>" ใช่หรือไม่?
+      </p>
+      <p class="text-xs text-coral mb-4">⚠️ การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+      <div class="al-modal-footer">
+        <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
+        <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
+          {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
+        </button>
       </div>
-    </div>
+    </BaseModal>
 
   </div>
 </template>
@@ -304,11 +309,17 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import * as svc from '../../services/adminService.js'
-import { fetchImages } from '../../services/imageService.js'
-import { deleteImage } from '../../services/edgeFunctions.js'
+import { useUiStore } from '../../core/stores/ui.js'
+import BaseModal from '../../shared/components/BaseModal.vue'
+import * as svc from '../../core/services/adminService.js'
+import { fetchImages } from '../../core/services/imageService.js'
+import { deleteImage } from '../../core/services/edgeFunctions.js'
+import AdminPageHeader from './AdminPageHeader.vue'
+import SkeletonCard from '../../shared/components/SkeletonCard.vue'
+import EmptyState from '../../shared/components/EmptyState.vue'
 
 const route = useRoute()
+const ui = useUiStore()
 
 const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
 function isTrue(v) { return v === true || v === 'true' || v === 'TRUE' }
@@ -546,7 +557,7 @@ function openAdd() {
     starGangName: '', starGangRole: '', starGangSlogan: '', monthIdx: '',
   })
   addBdayDay.value = ''; addImgPreview.value = ''; addImgPending.value = ''
-  addModal.error = ''; addModal.open = true
+  addModal.error = ''; ui.openModal('admin-emp-add')
 }
 
 async function pickAddImage(e) {
@@ -588,7 +599,7 @@ async function doAddSave() {
     }
 
     empRows.value.unshift({ id: empId, ...addForm, imgUrl, imgId, bdDate, fallbackIdx: 0 })
-    addModal.open = false
+    ui.closeModal()
   } catch (e) {
     addModal.error = e.message || 'เกิดข้อผิดพลาด'
   } finally {
@@ -600,7 +611,7 @@ async function doAddSave() {
 const delTarget = ref(null)
 const deleting  = ref(false)
 
-function confirmDelete(r) { delTarget.value = r }
+function confirmDelete(r) { delTarget.value = r; ui.openModal('admin-emp-del') }
 async function doDelete() {
   deleting.value = true
   const target = delTarget.value
@@ -610,6 +621,7 @@ async function doDelete() {
     cancelEdit(target.id)
     empRows.value = empRows.value.filter(r => r.id !== target.id)
     delTarget.value = null
+    ui.closeModal()
   } catch { } finally { deleting.value = false }
 }
 
@@ -618,19 +630,37 @@ async function doDelete() {
 <style scoped>
 @import './admin.css';
 
+/* ── Sticky top block (banner + search + filters) ── */
+.emp-sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.emp-sticky-top :deep(.al-page-banner) {
+  position: relative; /* banner is not sticky on its own — wrapper handles it */
+}
+.emp-search-bar {
+  background: #F2F3FA;
+  border-bottom: 1px solid #E5E7EB;
+  padding: 10px 0 8px;
+}
+.emp-search-bar-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+@media (min-width: 768px) {
+  .emp-search-bar-inner { padding: 0 32px; }
+}
+
 /* ── Toolbar ── */
 .emp-toolbar {
   display: flex;
   gap: 10px;
   align-items: center;
-}
-.emp-toolbar--sticky {
-  position: sticky;
-  top: 56px;
-  z-index: 100;
-  background: #F2F3FA;
-  padding: 8px 0;
-  margin: -8px 0;
 }
 .emp-search {
   flex: 1;

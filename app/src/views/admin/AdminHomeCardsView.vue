@@ -1,26 +1,29 @@
 <template>
-  <main class="al-main">
+  <div>
+    <AdminPageHeader title="🏠 Home Cards" sub="เปิด-ปิด และจัดการ Card หน้าหลัก" />
+    <main class="al-main">
+      <div class="al-body">
 
-    <div class="al-page-header">
-      <h1 class="al-page-title">🏠 จัดการ Cards หน้า Home</h1>
+    <div v-if="loading" class="al-loading-skeletons">
+      <SkeletonCard height="68px" />
+      <SkeletonCard height="68px" />
+      <SkeletonCard height="68px" />
     </div>
-
-    <div v-if="loading" class="al-loading">กำลังโหลดข้อมูล...</div>
 
     <template v-else>
 
       <!-- ── Section 1: เปิด/ปิด Card ─────────────────────────── -->
-      <div class="al-info-box" style="margin-bottom:0;">
+      <div class="al-info-box mb-0">
         ℹ️ <strong>เปิด</strong> = card แสดงและใช้งานได้ปกติ &nbsp;·&nbsp;
         <strong>ปิด</strong> = กดแล้วแสดง "เร็วๆ นี้" แทน
       </div>
 
-      <div class="al-card" style="padding:0;overflow:hidden;">
+      <div class="al-card p-0 overflow-hidden">
         <div
           v-for="(card, i) in CARD_DEFS"
           :key="card.key"
           class="hc-row"
-          :style="i > 0 ? 'border-top:1px solid #F3F4F6;' : ''"
+          :class="{ 'border-t border-gray-100': i > 0 }"
         >
           <div class="hc-icon">{{ card.icon }}</div>
           <div class="hc-info">
@@ -39,27 +42,26 @@
         </div>
       </div>
 
-      <div v-if="saveErr" class="al-error" style="text-align:center;">{{ saveErr }}</div>
+      <div v-if="saveErr" class="al-error text-center">{{ saveErr }}</div>
       <div v-if="saveOk"  class="al-success">✓ บันทึกสำเร็จ — หน้า Home จะอัพเดตทันที</div>
 
       <button
-        class="al-btn al-btn-save"
-        style="width:100%;padding:13px;font-size:14px;"
+        class="al-btn al-btn-save w-full py-3 text-sm"
         :disabled="cardConfig.saving"
         @click="doSave"
       >{{ cardConfig.saving ? 'กำลังบันทึก...' : '💾 บันทึกการตั้งค่า' }}</button>
 
       <!-- ── Section 2: พื้นหลัง Card ──────────────────────────── -->
-      <div class="al-page-header" style="margin-top:8px;margin-bottom:0;">
-        <h2 class="al-page-title" style="font-size:16px;">🎨 พื้นหลัง Card</h2>
+      <div class="al-page-header mt-2 mb-0">
+        <h2 class="al-page-title text-base">🎨 พื้นหลัง Card</h2>
       </div>
 
-      <div class="al-card" style="padding:0;overflow:hidden;">
+      <div class="al-card p-0 overflow-hidden">
         <div
           v-for="(card, i) in CARD_BG_DEFS"
           :key="card.key"
           class="bg-row"
-          :style="i > 0 ? 'border-top:1px solid #F3F4F6;' : ''"
+          :class="{ 'border-t border-gray-100': i > 0 }"
         >
           <!-- Preview swatch -->
           <div class="bg-swatch" :style="{ background: bgStyle(card.key) }"></div>
@@ -82,12 +84,12 @@
 
             <!-- Upload image -->
             <div class="bg-upload-row">
-              <label class="al-btn al-btn-edit bg-upload-btn" style="cursor:pointer;">
+              <label class="al-btn al-btn-edit bg-upload-btn cursor-pointer">
                 {{ uploading[card.key] ? '⏳ กำลังอัปโหลด...' : '📤 อัปโหลดรูป' }}
                 <input
                   type="file"
                   accept="image/*"
-                  style="display:none;"
+                  class="hidden"
                   :disabled="uploading[card.key]"
                   @change="e => onImgChange(card.key, e)"
                 />
@@ -108,25 +110,28 @@
         </div>
       </div>
 
-      <div v-if="saveBgErr" class="al-error" style="text-align:center;">{{ saveBgErr }}</div>
+      <div v-if="saveBgErr" class="al-error text-center">{{ saveBgErr }}</div>
       <div v-if="saveBgOk"  class="al-success">✓ บันทึกพื้นหลังสำเร็จ</div>
 
       <button
-        class="al-btn al-btn-save"
-        style="width:100%;padding:13px;font-size:14px;"
+        class="al-btn al-btn-save w-full py-3 text-sm"
         :disabled="cardConfig.saving"
         @click="doSaveBg"
       >{{ cardConfig.saving ? 'กำลังบันทึก...' : '🎨 บันทึกพื้นหลัง' }}</button>
 
     </template>
-  </main>
+      </div>
+    </main>
+  </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { useCardConfigStore, CARD_DEFS, CARD_BG_DEFS } from '../../stores/cardConfig.js'
-import { resizeToBase64 } from '../../composables/useImageCompress.js'
-import { uploadImage, deleteImage } from '../../services/edgeFunctions.js'
+import { useCardConfigStore, CARD_DEFS, CARD_BG_DEFS } from '../../core/stores/cardConfig.js'
+import { resizeToBase64 } from '../../core/composables/useImageCompress.js'
+import { uploadImage, deleteImage } from '../../core/services/edgeFunctions.js'
+import AdminPageHeader from './AdminPageHeader.vue'
+import SkeletonCard from '../../shared/components/SkeletonCard.vue'
 
 const cardConfig = useCardConfigStore()
 const loading   = ref(true)

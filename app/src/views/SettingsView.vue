@@ -132,8 +132,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUiStore } from '../stores/ui.js'
-import { useUserAuthStore } from '../stores/userAuth.js'
+import { useUiStore } from '../core/stores/ui.js'
+import { useUserAuthStore } from '../core/stores/userAuth.js'
 const ui       = useUiStore()
 const userAuth = useUserAuthStore()
 const router   = useRouter()

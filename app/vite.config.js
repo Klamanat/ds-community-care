@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { visualizer } from 'rollup-plugin-visualizer'
 import path from 'path'
 import https from 'https'
 import http from 'http'
@@ -62,9 +63,23 @@ export default defineConfig(({ mode }) => {
   const gasUrl = env.VITE_GAS_URL || ''
 
   return {
-    plugins: [vue(), ...(gasUrl ? [gasProxyPlugin(gasUrl)] : [])],
+    plugins: [
+      vue(),
+      ...(gasUrl ? [gasProxyPlugin(gasUrl)] : []),
+      visualizer({ open: false, filename: 'dist/stats.html' }),
+    ],
     resolve: {
       alias: { '@': path.resolve(__dirname, './src') }
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['vue', 'vue-router', 'pinia'],
+            supabase: ['@supabase/supabase-js'],
+          },
+        },
+      },
     },
   }
 })

@@ -1,205 +1,212 @@
 <template>
   <div>
+    <AdminPageHeader title="🎁 ของขวัญ" sub="Gift Management">
+      <button v-if="tab === 'gifts'" class="al-btn al-btn-primary" @click="openAdd">+ เพิ่มของขวัญ</button>
+    </AdminPageHeader>
+
     <main class="al-main">
-
-      <div class="al-page-header">
-        <h2 class="al-page-title">🎁 ของขวัญ</h2>
-        <button v-if="tab === 'gifts'" class="al-btn al-btn-primary" @click="openAdd">+ เพิ่มของขวัญ</button>
-      </div>
-
-      <!-- Tab bar -->
-      <div class="gifts-tab-bar">
-        <button class="gtab-btn" :class="{ active: tab === 'gifts' }" @click="tab = 'gifts'">🎁 รายการของขวัญ</button>
-        <button class="gtab-btn" :class="{ active: tab === 'claims' }" @click="switchClaims">🏆 รายการที่ได้รับ <span v-if="claims.length" class="gtab-count">{{ claims.length }}</span></button>
-      </div>
-
-      <!-- ── Tab: Gift catalog ── -->
-      <div v-if="tab === 'gifts'" class="al-card">
-        <div class="al-card-header">
-          <span class="al-card-title">รายการของขวัญ</span>
-          <span class="al-badge al-badge-blue">{{ gifts.length }} รายการ</span>
+      <div class="al-body">
+        <!-- Tab bar -->
+        <div class="gifts-tab-bar">
+          <button class="gtab-btn" :class="{ active: tab === 'gifts' }" @click="tab = 'gifts'">🎁 รายการของขวัญ</button>
+          <button class="gtab-btn" :class="{ active: tab === 'claims' }" @click="switchClaims">🏆 รายการที่ได้รับ <span v-if="claims.length" class="gtab-count">{{ claims.length }}</span></button>
         </div>
 
-        <div v-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
-        <div v-else-if="!gifts.length" class="al-empty">📭 ยังไม่มีของขวัญ</div>
+        <!-- ── Tab: Gift catalog ── -->
+        <div v-if="tab === 'gifts'" class="al-card">
+          <div class="al-card-header">
+            <span class="al-card-title">รายการของขวัญ</span>
+            <span class="al-badge al-badge-blue">{{ gifts.length }} รายการ</span>
+          </div>
 
-        <div v-else>
-          <div class="al-item" v-for="g in gifts" :key="g.id">
-            <img v-if="g.imgUrl" :src="g.imgUrl" class="al-item-thumb" @error="e => e.target.style.display='none'" />
-            <div v-else class="al-item-avatar">{{ g.icon || '🎁' }}</div>
-            <div class="al-item-body">
-              <div class="al-item-title">{{ g.name }}</div>
-              <div v-if="g.description" class="al-item-sub">{{ g.description }}</div>
-              <div class="al-item-meta">
-                <span v-if="g.category" class="al-badge al-badge-purple">{{ g.category }}</span>
-                <span v-if="g.price != null" class="al-badge al-badge-blue">฿{{ g.price.toLocaleString() }}</span>
-                <span v-if="g.quantity != null" class="al-badge al-badge-blue">คงเหลือ {{ g.quantity }}</span>
-                <span v-else class="al-badge al-badge-gray">ไม่จำกัด</span>
-                <span class="al-badge" :class="g.status === 'available' ? 'al-badge-green' : 'al-badge-gray'">
-                  {{ g.status === 'available' ? 'พร้อมแจก' : 'ปิด' }}
-                </span>
+          <div v-if="loading" class="al-loading-skeletons">
+            <SkeletonCard height="68px" />
+            <SkeletonCard height="68px" />
+            <SkeletonCard height="68px" />
+          </div>
+          <EmptyState v-else-if="!gifts.length" title="ยังไม่มีของขวัญ" sub="กด + เพิ่มของขวัญ เพื่อเริ่มต้น" />
+
+          <div v-else>
+            <div class="al-item fade-in" v-for="g in gifts" :key="g.id" @click="handleRippleClick">
+              <img v-if="g.imgUrl" :src="g.imgUrl" class="al-item-thumb" @error="e => e.target.style.display='none'" />
+              <div v-else class="al-item-avatar">{{ g.icon || '🎁' }}</div>
+              <div class="al-item-body">
+                <div class="al-item-title">{{ g.name }}</div>
+                <div v-if="g.description" class="al-item-sub">{{ g.description }}</div>
+                <div class="al-item-meta">
+                  <span v-if="g.category" class="al-badge al-badge-purple">{{ g.category }}</span>
+                  <span v-if="g.price != null" class="al-badge al-badge-blue">฿{{ g.price.toLocaleString() }}</span>
+                  <span v-if="g.quantity != null" class="al-badge al-badge-blue">คงเหลือ {{ g.quantity }}</span>
+                  <span v-else class="al-badge al-badge-gray">ไม่จำกัด</span>
+                  <span class="al-badge" :class="g.status === 'available' ? 'al-badge-green' : 'al-badge-gray'">
+                    {{ g.status === 'available' ? 'พร้อมแจก' : 'ปิด' }}
+                  </span>
+                </div>
+              </div>
+              <div class="al-item-actions" @click.stop>
+                <button class="al-btn al-btn-edit" @click="openEdit(g)">แก้ไข</button>
+                <button class="al-btn al-btn-delete" @click="confirmDelete(g)">ลบ</button>
               </div>
             </div>
-            <div class="al-item-actions">
-              <button class="al-btn al-btn-edit" @click="openEdit(g)">แก้ไข</button>
-              <button class="al-btn al-btn-delete" @click="confirmDelete(g)">ลบ</button>
+          </div>
+        </div>
+
+        <!-- ── Tab: Claims ── -->
+        <div v-if="tab === 'claims'" class="al-card">
+          <div class="al-card-header">
+            <span class="al-card-title">รายการที่ได้รับ</span>
+            <span class="al-badge al-badge-blue">{{ claims.length }} รายการ</span>
+          </div>
+
+          <div v-if="claimsLoading" class="al-loading-skeletons">
+            <SkeletonCard height="68px" />
+            <SkeletonCard height="68px" />
+          </div>
+          <EmptyState v-else-if="!claims.length" title="ยังไม่มีการรับของขวัญ" />
+
+          <div v-else>
+            <div class="claims-year-bar">
+              <button v-for="y in claimYears" :key="y" class="cy-btn" :class="{ active: claimYear === y }" @click="claimYear = y">{{ y }}</button>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- ── Tab: Claims ── -->
-      <div v-if="tab === 'claims'" class="al-card">
-        <div class="al-card-header">
-          <span class="al-card-title">รายการที่ได้รับ</span>
-          <span class="al-badge al-badge-blue">{{ claims.length }} รายการ</span>
-        </div>
-
-        <div v-if="claimsLoading" class="al-loading">⏳ กำลังโหลด...</div>
-        <div v-else-if="!claims.length" class="al-empty">📭 ยังไม่มีการรับของขวัญ</div>
-
-        <div v-else>
-          <!-- Year filter -->
-          <div class="claims-year-bar">
-            <button
-              v-for="y in claimYears"
-              :key="y"
-              class="cy-btn"
-              :class="{ active: claimYear === y }"
-              @click="claimYear = y"
-            >{{ y }}</button>
-          </div>
-
-          <div class="al-item" v-for="c in filteredClaims" :key="c.id">
-            <div class="al-item-avatar" style="font-size:22px;">🎉</div>
-            <div class="al-item-body">
-              <div class="al-item-title">{{ c.employee_name || c.employee_id }}</div>
-              <div class="al-item-sub" style="color:#6366F1;font-weight:700;">🎁 {{ c.gift_name || '—' }}</div>
-              <div class="al-item-meta">
-                <span class="al-badge al-badge-gray">ปี {{ c.claimed_year }}</span>
-                <span class="al-badge al-badge-gray">{{ formatDate(c.claimed_at) }}</span>
+            <div class="al-item fade-in" v-for="c in filteredClaims" :key="c.id" @click="handleRippleClick">
+              <div class="al-item-avatar">🎉</div>
+              <div class="al-item-body">
+                <div class="al-item-title">{{ c.employee_name || c.employee_id }}</div>
+                <div class="al-item-sub text-indigo font-bold">🎁 {{ c.gift_name || '—' }}</div>
+                <div class="al-item-meta">
+                  <span class="al-badge al-badge-gray">ปี {{ c.claimed_year }}</span>
+                  <span class="al-badge al-badge-gray">{{ formatDate(c.claimed_at) }}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
     </main>
 
     <!-- Add / Edit Modal -->
-    <div v-if="modal.open" class="al-modal-overlay" @click.self="modal.open = false">
-      <div class="al-modal">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">{{ modal.mode === 'add' ? '+ เพิ่มของขวัญ' : '✏️ แก้ไขของขวัญ' }}</div>
+    <BaseModal padded modal-id="admin-gifts-form" sheet-class="modal-sheet-lg">
+      <div class="al-modal-title">{{ modal.mode === 'add' ? '+ เพิ่มของขวัญ' : '✏️ แก้ไขของขวัญ' }}</div>
 
-        <div class="al-form-row">
-          <label class="al-form-label">ชื่อของขวัญ <span style="color:#EF4444;">*</span></label>
-          <input v-model="form.name" class="al-form-input" placeholder="เช่น กระเป๋าผ้า DS" />
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">หมวดหมู่</label>
-          <select v-model="form.category" class="al-form-select">
-            <option value="">— ไม่ระบุ —</option>
-            <option v-for="cat in CATEGORIES" :key="cat" :value="cat">{{ cat }}</option>
-          </select>
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">คำอธิบาย</label>
-          <textarea v-model="form.description" class="al-form-input" rows="2" placeholder="รายละเอียดของขวัญ"></textarea>
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">ราคาโดยประมาณ (บาท)</label>
-          <input v-model.number="form.price" type="number" min="0" class="al-form-input" placeholder="ไม่ระบุ" />
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">จำนวน (เว้นว่าง = ไม่จำกัด)</label>
-          <input v-model.number="form.quantity" type="number" min="0" class="al-form-input" placeholder="ไม่จำกัด" />
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">สถานะ</label>
-          <select v-model="form.status" class="al-form-select">
-            <option value="available">พร้อมแจก</option>
-            <option value="unavailable">ปิด (ซ่อน)</option>
-          </select>
-        </div>
-
-        <!-- Icon / Image toggle -->
-        <div class="al-form-row">
-          <label class="al-form-label">รูปของขวัญ</label>
-
-          <div class="gift-img-toggle">
-            <button class="git-btn" :class="{ active: imgMode === 'emoji' }" @click="imgMode = 'emoji'">😊 Emoji</button>
-            <button class="git-btn" :class="{ active: imgMode === 'upload' }" @click="imgMode = 'upload'">📷 อัปโหลดรูป</button>
-          </div>
-
-          <template v-if="imgMode === 'emoji'">
-            <div class="gift-emoji-grid">
-              <button v-for="e in GIFT_EMOJIS" :key="e" class="geg-btn" :class="{ active: form.icon === e }" @click="form.icon = e">{{ e }}</button>
-            </div>
-            <div v-if="form.icon" class="gift-emoji-preview">
-              <span style="font-size:48px;">{{ form.icon }}</span>
-              <button class="al-btn al-btn-delete" style="margin-top:4px;font-size:11px;padding:3px 10px;" @click="form.icon = ''">ล้าง</button>
-            </div>
-          </template>
-
-          <template v-else>
-            <div class="act-upload-zone" :style="imgUploading ? 'opacity:.6;cursor:default;' : ''" @click="!imgUploading && imgFileInput.click()">
-              <img v-if="imgPreview && !imgUploading" :src="imgPreview" class="act-upload-preview" />
-              <div v-else-if="imgUploading" class="act-upload-placeholder">
-                <span style="font-size:22px;">⏳</span>
-                <span style="font-size:12px;color:#6B7280;margin-top:4px;">กำลังอัปโหลด...</span>
-              </div>
-              <div v-else class="act-upload-placeholder">
-                <span style="font-size:28px;">🎁</span>
-                <span style="font-size:12px;color:#9CA3AF;margin-top:4px;">คลิกเพื่ออัปโหลดรูป</span>
-              </div>
-            </div>
-            <button v-if="imgPreview && !imgUploading" class="al-btn al-btn-delete" style="margin-top:6px;width:100%;" @click.stop="clearImg">🗑️ ลบรูป</button>
-            <input ref="imgFileInput" type="file" accept="image/*" style="display:none" @change="onImgChange" />
-          </template>
-        </div>
-
-        <div v-if="modal.error" class="al-error">⚠️ {{ modal.error }}</div>
-
-        <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="modal.open = false">ยกเลิก</button>
-          <button class="al-btn al-btn-save" :disabled="modal.saving || imgUploading" @click="saveModal">
-            {{ modal.saving ? 'กำลังบันทึก...' : imgUploading ? 'รอรูป...' : '✅ บันทึก' }}
-          </button>
-        </div>
+      <div class="al-form-row">
+        <label class="al-form-label">ชื่อของขวัญ <span class="text-coral">*</span></label>
+        <input v-model="form.name" class="al-form-input" placeholder="เช่น กระเป๋าผ้า DS" />
       </div>
-    </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">หมวดหมู่</label>
+        <select v-model="form.category" class="al-form-select">
+          <option value="">— ไม่ระบุ —</option>
+          <option v-for="cat in CATEGORIES" :key="cat" :value="cat">{{ cat }}</option>
+        </select>
+      </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">คำอธิบาย</label>
+        <textarea v-model="form.description" class="al-form-input" rows="2" placeholder="รายละเอียดของขวัญ"></textarea>
+      </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">ราคาโดยประมาณ (บาท)</label>
+        <input v-model.number="form.price" type="number" min="0" class="al-form-input" placeholder="ไม่ระบุ" />
+      </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">จำนวน (เว้นว่าง = ไม่จำกัด)</label>
+        <input v-model.number="form.quantity" type="number" min="0" class="al-form-input" placeholder="ไม่จำกัด" />
+      </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">สถานะ</label>
+        <select v-model="form.status" class="al-form-select">
+          <option value="available">พร้อมแจก</option>
+          <option value="unavailable">ปิด (ซ่อน)</option>
+        </select>
+      </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">รูปของขวัญ</label>
+
+        <div class="gift-img-toggle">
+          <button class="git-btn" :class="{ active: imgMode === 'emoji' }" @click="imgMode = 'emoji'">😊 Emoji</button>
+          <button class="git-btn" :class="{ active: imgMode === 'upload' }" @click="imgMode = 'upload'">📷 อัปโหลดรูป</button>
+        </div>
+
+        <template v-if="imgMode === 'emoji'">
+          <div class="gift-emoji-grid">
+            <button v-for="e in GIFT_EMOJIS" :key="e" class="geg-btn" :class="{ active: form.icon === e }" @click="form.icon = e">{{ e }}</button>
+          </div>
+          <div v-if="form.icon" class="gift-emoji-preview">
+            <span class="text-5xl">{{ form.icon }}</span>
+            <button class="al-btn al-btn-delete mt-1 text-[11px] py-0.5 px-2.5" @click="form.icon = ''">ล้าง</button>
+          </div>
+        </template>
+
+        <template v-else>
+          <div
+            class="act-upload-zone"
+            :class="{ 'opacity-60 cursor-default': imgUploading }"
+            @click="!imgUploading && imgFileInput.click()"
+          >
+            <img v-if="imgPreview && !imgUploading" :src="imgPreview" class="act-upload-preview" />
+            <div v-else-if="imgUploading" class="act-upload-placeholder">
+              <span class="text-2xl">⏳</span>
+              <span class="text-xs text-app-light mt-1">กำลังอัปโหลด...</span>
+            </div>
+            <div v-else class="act-upload-placeholder">
+              <span class="text-3xl">🎁</span>
+              <span class="text-xs text-app-light mt-1">คลิกเพื่ออัปโหลดรูป</span>
+            </div>
+          </div>
+          <button v-if="imgPreview && !imgUploading" class="al-btn al-btn-delete mt-1.5 w-full" @click.stop="clearImg">🗑️ ลบรูป</button>
+          <input ref="imgFileInput" type="file" accept="image/*" class="hidden" @change="onImgChange" />
+        </template>
+      </div>
+
+      <div v-if="modal.error" class="al-error">⚠️ {{ modal.error }}</div>
+
+      <div class="al-modal-footer">
+        <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
+        <button class="al-btn al-btn-save" :disabled="modal.saving || imgUploading" @click="saveModal">
+          {{ modal.saving ? 'กำลังบันทึก...' : imgUploading ? 'รอรูป...' : '✅ บันทึก' }}
+        </button>
+      </div>
+    </BaseModal>
 
     <!-- Delete confirm -->
-    <div v-if="delTarget" class="al-modal-overlay" @click.self="delTarget = null">
-      <div class="al-modal al-modal--sm">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">🗑️ ลบของขวัญ</div>
-        <p style="font-size:14px;color:#374151;margin:12px 0;">
-          ยืนยันลบ <strong>{{ delTarget.name }}</strong>?
-        </p>
-        <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="delTarget = null">ยกเลิก</button>
-          <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
-            {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
-          </button>
-        </div>
+    <BaseModal padded modal-id="admin-gifts-del">
+      <div class="al-modal-title">🗑️ ลบของขวัญ</div>
+      <p class="text-sm text-app-mid my-3">
+        ยืนยันลบ <strong>{{ delTarget?.name }}</strong>?
+      </p>
+      <div class="al-modal-footer">
+        <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
+        <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
+          {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
+        </button>
       </div>
-    </div>
+    </BaseModal>
 
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { fetchGifts, adminAddGift, adminUpdateGift, adminDeleteGift, fetchGiftClaims } from '../../services/giftService.js'
-import { resizeToBase64 } from '../../composables/useImageCompress.js'
-import { uploadImage, deleteImage } from '../../services/edgeFunctions.js'
+import { fetchGifts, adminAddGift, adminUpdateGift, adminDeleteGift, fetchGiftClaims } from '../../features/gifts/giftService.js'
+import { resizeToBase64 } from '../../core/composables/useImageCompress.js'
+import { uploadImage, deleteImage } from '../../core/services/edgeFunctions.js'
+import { useUiStore } from '../../core/stores/ui.js'
+import AdminPageHeader from './AdminPageHeader.vue'
+import BaseModal from '../../shared/components/BaseModal.vue'
+import SkeletonCard from '../../shared/components/SkeletonCard.vue'
+import EmptyState from '../../shared/components/EmptyState.vue'
+import { useRipple } from '../../core/composables/useRipple.js'
+import { useFadeIn } from '../../core/composables/useFadeIn.js'
+
+const ui = useUiStore()
+const { handleRippleClick } = useRipple()
+useFadeIn('.fade-in')
 
 const CATEGORIES = ['เครื่องใช้', 'อุปกรณ์สำนักงาน', 'อาหาร & เครื่องดื่ม', 'บัตรกำนัล', 'ของตกแต่ง', 'อื่นๆ']
 const GIFT_EMOJIS = [
@@ -221,9 +228,9 @@ onMounted(async () => {
 })
 
 // ── Claims ─────────────────────────────────────────────────────
-const claims       = ref([])
+const claims        = ref([])
 const claimsLoading = ref(false)
-const claimYear    = ref(new Date().getFullYear())
+const claimYear     = ref(new Date().getFullYear())
 
 const claimYears = computed(() => {
   const years = [...new Set(claims.value.map(c => c.claimed_year))].sort((a, b) => b - a)
@@ -252,7 +259,7 @@ function formatDate(raw) {
 }
 
 // ── Modal ──────────────────────────────────────────────────────
-const modal   = reactive({ open: false, mode: 'add', saving: false, error: '' })
+const modal   = reactive({ mode: 'add', saving: false, error: '' })
 const form    = reactive({ id: '', name: '', description: '', category: '', icon: '', price: null, quantity: null, status: 'available', imgId: '', imgUrl: '' })
 const imgMode = ref('emoji')
 
@@ -263,14 +270,16 @@ const imgUploading = ref(false)
 function openAdd() {
   Object.assign(form, { id: '', name: '', description: '', category: '', icon: '', price: null, quantity: null, status: 'available', imgId: '', imgUrl: '' })
   imgPreview.value = ''; imgUploading.value = false; imgMode.value = 'emoji'
-  modal.mode = 'add'; modal.error = ''; modal.open = true
+  modal.mode = 'add'; modal.error = ''
+  ui.openModal('admin-gifts-form')
 }
 
 function openEdit(g) {
   Object.assign(form, { id: g.id, name: g.name, description: g.description, category: g.category, icon: g.icon || '', price: g.price, quantity: g.quantity, status: g.status, imgId: g.imgId, imgUrl: g.imgUrl })
   imgPreview.value = g.imgUrl || ''; imgUploading.value = false
   imgMode.value = g.imgUrl ? 'upload' : 'emoji'
-  modal.mode = 'edit'; modal.error = ''; modal.open = true
+  modal.mode = 'edit'; modal.error = ''
+  ui.openModal('admin-gifts-form')
 }
 
 async function onImgChange(e) {
@@ -324,7 +333,7 @@ async function saveModal() {
       const idx = gifts.value.findIndex(g => g.id === form.id)
       if (idx >= 0) gifts.value.splice(idx, 1, updated)
     }
-    modal.open = false
+    ui.closeModal()
   } catch (err) {
     modal.error = err.message || 'บันทึกล้มเหลว'
   } finally {
@@ -336,7 +345,10 @@ async function saveModal() {
 const delTarget = ref(null)
 const deleting  = ref(false)
 
-function confirmDelete(g) { delTarget.value = g }
+function confirmDelete(g) {
+  delTarget.value = g
+  ui.openModal('admin-gifts-del')
+}
 
 async function doDelete() {
   if (!delTarget.value) return
@@ -346,6 +358,7 @@ async function doDelete() {
     if (target.imgId) deleteImage([target.imgId]).catch(console.warn)
     await adminDeleteGift(target.id)
     gifts.value = gifts.value.filter(g => g.id !== target.id)
+    ui.closeModal()
     delTarget.value = null
   } catch (err) {
     alert('ลบล้มเหลว: ' + err.message)

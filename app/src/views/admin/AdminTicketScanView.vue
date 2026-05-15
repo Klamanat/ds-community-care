@@ -1,14 +1,13 @@
 <template>
   <div class="scan-page">
-    <div class="al-page-header" style="margin-bottom:16px;">
-      <h2 class="al-page-title">📷 สแกนตั๋ว</h2>
-      <router-link to="/admin/activities" class="al-btn" style="font-size:12px;padding:7px 12px;">← กลับ</router-link>
-    </div>
+    <AdminPageHeader title="📷 สแกนตั๋ว" sub="QR Ticket Check-in">
+      <router-link to="/admin/activities" class="al-btn al-btn-cancel">← กลับ</router-link>
+    </AdminPageHeader>
 
     <!-- Camera -->
     <div class="scan-viewport-wrap">
       <video ref="videoEl" class="scan-video" autoplay playsinline muted></video>
-      <canvas ref="canvasEl" style="display:none;"></canvas>
+      <canvas ref="canvasEl" class="hidden"></canvas>
       <div class="scan-frame"></div>
       <div class="scan-status-overlay">{{ scanStatus }}</div>
     </div>
@@ -51,7 +50,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import jsQR from 'jsqr'
-import * as svc from '../../services/activitiesService.js'
+import AdminPageHeader from './AdminPageHeader.vue'
+import * as svc from '../../features/activities/activitiesService.js'
 
 const videoEl   = ref(null)
 const canvasEl  = ref(null)

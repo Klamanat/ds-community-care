@@ -372,6 +372,16 @@
   }
   .modal-body-scroll { @apply flex-1 overflow-y-auto; }
   .modal-inner-scroll { @apply overflow-y-auto; }
+  .modal-padded-body {
+    padding: 20px 20px 24px;
+    overflow-y: auto;
+    max-height: calc(90dvh - 56px);
+    overscroll-behavior: contain;
+  }
+  @media (min-width: 600px) {
+    .modal-padded-body { padding: 24px 28px 28px; }
+  }
+  .modal-sheet-lg { max-width: 580px !important; }
   .modal-close-btn {
     @apply w-full py-[13px] rounded-xl font-extrabold text-[13px] text-white
            border-none cursor-pointer bg-[linear-gradient(135deg,#6366F1,#A855F7)];
@@ -386,6 +396,33 @@
     @apply inline-flex items-center gap-1 bg-indigo/10 text-indigo
            text-[11px] font-bold px-3 py-1 rounded-full;
   }
+
+  /* === Admin form fields (global so they work inside Teleport modals) === */
+  .al-form-row { margin-bottom: 14px; }
+  .al-form-label {
+    display: block; font-size: 12px; font-weight: 700;
+    color: #52497A; margin-bottom: 5px; letter-spacing: 0.02em;
+  }
+  .al-form-input, .al-form-select, .al-form-textarea {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1.5px solid #E2DCFB;
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: 'Sarabun', sans-serif;
+    color: #1A1235;
+    background: #F9F8FF;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+  }
+  .al-form-input:focus, .al-form-select:focus, .al-form-textarea:focus {
+    border-color: #6366F1;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+  }
+  .al-form-textarea { resize: vertical; min-height: 80px; }
+  .al-form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
   /* === Empathy cards === */
   .emp-card-hdr { @apply flex items-center gap-2 p-3 pb-2; }

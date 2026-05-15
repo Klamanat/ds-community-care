@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#4F52C8"/>
+      <stop offset="52%"  stop-color="#7C3AC2"/>
+      <stop offset="100%" stop-color="#C83D8E"/>
+    </linearGradient>
+    <!-- soft inner glow on top half -->
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="rgba(255,255,255,0.18)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="32" height="32" rx="7" fill="url(#g)"/>
+  <!-- Subtle top shine -->
+  <rect width="32" height="16" rx="7" fill="url(#shine)"/>
+
+  <!-- Heart: white, centered -->
+  <path d="M16 23
+    C 15 22 5 16.5 5 10.5
+    C 5 7.5 7.5 5 10.5 5
+    C 12.6 5 14.2 6.1 16 8.2
+    C 17.8 6.1 19.4 5 21.5 5
+    C 24.5 5 27 7.5 27 10.5
+    C 27 16.5 17 22 16 23Z"
+    fill="white"/>
+
+  <!-- Tiny "DS" label at the bottom — readable at ≥24 px render size -->
+  <text x="16" y="30"
+    text-anchor="middle"
+    font-family="'Arial Black', Arial, sans-serif"
+    font-size="6.5"
+    font-weight="900"
+    letter-spacing="0.4"
+    fill="rgba(255,255,255,0.85)">DS</text>
+</svg>

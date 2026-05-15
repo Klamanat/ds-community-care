@@ -41,9 +41,9 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import EmpathyCard from './EmpathyCard.vue'
-import SkeletonCard from '../shared/SkeletonCard.vue'
-import { useEmpathyStore } from '../../stores/empathy.js'
-import { useUiStore } from '../../stores/ui.js'
+import SkeletonCard from '../../shared/components/SkeletonCard.vue'
+import { useEmpathyStore } from '../../features/empathy/empathy.store.js'
+import { useUiStore } from '../../core/stores/ui.js'
 
 const empathy = useEmpathyStore()
 const ui = useUiStore()

@@ -52,7 +52,7 @@
 </template>
 
 <script setup>
-import { useUiStore } from '../../stores/ui.js'
+import { useUiStore } from '../../core/stores/ui.js'
 
 defineProps({
   name:  { type: String, default: '' },

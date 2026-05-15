@@ -1,202 +1,186 @@
 <template>
   <div>
+    <AdminPageHeader title="🏆 วิธีสะสมคะแนน" sub="Point Rules">
+      <button class="al-btn al-btn-primary" @click="openAdd">+ เพิ่มกฎ</button>
+    </AdminPageHeader>
+
     <main class="al-main">
+      <div class="al-body">
+        <div class="al-card">
+          <div class="al-card-header">
+            <span class="al-card-title">กฎการสะสมคะแนน</span>
+            <span class="al-badge al-badge-blue">{{ rules.length }} รายการ</span>
+          </div>
 
-      <div class="al-page-header">
-        <h2 class="al-page-title">🏆 วิธีสะสมคะแนน</h2>
-        <button class="al-btn al-btn-primary" @click="openAdd">+ เพิ่มกฎ</button>
-      </div>
+          <div v-if="loading" class="al-loading-skeletons">
+            <SkeletonCard height="68px" />
+            <SkeletonCard height="68px" />
+            <SkeletonCard height="68px" />
+          </div>
+          <EmptyState v-else-if="!rules.length" title="ไม่พบข้อมูล" sub="รัน seedPointRules() ใน GAS ก่อน" />
 
-      <div class="al-card">
-        <div class="al-card-header">
-          <span class="al-card-title">กฎการสะสมคะแนน</span>
-          <span class="al-badge al-badge-blue">{{ rules.length }} รายการ</span>
-        </div>
-
-        <div v-if="loading" class="al-loading">⏳ กำลังโหลด...</div>
-        <div v-else-if="!rules.length" class="al-empty">📭 ไม่พบข้อมูล — รัน seedPointRules() ใน GAS ก่อน</div>
-
-        <div v-else>
-          <div class="al-item rw-rule-item" v-for="r in rules" :key="r.id">
-            <!-- Color swatch + icon -->
-            <div class="rw-rule-swatch" :style="{ background: r.color || '#6366F1' }">
-              {{ r.icon }}
-            </div>
-            <div class="al-item-body">
-              <div class="al-item-title">{{ r.name }}</div>
-              <div class="al-item-sub">{{ r.desc }}</div>
-              <div class="al-item-meta">
-                <span class="al-badge" :class="r.active === 'false' ? 'al-badge-gray' : 'al-badge-green'">
-                  {{ r.active === 'false' ? 'ปิด' : 'เปิด' }}
-                </span>
-                <span class="al-badge al-badge-blue">+{{ r.pts }} pts</span>
-                <span class="al-badge al-badge-gray rw-type-badge">{{ r.type }}</span>
-                <span v-if="r.subtype" class="al-badge al-badge-purple rw-type-badge">{{ r.subtype }}</span>
+          <div v-else>
+            <div class="al-item rw-rule-item fade-in" v-for="r in rules" :key="r.id" @click="handleRippleClick">
+              <div class="rw-rule-swatch" :style="{ background: r.color || '#6366F1' }">
+                {{ r.icon }}
               </div>
-            </div>
-            <div class="al-item-actions">
-              <button class="al-btn al-btn-edit" @click="openEdit(r)">แก้ไข</button>
-              <button class="al-btn al-btn-delete" @click="confirmDelete(r)">ลบ</button>
+              <div class="al-item-body">
+                <div class="al-item-title">{{ r.name }}</div>
+                <div class="al-item-sub">{{ r.desc }}</div>
+                <div class="al-item-meta">
+                  <span class="al-badge" :class="r.active === 'false' ? 'al-badge-gray' : 'al-badge-green'">
+                    {{ r.active === 'false' ? 'ปิด' : 'เปิด' }}
+                  </span>
+                  <span class="al-badge al-badge-blue">+{{ r.pts }} pts</span>
+                  <span class="al-badge al-badge-gray rw-type-badge">{{ r.type }}</span>
+                  <span v-if="r.subtype" class="al-badge al-badge-purple rw-type-badge">{{ r.subtype }}</span>
+                </div>
+              </div>
+              <div class="al-item-actions" @click.stop>
+                <button class="al-btn al-btn-edit" @click="openEdit(r)">แก้ไข</button>
+                <button class="al-btn al-btn-delete" @click="confirmDelete(r)">ลบ</button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="al-info-box">
-        <div style="font-size:12px;font-weight:800;color:#3730A3;margin-bottom:6px;">ℹ️ หมายเหตุ</div>
-        <ul style="font-size:12px;color:#4338CA;line-height:2;padding-left:16px;margin:0;">
-          <li>type + subtype ต้องไม่ซ้ำกัน (GAS จะตรวจสอบ)</li>
-          <li>subtype เว้นว่าง = กฎ default ของ type นั้น</li>
-          <li>เมื่อเลือกประเภท icon และสีจะถูก auto-fill ให้อัตโนมัติ</li>
-          <li>ปิด active จะหยุดมอบคะแนนทันที (GAS จะข้ามไป)</li>
-        </ul>
+        <div class="al-info-box">
+          <div class="text-xs font-extrabold text-indigo mb-1.5">ℹ️ หมายเหตุ</div>
+          <ul class="text-xs text-indigo/80 leading-loose pl-4 m-0">
+            <li>type + subtype ต้องไม่ซ้ำกัน (GAS จะตรวจสอบ)</li>
+            <li>subtype เว้นว่าง = กฎ default ของ type นั้น</li>
+            <li>เมื่อเลือกประเภท icon และสีจะถูก auto-fill ให้อัตโนมัติ</li>
+            <li>ปิด active จะหยุดมอบคะแนนทันที (GAS จะข้ามไป)</li>
+          </ul>
+        </div>
       </div>
     </main>
 
     <!-- Add / Edit Modal -->
-    <div v-if="modal.open" class="al-modal-overlay" @click.self="modal.open=false">
-      <div class="al-modal">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">{{ modal.mode === 'add' ? '+ เพิ่มกฎใหม่' : '✏️ แก้ไขกฎคะแนน' }}</div>
+    <BaseModal padded modal-id="admin-rules-form" sheet-class="modal-sheet-lg">
+      <div class="al-modal-title">{{ modal.mode === 'add' ? '+ เพิ่มกฎใหม่' : '✏️ แก้ไขกฎคะแนน' }}</div>
 
-        <!-- type (add only) -->
-        <div v-if="modal.mode === 'add'" class="al-form-row">
-          <label class="al-form-label">ประเภท <span style="color:#EF4444;">*</span></label>
-          <select v-model="form.type" class="al-form-select" @change="onTypeChange">
-            <option value="" disabled>เลือกประเภท...</option>
-            <option
-              v-for="opt in TYPE_OPTIONS"
-              :key="opt.value"
-              :value="opt.value"
-            >{{ opt.label }}</option>
-          </select>
-        </div>
-        <div v-if="modal.mode === 'add'" class="al-form-row">
-          <label class="al-form-label">Subtype</label>
-          <select v-model="form.subtype" class="al-form-select" :disabled="!form.type">
-            <option v-if="!form.type" value="" disabled>เลือก type ก่อน</option>
-            <option
-              v-for="opt in availableSubtypes"
-              :key="opt.value"
-              :value="opt.value"
-            >{{ opt.label }}</option>
-          </select>
-          <div v-if="availableSubtypes.length === 0" style="font-size:10px;color:#EF4444;margin-top:3px;">
-            ⚠️ type นี้มีกฎครบทุก subtype แล้ว
-          </div>
-        </div>
-        <div v-else class="al-form-row">
-          <label class="al-form-label">ประเภท</label>
-          <div class="rw-type-readonly">
-            {{ TYPE_OPTIONS.find(t => t.value === form.type)?.label || form.type }}
-            <span v-if="form.subtype" style="margin-left:6px;font-size:11px;opacity:0.7;">/ {{ form.subtype }}</span>
-          </div>
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">Icon</label>
-          <div class="rw-icon-picker">
-            <div
-              v-for="em in ICON_OPTIONS"
-              :key="em"
-              class="rw-icon-opt"
-              :class="{ active: form.icon === em }"
-              @click="form.icon = em"
-            >{{ em }}</div>
-          </div>
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">คะแนน (pts)</label>
-          <input v-model.number="form.pts" type="number" min="0" max="9999" class="al-form-input" />
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">ชื่อ</label>
-          <input v-model="form.name" class="al-form-input" maxlength="60" placeholder="ชื่อกฎ" />
-        </div>
-        <div class="al-form-row">
-          <label class="al-form-label">คำอธิบาย</label>
-          <input v-model="form.desc" class="al-form-input" maxlength="120" placeholder="รายละเอียด..." />
-        </div>
-
-        <!-- Color picker -->
-        <div class="al-form-row">
-          <label class="al-form-label">สี</label>
-          <div class="rw-color-row">
-            <input type="color" v-model="form.color" class="rw-color-input" />
-            <div class="rw-color-preview" :style="{ background: form.color }">{{ form.icon || '⭐' }}</div>
-          </div>
-          <!-- Presets -->
-          <div class="rw-color-presets">
-            <div
-              v-for="c in COLOR_PRESETS" :key="c"
-              class="rw-color-dot"
-              :class="{ active: form.color === c }"
-              :style="{ background: c }"
-              @click="form.color = c"
-            ></div>
-          </div>
-        </div>
-
-        <div class="al-form-row">
-          <label class="al-form-label">สถานะ</label>
-          <div class="rw-toggle-wrap">
-            <label class="rw-toggle">
-              <input type="checkbox" :checked="form.active !== 'false'" @change="e => form.active = e.target.checked ? 'true' : 'false'" />
-              <span class="rw-toggle-slider"></span>
-            </label>
-            <span class="rw-toggle-label">{{ form.active !== 'false' ? '✅ เปิดใช้งาน' : '🔴 ปิดใช้งาน' }}</span>
-          </div>
-        </div>
-
-        <div v-if="modal.error" class="al-error">⚠️ {{ modal.error }}</div>
-
-        <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="modal.open=false">ยกเลิก</button>
-          <button class="al-btn al-btn-save" :disabled="modal.saving" @click="saveModal">
-            {{ modal.saving ? 'กำลังบันทึก...' : '✅ บันทึก' }}
-          </button>
+      <div v-if="modal.mode === 'add'" class="al-form-row">
+        <label class="al-form-label">ประเภท <span class="text-coral">*</span></label>
+        <select v-model="form.type" class="al-form-select" @change="onTypeChange">
+          <option value="" disabled>เลือกประเภท...</option>
+          <option v-for="opt in TYPE_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
+      <div v-if="modal.mode === 'add'" class="al-form-row">
+        <label class="al-form-label">Subtype</label>
+        <select v-model="form.subtype" class="al-form-select" :disabled="!form.type">
+          <option v-if="!form.type" value="" disabled>เลือก type ก่อน</option>
+          <option v-for="opt in availableSubtypes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        </select>
+        <div v-if="availableSubtypes.length === 0" class="text-[10px] text-coral mt-0.5">
+          ⚠️ type นี้มีกฎครบทุก subtype แล้ว
         </div>
       </div>
-    </div>
+      <div v-else class="al-form-row">
+        <label class="al-form-label">ประเภท</label>
+        <div class="rw-type-readonly">
+          {{ TYPE_OPTIONS.find(t => t.value === form.type)?.label || form.type }}
+          <span v-if="form.subtype" class="ml-1.5 text-xs opacity-70">/ {{ form.subtype }}</span>
+        </div>
+      </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">Icon</label>
+        <div class="rw-icon-picker">
+          <div v-for="em in ICON_OPTIONS" :key="em" class="rw-icon-opt" :class="{ active: form.icon === em }" @click="form.icon = em">{{ em }}</div>
+        </div>
+      </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">คะแนน (pts)</label>
+        <input v-model.number="form.pts" type="number" min="0" max="9999" class="al-form-input" />
+      </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">ชื่อ</label>
+        <input v-model="form.name" class="al-form-input" maxlength="60" placeholder="ชื่อกฎ" />
+      </div>
+      <div class="al-form-row">
+        <label class="al-form-label">คำอธิบาย</label>
+        <input v-model="form.desc" class="al-form-input" maxlength="120" placeholder="รายละเอียด..." />
+      </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">สี</label>
+        <div class="rw-color-row">
+          <input type="color" v-model="form.color" class="rw-color-input" />
+          <div class="rw-color-preview" :style="{ background: form.color }">{{ form.icon || '⭐' }}</div>
+        </div>
+        <div class="rw-color-presets">
+          <div v-for="c in COLOR_PRESETS" :key="c" class="rw-color-dot" :class="{ active: form.color === c }" :style="{ background: c }" @click="form.color = c"></div>
+        </div>
+      </div>
+
+      <div class="al-form-row">
+        <label class="al-form-label">สถานะ</label>
+        <div class="rw-toggle-wrap">
+          <label class="rw-toggle">
+            <input type="checkbox" :checked="form.active !== 'false'" @change="e => form.active = e.target.checked ? 'true' : 'false'" />
+            <span class="rw-toggle-slider"></span>
+          </label>
+          <span class="rw-toggle-label">{{ form.active !== 'false' ? '✅ เปิดใช้งาน' : '🔴 ปิดใช้งาน' }}</span>
+        </div>
+      </div>
+
+      <div v-if="modal.error" class="al-error">⚠️ {{ modal.error }}</div>
+
+      <div class="al-modal-footer">
+        <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
+        <button class="al-btn al-btn-save" :disabled="modal.saving" @click="saveModal">
+          {{ modal.saving ? 'กำลังบันทึก...' : '✅ บันทึก' }}
+        </button>
+      </div>
+    </BaseModal>
 
     <!-- Delete Confirm -->
-    <div v-if="delTarget" class="al-modal-overlay" @click.self="delTarget=null">
-      <div class="al-modal">
-        <div class="al-modal-handle"></div>
-        <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
-        <p style="font-size:13px;color:#374151;margin:0 0 16px;">
-          ลบกฎ "<strong>{{ delTarget.name }}</strong>" ({{ delTarget.type }}) ใช่หรือไม่?
-        </p>
-        <div class="al-modal-footer">
-          <button class="al-btn al-btn-cancel" @click="delTarget=null">ยกเลิก</button>
-          <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
-            {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
-          </button>
-        </div>
+    <BaseModal padded modal-id="admin-rules-del">
+      <div class="al-modal-title">🗑️ ยืนยันการลบ</div>
+      <p class="text-sm text-app-mid mb-4">
+        ลบกฎ "<strong>{{ delTarget?.name }}</strong>" ({{ delTarget?.type }}) ใช่หรือไม่?
+      </p>
+      <div class="al-modal-footer">
+        <button class="al-btn al-btn-cancel" @click="ui.closeModal()">ยกเลิก</button>
+        <button class="al-btn al-btn-delete" :disabled="deleting" @click="doDelete">
+          {{ deleting ? 'กำลังลบ...' : '🗑️ ลบ' }}
+        </button>
       </div>
-    </div>
+    </BaseModal>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useRewardStore } from '../../stores/reward.js'
+import { useRewardStore } from '../../features/rewards/reward.store.js'
 import {
   adminAddRewardRule,
   adminUpdateRewardRule,
   adminDeleteRewardRule,
-} from '../../services/rewardService.js'
+} from '../../features/rewards/rewardService.js'
+import { useUiStore } from '../../core/stores/ui.js'
+import AdminPageHeader from './AdminPageHeader.vue'
+import BaseModal from '../../shared/components/BaseModal.vue'
+import SkeletonCard from '../../shared/components/SkeletonCard.vue'
+import EmptyState from '../../shared/components/EmptyState.vue'
+import { useRipple } from '../../core/composables/useRipple.js'
+import { useFadeIn } from '../../core/composables/useFadeIn.js'
 
+const ui = useUiStore()
 const reward = useRewardStore()
+const { handleRippleClick } = useRipple()
+useFadeIn('.fade-in')
 
 const loading   = ref(true)
 const rules     = ref([])
 const delTarget = ref(null)
 const deleting  = ref(false)
 
-const modal = reactive({ open: false, mode: 'add', saving: false, error: '' })
+const modal = reactive({ mode: 'add', saving: false, error: '' })
 const form  = reactive({ id: '', type: '', subtype: '', icon: '', name: '', desc: '', pts: 0, color: '#6366F1', active: 'true' })
 
 const COLOR_PRESETS = ['#6366F1','#EC4899','#A855F7','#06C755','#F59E0B','#EF4444','#3B82F6','#14B8A6','#F97316','#8B5CF6']
@@ -207,7 +191,6 @@ const ICON_OPTIONS = [
   '📣','🎤','🎨','📚','💪','🏅','🎖️','🌱','⚡','🦋',
 ]
 
-// Type options — wired in GAS addPoints() calls
 const TYPE_OPTIONS = [
   { value: 'join_activity',    label: '🙌 เข้าร่วมกิจกรรม',       defaultIcon: '🙌', defaultColor: '#6366F1' },
   { value: 'activity_checkin', label: '📍 Check-in กิจกรรม',      defaultIcon: '📍', defaultColor: '#3B82F6' },
@@ -216,7 +199,6 @@ const TYPE_OPTIONS = [
   { value: 'birthday_wish',    label: '🎂 อวยพรวันเกิดเพื่อน',    defaultIcon: '🎂', defaultColor: '#A855F7' },
 ]
 
-// Subtype options per type — '' = default rule for that type
 const SUBTYPE_OPTIONS = {
   join_activity: [
     { value: '',           label: '(ค่าเริ่มต้น) เข้าร่วมทั่วไป' },
@@ -224,27 +206,17 @@ const SUBTYPE_OPTIONS = {
     { value: 'presenter',  label: 'presenter — วิทยากร/ผู้นำเสนอ' },
     { value: 'organizer',  label: 'organizer — ผู้จัดงานหลัก' },
   ],
-  activity_checkin: [
-    { value: '', label: '(ค่าเริ่มต้น) check-in กิจกรรม' },
-  ],
-  daily_checkin: [
-    { value: '', label: '(ค่าเริ่มต้น) check-in รายวัน' },
-  ],
-  send_empathy: [
-    { value: '', label: '(ค่าเริ่มต้น)' },
-  ],
-  birthday_wish: [
-    { value: '', label: '(ค่าเริ่มต้น)' },
-  ],
+  activity_checkin: [{ value: '', label: '(ค่าเริ่มต้น) check-in กิจกรรม' }],
+  daily_checkin:    [{ value: '', label: '(ค่าเริ่มต้น) check-in รายวัน' }],
+  send_empathy:     [{ value: '', label: '(ค่าเริ่มต้น)' }],
+  birthday_wish:    [{ value: '', label: '(ค่าเริ่มต้น)' }],
 }
 
-// Filter out subtypes already having a rule for the selected type
 const availableSubtypes = computed(() => {
   const opts = SUBTYPE_OPTIONS[form.type] || [{ value: '', label: '(ค่าเริ่มต้น)' }]
   return opts.filter(opt => !rules.value.some(r => r.type === form.type && r.subtype === opt.value))
 })
 
-// Auto-fill icon/color + reset subtype when type changes
 function onTypeChange() {
   const opt = TYPE_OPTIONS.find(t => t.value === form.type)
   if (opt) {
@@ -262,11 +234,14 @@ onMounted(async () => {
 
 function openAdd() {
   Object.assign(form, { id: '', type: '', subtype: '', icon: '⭐', name: '', desc: '', pts: 10, color: '#6366F1', active: 'true' })
-  modal.mode = 'add'; modal.error = ''; modal.open = true
+  modal.mode = 'add'; modal.error = ''
+  ui.openModal('admin-rules-form')
 }
+
 function openEdit(r) {
   Object.assign(form, { ...r, color: r.color || '#6366F1' })
-  modal.mode = 'edit'; modal.error = ''; modal.open = true
+  modal.mode = 'edit'; modal.error = ''
+  ui.openModal('admin-rules-form')
 }
 
 async function saveModal() {
@@ -294,7 +269,7 @@ async function saveModal() {
       if (idx >= 0) Object.assign(rules.value[idx], { ...form })
     }
     reward.rules = [...rules.value]
-    modal.open = false
+    ui.closeModal()
   } catch (e) {
     modal.error = e.message || 'เกิดข้อผิดพลาด'
   } finally {
@@ -302,19 +277,23 @@ async function saveModal() {
   }
 }
 
-function confirmDelete(r) { delTarget.value = r }
+function confirmDelete(r) {
+  delTarget.value = r
+  ui.openModal('admin-rules-del')
+}
+
 async function doDelete() {
   deleting.value = true
   try {
     await adminDeleteRewardRule(null, delTarget.value.id)
-    rules.value   = rules.value.filter(r => r.id !== delTarget.value.id)
-    reward.rules  = [...rules.value]
+    rules.value  = rules.value.filter(r => r.id !== delTarget.value.id)
+    reward.rules = [...rules.value]
+    ui.closeModal()
     delTarget.value = null
   } catch { } finally {
     deleting.value = false
   }
 }
-
 </script>
 
 <style scoped>
@@ -387,7 +366,6 @@ async function doDelete() {
   background: white;
   flex-shrink: 0;
 }
-.rw-color-hex { flex: 1; font-family: monospace; }
 .rw-color-preview {
   width: 40px;
   height: 40px;

@@ -120,9 +120,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useBlogStore, BLOG_CATEGORIES, getCatInfo } from '../stores/blog.js'
-import { useUserAuthStore } from '../stores/userAuth.js'
-import { useUiStore } from '../stores/ui.js'
+import { useBlogStore, BLOG_CATEGORIES, getCatInfo } from '../features/blog/blog.store.js'
+import { useUserAuthStore } from '../core/stores/userAuth.js'
+import { useUiStore } from '../core/stores/ui.js'
 // BlogPostModal is registered globally in App.vue
 
 const blog     = useBlogStore()
