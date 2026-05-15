@@ -141,20 +141,34 @@ export async function deleteActivity(id) {
   if (error) throw new Error(error.message)
 }
 
-export async function joinActivity(activityId, activityName, employeeName, joinLabel) {
-  // Check if already joined
-  const { data: existing } = await supabase
-    .from('activity_joins')
-    .select('id')
-    .eq('activity_id', activityId)
-    .eq('employee_name', employeeName || 'ไม่ระบุชื่อ')
-    .maybeSingle()
+export async function joinActivity(activityId, activityName, employeeId, employeeName, joinLabel) {
+  // Check if already joined — prefer employee_id lookup when available
+  let existing = null
+  if (employeeId) {
+    const { data } = await supabase
+      .from('activity_joins')
+      .select('id')
+      .eq('activity_id', activityId)
+      .eq('employee_id', String(employeeId))
+      .maybeSingle()
+    existing = data
+  }
+  if (!existing) {
+    const { data } = await supabase
+      .from('activity_joins')
+      .select('id')
+      .eq('activity_id', activityId)
+      .eq('employee_name', employeeName || 'ไม่ระบุชื่อ')
+      .maybeSingle()
+    existing = data
+  }
 
   if (existing) return { alreadyJoined: true }
 
   const { error } = await supabase.from('activity_joins').insert({
     activity_id:   activityId,
     activity_name: activityName,
+    employee_id:   employeeId ? String(employeeId) : null,
     employee_name: employeeName || 'ไม่ระบุชื่อ',
     reward_type:   joinLabel || '',
   })
@@ -172,12 +186,15 @@ export async function uploadImage(base64, fileName, folderType = 'activities') {
   return edgeUpload(base64, fileName || 'image.jpg', folderType)
 }
 
-export async function getMyStamps(employeeName) {
-  const { data, error } = await supabase
-    .from('activity_joins')
-    .select('*')
-    .eq('employee_name', employeeName)
-    .order('stamped_at', { ascending: false })
+export async function getMyStamps(employeeId, employeeName) {
+  // Prefer employee_id query (accurate), fallback to name
+  let query = supabase.from('activity_joins').select('*').order('stamped_at', { ascending: false })
+  if (employeeId) {
+    query = query.eq('employee_id', String(employeeId))
+  } else if (employeeName) {
+    query = query.eq('employee_name', employeeName)
+  }
+  const { data, error } = await query
   if (error) throw new Error(error.message)
   return data || []
 }

@@ -307,7 +307,7 @@ async function stampJoin(ev) {
 
   const name = ui.currentUser?.name || 'ไม่ระบุชื่อ'
   try {
-    await svc.joinActivity(ev.id, ev.name, name, ev.joinLabel)
+    await svc.joinActivity(ev.id, ev.name, ui.currentUser?.id || null, name, ev.joinLabel)
 
     // Add stamp locally only after GAS confirms
     if (!myStamps.value.find(s => String(s.activityId) === String(ev.id))) {
@@ -358,7 +358,7 @@ function closeEgg() { egg.value.show = false }
 async function loadMyStamps() {
   const name = ui.currentUser?.name || ''
   if (!name) { myStamps.value = []; stampsLoaded.value = true; return }
-  try { myStamps.value = await svc.getMyStamps(name) }
+  try { myStamps.value = await svc.getMyStamps(ui.currentUser?.id || null, name) }
   catch { myStamps.value = [] }
   finally { stampsLoaded.value = true }
 }

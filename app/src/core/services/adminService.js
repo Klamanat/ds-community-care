@@ -50,12 +50,15 @@ function mapEmp(e) {
     monthIdx:       e.month_idx   != null ? Number(e.month_idx)   : null,
     bdDate:         e.bd_date     || '',
     fallbackIdx:    e.fallback_idx != null ? Number(e.fallback_idx) : 0,
-    passcode:       e.passcode !== undefined ? e.passcode : null,
+    // passcode intentionally excluded — never expose to client
   }
 }
 
 export async function getEmployees() {
-  const { data, error } = await supabase.from('employees').select('*').order('name')
+  const { data, error } = await supabase
+    .from('employees')
+    .select('id,emp_code,name,role,dept,grad,img_id,img_url,in_team,in_star_gang,star_gang_name,star_gang_role,star_gang_slogan,month_idx,bd_date,fallback_idx')
+    .order('name')
   if (error) throw new Error(error.message)
   return (data || []).map(mapEmp)
 }

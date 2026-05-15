@@ -79,12 +79,17 @@ import { useUiStore }        from './core/stores/ui.js'
 import { useUserAuthStore }  from './core/stores/userAuth.js'
 import { useNotifStore }     from './features/notifications/notif.store.js'
 import { useCardConfigStore } from './core/stores/cardConfig.js'
+import { useRewardStore }    from './features/rewards/reward.store.js'
+import { useMentalStore }    from './features/mental/mental.store.js'
 import { pingPresence }      from './core/services/presenceService.js'
+import { supabase }          from './core/services/supabase.js'
 
 const ui         = useUiStore()
 const userAuth   = useUserAuthStore()
 const notif      = useNotifStore()
 const cardConfig = useCardConfigStore()
+const reward     = useRewardStore()
+const mental     = useMentalStore()
 
 // Load card config once at app start (non-admin users also need to know which cards are on/off)
 cardConfig.load()
@@ -129,6 +134,32 @@ function loadNotifs(immediate = false) {
 onMounted(() => loadNotifs(false))
 watch(() => userAuth.userName, () => loadNotifs(true))  // login/logout → immediate
 watch(() => notif.unreadCount, count => { ui.notifBadge = count }, { immediate: true })
+
+// Session validation — if localStorage has user_id but Supabase session is gone, force logout
+// Note: anonymous sessions are valid but can expire; we silently re-auth if needed
+onMounted(async () => {
+  if (userAuth.userId && !isAdmin.value) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      // Try to restore anonymous session before forcing logout
+      const { data: anonData } = await supabase.auth.signInAnonymously().catch(() => ({ data: null }))
+      if (!anonData?.session) {
+        await userAuth.logout()
+        router.replace('/login')
+      }
+    }
+  }
+})
+
+// On logout: reset feature store caches so next user gets fresh data
+watch(() => userAuth.userId, (newId, oldId) => {
+  if (oldId && !newId) {
+    notif.reset()
+    reward.reset()
+    mental.reset()
+    ui.currentUser = null
+  }
+})
 
 // Presence ping — update last_seen_at on mount + every 3 min (non-admin only)
 let _pingInterval = null

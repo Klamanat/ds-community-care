@@ -56,6 +56,16 @@ export const useRewardStore = defineStore('reward', () => {
       history.value   = pts.history   || []
       if (ruleData) rules.value = ruleData
       loaded.value    = true
+
+      // Sync checkedInToday from server history — prevents localStorage bypass
+      const todayDate = todayStr()
+      const hasCheckinToday = history.value.some(h =>
+        h.type === 'checkin' && (h.createdAt || '').startsWith(todayDate)
+      )
+      if (hasCheckinToday) {
+        checkedInToday.value = true
+        localStorage.setItem(CHECKIN_KEY, todayDate)
+      }
     } catch {
       // silently fail — keep 0 pts
     } finally {
@@ -89,5 +99,18 @@ export const useRewardStore = defineStore('reward', () => {
     }
   }
 
-  return { total, level, levelName, nextPts, nextName, history, rules, loading, loaded, progress, checkedInToday, checkinLoading, load, loadRules, doCheckin }
+  function reset() {
+    total.value          = 0
+    level.value          = 0
+    levelName.value      = '🌱 Newcomer'
+    nextPts.value        = 100
+    nextName.value       = null
+    history.value        = []
+    rules.value          = []
+    loaded.value         = false
+    checkedInToday.value = false
+    localStorage.removeItem(CHECKIN_KEY)
+  }
+
+  return { total, level, levelName, nextPts, nextName, history, rules, loading, loaded, progress, checkedInToday, checkinLoading, load, loadRules, doCheckin, reset }
 })

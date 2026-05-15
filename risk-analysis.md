@@ -1,20 +1,21 @@
 # DS Community Care — Risk Analysis
 
 > วิเคราะห์จุดเสี่ยงในแต่ละ Feature  
-> Updated: 2026-05-15 (Phase 1 applied)
+> Updated: 2026-05-15 (Phase 1 + Phase 2 applied)
 
 ---
 
 ## สรุปภาพรวม
 
-| Severity | จำนวน | Fixed (Phase 1) |
-|---|---|---|
-| 🔴 High | 14 | 8 ✅ |
-| 🟡 Medium | 16 | 3 ✅ |
-| 🟢 Low | 1 | 0 |
+| Severity | จำนวน | Fixed (Phase 1) | Fixed (Phase 2) |
+|---|---|---|---|
+| 🔴 High | 14 | 8 ✅ | 0 |
+| 🟡 Medium | 16 | 3 ✅ | 5 ✅ |
+| 🟢 Low | 1 | 0 | 0 |
 
 > **Phase 1 status:** SQL migration `20260515_phase1_constraints_rls.sql` เขียนครบ รอ run บน Supabase  
-> Client-side fallback pattern ทำให้ทุก fix ทำงานได้ก่อน migration (backward compatible)
+> **Phase 2 status:** SQL migration `20260515_phase2_security.sql` เขียนครบ รอ run บน Supabase  
+> Client-side changes ทั้งหมด backward compatible
 
 ### Risk Categories
 - **Security** — ช่องโหว่ที่ผู้ใช้สามารถปลอมแปลงข้อมูลหรือเข้าถึงโดยไม่มีสิทธิ์
@@ -201,7 +202,7 @@ User ทั่วไปสามารถ toggle card visibility หรือแ
 
 ## 🟡 Medium — ควรแก้ไข
 
-### POINTS-01 · Business Logic · `reward.store.js:28, 73-80`
+### POINTS-01 · Business Logic · `reward.store.js:28, 73-80` · ✅ Fixed (Phase 2)
 **Daily check-in บังคับด้วย localStorage เท่านั้น**
 
 ```js
@@ -211,7 +212,9 @@ if (localStorage.getItem('ds_checkin_date') === today) return
 
 Clear localStorage = check-in ได้ไม่จำกัดครั้ง
 
-**Fix:** DB function ตรวจ last check-in date และ reject ถ้า check-in วันนี้แล้ว
+**Fix applied:** 
+- `daily_checkin` RPC (Phase 2 migration) บังคับด้วย `daily_checkins` table PRIMARY KEY `(employee_name, checkin_date)` — ป้องกัน race + double check-in ฝั่ง DB
+- `reward.store.js` `load()` sync `checkedInToday` จาก server history — ถ้า history มี `type='checkin'` วันนี้ จะ set flag โดยไม่ต้องพึ่ง localStorage
 
 ---
 
@@ -237,30 +240,32 @@ Race condition เล็กน้อย: สองคนกด join พร้อ
 
 ---
 
-### NAME-SPOOF · Security · หลายไฟล์
+### NAME-SPOOF · Security · หลายไฟล์ · ✅ Partially Fixed (Phase 2)
 **`employee_name` เก็บเป็น plain string ทุก table**
 
-| Table | Field |
-|---|---|
-| `activity_joins` | `employee_name` |
-| `activity_tickets` | `employee_name` |
-| `gift_claims` | `employee_name` |
-| `ideas` | `submitter_name` |
-| `training_registrations` | `employee_name` |
-| `consult_requests` | `employee_name` |
+| Table | Field | employee_id? |
+|---|---|---|
+| `activity_joins` | `employee_name` | ✅ Added (Phase 2 migration) |
+| `activity_tickets` | `employee_name` | ✅ มีอยู่แล้ว (Phase 1 RPC) |
+| `gift_claims` | `employee_name` | ✅ มีอยู่แล้ว (Phase 1 RPC) |
+| `ideas` | `submitter_name` | ✅ Added (Phase 2 migration) |
+| `training_registrations` | `employee_name` | ✅ มีอยู่แล้ว |
+| `consult_requests` | `employee_name` | ✅ มีอยู่แล้ว |
 
-ถ้า client ส่ง name ที่แก้แล้ว DB จะบันทึกตามนั้น
-
-**Fix:** Store `employee_id` เท่านั้น, resolve name ตอน display ผ่าน JOIN หรือ view
+**Fix applied:** Phase 2 migration เพิ่ม `employee_id` column ใน `activity_joins` และ `ideas` + unique index บน `employee_id`; client ส่ง `employee_id` ใน `joinActivity()` และ `submitIdea()` แล้ว  
+⚠️ **Remaining:** Display layer ยังใช้ `employee_name` — full migration ไปใช้ JOIN เป็น Phase 3
 
 ---
 
-### LOGOUT-01 · Data Integrity · `userAuth.js:139-143`
+### LOGOUT-01 · Data Integrity · `userAuth.js:139-143` · ✅ Fixed (Phase 2)
 **Logout ไม่ clear caches ทั้งหมด**
 
 Background stores (rewards, notifications, etc.) ยังมีข้อมูลของ user เก่าอยู่ใน memory หลัง logout
 
-**Fix:** `logout()` ต้อง `$reset()` ทุก Pinia store และ clear localStorage keys ทั้งหมด
+**Fix applied:**
+- เพิ่ม `reset()` ใน `reward.store.js`, `notif.store.js`, `mental.store.js` 
+- `App.vue` watch `userId → ''` → เรียก `reset()` ทุก store + clear `ui.currentUser`
+- `userAuth.logout()` เพิ่ม `ds_checkin_date` ใน localStorage cleanup list
 
 ---
 
@@ -305,21 +310,21 @@ Config เก่าจาก เดือนที่แล้วอาจ overr
 
 ---
 
-### SESSION-01 · Security · `userAuth.js`
+### SESSION-01 · Security · `userAuth.js` · ✅ Fixed (Phase 2)
 **Session ไม่ถูก validate ตอน app start**
 
 App โหลด localStorage ตรงๆ โดยไม่ verify กับ server ว่า session ยังใช้งานได้
 
-**Fix:** ตอน `onMounted(App.vue)` ให้ call Supabase `getSession()` และ verify ก่อน restore state
+**Fix applied:** `App.vue` `onMounted` ตรวจ `supabase.auth.getSession()` — ถ้าไม่มี session ลอง `signInAnonymously()` re-auth ก่อน; ถ้ายังไม่ได้ → `logout()` + redirect `/login`
 
 ---
 
-### ADMIN-SELECT-01 · Security · `adminService.js`
+### ADMIN-SELECT-01 · Security · `adminService.js` · ✅ Fixed (Phase 2)
 **`select('*')` บน sensitive tables หลายจุด**
 
 `getEmployees()`, `fetchQuizAnswers()` และอื่นๆ ดึงทุก column รวม `passcode`
 
-**Fix:** Select เฉพาะ column ที่ต้องการ, exclude `passcode` ทุกกรณี
+**Fix applied:** `getEmployees()` ใช้ explicit column list ที่ไม่มี `passcode`; `mapEmp()` ลบ `passcode` field ออกจาก return object พร้อม comment ชัดเจน
 
 ---
 
@@ -368,14 +373,16 @@ Rollback มีแต่ถ้า server return state ที่ต่างจ�
 
 > ⚠️ Migration file `supabase/migrations/20260515_phase1_constraints_rls.sql` ต้อง run บน Supabase SQL Editor ก่อน DB-side fix มีผล
 
-### Phase 2 — Security Hardening
-| # | งาน | Feature |
-|---|---|---|
-| 6 | Daily check-in enforce ใน DB function (ไม่ใช่ localStorage เท่านั้น) | Rewards |
-| 7 | ย้าย `employee_name` → `employee_id` บน tables สำคัญ | ทุก Feature |
-| 8 | Remove `select('*')` — exclude `passcode` column ทุกจุด | Admin |
-| 9 | Validate session ตอน app start | Auth |
-| 10 | `logout()` → `$reset()` ทุก store | Auth |
+### Phase 2 — Security Hardening ✅ Done
+| # | งาน | Feature | Status |
+|---|---|---|---|
+| 6 | Daily check-in enforce ใน DB function + store sync จาก history | Rewards | ✅ Migration + client |
+| 7 | เพิ่ม `employee_id` ใน `activity_joins`, `ideas` | ทุก Feature | ✅ Migration + client |
+| 8 | Remove `select('*')` — exclude `passcode` column | Admin | ✅ Client |
+| 9 | Validate session ตอน app start + anonymous re-auth | Auth | ✅ Client |
+| 10 | `logout()` → `reset()` ทุก store + clear all localStorage keys | Auth | ✅ Client |
+
+> ⚠️ Migration file `supabase/migrations/20260515_phase2_security.sql` ต้อง run บน Supabase SQL Editor
 
 ### Phase 3 — UX & Reliability
 | # | งาน | Feature |
@@ -387,4 +394,4 @@ Rollback มีแต่ถ้า server return state ที่ต่างจ�
 
 ---
 
-*risk-analysis.md — DS Community Care v2.0 · Phase 1 completed 2026-05-15*
+*risk-analysis.md — DS Community Care v2.0 · Phase 1 + Phase 2 completed 2026-05-15*

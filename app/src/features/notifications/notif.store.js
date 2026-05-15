@@ -80,5 +80,14 @@ export const useNotifStore = defineStore('notif', () => {
     finally { loading.value = false }
   }
 
-  return { items, readIds, loading, unreadCount, isRead, load, markRead, markAllRead }
+  function reset() {
+    items.value   = []
+    readIds.value = new Set()
+    _lastFetch    = 0
+    _lastEmp      = ''
+    localStorage.removeItem(LS_READ)
+    localStorage.removeItem(LS_DATA)
+  }
+
+  return { items, readIds, loading, unreadCount, isRead, load, markRead, markAllRead, reset }
 })

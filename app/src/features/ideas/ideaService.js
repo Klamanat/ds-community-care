@@ -31,6 +31,7 @@ export async function submitIdea(idea) {
       title:          idea.title.slice(0, 200),
       detail:         (idea.detail || '').slice(0, 500),
       submitter_name: idea.submitterName,
+      employee_id:    idea.employeeId ? String(idea.employeeId) : null,
       status:         'pending',
     })
     .select()

@@ -125,6 +125,17 @@ export const useMentalStore = defineStore('mental', () => {
     senderLoaded.value = false  // invalidate cache so history reloads
   }
 
+  function reset() {
+    advisors.value        = []
+    loaded.value          = false
+    myRequests.value      = []
+    requestsLoaded.value  = false
+    requestsError.value   = ''
+    senderRequests.value  = []
+    senderLoaded.value    = false
+    senderError.value     = ''
+  }
+
   return {
     advisors, loaded, loadAdvisors, isCounselor,
     myRequests, requestsLoaded, requestsLoading, requestsError,
@@ -132,5 +143,6 @@ export const useMentalStore = defineStore('mental', () => {
     senderRequests, senderLoaded, senderLoading, senderError,
     loadSenderRequests,
     submitRequest: doSubmitRequest,
+    reset,
   }
 })

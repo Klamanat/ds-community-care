@@ -162,7 +162,8 @@ async function submit() {
       category: ideas.selectedCategory,
       title: title.value.trim(),
       detail: detail.value.trim(),
-      submitterName: anonymous.value ? 'ไม่ระบุชื่อ' : (userAuth.userName || 'ไม่ระบุ')
+      submitterName: anonymous.value ? 'ไม่ระบุชื่อ' : (userAuth.userName || 'ไม่ระบุ'),
+      employeeId: anonymous.value ? null : (userAuth.userId || null),
     })
     title.value = ''
     detail.value = ''

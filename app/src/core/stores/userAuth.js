@@ -139,7 +139,7 @@ export const useUserAuthStore = defineStore('userAuth', () => {
   async function logout() {
     await supabase.auth.signOut()
     _clearLocal()
-    ;['user_id','user_empcode','user_name','user_role','user_imgid','user_img','user_dept','user_slogan','dsc_ann_seen'].forEach(k => localStorage.removeItem(k))
+    ;['user_id','user_empcode','user_name','user_role','user_imgid','user_img','user_dept','user_slogan','dsc_ann_seen','ds_checkin_date'].forEach(k => localStorage.removeItem(k))
   }
 
   return { userId, userEmpCode, userName, userRole, userImgId, userImgUrl, userDept, userSlogan, userBdDate, isLoading, error, isAuthenticated, checkEmployee, setPasscode, loginWithEmployee, logout }
