@@ -89,6 +89,11 @@ export const useCardConfigStore = defineStore('cardConfig', () => {
       const { error } = await supabase.from('settings').upsert(rows, { onConflict: 'key' })
       if (error) throw new Error(error.message)
       localStorage.setItem(LS_KEY, JSON.stringify({ ...config }))
+    } catch (e) {
+      // Restore from localStorage on failure
+      const saved = localStorage.getItem(LS_KEY)
+      if (saved) Object.assign(config, JSON.parse(saved))
+      throw e
     } finally {
       saving.value = false
     }
@@ -109,6 +114,13 @@ export const useCardConfigStore = defineStore('cardConfig', () => {
       if (error) throw new Error(error.message)
       localStorage.setItem(LS_BG_KEY,    JSON.stringify({ ...bgConfig }))
       localStorage.setItem(LS_BG_ID_KEY, JSON.stringify({ ...bgImgId }))
+    } catch (e) {
+      // Restore from localStorage on failure
+      const savedBg = localStorage.getItem(LS_BG_KEY)
+      const savedId = localStorage.getItem(LS_BG_ID_KEY)
+      if (savedBg) Object.assign(bgConfig, JSON.parse(savedBg))
+      if (savedId) Object.assign(bgImgId, JSON.parse(savedId))
+      throw e
     } finally {
       saving.value = false
     }

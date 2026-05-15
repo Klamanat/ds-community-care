@@ -133,30 +133,37 @@ function quantityWeightedRandom(gifts) {
 export async function claimSurpriseBox(employeeId, employeeName) {
   const year = new Date().getFullYear()
 
-  // Guard: already claimed?
+  // Try atomic RPC first (requires migration 20260515_phase1_constraints_rls.sql)
+  const { data: rpcData, error: rpcErr } = await supabase.rpc('claim_surprise_box', {
+    p_employee_id:   String(employeeId),
+    p_employee_name: employeeName || '',
+  })
+  if (!rpcErr) return rpcData
+  // If error is unique violation (race) treat as already claimed
+  if (rpcErr.code === '23505') return { alreadyClaimed: true, giftName: '' }
+  // RPC not deployed yet → fallback to direct queries
+  if (!rpcErr.message?.includes('Could not find the function')) throw new Error(rpcErr.message)
+
+  // ── Fallback: direct queries ──────────────────────────────
   const existing = await checkSurpriseBoxClaim(employeeId)
   if (existing) return { alreadyClaimed: true, giftName: existing.gift_name }
 
-  // Fetch available gifts
   const gifts = await fetchAvailableGifts()
   if (!gifts.length) return { noGifts: true }
 
-  // Pick gift — probability ∝ remaining quantity (ของน้อย = หายาก)
   const gift = quantityWeightedRandom(gifts)
 
-  // Record claim
   const { error: claimErr } = await supabase.from('gift_claims').insert({
-    employee_id:   String(employeeId),
-    employee_name: employeeName || '',
-    gift_id:       gift.id,
-    gift_name:     gift.name,
-    claimed_year:  year,
+    employee_id: String(employeeId), employee_name: employeeName || '',
+    gift_id: gift.id, gift_name: gift.name, claimed_year: year,
   })
+  // Unique violation = race condition, already claimed
+  if (claimErr?.code === '23505') return { alreadyClaimed: true, giftName: gift.name }
   if (claimErr) throw new Error(claimErr.message)
 
-  // Decrement quantity (fire-and-forget — ignore race condition for internal use)
+  // Decrement stock (awaited — not fire-and-forget)
   if (gift.quantity != null && gift.quantity > 0) {
-    supabase.from('gifts').update({ quantity: gift.quantity - 1 }).eq('id', gift.id).then(() => {})
+    await supabase.from('gifts').update({ quantity: gift.quantity - 1 }).eq('id', gift.id)
   }
 
   return { gift }

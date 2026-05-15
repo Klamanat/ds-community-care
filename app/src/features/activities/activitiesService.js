@@ -206,60 +206,54 @@ export async function fetchTicketActivities() {
   return (data || []).map(mapActivity)
 }
 
+// Loading guard — prevent concurrent bookings for same activity+employee
+const _bookingInProgress = new Set()
+
 export async function bookTicket(activityId, employeeId, employeeName, price, quantity = 1) {
-  // Check capacity (sum of quantities, not row count)
-  const { data: act } = await supabase
-    .from('activities')
-    .select('ticket_capacity')
-    .eq('id', activityId)
-    .single()
+  const key = `${activityId}:${employeeId}`
+  if (_bookingInProgress.has(key)) throw new Error('กำลังดำเนินการอยู่ กรุณารอสักครู่')
+  _bookingInProgress.add(key)
+  try {
+    // Try atomic RPC first (requires migration 20260515_phase1_constraints_rls.sql)
+    const { data: rpcData, error: rpcErr } = await supabase.rpc('book_activity_ticket', {
+      p_activity_id:   activityId,
+      p_employee_id:   String(employeeId),
+      p_employee_name: employeeName || '',
+      p_price:         price || 0,
+      p_quantity:      quantity,
+    })
+    // RPC available → use it
+    if (!rpcErr) {
+      if (rpcData?.error) throw new Error(rpcData.error)
+      return mapTicket(rpcData)
+    }
+    // RPC not deployed yet → fallback to direct queries
+    if (!rpcErr.message?.includes('Could not find the function')) throw new Error(rpcErr.message)
 
-  if (act?.ticket_capacity != null) {
-    const { data: rows } = await supabase
-      .from('activity_tickets')
-      .select('quantity')
-      .eq('activity_id', activityId)
-      .in('status', ['pending_slip', 'booked', 'checked_in'])
-    const totalBooked = (rows || []).reduce((s, r) => s + (r.quantity || 1), 0)
-    if (totalBooked + quantity > act.ticket_capacity) throw new Error('ที่นั่งไม่เพียงพอ')
-  }
+    // ── Fallback: direct queries ──────────────────────────────
+    const { data: act } = await supabase.from('activities').select('ticket_capacity').eq('id', activityId).single()
+    if (act?.ticket_capacity != null) {
+      const { data: rows } = await supabase.from('activity_tickets').select('quantity').eq('activity_id', activityId).in('status', ['pending_slip', 'booked', 'checked_in'])
+      const totalBooked = (rows || []).reduce((s, r) => s + (r.quantity || 1), 0)
+      if (totalBooked + quantity > act.ticket_capacity) throw new Error('ที่นั่งไม่เพียงพอ')
+    }
 
-  // Generate ticket_no
-  const { count: total } = await supabase
-    .from('activity_tickets')
-    .select('*', { count: 'exact', head: true })
-    .eq('activity_id', activityId)
+    const { count: total } = await supabase.from('activity_tickets').select('*', { count: 'exact', head: true }).eq('activity_id', activityId)
+    const ticketNo   = `TKT-${String((total || 0) + 1).padStart(4, '0')}`
+    const initStatus = (price && price > 0) ? 'pending_slip' : 'booked'
 
-  const ticketNo = `TKT-${String((total || 0) + 1).padStart(4, '0')}`
-  const initStatus = (price && price > 0) ? 'pending_slip' : 'booked'
-
-  // Revive cancelled row if exists (avoids UNIQUE constraint violation)
-  const { data: prev } = await supabase
-    .from('activity_tickets')
-    .select('id')
-    .eq('activity_id', activityId)
-    .eq('employee_id', employeeId)
-    .eq('status', 'cancelled')
-    .maybeSingle()
-
-  if (prev) {
-    const { data, error } = await supabase
-      .from('activity_tickets')
-      .update({ status: initStatus, quantity, price: price || 0, ticket_no: ticketNo, slip_url: '', cancelled_at: null, checked_in_at: null })
-      .eq('id', prev.id)
-      .select()
-      .single()
+    const { data: prev } = await supabase.from('activity_tickets').select('id').eq('activity_id', activityId).eq('employee_id', employeeId).eq('status', 'cancelled').maybeSingle()
+    if (prev) {
+      const { data, error } = await supabase.from('activity_tickets').update({ status: initStatus, quantity, price: price || 0, ticket_no: ticketNo, slip_url: '', cancelled_at: null, checked_in_at: null }).eq('id', prev.id).select().single()
+      if (error) throw new Error(error.message)
+      return mapTicket(data)
+    }
+    const { data, error } = await supabase.from('activity_tickets').insert({ activity_id: activityId, employee_id: employeeId, employee_name: employeeName, ticket_no: ticketNo, price: price || 0, quantity, status: initStatus }).select().single()
     if (error) throw new Error(error.message)
     return mapTicket(data)
+  } finally {
+    _bookingInProgress.delete(key)
   }
-
-  const { data, error } = await supabase
-    .from('activity_tickets')
-    .insert({ activity_id: activityId, employee_id: employeeId, employee_name: employeeName, ticket_no: ticketNo, price: price || 0, quantity, status: initStatus })
-    .select()
-    .single()
-  if (error) throw new Error(error.message)
-  return mapTicket(data)
 }
 
 export async function uploadTicketSlip(ticketId, base64, fileName) {

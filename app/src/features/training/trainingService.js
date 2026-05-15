@@ -42,12 +42,13 @@ export async function fetchMyTrainings(employeeId) {
 }
 
 export async function registerTraining(trainingId, employeeId, employeeName) {
-  const { error } = await supabase.from('training_registrations').insert({
-    training_id:   trainingId,
-    employee_id:   employeeId,
-    employee_name: employeeName,
-  })
-  if (error) throw new Error(error.message)
+  const { error } = await supabase.from('training_registrations')
+    .upsert(
+      { training_id: trainingId, employee_id: employeeId, employee_name: employeeName },
+      { onConflict: 'training_id,employee_id', ignoreDuplicates: true }
+    )
+  // Ignore unique constraint violation (duplicate = already registered = ok)
+  if (error && error.code !== '23505') throw new Error(error.message)
 }
 
 export async function cancelRegistration(trainingId, employeeId) {

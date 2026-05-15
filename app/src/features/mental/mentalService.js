@@ -45,7 +45,7 @@ export async function fetchAdvisors() {
 export async function fetchCounselorRequests(counselorEmployeeId) {
   const { data, error } = await supabase
     .from('consult_requests')
-    .select('*')
+    .select('id,counselor_employee_id,counselor_name,employee_id,employee_name,message,created_at,is_read,reply,replied_at')
     .eq('counselor_employee_id', counselorEmployeeId)
     .order('created_at', { ascending: false })
   if (error) throw new Error(error.message)
@@ -55,7 +55,7 @@ export async function fetchCounselorRequests(counselorEmployeeId) {
 export async function fetchSenderRequests(senderEmployeeId) {
   const { data, error } = await supabase
     .from('consult_requests')
-    .select('*')
+    .select('id,counselor_employee_id,counselor_name,employee_id,employee_name,message,created_at,is_read,reply,replied_at')
     .eq('employee_id', senderEmployeeId)
     .order('created_at', { ascending: false })
   if (error) throw new Error(error.message)
