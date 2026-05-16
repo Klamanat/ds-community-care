@@ -112,7 +112,11 @@ async function doCheck() {
   checking.value = true
   try {
     const { exists, status } = await auth.checkEmployee(id)
-    if (!exists) { auth.error = 'ไม่พบรหัสพนักงานนี้ กรุณาตรวจสอบอีกครั้ง'; return }
+    if (!exists) {
+      // AUTH-02: Same message for not_found and invalid — prevent account enumeration
+      auth.error = 'รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่'
+      return
+    }
     if (status === 'no_passcode') {
       // No passcode required — login directly
       const ok = await auth.loginWithEmployee(id)

@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { supabase } from '../services/supabase.js'
-import { login as authLogin, checkEmployee as authCheck, setPasscode as authSetPasscode } from '../services/userAuthService.js'
+import { login as authLogin, checkEmployee as authCheck, setPasscode as authSetPasscode, fetchMyEmployee } from '../services/userAuthService.js'
 import { fetchImages, getCached } from '../services/imageService.js'
 import { fetchAllEmployees } from '../../features/team/teamService.js'
 
@@ -142,5 +142,32 @@ export const useUserAuthStore = defineStore('userAuth', () => {
     ;['user_id','user_empcode','user_name','user_role','user_imgid','user_img','user_dept','user_slogan','dsc_ann_seen','ds_checkin_date'].forEach(k => localStorage.removeItem(k))
   }
 
-  return { userId, userEmpCode, userName, userRole, userImgId, userImgUrl, userDept, userSlogan, userBdDate, isLoading, error, isAuthenticated, checkEmployee, setPasscode, loginWithEmployee, logout }
+  /**
+   * AUTH-03 fix: Re-fetch role/name/dept from server using current Supabase session.
+   * Called on app start after session restore — prevents localStorage role spoofing.
+   * Silent — never throws, never logs out user.
+   */
+  async function refreshFromServer() {
+    try {
+      const emp = await fetchMyEmployee()
+      if (!emp) return  // no session or not linked yet (legacy user pre-migration)
+      // Update store with authoritative server values — role cannot be spoofed
+      userId.value     = String(emp.id || '')
+      userName.value   = emp.name   || userName.value
+      userRole.value   = emp.role   || ''
+      userDept.value   = emp.dept   || ''
+      userSlogan.value = emp.star_gang_slogan || ''
+      userBdDate.value = emp.bd_date || ''
+      userEmpCode.value = emp.emp_code || userEmpCode.value
+      // Persist refreshed values
+      localStorage.setItem('user_role',   userRole.value)
+      localStorage.setItem('user_name',   userName.value)
+      localStorage.setItem('user_dept',   userDept.value)
+      localStorage.setItem('user_slogan', userSlogan.value)
+    } catch {
+      // Silent — app works from localStorage cache if server unreachable
+    }
+  }
+
+  return { userId, userEmpCode, userName, userRole, userImgId, userImgUrl, userDept, userSlogan, userBdDate, isLoading, error, isAuthenticated, checkEmployee, setPasscode, loginWithEmployee, logout, refreshFromServer }
 })

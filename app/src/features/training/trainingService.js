@@ -88,7 +88,11 @@ export async function fetchSiteVisits() {
 }
 
 export async function voteSite(siteId, employeeId, employeeName) {
-  const { error } = await supabase.from('site_votes').insert({ site_id: siteId, employee_id: employeeId, employee_name: employeeName })
+  // SITE-VOTE-01: upsert prevents duplicate votes per (site_id, employee_id)
+  const { error } = await supabase.from('site_votes').upsert(
+    { site_id: siteId, employee_id: employeeId, employee_name: employeeName },
+    { onConflict: 'site_id,employee_id', ignoreDuplicates: true }
+  )
   if (error) throw new Error(error.message)
 }
 

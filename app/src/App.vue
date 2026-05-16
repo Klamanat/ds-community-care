@@ -136,13 +136,18 @@ watch(() => userAuth.userName, () => loadNotifs(true))  // login/logout → imme
 watch(() => notif.unreadCount, count => { ui.notifBadge = count }, { immediate: true })
 
 // Session restore — if no Supabase session exists, try to create one silently.
-// Do NOT force logout: current auth is localStorage-primary; Supabase session is optional for RLS.
-// Force logout only when userId is explicitly cleared (logout action).
+// Phase 4: On app start, restore real Supabase session and refresh role/name from server.
+// AUTH-01: If session exists → user has real authenticated session (not anonymous).
+// AUTH-03: refreshFromServer() re-fetches role from DB → prevents localStorage role spoofing.
+// Do NOT force logout — auth is localStorage-primary; Supabase session enhances RLS only.
 onMounted(async () => {
   if (userAuth.userId && !isAdmin.value) {
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      // Silently attempt anonymous re-auth (enables RLS policies)
+    if (session) {
+      // Real session available → refresh role/name/dept from server (AUTH-03)
+      await userAuth.refreshFromServer()
+    } else {
+      // No session: silently attempt anonymous re-auth for RLS 'authenticated' role
       await supabase.auth.signInAnonymously().catch(() => {})
     }
   }

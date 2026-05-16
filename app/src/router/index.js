@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { track } from '@vercel/analytics'
+import { supabase } from '../core/services/supabase.js'
 
 const routes = [
   // User auth (no login required)
@@ -127,11 +128,17 @@ router.afterEach((to) => {
   track('pageview', { path: to.fullPath, name: String(to.name || '') })
 })
 
-router.beforeEach((to) => {
-  // Admin guard (check matched chain for nested routes)
+router.beforeEach(async (to) => {
+  // Admin guard — check Supabase session role (ROUTER-01: not just localStorage)
   if (to.matched.some(r => r.meta.requiresAdmin)) {
     const name = localStorage.getItem('admin_name')
     if (!name) return { name: 'admin-login' }
+    // Secondary: verify active session still has admin role (catches revoked sessions)
+    const { data: { session } } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }))
+    if (session && session.user?.user_metadata?.role !== 'admin') {
+      localStorage.removeItem('admin_name')
+      return { name: 'admin-login' }
+    }
   }
   // User guard
   if (to.meta.requiresUser) {

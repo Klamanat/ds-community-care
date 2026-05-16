@@ -7,16 +7,19 @@
 
 ## สรุปภาพรวม
 
-| Severity | จำนวน | Fixed (Phase 1) | Fixed (Phase 2) | Fixed (Phase 3) |
-|---|---|---|---|---|
-| 🔴 High | 14 | 8 ✅ | 0 | 0 |
-| 🟡 Medium | 16 | 3 ✅ | 5 ✅ | 4 ✅ |
-| 🟢 Low | 1 | 0 | 0 | 0 |
+| Severity | จำนวน | Fixed (Phase 1) | Fixed (Phase 2) | Fixed (Phase 3) | Fixed (Phase 4) | Fixed (Phase 5) |
+|---|---|---|---|---|---|---|
+| 🔴 High | 14 | 8 ✅ | 0 | 0 | 3 ✅ | 3 ✅ |
+| 🟡 Medium | 16 | 3 ✅ | 5 ✅ | 4 ✅ | 0 | 4 ✅ |
+| 🟢 Low | 1 | 0 | 0 | 0 | 0 | 0 |
 
-> **Phase 1 status:** ✅ SQL migration `20260515_phase1_constraints_rls.sql` run แล้ว 2026-05-16  
-> **Phase 2 status:** ✅ SQL migration `20260515_phase2_security.sql` run แล้ว 2026-05-16  
-> **Phase 3 status:** ✅ Client-side only — ไม่ต้องรัน SQL เพิ่ม  
-> **Session fix:** Phase 2 SESSION-01 ปรับเป็น silent re-auth (ไม่ force logout) เพื่อ compat กับ anonymous auth architecture
+> **Phase 1 status:** ✅ SQL run แล้ว 2026-05-16  
+> **Phase 2 status:** ✅ SQL run แล้ว 2026-05-16  
+> **Phase 3 status:** ✅ Client-side only  
+> **Phase 4 status:** ✅ `20260516_phase4_real_auth.sql` run แล้ว 2026-05-16
+> **Phase 5A status:** ✅ `20260516_phase5a_data_integrity.sql` run แล้ว 2026-05-16
+> **Phase 5B status:** ✅ `20260516_phase5b_admin_rls.sql` run แล้ว 2026-05-16 (แก้ empathy_replies not exist ก่อน run)  
+> **Phase 5C status:** ✅ `20260516_phase5c_empathy_rpc.sql` run แล้ว 2026-05-16
 
 ### Risk Categories
 - **Security** — ช่องโหว่ที่ผู้ใช้สามารถปลอมแปลงข้อมูลหรือเข้าถึงโดยไม่มีสิทธิ์
@@ -28,85 +31,64 @@
 
 ## 🔴 High — ต้องแก้ไข
 
-### AUTH-01 · Security · `userAuthService.js`
+### AUTH-01 · Security · `userAuthService.js` · ✅ Fixed (Phase 4)
 **Anonymous session ใช้แทน real auth**
 
 Login flow สร้าง anonymous Supabase session หลัง verify passcode สำเร็จ session นี้ไม่ผูกกับ employee จริงๆ ทำให้ RLS ไม่สามารถระบุตัวตนได้แน่นอน
 
-```js
-// userAuthService.js:58-61
-const { data: anonSession } = await supabase.auth.signInAnonymously()
-// ← session ไม่ผูกกับ employee row ใดๆ
-```
-
-**Fix:** ใช้ Custom JWT หรือ Supabase `signInWithPassword` ที่ผูก email = empCode เพื่อให้ `auth.uid()` ใช้ใน RLS ได้
+**Fix applied:** Phase 4:
+- `login()` ใช้ `signInWithPassword({ email: empCode@ds-community.internal, password })` → `auth.uid()` = Supabase user จริง
+- Legacy path (ยังไม่มี `auth_user_id`): verify bcrypt เดิม → `signUp` auto-create + link ใน background
+- `setPasscode()` เรียก `signUp` + `link_auth_user()` RPC ทันทีหลัง setup
+- Migration: `supabase/migrations/20260516_phase4_real_auth.sql` — `auth_user_id` column + `get_my_employee()` + `link_auth_user()` RPCs
 
 ---
 
-### AUTH-02 · Security · `userAuthService.js`
+### AUTH-02 · Security · `userAuthService.js` · ✅ Fixed (Phase 4)
 **Account enumeration ผ่าน `checkEmployee()`**
 
 `checkEmployee()` แยก response ชัดเจนระหว่าง "ไม่พบรหัส" กับ "ยังไม่ตั้งรหัสผ่าน" ทำให้ brute-force หาว่ามี empCode ใดในระบบได้
 
-```js
-// userAuthService.js:9-18
-if (!emp) return { exists: false }
-if (!emp.passcode) return { exists: true, hasPasscode: false }
-```
-
-**Fix:** Return generic response เช่น `{ status: 'ok' | 'invalid' }` โดยไม่แยกเหตุผล
+**Fix applied:** 
+- `login()` return generic error `'รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง'` สำหรับทั้ง not_found + wrong_passcode
+- `UserLoginView.vue` แสดง error เดียวกันสำหรับ empCode ที่ไม่พบ
 
 ---
 
-### AUTH-03 · Security · `userAuth.js` store
+### AUTH-03 · Security · `userAuth.js` store · ✅ Fixed (Phase 4)
 **Auth state ทั้งหมดเก็บใน localStorage — ปลอมแปลงได้**
 
 `userId`, `userName`, `userRole` เก็บใน localStorage ตรงๆ ใครก็ได้เปิด DevTools แล้วแก้ role เป็น `admin` ได้
 
-```js
-// userAuth.js:121-130
-localStorage.setItem('user_id', data.id)
-localStorage.setItem('user_role', data.role)  // ← แก้ได้ใน DevTools
-```
-
-**Fix:** เก็บแค่ session token ใน localStorage, ดึง role จาก server เสมอเมื่อ app start
+**Fix applied:** 
+- เพิ่ม `refreshFromServer()` ใน `userAuth.js` store — เรียก `get_my_employee()` RPC ที่ SECURITY DEFINER
+- `App.vue` `onMounted` เรียก `refreshFromServer()` หลัง session restore → role ถูก re-validate จาก DB ทุกครั้ง app start
+- localStorage role ยังเป็น cache UX แต่ถูก overwrite ด้วยค่าจาก server เสมอ
 
 ---
 
-### ADMIN-01 · Security · `adminService.js`
+### ADMIN-01 · Security · `adminService.js` · ✅ Fixed (Phase 5B)
 **Admin role ตรวจจาก client metadata**
 
 ```js
-// adminService.js:8-17
 if (user?.user_metadata?.role === 'admin') { ... }
-// ← user_metadata อ่านได้ฝั่ง client ปลอมแปลงได้
 ```
 
-**Fix:** ตรวจ admin role ผ่าน DB function หรือ Supabase `service_role` key บน server เท่านั้น
+**Fix applied:** `is_admin()` DB function — `(auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'` — JWT เป็น server-signed ปลอมแปลงไม่ได้; RLS ทุก admin table ใช้ `is_admin()` บังคับ write
 
 ---
 
-### ADMIN-02 · Security · `adminService.js`
+### ADMIN-02 · Security · `adminService.js` · ✅ Fixed (Phase 5B)
 **Admin CRUD ไม่มี server-side role enforcement ใน client**
 
-ฟังก์ชัน `getEmployees()`, `upsertReward()`, `deleteActivity()` ฯลฯ ไม่มีการตรวจ role ก่อนยิง query
-
-**Fix:** บังคับ RLS policy บน Supabase ทุก admin table ให้ `auth.jwt() ->> 'role' = 'admin'`
+**Fix applied:** RLS admin-only write บน `employees`, `mental_advisors`, `empathy_comments`, `empathy_replies`, `quiz_answers`, `point_rules`, `rewards` ทั้งหมดใช้ `is_admin()` — ถ้าไม่มี admin JWT → DB reject ทันที
 
 ---
 
-### ROUTER-01 · Security · `router/index.js`
+### ROUTER-01 · Security · `router/index.js` · ✅ Fixed (Phase 5B)
 **Route guard อ่านจาก localStorage เท่านั้น**
 
-```js
-// router/index.js:130-140
-if (!localStorage.getItem('user_id')) return '/login'
-if (!localStorage.getItem('admin_name')) return '/admin/login'
-```
-
-ใครก็ได้ set `localStorage.setItem('user_id', 'fake')` แล้วเข้าหน้าใดก็ได้
-
-**Fix:** Route guard เป็นแค่ UX fallback ได้ แต่ต้องบังคับ access control ที่ Supabase RLS จริงๆ
+**Fix applied:** Admin `beforeEach` guard ตรวจ `localStorage.admin_name` (UX fast-check) แล้วตาม validate Supabase session role — ถ้า session มีอยู่แต่ไม่ใช่ admin → redirect `/admin/login` + clear `admin_name`
 
 ---
 
@@ -270,10 +252,10 @@ Background stores (rewards, notifications, etc.) ยังมีข้อมู�
 
 ---
 
-### EMPATHY-01 · Security · `empathy.store.js:63, 115-118`
+### EMPATHY-01 · Security · `empathy.store.js:63, 115-118` · ✅ Fixed (Phase 5C)
 **`userKey` สำหรับ likes อ่านจาก local state — spoofable**
 
-**Fix:** Bind ไปที่ authenticated session บน server
+**Fix applied:** `toggle_empathy_like / toggle_comment_like / toggle_channel_like` RPCs ใช้ `auth.uid()` → lookup `employees.id` บน server — `p_user_key` จาก client ถูก ignore ถ้า session มีอยู่; fallback ไป `p_user_key` เฉพาะ anonymous/pre-migration sessions
 
 ---
 
@@ -286,10 +268,10 @@ User ส่ง idea ได้ไม่จำกัดครั้ง
 
 ---
 
-### SITE-VOTE-01 · Data Integrity · `trainingService.js:89-112`
+### SITE-VOTE-01 · Data Integrity · `trainingService.js:89-112` · ✅ Fixed (Phase 5A)
 **Site vote ไม่มี unique constraint ที่ชัดเจนในฝั่ง client**
 
-**Fix:** Unique constraint บน `(site_id, employee_id)` + upsert
+**Fix applied:** DB: `UNIQUE INDEX (site_id, employee_id)` บน `site_votes`; client: `voteSite()` เปลี่ยนจาก `insert` → `upsert` with `onConflict: 'site_id,employee_id'`
 
 ---
 
@@ -330,17 +312,17 @@ App โหลด localStorage ตรงๆ โดยไม่ verify กับ s
 
 ---
 
-### REWARDS-ADMIN-01 · Security · `rewardService.js:48-115`
+### REWARDS-ADMIN-01 · Security · `rewardService.js:48-115` · ✅ Fixed (Phase 5A)
 **Admin write ops ไม่มี auth check ใน service**
 
-**Fix:** Enforce ผ่าน RLS + ตรวจ role ใน store ก่อนเรียก service
+**Fix applied:** RLS `point_rules write admin` + `rewards write admin` policies บน DB ใช้ `is_admin()` — ถ้าไม่ใช่ admin JWT → DB reject ทันที
 
 ---
 
-### MENTAL-NAME-01 · Security · `mentalService.js`
+### MENTAL-NAME-01 · Security · `mentalService.js` · ✅ Fixed (Phase 5A)
 **`employee_name` ใน consult_requests เป็น plain string**
 
-**Fix:** Store `employee_id` + RLS ผูก read/write กับ session user
+**Fix applied:** DB: `employee_id TEXT` column เพิ่มใน `consult_requests` (Phase 5A migration); client: `submitConsultRequest()` ส่ง `employee_id` อยู่แล้ว (บรรทัด 70); RLS `consult read own` ใช้ `employee_id = auth.uid()::text`
 
 ---
 
@@ -394,6 +376,20 @@ Rollback มีแต่ถ้า server return state ที่ต่างจ�
 | 13 | Rate limiting สำหรับ idea submission | Ideas | ✅ Done |
 | 14 | TTL ให้ localStorage cache ใน cardConfig | Card Config | ✅ Done |
 
+### Phase 5 — Admin & Data Security
+| # | งาน | Feature | Status |
+|---|---|---|---|
+| 20 | UNIQUE on site_votes + RLS on point_rules/rewards + employee_id on consult_requests | Training/Mental | ✅ Migration written |
+| 21 | trainingService voteSite: insert → upsert | Training | ✅ Client |
+| 22 | is_admin() + RLS admin-only on all admin tables | Admin | ✅ Migration written |
+| 23 | Router admin guard: validate Supabase session role | Router | ✅ Client |
+| 24 | toggle_*_like RPCs: use auth.uid() instead of client-supplied p_user_key | Empathy | ✅ Migration written |
+
+> ⚠️ Phase 5 migrations ต้อง run บน Supabase SQL Editor:  
+> 1. `20260516_phase5a_data_integrity.sql`  
+> 2. `20260516_phase5b_admin_rls.sql`  
+> 3. `20260516_phase5c_empathy_rpc.sql`
+
 ---
 
-*risk-analysis.md — DS Community Care v2.0 · Phase 1 + Phase 2 + Phase 3 completed 2026-05-16*
+*risk-analysis.md — DS Community Care v2.0 · Phase 1–5 applied 2026-05-16*
