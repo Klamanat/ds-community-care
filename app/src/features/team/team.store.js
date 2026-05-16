@@ -23,6 +23,7 @@ export const useTeamStore = defineStore('team', () => {
   const joinCount    = ref(sgMembers.value.length)
   const isLoading    = ref(false)
   const lastFetched  = ref(null)
+  const loadError    = ref('')
 
   function getSgFallback(idx) { return SG_FALLBACKS[idx % SG_FALLBACKS.length] }
   function getGrad(idx)       { return GRADS[idx % GRADS.length] }
@@ -30,15 +31,19 @@ export const useTeamStore = defineStore('team', () => {
   async function loadTeam(force = false) {
     if (!force && lastFetched.value && (Date.now() - lastFetched.value) < 60000) return
     isLoading.value = !empTeam.value.length
+    loadError.value = ''
     try {
       const data = await svc.fetchTeam()
       empTeam.value = data || []
       lastFetched.value = Date.now()
       lsSet('team_list', stripBase64(data || [], 'imgUrl'), TTL)
-    } catch {} finally { isLoading.value = false }
+    } catch (e) {
+      loadError.value = e?.message || 'โหลดทีมไม่สำเร็จ'
+    } finally { isLoading.value = false }
   }
 
   async function loadStarGang() {
+    loadError.value = ''
     try {
       const data = await svc.fetchStarGang()
       // Apply cached Drive images immediately
@@ -54,7 +59,9 @@ export const useTeamStore = defineStore('team', () => {
           (m.imgId && map[m.imgId]) ? { ...m, imgUrl: map[m.imgId] } : m
         )
       }).catch(() => {})
-    } catch {}
+    } catch (e) {
+      loadError.value = e?.message || 'โหลดข้อมูลไม่สำเร็จ'
+    }
   }
 
   async function loadDirectory() {
@@ -62,7 +69,9 @@ export const useTeamStore = defineStore('team', () => {
       const data = await svc.fetchDirectory()
       empDirectory.value = data || []
       lsSet('team_dir', stripBase64(data || [], 'imgUrl'), TTL)
-    } catch {}
+    } catch (e) {
+      loadError.value = e?.message || 'โหลดไดเรกทอรีไม่สำเร็จ'
+    }
   }
 
   async function addToTeam(member) {
@@ -94,5 +103,5 @@ export const useTeamStore = defineStore('team', () => {
     }
   }
 
-  return { empTeam, empDirectory, sgMembers, joinCount, isLoading, getSgFallback, getGrad, loadTeam, loadStarGang, loadDirectory, addToTeam, joinStarGang }
+  return { empTeam, empDirectory, sgMembers, joinCount, isLoading, loadError, getSgFallback, getGrad, loadTeam, loadStarGang, loadDirectory, addToTeam, joinStarGang }
 })

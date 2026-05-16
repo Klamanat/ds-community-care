@@ -10,6 +10,7 @@ export const useActivitiesStore = defineStore('activities', () => {
   const all       = ref([])
   const isLoading = ref(false)
   const loaded    = ref(false)
+  const loadError = ref('')
 
   const byMonth = computed(() => {
     const map = {}
@@ -37,6 +38,7 @@ export const useActivitiesStore = defineStore('activities', () => {
 
     // Only show spinner if nothing to display yet
     isLoading.value = !all.value.length
+    loadError.value = ''
     try {
       const data = await svc.fetchAll()
       // Apply cached images immediately before lazy-fetch
@@ -52,7 +54,8 @@ export const useActivitiesStore = defineStore('activities', () => {
       if (ids.length) fetchImages(ids).then(map => {
         all.value = all.value.map(a => (a.imgId && map[a.imgId]) ? { ...a, imgUrl: map[a.imgId] } : a)
       }).catch(() => {})
-    } catch {
+    } catch (e) {
+      loadError.value = e?.message || 'โหลดข้อมูลไม่สำเร็จ'
       if (!loaded.value) loaded.value = !!all.value.length
     } finally {
       isLoading.value = false
@@ -66,5 +69,13 @@ export const useActivitiesStore = defineStore('activities', () => {
     if (idx >= 0) Object.assign(all.value[idx], fields)
   }
 
-  return { all, byMonth, isLoading, loaded, getMonth, load, localAdd, localUpdate, localDelete }
+  // Snapshot-based optimistic helper
+  // Usage: const rollback = activities.snapshot()
+  //        doLocalChange(); await serverCall().catch(() => { rollback(); throw err })
+  function snapshot() {
+    const snap = JSON.parse(JSON.stringify(all.value))
+    return () => { all.value = snap }
+  }
+
+  return { all, byMonth, isLoading, loaded, loadError, getMonth, load, localAdd, localUpdate, localDelete, snapshot }
 })

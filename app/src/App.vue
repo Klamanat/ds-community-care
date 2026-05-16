@@ -135,18 +135,15 @@ onMounted(() => loadNotifs(false))
 watch(() => userAuth.userName, () => loadNotifs(true))  // login/logout → immediate
 watch(() => notif.unreadCount, count => { ui.notifBadge = count }, { immediate: true })
 
-// Session validation — if localStorage has user_id but Supabase session is gone, force logout
-// Note: anonymous sessions are valid but can expire; we silently re-auth if needed
+// Session restore — if no Supabase session exists, try to create one silently.
+// Do NOT force logout: current auth is localStorage-primary; Supabase session is optional for RLS.
+// Force logout only when userId is explicitly cleared (logout action).
 onMounted(async () => {
   if (userAuth.userId && !isAdmin.value) {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
-      // Try to restore anonymous session before forcing logout
-      const { data: anonData } = await supabase.auth.signInAnonymously().catch(() => ({ data: null }))
-      if (!anonData?.session) {
-        await userAuth.logout()
-        router.replace('/login')
-      }
+      // Silently attempt anonymous re-auth (enables RLS policies)
+      await supabase.auth.signInAnonymously().catch(() => {})
     }
   }
 })

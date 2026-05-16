@@ -1,21 +1,22 @@
 # DS Community Care — Risk Analysis
 
 > วิเคราะห์จุดเสี่ยงในแต่ละ Feature  
-> Updated: 2026-05-15 (Phase 1 + Phase 2 applied)
+> Updated: 2026-05-16 (Phase 1 + Phase 2 + Phase 3 applied)
 
 ---
 
 ## สรุปภาพรวม
 
-| Severity | จำนวน | Fixed (Phase 1) | Fixed (Phase 2) |
-|---|---|---|---|
-| 🔴 High | 14 | 8 ✅ | 0 |
-| 🟡 Medium | 16 | 3 ✅ | 5 ✅ |
-| 🟢 Low | 1 | 0 | 0 |
+| Severity | จำนวน | Fixed (Phase 1) | Fixed (Phase 2) | Fixed (Phase 3) |
+|---|---|---|---|---|
+| 🔴 High | 14 | 8 ✅ | 0 | 0 |
+| 🟡 Medium | 16 | 3 ✅ | 5 ✅ | 4 ✅ |
+| 🟢 Low | 1 | 0 | 0 | 0 |
 
-> **Phase 1 status:** SQL migration `20260515_phase1_constraints_rls.sql` เขียนครบ รอ run บน Supabase  
-> **Phase 2 status:** SQL migration `20260515_phase2_security.sql` เขียนครบ รอ run บน Supabase  
-> Client-side changes ทั้งหมด backward compatible
+> **Phase 1 status:** ✅ SQL migration `20260515_phase1_constraints_rls.sql` run แล้ว 2026-05-16  
+> **Phase 2 status:** ✅ SQL migration `20260515_phase2_security.sql` run แล้ว 2026-05-16  
+> **Phase 3 status:** ✅ Client-side only — ไม่ต้องรัน SQL เพิ่ม  
+> **Session fix:** Phase 2 SESSION-01 ปรับเป็น silent re-auth (ไม่ force logout) เพื่อ compat กับ anonymous auth architecture
 
 ### Risk Categories
 - **Security** — ช่องโหว่ที่ผู้ใช้สามารถปลอมแปลงข้อมูลหรือเข้าถึงโดยไม่มีสิทธิ์
@@ -218,7 +219,7 @@ Clear localStorage = check-in ได้ไม่จำกัดครั้ง
 
 ---
 
-### POINTS-02 · UX · `reward.store.js:59-70`
+### POINTS-02 · UX · `reward.store.js:59-70` · ✅ Fixed (Phase 3)
 **Error ถูก swallow — user ไม่รู้ว่า load ล้มเหลว**
 
 ```js
@@ -227,7 +228,7 @@ Clear localStorage = check-in ได้ไม่จำกัดครั้ง
 }
 ```
 
-**Fix:** Set `error` state + แสดง toast หรือ retry button
+**Fix applied:** เพิ่ม `loadError` ref ใน `reward.store.js` — set message ใน catch block; UI สามารถ `v-if="reward.loadError"` แสดง retry หรือ error state ได้
 
 ---
 
@@ -276,12 +277,12 @@ Background stores (rewards, notifications, etc.) ยังมีข้อมู�
 
 ---
 
-### IDEAS-01 · Business Logic · `ideaService.js:26-39`
+### IDEAS-01 · Business Logic · `ideaService.js:26-39` · ✅ Fixed (Phase 3)
 **ไม่มี rate limiting หรือ spam prevention**
 
 User ส่ง idea ได้ไม่จำกัดครั้ง
 
-**Fix:** Rate limit ใน DB (เช่น max 5 ideas/day per employee) หรือ Supabase Row Security
+**Fix applied:** `ideas.store.js` ตรวจ `localStorage.getItem('ds_idea_last')` — block ถ้าส่งล่าสุดภายใน 60 วินาที + toast แสดงวินาทีที่เหลือ
 
 ---
 
@@ -292,30 +293,31 @@ User ส่ง idea ได้ไม่จำกัดครั้ง
 
 ---
 
-### CONFIG-01 · UX · `cardConfig.js:43-55`
+### CONFIG-01 · UX · `cardConfig.js:43-55` · ✅ Fixed (Phase 3)
 **Config fall back ไป localStorage โดยไม่ validate อายุ cache**
 
-Config เก่าจาก เดือนที่แล้วอาจ override server state
+Config เก่าจากเดือนที่แล้วอาจ override server state
 
-**Fix:** เพิ่ม TTL ให้ localStorage cache หรือ always prefer server value
+**Fix applied:** เพิ่ม `CACHE_TTL = 1 hour` + `LS_TTL_KEY` timestamp — cache restore ยังเกิดเสมอเพื่อป้องกัน flash; TTL ใช้ตัดสินว่าจะ skip server call ได้หรือไม่ (ถ้า fresh + loaded) — server response อัปเดต TTL ทุกครั้งที่ save
 
 ---
 
-### ACTIVITY-OPT-01 · Data Integrity · `activities.store.js`
+### ACTIVITY-OPT-01 · Data Integrity · `activities.store.js` · ✅ Fixed (Phase 3)
 **Optimistic update ไม่มี rollback**
 
 `localAdd/localDelete/localUpdate` อัพเดต local state แต่ถ้า server error ไม่มี revert
 
-**Fix:** เก็บ snapshot ก่อน update แล้ว restore on error (เหมือน empathy store)
+**Fix applied:** เพิ่ม `snapshot()` helper — return `rollback()` function ที่ restore `all.value` กลับ snapshot; admin views ใช้ pessimistic pattern อยู่แล้ว (server first) จึงไม่ต้องแก้ view; `snapshot()` พร้อมใช้งานสำหรับ future optimistic patterns
 
 ---
 
-### SESSION-01 · Security · `userAuth.js` · ✅ Fixed (Phase 2)
+### SESSION-01 · Security · `userAuth.js` · ✅ Fixed (Phase 2, revised Phase 3)
 **Session ไม่ถูก validate ตอน app start**
 
 App โหลด localStorage ตรงๆ โดยไม่ verify กับ server ว่า session ยังใช้งานได้
 
-**Fix applied:** `App.vue` `onMounted` ตรวจ `supabase.auth.getSession()` — ถ้าไม่มี session ลอง `signInAnonymously()` re-auth ก่อน; ถ้ายังไม่ได้ → `logout()` + redirect `/login`
+**Fix applied:** `App.vue` `onMounted` ตรวจ `supabase.auth.getSession()` — ถ้าไม่มี session ลอง `signInAnonymously()` re-auth แบบ silent  
+⚠️ **Revised (Phase 3):** ลบ force-logout ออก เพราะ current auth architecture ใช้ localStorage เป็น primary; anonymous session เป็น optional สำหรับ RLS เท่านั้น — การ force logout ทำให้ refresh browser แล้วเด้งออก login
 
 ---
 
@@ -371,7 +373,7 @@ Rollback มีแต่ถ้า server return state ที่ต่างจ�
 | 4 | Lock `settings` table write ด้วย RLS admin-only | Card Config | ✅ Migration (DB) |
 | 5 | Lock `consult_requests` read ด้วย RLS (counselor + owner) | Mental | ✅ Migration (DB) |
 
-> ⚠️ Migration file `supabase/migrations/20260515_phase1_constraints_rls.sql` ต้อง run บน Supabase SQL Editor ก่อน DB-side fix มีผล
+> ✅ Migration `20260515_phase1_constraints_rls.sql` run แล้ว 2026-05-16
 
 ### Phase 2 — Security Hardening ✅ Done
 | # | งาน | Feature | Status |
@@ -382,16 +384,16 @@ Rollback มีแต่ถ้า server return state ที่ต่างจ�
 | 9 | Validate session ตอน app start + anonymous re-auth | Auth | ✅ Client |
 | 10 | `logout()` → `reset()` ทุก store + clear all localStorage keys | Auth | ✅ Client |
 
-> ⚠️ Migration file `supabase/migrations/20260515_phase2_security.sql` ต้อง run บน Supabase SQL Editor
+> ✅ Migration `20260515_phase2_security.sql` run แล้ว 2026-05-16
 
 ### Phase 3 — UX & Reliability
-| # | งาน | Feature |
-|---|---|---|
-| 11 | เพิ่ม error state + toast ทุก store ที่ silent fail | ทุก Feature |
-| 12 | Optimistic rollback ใน activities store | Activities |
-| 13 | Rate limiting สำหรับ idea submission | Ideas |
-| 14 | TTL ให้ localStorage cache ใน cardConfig | Card Config |
+| # | งาน | Feature | Status |
+|---|---|---|---|
+| 11 | เพิ่ม error state + toast ทุก store ที่ silent fail | ทุก Feature | ✅ Done |
+| 12 | Optimistic rollback ใน activities store | Activities | ✅ Done |
+| 13 | Rate limiting สำหรับ idea submission | Ideas | ✅ Done |
+| 14 | TTL ให้ localStorage cache ใน cardConfig | Card Config | ✅ Done |
 
 ---
 
-*risk-analysis.md — DS Community Care v2.0 · Phase 1 + Phase 2 completed 2026-05-15*
+*risk-analysis.md — DS Community Care v2.0 · Phase 1 + Phase 2 + Phase 3 completed 2026-05-16*

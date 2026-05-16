@@ -14,6 +14,7 @@ export const useNotifStore = defineStore('notif', () => {
   const items     = ref([])
   const readIds   = ref(loadReadIds())
   const loading   = ref(false)
+  const loadError = ref('')
   let   _lastFetch = 0
   let   _lastEmp   = ''
 
@@ -57,7 +58,8 @@ export const useNotifStore = defineStore('notif', () => {
 
     _lastEmp = employeeName
     _hydrate(employeeName)
-    loading.value = true
+    loading.value   = true
+    loadError.value = ''
 
     try {
       const monthIdx = new Date().getMonth()  // 0-indexed, matches employees.month_idx
@@ -76,7 +78,9 @@ export const useNotifStore = defineStore('notif', () => {
           items: data,
         }))
       }
-    } catch {}
+    } catch (e) {
+      loadError.value = e?.message || 'โหลดการแจ้งเตือนไม่สำเร็จ'
+    }
     finally { loading.value = false }
   }
 
@@ -89,5 +93,5 @@ export const useNotifStore = defineStore('notif', () => {
     localStorage.removeItem(LS_DATA)
   }
 
-  return { items, readIds, loading, unreadCount, isRead, load, markRead, markAllRead, reset }
+  return { items, readIds, loading, loadError, unreadCount, isRead, load, markRead, markAllRead, reset }
 })

@@ -25,6 +25,7 @@ export const useRewardStore = defineStore('reward', () => {
   const rules            = ref([])
   const loading          = ref(false)
   const loaded           = ref(false)
+  const loadError        = ref('')
   const checkedInToday   = ref(localStorage.getItem(CHECKIN_KEY) === todayStr())
   const checkinLoading   = ref(false)
 
@@ -43,6 +44,7 @@ export const useRewardStore = defineStore('reward', () => {
     if (loaded.value && !force) return
     if (!employeeName) return
     loading.value = true
+    loadError.value = ''
     try {
       const [pts, ruleData] = await Promise.all([
         fetchMyPoints(employeeName),
@@ -66,7 +68,8 @@ export const useRewardStore = defineStore('reward', () => {
         checkedInToday.value = true
         localStorage.setItem(CHECKIN_KEY, todayDate)
       }
-    } catch {
+    } catch (e) {
+      loadError.value = e?.message || 'โหลดคะแนนไม่สำเร็จ'
       // silently fail — keep 0 pts
     } finally {
       loading.value = false
@@ -108,9 +111,10 @@ export const useRewardStore = defineStore('reward', () => {
     history.value        = []
     rules.value          = []
     loaded.value         = false
+    loadError.value         = ''
     checkedInToday.value = false
     localStorage.removeItem(CHECKIN_KEY)
   }
 
-  return { total, level, levelName, nextPts, nextName, history, rules, loading, loaded, progress, checkedInToday, checkinLoading, load, loadRules, doCheckin, reset }
+  return { total, level, levelName, nextPts, nextName, history, rules, loading, loaded, loadError, progress, checkedInToday, checkinLoading, load, loadRules, doCheckin, reset }
 })

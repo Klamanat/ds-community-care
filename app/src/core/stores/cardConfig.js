@@ -31,6 +31,13 @@ export const CARD_BG_DEFS = [
 const LS_KEY       = 'dsc_card_config'
 const LS_BG_KEY    = 'dsc_card_bg'
 const LS_BG_ID_KEY = 'dsc_card_bg_id'
+const LS_TTL_KEY   = 'dsc_card_ttl'
+const CACHE_TTL    = 60 * 60 * 1000  // 1 hour — force server refresh hourly
+
+function isCacheValid() {
+  const ts = Number(localStorage.getItem(LS_TTL_KEY) || 0)
+  return ts > 0 && (Date.now() - ts) < CACHE_TTL
+}
 
 export const useCardConfigStore = defineStore('cardConfig', () => {
   const config     = reactive(Object.fromEntries(CARD_DEFS.map(c => [c.key, true])))
@@ -40,7 +47,8 @@ export const useCardConfigStore = defineStore('cardConfig', () => {
   const loaded     = ref(false)
   const saving     = ref(false)
 
-  // Restore caches immediately (avoids flash)
+  // Always restore from localStorage (avoids flash); server will override on load()
+  // TTL is used only to decide whether to call server eagerly (not to block cache restore)
   try {
     const cached = JSON.parse(localStorage.getItem(LS_KEY) || 'null')
     if (cached) Object.assign(config, cached)
@@ -54,7 +62,9 @@ export const useCardConfigStore = defineStore('cardConfig', () => {
     if (cachedId) Object.assign(bgImgId, cachedId)
   } catch {}
 
-  async function load() {
+  async function load(force = false) {
+    // Skip server call if cache is fresh (TTL not expired) and not forced
+    if (!force && isCacheValid() && loaded.value) return
     try {
       const { data } = await supabase
         .from('settings')
@@ -76,6 +86,7 @@ export const useCardConfigStore = defineStore('cardConfig', () => {
         localStorage.setItem(LS_KEY,       JSON.stringify({ ...config }))
         localStorage.setItem(LS_BG_KEY,    JSON.stringify({ ...bgConfig }))
         localStorage.setItem(LS_BG_ID_KEY, JSON.stringify({ ...bgImgId }))
+        localStorage.setItem(LS_TTL_KEY,   String(Date.now()))
       }
     } catch { /* silent — defaults stay */ } finally {
       loaded.value = true
@@ -88,7 +99,8 @@ export const useCardConfigStore = defineStore('cardConfig', () => {
       const rows = CARD_DEFS.map(c => ({ key: `card_${c.key}`, value: config[c.key] ? 'TRUE' : 'FALSE' }))
       const { error } = await supabase.from('settings').upsert(rows, { onConflict: 'key' })
       if (error) throw new Error(error.message)
-      localStorage.setItem(LS_KEY, JSON.stringify({ ...config }))
+      localStorage.setItem(LS_KEY,     JSON.stringify({ ...config }))
+      localStorage.setItem(LS_TTL_KEY, String(Date.now()))
     } catch (e) {
       // Restore from localStorage on failure
       const saved = localStorage.getItem(LS_KEY)
@@ -114,6 +126,7 @@ export const useCardConfigStore = defineStore('cardConfig', () => {
       if (error) throw new Error(error.message)
       localStorage.setItem(LS_BG_KEY,    JSON.stringify({ ...bgConfig }))
       localStorage.setItem(LS_BG_ID_KEY, JSON.stringify({ ...bgImgId }))
+      localStorage.setItem(LS_TTL_KEY,   String(Date.now()))
     } catch (e) {
       // Restore from localStorage on failure
       const savedBg = localStorage.getItem(LS_BG_KEY)
