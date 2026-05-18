@@ -5,9 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>DS Community Care</title>
 
+    <!-- Preconnect for Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Preload critical fonts with display=swap -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700;800&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
+
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
 
     <!-- PWA / browser chrome color -->
     <meta name="theme-color" content="#7C3AC2" />
@@ -17,14 +36,33 @@
 
     <!-- SEO / share -->
     <meta name="description" content="DS Community Care — แพลตฟอร์มดูแลพนักงาน สะสมคะแนน และสร้างชุมชนภายในองค์กร" />
+    <meta name="keywords" content="DS Community Care, employee engagement, digital solutions" />
+    <meta name="author" content="Digital Solutions" />
+    <meta property="og:title" content="DS Community Care" />
+    <meta property="og:description" content="แพลตฟอร์มดูแลพนักงาน สะสมคะแนน และสร้างชุมชนภายในองค์กร" />
+    <meta property="og:type" content="website" />
+    <meta name="robots" content="index, follow" />
 
-    <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Performance: DNS prefetch for Supabase -->
+    <link rel="dns-prefetch" href="https://szcvfcemgspfsfrcmqzb.supabase.co" />
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <!-- Loading indicator for slow connections -->
+      <div id="app-loading" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#52497A;font-size:16px;">
+        <div style="text-align:center;">
+          <div style="font-size:48px;margin-bottom:12px;">💜</div>
+          <div>กำลังโหลด...</div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.js"></script>
+    <script>
+      // Hide loading indicator once Vue mounts
+      window.addEventListener('load', function() {
+        var el = document.getElementById('app-loading')
+        if (el) setTimeout(function() { el.style.display = 'none' }, 100)
+      })
+    </script>
   </body>
 </html>

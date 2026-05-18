@@ -253,5 +253,63 @@ describe('useFadeIn', () => {
       expect(el.classList.contains('visible')).toBe(true)
       expect(mockUnobserve).toHaveBeenCalledWith(el)
     })
+
+    it('handles multiple entries in a single callback', () => {
+      document.body.innerHTML = `
+        <div class="fade-in" id="a">A</div>
+        <div class="fade-in" id="b">B</div>
+      `
+
+      mount(createTestComp(), { attachTo: document.body })
+
+      const elA = document.querySelector('#a')
+      const elB = document.querySelector('#b')
+
+      // First intersecting, second not
+      ioCallback([
+        { isIntersecting: true, target: elA },
+        { isIntersecting: false, target: elB },
+      ])
+
+      expect(elA.classList.contains('visible')).toBe(true)
+      expect(elB.classList.contains('visible')).toBe(false)
+    })
+  })
+
+  describe('edge cases', () => {
+    it('uses document when rootEl is a ref with null value', () => {
+      document.body.innerHTML = '<div class="fade-in">Hello</div>'
+      const nullRef = ref(null)
+
+      mount(createTestComp(undefined, nullRef), { attachTo: document.body })
+
+      // Should observe element on document.body
+      expect(mockObserve).toHaveBeenCalled()
+      // MutationObserver should observe document.body (root === document)
+      expect(mockMutateObserve).toHaveBeenCalledWith(document.body, {
+        childList: true,
+        subtree: true,
+      })
+    })
+
+    it('handles empty DOM with no matching elements', () => {
+      // No elements in DOM
+      mount(createTestComp(), { attachTo: document.body })
+
+      // Observe should not have been called for any element
+      expect(mockObserve).not.toHaveBeenCalled()
+      // But MutationObserver should still be observing
+      expect(mockMutateObserve).toHaveBeenCalled()
+    })
+
+    it('calls disconnect on both observers when unmounted', () => {
+      const wrapper = mount(createTestComp(), { attachTo: document.body })
+      expect(mockMutateObserve).toHaveBeenCalled()
+
+      wrapper.unmount()
+
+      expect(mockDisconnect).toHaveBeenCalled()
+      expect(mockMutateDisconnect).toHaveBeenCalled()
+    })
   })
 })
