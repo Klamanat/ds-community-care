@@ -1,23 +1,21 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import {
-  fetchAdvisors,
-  fetchCounselorRequests, fetchSenderRequests,
-  submitConsultRequest, markConsultRead, addConsultReply,
-} from './mentalService.js'
+import * as svc from './mentalService.js'
 import { fetchImages } from '../../core/services/imageService.js'
 import { fetchAllEmployees } from '../team/teamService.js'
 
 export const useMentalStore = defineStore('mental', () => {
   // ── Advisors ─────────────────────────────────────────────────────────────
-  const advisors = ref([])
-  const loaded   = ref(false)
+  const advisors        = ref([])
+  const loaded          = ref(false)
+  const advisorsLoading = ref(false)
 
   async function loadAdvisors(force = false) {
     if (!force && loaded.value) return
+    advisorsLoading.value = true
     try {
       const [list, emps] = await Promise.all([
-        fetchAdvisors(),
+        svc.fetchAdvisors(),
         fetchAllEmployees(),
       ])
       loaded.value = true
@@ -47,6 +45,8 @@ export const useMentalStore = defineStore('mental', () => {
     } catch {
       advisors.value = []
       loaded.value   = true
+    } finally {
+      advisorsLoading.value = false
     }
   }
 
@@ -67,7 +67,7 @@ export const useMentalStore = defineStore('mental', () => {
     requestsLoading.value = true
     requestsError.value   = ''
     try {
-      myRequests.value     = await fetchCounselorRequests(counselorEmployeeId)
+      myRequests.value     = await svc.fetchCounselorRequests(counselorEmployeeId)
       requestsLoaded.value = true
     } catch (e) {
       requestsError.value  = e.message || 'โหลดไม่สำเร็จ'
@@ -79,14 +79,14 @@ export const useMentalStore = defineStore('mental', () => {
 
   async function markRead(id) {
     try {
-      await markConsultRead(id)
+      await svc.markConsultRead(id)
       const r = myRequests.value.find(r => r.id === id)
       if (r) r.isRead = true
     } catch {}
   }
 
   async function addReply(requestId, reply, counselorEmployeeId) {
-    await addConsultReply(requestId, reply, counselorEmployeeId)
+    await svc.addConsultReply(requestId, reply, counselorEmployeeId)
     const r = myRequests.value.find(r => r.id === requestId)
     if (r) { r.reply = reply; r.repliedAt = new Date().toISOString(); r.isRead = true }
     const sr = senderRequests.value.find(r => r.id === requestId)
@@ -109,7 +109,7 @@ export const useMentalStore = defineStore('mental', () => {
     senderLoading.value = true
     senderError.value   = ''
     try {
-      senderRequests.value = await fetchSenderRequests(senderEmployeeId)
+      senderRequests.value = await svc.fetchSenderRequests(senderEmployeeId)
       senderLoaded.value   = true
     } catch (e) {
       senderError.value    = e.message || 'โหลดไม่สำเร็จ'
@@ -121,7 +121,7 @@ export const useMentalStore = defineStore('mental', () => {
   }
 
   async function doSubmitRequest(counselorEmployeeId, message, senderEmployeeId, senderName) {
-    await submitConsultRequest(counselorEmployeeId, message, senderEmployeeId, senderName)
+    await svc.submitConsultRequest(counselorEmployeeId, message, senderEmployeeId, senderName)
     senderLoaded.value = false  // invalidate cache so history reloads
   }
 
@@ -137,7 +137,7 @@ export const useMentalStore = defineStore('mental', () => {
   }
 
   return {
-    advisors, loaded, loadAdvisors, isCounselor,
+    advisors, loaded, advisorsLoading, loadAdvisors, isCounselor,
     myRequests, requestsLoaded, requestsLoading, requestsError,
     loadMyRequests, markRead, addReply, unreadCount,
     senderRequests, senderLoaded, senderLoading, senderError,

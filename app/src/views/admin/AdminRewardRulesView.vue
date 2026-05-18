@@ -17,7 +17,7 @@
             <SkeletonCard height="68px" />
             <SkeletonCard height="68px" />
           </div>
-          <EmptyState v-else-if="!rules.length" title="ไม่พบข้อมูล" sub="รัน seedPointRules() ใน GAS ก่อน" />
+          <EmptyState v-else-if="!rules.length" title="ไม่พบข้อมูล" sub="ยังไม่มีกฎคะแนนในระบบ — ตรวจสอบ Supabase tables" />
 
           <div v-else>
             <div class="al-item rw-rule-item fade-in" v-for="r in rules" :key="r.id" @click="handleRippleClick">
@@ -47,10 +47,10 @@
         <div class="al-info-box">
           <div class="text-xs font-extrabold text-indigo mb-1.5">ℹ️ หมายเหตุ</div>
           <ul class="text-xs text-indigo/80 leading-loose pl-4 m-0">
-            <li>type + subtype ต้องไม่ซ้ำกัน (GAS จะตรวจสอบ)</li>
+            <li>type + subtype ต้องไม่ซ้ำกัน (Supabase constraint จะตรวจสอบ)</li>
             <li>subtype เว้นว่าง = กฎ default ของ type นั้น</li>
             <li>เมื่อเลือกประเภท icon และสีจะถูก auto-fill ให้อัตโนมัติ</li>
-            <li>ปิด active จะหยุดมอบคะแนนทันที (GAS จะข้ามไป)</li>
+            <li>ปิด active จะหยุดมอบคะแนนทันที (ระบบจะข้ามไป)</li>
           </ul>
         </div>
       </div>

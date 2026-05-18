@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '../../core/services/supabase.js'
+import * as svc from './notificationService.js'
 
 const LS_READ = 'notif_read'
 const LS_DATA = 'notif_cache'
@@ -63,11 +63,7 @@ export const useNotifStore = defineStore('notif', () => {
 
     try {
       const monthIdx = new Date().getMonth()  // 0-indexed, matches employees.month_idx
-      const { data, error } = await supabase.rpc('get_notifications', {
-        p_emp_name:   employeeName,
-        p_month_idx:  monthIdx,
-      })
-      if (error) throw new Error(error.message)
+      const data = await svc.fetchNotifications(employeeName, monthIdx)
 
       if (Array.isArray(data)) {
         items.value = data

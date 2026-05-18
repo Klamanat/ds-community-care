@@ -25,7 +25,7 @@ export function lsDel(key) {
 /**
  * Strip base64 data URLs from specified image fields before caching.
  * Base64 images (~100KB each) make localStorage huge → JSON.parse ช้ามากบน Safari.
- * Images are re-fetched from GAS ScriptCache (fast) after initial render.
+ * Images are lazy-fetched via Edge Function cache after initial render.
  */
 export function stripBase64(arr, ...fields) {
   if (!Array.isArray(arr)) return arr

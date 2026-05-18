@@ -27,7 +27,7 @@ function _saveCommentLike(commentId, state) {
   s.comments[commentId] = state
   _saveStored(s)
 }
-// Apply stored comment likes only where GAS didn't already set _liked
+// Apply stored comment likes only where Supabase didn't already set _liked
 function _applyCommentLikes(comments) {
   const stored = _loadStored().comments || {}
   comments.forEach(cm => {
@@ -129,7 +129,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
     } catch { }
   }
 
-  // ── recordPraise — add/update session praise list (no GAS call) ─
+  // ── recordPraise — add/update session praise list (local only) ─
   function recordPraise(member, channelId) {
     const uid = channelId || String(member.empCode || member.id || member.name).trim()
     const existing = praisedPeople.value.find(p => String(p.id).trim() === uid)
@@ -147,7 +147,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
     }
   }
 
-  // ── loadComments — fetch with userKey so GAS returns _liked per comment ─
+  // ── loadComments — fetch with userKey so Supabase returns _liked per comment ─
   async function loadComments(channelId) {
     const userKey = useUserAuthStore().userId || ''
     function sortByTime(arr) {
@@ -157,7 +157,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
         return ta - tb
       })
     }
-    // Hydrate from localStorage immediately (shows comments without waiting for GAS)
+    // Hydrate from localStorage immediately (shows comments without waiting for API)
     if (!postComments[channelId]) {
       const cached = lsGet('dsc_cm_' + channelId)
       if (cached?.length) {
@@ -165,7 +165,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
         _applyCommentLikes(postComments[channelId])
       }
     }
-    // Skip GAS if already loaded in this session
+    // Skip fetch if already loaded in this session
     if (postComments[channelId]?.length > 0) return
     try {
       const arr = await svc.fetchComments(channelId, userKey)
@@ -182,7 +182,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
     }
   }
 
-  // ── loadChannelLike — fetch channel like state from GAS when opening thread ─
+  // ── loadChannelLike — fetch channel like state from Supabase when opening thread ─
   async function loadChannelLike(channelId) {
     const userKey = useUserAuthStore().userId || ''
     try {
@@ -358,7 +358,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
     const removed = comments.splice(idx, 1)[0]
     lsDel('dsc_cm_' + channelId)
     // decrement commentCount on praisedPeople
-    const person = praisedPeople.find(p => p.empCode === channelId || p.id === channelId)
+    const person = praisedPeople.value.find(p => p.empCode === channelId || p.id === channelId)
     if (person) person.commentCount = Math.max(0, (person.commentCount || 1) - 1)
     try {
       await svc.deleteComment(commentId)

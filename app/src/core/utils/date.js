@@ -1,7 +1,7 @@
 const MONTHS_TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
 
 /**
- * แปลง "dd/MM/yyyy HH:mm" (จาก GAS) → "7 มี.ค. 2569 · 14:30"
+ * แปลงวันที่จาก Supabase (ISO/dd/MM/yyyy HH:mm) → "7 มี.ค. 2569 · 14:30"
  * รองรับ ISO string และ Date object ด้วย
  */
 export function formatThaiDatetime(value) {
@@ -12,7 +12,7 @@ export function formatThaiDatetime(value) {
     date = value
   } else {
     const str = String(value).trim()
-    // dd/MM/yyyy HH:mm  (GAS format)
+    // dd/MM/yyyy HH:mm  (legacy format)
     const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/)
     if (m) {
       date = new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5])

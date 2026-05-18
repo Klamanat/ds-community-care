@@ -1,5 +1,5 @@
-// edgeFunctions.js — wrappers for Supabase Edge Functions that call Google Drive API
-// Replaces: gasPost('uploadImage', ...) and gasGet('getImages', ...)
+// edgeFunctions.js — Supabase Edge Function wrappers for image operations
+// (upload to Drive, batch-fetch Drive images via cache, delete storage files)
 
 const BASE = import.meta.env.VITE_SUPABASE_URL + '/functions/v1'
 const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -70,7 +70,6 @@ export async function fixCacheControl() {
 
 /**
  * Batch-fetch Drive images as base64 map via Edge Function.
- * Replaces gasGet('getImages', { imgIds: '...' })
  * @param {string[]} imgIds  Array of Drive file IDs
  * @returns {Record<string, string>}  { fileId: 'data:image/jpeg;base64,...' }
  */

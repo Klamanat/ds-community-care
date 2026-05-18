@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import * as svc from './ideaService.js'
 import { useUiStore } from '../../core/stores/ui.js'
 
@@ -61,10 +61,10 @@ export const useIdeasStore = defineStore('ideas', () => {
     selectedCategory.value = selectedCategory.value === cat ? null : cat
   }
 
-  const filteredIdeas = () => {
+  const filteredIdeas = computed(() => {
     if (!selectedCategory.value) return ideas.value
     return ideas.value.filter(i => i.category === selectedCategory.value)
-  }
+  })
 
   return { ideas, selectedCategory, isLoading, loadError, categories, loadIdeas, submitIdea, selectCategory, filteredIdeas }
 })

@@ -122,7 +122,7 @@ watch(() => userAuth.userId,    syncUser)
 watch(() => userAuth.userImgUrl, img => { if (ui.currentUser) ui.currentUser.img = img })
 
 // Load notifications when user is known; sync unread count → badge
-// Deferred by 3s on first load so it doesn't compete with critical data on cold GAS start
+// Deferred by 3s on first load so it doesn't compete with critical data
 function loadNotifs(immediate = false) {
   if (!userAuth.userName) return
   if (immediate || notif.items.length) {

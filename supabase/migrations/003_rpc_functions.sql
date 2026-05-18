@@ -4,7 +4,7 @@
 -- ============================================================
 
 -- ── get_empathy_people() ─────────────────────────────────────
--- Replaces GAS getEmpathyPeople — joins empathy_comments + employees + empathy_photos
+-- RPC: get_empathy_people — joins empathy_comments + employees + empathy_photos
 -- Returns one card per person with comment count, latest image, sorted by recency
 
 create or replace function get_empathy_people()
@@ -49,7 +49,7 @@ returns table (
 $$;
 
 -- ── toggle_empathy_like(post_id, user_key) ───────────────────
--- Replaces GAS toggleLike — atomic upsert/delete in empathy_likes
+-- RPC: toggle_empathy_like — atomic upsert/delete in empathy_likes
 
 create or replace function toggle_empathy_like(p_post_id text, p_user_key text)
 returns table (liked boolean, like_count bigint) language plpgsql security definer as $$
@@ -117,7 +117,7 @@ end;
 $$;
 
 -- ── award_points(emp_name, type, subtype, desc_text) ─────────
--- Replaces GAS addPoints — looks up rule → inserts into points
+-- RPC: add_points — looks up rule → inserts into points
 
 create or replace function award_points(
   p_emp_name  text,
@@ -172,7 +172,7 @@ end;
 $$;
 
 -- ── get_notifications(emp_name, month_idx) ───────────────────
--- Replaces GAS getNotifications — generates notification list from DB
+-- RPC: get_notifications — generates notification list from DB
 
 create or replace function get_notifications(p_emp_name text, p_month_idx integer default null)
 returns table (

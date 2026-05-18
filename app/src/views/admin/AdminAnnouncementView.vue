@@ -801,7 +801,7 @@ async function doSave() {
     setTimeout(() => saveOk.value = false, 5000)
     if (form.quizEnabled && form.id) loadQuizAnswers()
 
-    // 1) เขียน cache ใหม่ทันที → popup อ่านจาก localStorage ได้เลยโดยไม่รอ GAS
+    // 1) เขียน cache ใหม่ทันที → popup อ่านจาก localStorage ได้เลยโดยไม่รอ API
     const annData = { id: form.id, title: form.title, videoUrl: form.video, videoEnabled: form.videoEnabled, imageUrl: form.image, imageEnabled: form.imageEnabled, desc: form.desc }
     try {
       if (form.enabled && form.id) {

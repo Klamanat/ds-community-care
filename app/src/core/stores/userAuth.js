@@ -75,21 +75,6 @@ export const useUserAuthStore = defineStore('userAuth', () => {
     }
   }
 
-  function _syncFromMeta(user) {
-    const m = user.user_metadata || {}
-    if (m.employee_id || m.employeeId) {
-      userId.value     = String(m.employee_id || m.employeeId || '')
-      userName.value   = m.name    || ''
-      userRole.value   = m.role    || ''
-      userImgId.value  = m.img_id  || m.imgId  || ''
-      userImgUrl.value = m.img_url || m.imgUrl || getCached(userImgId.value) || ''
-      userDept.value   = m.dept    || ''
-      userSlogan.value = m.star_gang_slogan || m.starGangSlogan || ''
-      userBdDate.value = m.bd_date || m.bdDate || ''
-      _saveLocal()
-    }
-  }
-
   function _persist(emp) {
     userId.value      = String(emp.id || emp.employee_id || '')
     userEmpCode.value = String(emp.empCode || emp.emp_code || '')

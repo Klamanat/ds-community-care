@@ -19,7 +19,7 @@ const FALLBACK_EMOJI = ['😄','🌟','🦊','🦋','🐯','🌸']
 
 export const useBirthdayStore = defineStore('birthday', () => {
   const allEmployees = reactive({})
-  const loadedMonths = ref(new Set())
+  const loadedMonths = ref({})
   const isLoading    = ref(false)
 
   const SENDER_AVATARS = [
@@ -43,12 +43,12 @@ export const useBirthdayStore = defineStore('birthday', () => {
 
   async function loadMonth(monthIdx, force = false) {
     // In-session: already loaded → skip
-    if (!force && loadedMonths.value.has(monthIdx)) return
+    if (!force && loadedMonths.value[monthIdx]) return
 
     // Hydrate from localStorage immediately
     if (!allEmployees[monthIdx]) {
       const cached = lsGet('bday_m' + monthIdx)
-      if (cached) { allEmployees[monthIdx] = cached; loadedMonths.value.add(monthIdx) }
+      if (cached) { allEmployees[monthIdx] = cached; loadedMonths.value[monthIdx] = true }
     }
 
     isLoading.value = !allEmployees[monthIdx]
@@ -59,7 +59,7 @@ export const useBirthdayStore = defineStore('birthday', () => {
         ...e, photo: e.photo || getCached(e.imgId) || '',
       }))
       allEmployees[monthIdx] = enriched
-      loadedMonths.value.add(monthIdx)
+      loadedMonths.value[monthIdx] = true
       lsSet('bday_m' + monthIdx, stripBase64(enriched, 'imgUrl', 'photo'), TTL)
       // Lazy-fetch images in background (mutate in-place to preserve object references)
       const ids = [...new Set(enriched.map(e => e.imgId).filter(Boolean))]
@@ -71,7 +71,7 @@ export const useBirthdayStore = defineStore('birthday', () => {
       }).catch(() => {})
     } catch {
       if (!allEmployees[monthIdx]) allEmployees[monthIdx] = []
-      loadedMonths.value.add(monthIdx)
+      loadedMonths.value[monthIdx] = true
     } finally {
       isLoading.value = false
     }

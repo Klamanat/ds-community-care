@@ -122,7 +122,7 @@ const pageSize  = ref(PAGE_SIZE)
 watch(blogFilterCat, () => { pageSize.value = PAGE_SIZE })
 
 const filteredPosts = computed(() => {
-  const all = blog.posts  // already sorted newest-first by GAS
+  const all = blog.posts  // already sorted newest-first by Supabase query
   if (!blogFilterCat.value) return all
   return all.filter(p => p.category === blogFilterCat.value)
 })

@@ -10,9 +10,10 @@ Web App สำหรับทีม **Digital Solutions** — ดูแลสุ
 | ------------ | ------------------------------------------------------------------ |
 | **Frontend** | Vue 3 (Composition API) + Vite + Pinia + Vue Router (hash history) |
 | **Styling**  | Tailwind CSS v3 + `global.css` (single source of truth)            |
-| **Backend**  | Google Apps Script Web App (doGet / doPost)                        |
-| **Database** | Google Sheets                                                      |
-| **Deploy**   | Vercel / Netlify (static SPA)                                      |
+| **Backend**  | Supabase (PostgreSQL + RLS + RPC + Storage)                        |
+| **Auth**     | Supabase Auth (email-password with empCode@ds-community.internal)  |
+| **Images**   | Supabase Storage + Google Drive (via Edge Function cache)          |
+| **Deploy**   | Vercel (SPA)                                                       |
 
 ---
 
@@ -22,31 +23,33 @@ Web App สำหรับทีม **Digital Solutions** — ดูแลสุ
 ds-community-care/
 ├── app/                              # Vite project (frontend)
 │   ├── index.html                    # Entry HTML — viewport no-zoom, Google Fonts
-│   ├── vite.config.js                # Proxy /api → GAS URL (dev only)
+│   ├── vite.config.js                # Vite config + plugins
 │   ├── src/
 │   │   ├── main.js                   # createApp + Pinia + Router + mount
 │   │   ├── App.vue                   # Shell: Layout + BottomNav + all modals
 │   │   ├── router/index.js           # User routes + Admin routes + guards
 │   │   ├── styles/global.css         # CSS ทั้งหมด (Tailwind + components)
-│   │   ├── stores/                   # Pinia stores
-│   │   │   ├── ui.js                 # Modal state, toast, currentUser, notif badge
-│   │   │   ├── userAuth.js           # User login/logout, background profile sync
-│   │   │   ├── admin.js              # Admin token auth
-│   │   │   ├── empathy.js            # Posts, people, comments, likes (channel + comment)
-│   │   │   ├── birthday.js           # Birthday employees by month, wishes
-│   │   │   ├── team.js               # empTeam, empDirectory, Star Gang
-│   │   │   ├── ideas.js              # Ideas list + submit
-│   │   │   ├── activities.js         # Monthly activities, stamps, rewards
-│   │   │   ├── mental.js             # Mental health advisors + consult requests
-│   │   │   ├── notif.js              # Notification items + unread count
-│   │   │   ├── reward.js             # Points balance + reward rules
-│   │   │   ├── training.js           # Trainings, IDP posters/videos, site visits
-│   │   │   └── blog.js               # Blog posts
-│   │   ├── services/                 # GAS API wrappers
-│   │   │   ├── api.js                # gasGet / gasPost (CORS, error handling)
-│   │   │   ├── imageService.js       # Drive image cache (3-tier: ScriptCache → LS → Map)
-│   │   │   ├── teamService.js        # Employee directory — dedup concurrent calls
-│   │   │   ├── empathyService.js     # Empathy CRUD
+│   │   ├── core/
+│   │   │   ├── stores/               # Core Pinia stores (ui, userAuth, admin, cardConfig)
+│   │   │   ├── services/             # Core services (supabase, imageService, edgeFunctions)
+│   │   │   ├── layout/               # AppShell (AppHeader, AppSidebar, AppBottomNav)
+│   │   │   ├── composables/          # useRipple, useConfetti, useFadeIn, useImageCompress
+│   │   │   ├── constants/            # mentalCardColors
+│   │   │   └── utils/                # cache.js (lsGet/lsSet/lsDel), date.js
+│   │   ├── features/                 # Feature modules (feature-first)
+│   │   │   ├── empathy/              # empathy.store.js + empathyService.js + modals
+│   │   │   ├── activities/           # activities.store.js + activitiesService.js
+│   │   │   ├── birthday/             # birthday.store.js + birthdayService.js
+│   │   │   ├── rewards/              # reward.store.js + rewardService.js
+│   │   │   ├── training/             # training.store.js + trainingService.js + sub-views
+│   │   │   ├── ...                   # announcements, blog, gifts, ideas, mental, notif, plans, team
+│   │   ├── shared/components/        # BaseModal, SkeletonCard, EmptyState, AdminCardMenu
+│   │   ├── components/home/          # BdayBanner, ConsultCards, EmpathyBoard, MonthsGrid
+│   │   ├── views/                    # Page-level views (HomeView, StarView, BdayView, etc.)
+│   │   │   └── admin/                # Admin views + AdminLayout + admin.css
+│   │   └── env                       # VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+│   └── .env                          # Supabase credentials (dev)
+└── supabase/                         # Database migrations, RLS, RPC, Edge Functions
 │   │   │   ├── birthdayService.js    # Birthday CRUD
 │   │   │   ├── ideaService.js        # Ideas CRUD
 │   │   │   ├── activitiesService.js  # Activities + stamps + rewards
@@ -108,25 +111,8 @@ ds-community-care/
 │   │           ├── AdminRewardRulesView.vue
 │   │           ├── AdminBlogView.vue
 │   │           └── AdminAnnouncementView.vue
-│   └── .env                          # VITE_GAS_URL=https://script.google.com/...
-└── gas/                              # Google Apps Script files
-    ├── Code.gs                       # doGet / doPost router + keepAlive trigger
-    ├── Utils.gs                      # helpers + ScriptCache + Drive image proxy
-    ├── Employees.gs                  # getEmployees, addTeamMember, joinStarGang
-    ├── Birthdays.gs                  # getBirthdays, getBirthdayWishes, addBirthdayWish
-    ├── Empathy.gs                    # posts, people, comments, likes (post/comment/channel)
-    ├── Activities.gs                 # getActivities, joinActivity, stamps, rewards
-    ├── Ideas.gs                      # getIdeas, submitIdea
-    ├── Mental.gs                     # getMentalAdvisors, submitConsultRequest, addConsultReply
-    ├── Notifications.gs              # getNotifications, markNotifsRead
-    ├── Rewards.gs                    # getMyPoints, dailyCheckin, getRewardRules
-    ├── Training.gs                   # getTrainings, registerTraining, getSiteVisits, getIdpPosters
-    ├── Blog.gs                       # getBlogPosts, addBlogPost
-    ├── UserAuth.gs                   # userCheckPassword, userSetPassword
-    ├── Admin.gs                      # adminGetAll, adminUpdateRow, adminDeleteRow
-    ├── DriveUpload.gs                # uploadImage, adminUploadProfileImage
-    ├── Idp.gs                        # getIdpPosters, getIdpVideos, adminAdd/Update/Delete
-    └── Setup.gs                      # sheet initialization helpers
+│   └── .env                          # VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY (dev)
+└── supabase/                         # Database migrations, RLS, RPC, Edge Functions
 ```
 
 ---
@@ -135,18 +121,17 @@ ds-community-care/
 
 ```
 Browser
-  └── Vue SPA (hash routing: /#/, /#/star, /#/idea ...)
+  └── Vue SPA (hash routing: /#/, /#/login, /#/admin/...)
         ├── Pinia Store (reactive state + localStorage cache)
-        │     └── Service layer (gasGet / gasPost)
-        │           └── GAS Web App (doGet / doPost)
-        │                 └── Google Sheets (data store)
-        │                 └── Google Drive (image store)
-        └── imageService (3-tier cache: ScriptCache → localStorage → in-memory Map)
+        │     └── Service layer (features/*/*Service.js)
+        │           └── Supabase JS client (core/services/supabase.js)
+        │                 └── PostgreSQL (RLS enforced)
+        │                 └── Edge Functions (image upload/cache/delete)
+        └── imageService (3-tier cache: Edge Function → localStorage → in-memory Map)
 ```
 
-**CORS:** GAS sets `Access-Control-Allow-Origin: *` หลัง redirect → client ต้องใช้ `{ redirect: 'follow' }`
-**Dev proxy:** Vite proxy `/api` → GAS URL เพื่อหลีกเลี่ยง CORS บน localhost
-**Thai encoding:** `URLSearchParams` auto-encode UTF-8 — ไม่ต้อง encode เอง
+**CORS:** Prod uses Vercel rewrites (`/supabase/*` → Supabase URL). Dev uses `.env` + `VITE_SUPABASE_URL`.
+**Auth:** User auth uses Supabase email-password with `empCode@ds-community.internal` format. Admin panel uses separate credential check.
 
 ---
 
@@ -155,29 +140,29 @@ Browser
 ### User Login (`/login`)
 
 1. ผู้ใช้กรอก **empCode** (รหัสพนักงาน)
-2. Frontend เรียก `getEmployees` → GAS ดึงทุกแถวจาก Employees sheet
-3. หา employee ที่ตรงกับ `empCode` (case-insensitive)
-4. บันทึก `user_id`, `user_name`, `user_role`, `user_imgid`, `user_img`, `user_dept`, `user_slogan` ใน localStorage
-5. Redirect ไปหน้า Home
-6. Route guard (`router.beforeEach`) ตรวจ `user_id` ใน localStorage — ถ้าไม่มี redirect กลับ `/login`
-7. Background sync (5s delay): เปรียบเทียบข้อมูลกับ Sheets ทุกครั้งที่เปิดแอป — sync ชื่อ/ตำแหน่ง/รูปอัตโนมัติ
+2. `checkEmployee(empCode)` → query `employees` table
+   - ไม่พบ → generic error (ป้องกัน account enumeration)
+   - พบแต่ไม่มี passcode → redirect `/set-password`
+3. `setPasscode(empCode, passcode)` → RPC `set_user_passcode` + `supabase.auth.signUp()`
+4. `loginWithEmployee(empCode, passcode)` →
+   - `signInWithPassword` (ถ้ามี auth_user_id) หรือ verify via RPC `verify_user_passcode`
+   - สร้าง real Supabase session (ไม่ใช่ anonymous)
+   - บันทึก profile ลง localStorage + background sync profile
 
 ### Admin Login (`/admin/login`)
 
-- แยกออกจาก user login ใช้ username + password
-- GAS ตรวจสอบ credentials → return JWT-like `token`
-- บันทึก `admin_token`, `admin_name` ใน localStorage
-- Route guard ตรวจ `admin_token` ก่อนเข้าทุก `/admin/*`
-- Token หมดอายุ → GAS return `"Invalid token"` → frontend clear token + redirect `/admin/login` อัตโนมัติ
+- แยกจาก user login — ใช้ username/password แบบดั้งเดิม
+- Supabase session role (`user_metadata.role === 'admin'`) เป็นตัวยืนยันสิทธิ์
+- Route guard ตรวจ localStorage fast-check + Supabase session re-validation
 
 ---
 
 ## Performance
 
-### GAS Keep-Alive
+### Supabase (No Cold Start)
 
-GAS V8 sleeps หลังไม่มีการใช้งาน ~5 นาที → cold start 10-20s ต่อ request
-แก้ไขด้วย Time-based trigger ทุก 5 นาที: ติดตั้งครั้งเดียวด้วย `installKeepAliveTrigger()` ใน GAS editor
+Supabase PostgreSQL + Edge Functions ไม่มี cold start problem — response time millisecond-level
+ไม่จำเป็นต้องใช้ keep-alive trigger อีกต่อไป
 
 ### Deferred Loading
 
@@ -191,11 +176,11 @@ GAS V8 sleeps หลังไม่มีการใช้งาน ~5 นา�
 ### Promise Dedup (`teamService.js`)
 
 `getEmployees` ถูกเรียกพร้อมกันจากหลาย store → dedup ด้วย in-flight promise cache (30s TTL)
-ผล: 3-5 concurrent calls → 1 GAS request
+ผล: 3-5 concurrent calls → 1 Supabase query
 
 ### Optimistic Updates
 
-Store อัปเดต state ก่อน → เรียก GAS → revert ถ้า error (likes, comments, joins ทั้งหมด)
+Store อัปเดต state ก่อน → เรียก API → revert ถ้า error (likes, comments, joins ทั้งหมด)
 
 ---
 
@@ -215,7 +200,7 @@ Store อัปเดต state ก่อน → เรียก GAS → revert �
 | 💝 Empathy Board     | cards 12 คนล่าสุด — like / click ดูรายละเอียด             | `empathy.js` → `getEmpathyPeople` |
 | 📅 Activities        | grid 12 เดือน คลิกเปิด MonthModal                         | `activities.js` → `getActivities` |
 
-**Announcement Banner** — ดึง announcement จาก GAS เมื่อ login สำเร็จ แสดงครั้งเดียวต่อ session (ตรวจสอบด้วย `dsc_ann_seen` ใน localStorage) รองรับทั้งข้อความและวิดีโอ
+**Announcement Banner** — ดึง announcement จาก Supabase เมื่อ login สำเร็จ แสดงครั้งเดียวต่อ session (ตรวจสอบด้วย `dsc_ann_seen` ใน localStorage) รองรับทั้งข้อความและวิดีโอ
 
 ---
 
@@ -229,14 +214,14 @@ Store อัปเดต state ก่อน → เรียก GAS → revert �
 
 **การส่งคำอวยพร:**
 
-- เลือก avatar emoji + เขียนข้อความ → `addBirthdayWish` บันทึกใน `BirthdayWishes` sheet
-- Optimistic update: wish แสดงทันทีก่อน GAS ตอบกลับ — revert ถ้า error
+- เลือก avatar emoji + เขียนข้อความ → `birthdayService.addWish` → insert สู่ Supabase
+- Optimistic update: wish แสดงทันทีก่อน API ตอบกลับ — revert ถ้า error
 
 **อัปโหลดรูปวันเกิด:**
 
 - เฉพาะพนักงานเจ้าของวันเกิด (ตรวจสอบด้วย `userId === birthday.employeeId`)
-- บีบอัดรูปก่อน upload ผ่าน `useImageCompress` → `uploadImage` (POST base64 ไป Drive)
-- อัปเดต Birthdays sheet ด้วย Drive URL ใหม่
+- บีบอัดรูปก่อน upload ผ่าน `useImageCompress` → `uploadImage` (Edge Function → Drive)
+- อัปเดต employee record ใน Supabase ด้วย Drive URL ใหม่
 
 **Surprise Box:**
 
@@ -297,14 +282,14 @@ Store อัปเดต state ก่อน → เรียก GAS → revert �
 
 **ลงทะเบียน:**
 
-- `joinActivity` บันทึกใน `ActivityJoins` sheet + นับ `joinCount`
+- `activitiesService.joinActivity` → insert สู่ `activity_joins` table
 - Optimistic update ทันที (ปุ่มเปลี่ยนเป็น "✅ Stamped")
-- Stamp เก็บใน `getMyStamps?employeeName=xxx`
+- Stamp เก็บใน `activities.store` → `getMyStamps`
 
 **รับรางวัล:**
 
 - กด "🥚 รับรางวัล" → `claimActivityReward` → animation แกะไข่
-- GAS ตรวจว่า claim แล้วหรือยัง (ป้องกัน double claim)
+- DB constraint + RPC ป้องกัน double claim
 - เพิ่ม points ผ่าน reward system อัตโนมัติ
 
 ---
@@ -326,19 +311,19 @@ TrainingModal มี 8 หมวดหมู่ทักษะ แต่ละ�
 
 **ลงทะเบียน course:**
 
-- `register(trainingId)` → `registerTraining` บันทึกใน `TrainingRegistrations` sheet
-- ตรวจสอบ: ถ้า full (joinCount ≥ maxSlots) → error "เต็มแล้ว"
+- `register(trainingId)` → `trainingService.registerTraining` → insert สู่ `training_registrations` table
+- ตรวจสอบ: UNIQUE constraint ป้องกัน duplicate registration
 - Optimistic: เพิ่ม `trainingId` เข้า `myTrainingIds` ทันที → ปุ่มเปลี่ยนสถานะ
-- ยกเลิก: `cancelRegistration` ลบออกจาก sheet + ลด `joinCount`
+- ยกเลิก: `cancelRegistration` ลบจาก `training_registrations`
 
 **IDP:**
 
-- Posters: รูปขนาดใหญ่พร้อม link — ดึงจาก `getIdpPosters` + batch image fetch
-- Videos: เปิดดูผ่าน `getVideoUrl?fileId=xxx` → stream จาก Drive
+- Posters: รูปขนาดใหญ่พร้อม link — ดึงจาก Supabase + batch image fetch
+- Videos: เปิดดูผ่าน Edge Function → stream จาก Drive
 
 **Site Visit:**
 
-- โหวตสถานที่ที่อยากไป (1 คน 1 โหวต) → `voteSite` เก็บใน `SiteVotes` sheet
+- โหวตสถานที่ที่อยากไป (1 คน 1 โหวต) → `voteSite` เก็บใน `site_votes` table
 - ยกเลิกโหวตได้: `cancelSiteVote`
 - แสดง voteCount real-time (optimistic +1/-1)
 
@@ -354,9 +339,9 @@ TrainingModal มี 8 หมวดหมู่ทักษะ แต่ละ�
 
 **Flow:**
 
-- โหลดครั้งแรกหลัง 3 วินาที (deferred) เพื่อไม่แย่ง GAS request กับข้อมูล critical
-- Fetch `getNotifications?employeeName=xxx&monthIdx=N` + `getNotifReads?employeeName=xxx` พร้อมกัน (`Promise.all`)
-- Merge server readIds กับ localStorage readIds (union)
+- โหลดครั้งแรกหลัง 3 วินาที (deferred) เพื่อไม่แย่ง critical data
+- Supabase RPC `get_notifications` + localStorage read tracking
+- localStorage offline read state ซิงค์อัตโนมัติ
 
 **Unread badge:**
 
@@ -600,61 +585,49 @@ GAS ScriptCache  (60 min, shared across all users)
 # 1. Install dependencies
 cd app && npm install
 
-# 2. Configure GAS URL
-echo "VITE_GAS_URL=https://script.google.com/macros/s/.../exec" > app/.env
+# 2. Configure Supabase credentials
+#    Copy app/.env.example → app/.env and fill in VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
+cp app/.env.example app/.env
 
-# 3. Start dev server (proxies /api → GAS)
+# 3. Start dev server
 npm run dev
 
 # 4. Build for production
 npm run build
 ```
 
-## GAS Deployment
-
-1. Google Sheets → Extensions → Apps Script
-2. Copy ไฟล์จาก `gas/` ทั้งหมด (Code.gs ก่อน)
-3. Deploy → New Deployment → Web App
-   - Execute as: **Me**
-   - Who has access: **Anyone**
-4. Copy URL → วางใน `app/.env` เป็น `VITE_GAS_URL`
-5. ทดสอบ: `GET [URL]?action=getEmployees` → `{ "ok": true, "data": [] }`
-6. ติดตั้ง keep-alive trigger: เปิด GAS editor → Run → `installKeepAliveTrigger` (ครั้งเดียว)
-
 ---
 
-## Google Sheets Schema
+## Supabase Schema
 
-| Sheet                 | Columns หลัก                                                                                                            |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Employees             | id, empCode, name, role, dept, imgUrl (drive:ID), imgId, inTeam, inStarGang, starGangName, starGangRole, starGangSlogan |
-| Birthdays             | key, employeeId, name, role, monthIdx (0-11), date, fallbackIdx, imgUrl                                                 |
-| BirthdayWishes        | id, birthdayKey, fromName, fromAvIdx, msg, time, year                                                                   |
-| EmpathyPosts          | id, recEmployeeId, recName, recRole, recImgUrl, sndName, msg, tag, likeCount, createdAt                                 |
-| EmpathyComments       | id, postId, parentId, authorName, text, createdAt                                                                       |
-| EmpathyLikes          | postId, userKey                                                                                                         |
-| EmpathyPhotos         | empCode, imgUrl, updatedAt                                                                                              |
-| CommentLikes          | commentId, userKey                                                                                                      |
-| ChannelLikes          | channelId, userKey                                                                                                      |
-| Ideas                 | id, category, title, detail, submitterName, createdAt, status                                                           |
-| Activities            | id, monthIdx, name, emoji, date, detail, imgUrl, joinOpen, joinCount, steps, rewardType                                 |
-| ActivityJoins         | id, activityId, activityName, employeeName, joinedAt                                                                    |
-| Notifications         | id, title, body, targetName, type, createdAt                                                                            |
-| NotifReads            | notifId, userName                                                                                                       |
-| RewardPoints          | id, userName, points, action, detail, createdAt                                                                         |
-| RewardRules           | id, action, points, label                                                                                               |
-| Trainings             | id, type, title, description, date, location, maxSlots, joinCount, imgUrl, steps, reviewEnabled                         |
-| TrainingRegistrations | id, trainingId, employeeName, registeredAt                                                                              |
-| TrainingReviews       | id, trainingId, employeeName, rating, comment, createdAt                                                                |
-| SiteVisits            | id, name, description, date, location, imgUrl, voteCount                                                                |
-| SiteVotes             | id, siteId, employeeName, votedAt                                                                                       |
-| IdpPosters            | id, title, imgUrl, imgId, link                                                                                          |
-| IdpVideos             | id, title, fileId, description                                                                                          |
-| MentalAdvisors        | id, name, role, imgUrl, imgId                                                                                           |
-| ConsultRequests       | id, advisorId, message, reply, createdAt, readAt                                                                        |
-| BlogPosts             | id, title, content, type, authorName, imgUrl, createdAt                                                                 |
-| Announcement          | title, body, videoFileId, updatedAt                                                                                     |
-| UserPasswords         | empCode, passwordHash                                                                                                   |
+ดู migrations ทั้งหมดได้ที่ `supabase/migrations/` ซึ่งครอบคลุม:
+
+- Users & auth (`employees`, `auth` integration)
+- Birthday (`birthdays`, `birthday_wishes`)
+- Empathy (`empathy_comments`, `empathy_likes`, `comment_likes`, `channel_likes`)
+- Activities (`activities`, `activity_joins`, `activity_tickets`)
+- Ideas (`ideas`)
+- Rewards & points (`rewards`, `point_rules`, `daily_checkins`)
+- Training (`training_registrations`, `site_votes`, `training_reviews`)
+- Mental health (`mental_advisors`, `consult_requests`)
+- Notifications (`get_notifications` RPC)
+- Gifts (`gifts`, `gift_claims`)
+- Presence (`user_presence`, `presence_logs`)
+- Settings (`settings`)
+
+RLS policies และ RPC functions อยู่ใน migrations เดียวกัน
+| Trainings | id, type, title, description, date, location, maxSlots, joinCount, imgUrl, steps, reviewEnabled |
+| TrainingRegistrations | id, trainingId, employeeName, registeredAt |
+| TrainingReviews | id, trainingId, employeeName, rating, comment, createdAt |
+| SiteVisits | id, name, description, date, location, imgUrl, voteCount |
+| SiteVotes | id, siteId, employeeName, votedAt |
+| IdpPosters | id, title, imgUrl, imgId, link |
+| IdpVideos | id, title, fileId, description |
+| MentalAdvisors | id, name, role, imgUrl, imgId |
+| ConsultRequests | id, advisorId, message, reply, createdAt, readAt |
+| BlogPosts | id, title, content, type, authorName, imgUrl, createdAt |
+| Announcement | title, body, videoFileId, updatedAt |
+| UserPasswords | empCode, passwordHash |
 
 > **imgUrl format:** `drive:FILE_ID` = GAS proxy ผ่าน `getImages` / plain URL = ใช้ตรง
 

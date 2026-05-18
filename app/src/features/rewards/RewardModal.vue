@@ -20,7 +20,7 @@
         <div class="rw-pts-card">
           <div class="rw-pts-left">
             <div class="rw-pts-num">
-              <span v-if="reward.loading" class="rw-skeleton-num"></span>
+              <span v-if="reward.isLoading" class="rw-skeleton-num"></span>
               <span v-else>{{ reward.total.toLocaleString() }}</span>
             </div>
             <div class="rw-pts-label">คะแนนสะสม</div>
@@ -73,7 +73,7 @@
               @click="handleCheckin"
             >
               <span v-if="reward.checkinLoading" class="rw-ci-spinner"></span>
-              <span v-else>รับ +{{ reward.loading ? '…' : checkinPts }} pts</span>
+              <span v-else>รับ +{{ reward.isLoading ? '…' : checkinPts }} pts</span>
             </button>
           </div>
         </div>
@@ -850,7 +850,7 @@
         </div>
 
         <!-- Loading skeleton for history -->
-        <div v-else-if="reward.loading" class="rw-section">
+        <div v-else-if="reward.isLoading" class="rw-section">
           <div class="rw-section-title">ประวัติคะแนน</div>
           <div v-for="i in 3" :key="i" class="rw-hist-skeleton"></div>
         </div>
@@ -1048,7 +1048,7 @@ async function handleCheckin() {
   if (!res.alreadyCheckedIn) checkinDone.value = true
 }
 
-// Fallback static rules if GAS not connected yet
+// Fallback static rules if rules not loaded from Supabase yet
 const FALLBACK_RULES = [
   { type: 'join_activity',    subtype: '', icon: '🙌', name: 'เข้าร่วมกิจกรรม',       desc: 'เข้าร่วม event / กิจกรรมองค์กร',           pts: 50, color: '#6366F1' },
   { type: 'activity_checkin', subtype: '', icon: '📍', name: 'Check-in กิจกรรม',      desc: 'เช็คอินเข้างานเมื่อถึงสถานที่จัดงาน',       pts: 30, color: '#3B82F6' },

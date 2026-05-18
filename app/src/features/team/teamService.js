@@ -1,5 +1,5 @@
 // teamService.js — Employee / team data via Supabase
-// Replaces GAS getEmployees, addTeamMember, joinStarGang, updateEmployeeSelf
+// All data from Supabase (GAS fully removed)
 
 import { supabase } from '../../core/services/supabase.js'
 

@@ -14,7 +14,7 @@
           <span class="m-num">{{ String(m.idx).padStart(2, '0') }}</span>
         </div>
         <div class="m-name">{{ m.name }}</div>
-        <!-- Events from GAS -->
+        <!-- Events loaded from Supabase -->
         <template v-if="acts.getMonth(m.idx).length">
           <div v-for="ev in acts.getMonth(m.idx).slice(0, 2)" :key="ev.id" class="m-ev">
             {{ ev.emoji }} {{ ev.name }}

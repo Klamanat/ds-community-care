@@ -115,7 +115,7 @@ function typeEmoji(type) {
 // ── Thai time-ago ──────────────────────────────────────────
 function timeAgo(raw) {
   if (!raw) return ''
-  // GAS formatDate: "dd/MM/yyyy HH:mm"
+  // Supabase formatDate: "dd/MM/yyyy HH:mm"
   let d
   const m = String(raw).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{2}):(\d{2})/)
   if (m) {

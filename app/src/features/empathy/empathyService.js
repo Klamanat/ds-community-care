@@ -1,5 +1,5 @@
 // empathyService.js — Empathy system via Supabase
-// Replaces all GAS empathy endpoints
+// All data from Supabase (GAS fully removed)
 
 import { supabase } from '../../core/services/supabase.js'
 import { uploadImage } from '../../core/services/edgeFunctions.js'

@@ -309,7 +309,7 @@ async function stampJoin(ev) {
   try {
     await svc.joinActivity(ev.id, ev.name, ui.currentUser?.id || null, name, ev.joinLabel)
 
-    // Add stamp locally only after GAS confirms
+    // Add stamp locally only after Supabase confirms
     if (!myStamps.value.find(s => String(s.activityId) === String(ev.id))) {
       myStamps.value.push({
         id: Date.now().toString(),
@@ -321,7 +321,7 @@ async function stampJoin(ev) {
     }
     if (ev.joinLabel === 'stamp') openEgg(ev)
   } catch {
-    // GAS failed — ไม่เปิด egg, ปุ่มกลับมาใหม่
+    // API call failed — ไม่เปิด egg, ปุ่มกลับมาใหม่
   } finally {
     stamping.value[ev.id] = false
   }

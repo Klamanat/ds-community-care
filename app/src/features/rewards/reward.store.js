@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { fetchMyPoints, fetchRewardRules, postDailyCheckin } from './rewardService.js'
+import * as svc from './rewardService.js'
 
 const CHECKIN_KEY = 'ds_checkin_date'
 function todayStr() {
@@ -23,7 +23,7 @@ export const useRewardStore = defineStore('reward', () => {
   const nextName  = ref('⭐ Member')
   const history   = ref([])
   const rules            = ref([])
-  const loading          = ref(false)
+  const isLoading        = ref(false)
   const loaded           = ref(false)
   const loadError        = ref('')
   const checkedInToday   = ref(localStorage.getItem(CHECKIN_KEY) === todayStr())
@@ -43,12 +43,12 @@ export const useRewardStore = defineStore('reward', () => {
 
     if (loaded.value && !force) return
     if (!employeeName) return
-    loading.value = true
+    isLoading.value = true
     loadError.value = ''
     try {
       const [pts, ruleData] = await Promise.all([
-        fetchMyPoints(employeeName),
-        force ? fetchRewardRules().catch(() => null) : (rules.value.length ? Promise.resolve(null) : fetchRewardRules().catch(() => null)),
+        svc.fetchMyPoints(employeeName),
+        force ? svc.fetchRewardRules().catch(() => null) : (rules.value.length ? Promise.resolve(null) : svc.fetchRewardRules().catch(() => null)),
       ])
       total.value     = pts.total     || 0
       level.value     = pts.level     || 0
@@ -72,14 +72,14 @@ export const useRewardStore = defineStore('reward', () => {
       loadError.value = e?.message || 'โหลดคะแนนไม่สำเร็จ'
       // silently fail — keep 0 pts
     } finally {
-      loading.value = false
+      isLoading.value = false
     }
   }
 
   async function loadRules(force = false) {
     if (rules.value.length && !force) return
     try {
-      rules.value = await fetchRewardRules()
+      rules.value = await svc.fetchRewardRules()
     } catch {}
   }
 
@@ -87,7 +87,7 @@ export const useRewardStore = defineStore('reward', () => {
     if (checkedInToday.value || checkinLoading.value || !employeeName) return { alreadyCheckedIn: true }
     checkinLoading.value = true
     try {
-      const res = await postDailyCheckin(employeeName)
+      const res = await svc.postDailyCheckin(employeeName)
       checkedInToday.value = true
       localStorage.setItem(CHECKIN_KEY, todayStr())
       const alreadyCheckedIn = (res.pts === 0)
@@ -116,5 +116,5 @@ export const useRewardStore = defineStore('reward', () => {
     localStorage.removeItem(CHECKIN_KEY)
   }
 
-  return { total, level, levelName, nextPts, nextName, history, rules, loading, loaded, loadError, progress, checkedInToday, checkinLoading, load, loadRules, doCheckin, reset }
+  return { total, level, levelName, nextPts, nextName, history, rules, isLoading, loaded, loadError, progress, checkedInToday, checkinLoading, load, loadRules, doCheckin, reset }
 })

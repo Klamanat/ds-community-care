@@ -56,7 +56,7 @@ const empPages   = ref(1)
 
 onMounted(() => {
   window.addEventListener('resize', _onResize)
-  // ถ้ามี cache อยู่แล้ว → ไม่ต้อง spinner รอ GAS
+  // ถ้ามี cache อยู่แล้ว → ไม่ต้อง spinner รอ API
   loading.value = !empathy.praisedPeople.length
   empathy.loadPeople().finally(() => { loading.value = false })
 })

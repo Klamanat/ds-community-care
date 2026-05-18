@@ -510,7 +510,7 @@ const admin    = useAdminStore()
 const _TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
 function formatWishTime(raw) {
   if (!raw || raw === 'เมื่อกี้') return raw || ''
-  // GAS formatDate returns "dd/MM/yyyy HH:mm"
+  // Supabase formatDate returns "dd/MM/yyyy HH:mm"
   const m = String(raw).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{2}):(\d{2})/)
   if (m) return `${+m[1]} ${_TH_MONTHS[+m[2]-1]} ${+m[3]+543} ${m[4]}:${m[5]}`
   // Fallback: ISO / Date object
