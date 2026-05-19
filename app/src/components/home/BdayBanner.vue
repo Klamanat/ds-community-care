@@ -5,11 +5,16 @@
     @click="onClick"
   >
     <!-- Background image -->
-    <img
-      src="/images/bday-header.jpg"
-      alt="พื้นหลังฉลองวันเกิด"
-      style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 20%;"
-    />
+    <picture>
+      <source srcset="/images/bday-header.webp" type="image/webp" />
+      <img
+        src="/images/bday-header.jpg"
+        alt="พื้นหลังฉลองวันเกิด"
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 20%;"
+        loading="eager"
+        fetchpriority="high"
+      />
+    </picture>
     <!-- Overlay -->
     <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(20,0,50,0.15) 0%,rgba(10,0,40,0.55) 100%);"></div>
 

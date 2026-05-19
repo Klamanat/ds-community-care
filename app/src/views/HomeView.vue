@@ -34,9 +34,14 @@
           <!-- aspect-ratio spacer: mobile uses 375/150, SM+ capped by parent height -->
           <div class="sm:hidden" style="aspect-ratio:375/150;"></div>
           <div class="hidden sm:block" style="height:160px;"></div>
-          <img src="/images/bday-header.jpg"
-               alt="ภาพพื้นหลังวันเกิด"
-               class="absolute inset-0 w-full h-full object-cover object-top" />
+          <picture>
+            <source srcset="/images/bday-header.webp" type="image/webp" />
+            <img src="/images/bday-header.jpg"
+                 alt="ภาพพื้นหลังวันเกิด"
+                 class="absolute inset-0 w-full h-full object-cover object-top"
+                 loading="eager"
+                 fetchpriority="high" />
+          </picture>
           <div class="absolute inset-0"
                style="background:linear-gradient(to bottom,rgba(10,0,40,0.18) 0%,rgba(10,0,40,0.62) 100%);"></div>
           <div class="absolute inset-0 flex flex-col justify-center items-start p-4 gap-3">
@@ -80,7 +85,10 @@
                :style="{ background: cardConfig.getBg('training') }"
                @click="cardClick('training', () => ui.openModal('modal-training'))">
             <div class="c-emo">
-              <img src="/images/icon-training.png" alt="" style="width:28px;height:28px;object-fit:contain;" />
+              <picture>
+                <source srcset="/images/icon-training.webp" type="image/webp" />
+                <img src="/images/icon-training.png" alt="" style="width:28px;height:28px;object-fit:contain;" loading="lazy" />
+              </picture>
             </div>
             <div class="c-lbl">Training</div>
             <div class="c-sub">{{ cardConfig.isEnabled('training') ? 'การฝึกอบรม' : '🔜 เร็วๆ นี้' }}</div>

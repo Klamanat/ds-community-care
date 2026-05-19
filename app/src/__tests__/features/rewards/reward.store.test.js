@@ -63,6 +63,7 @@ describe('reward.store', () => {
   })
 
   describe('load', () => {
+    const today = new Date().toISOString().slice(0, 10)
     const ptsResponse = {
       total: 250,
       level: 1,
@@ -70,7 +71,7 @@ describe('reward.store', () => {
       nextPts: 300,
       nextName: '🔥 Active',
       history: [
-        { id: 1, type: 'checkin', amount: 10, desc: 'Daily checkin', createdAt: '2026-05-18T00:00:00Z' },
+        { id: 1, type: 'checkin', amount: 10, desc: 'Daily checkin', createdAt: today + 'T00:00:00Z' },
       ],
     }
     const rulesData = [{ id: 1, name: 'Checkin', pts: 10, active: true }]
