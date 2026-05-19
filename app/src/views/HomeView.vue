@@ -8,7 +8,7 @@
         <div class="hv-date">{{ todayStr }}</div>
       </div>
       <div class="hv-avatar" @click="ui.openModal('modal-settings')">
-        <img v-if="auth.userImgUrl" :src="auth.userImgUrl" class="hv-avatar-img" />
+        <img v-if="auth.userImgUrl" :src="auth.userImgUrl" class="hv-avatar-img" alt="" />
         <div v-else class="hv-avatar-fb">{{ initials }}</div>
       </div>
     </div>
@@ -35,6 +35,7 @@
           <div class="sm:hidden" style="aspect-ratio:375/150;"></div>
           <div class="hidden sm:block" style="height:160px;"></div>
           <img src="/images/bday-header.jpg"
+               alt="ภาพพื้นหลังวันเกิด"
                class="absolute inset-0 w-full h-full object-cover object-top" />
           <div class="absolute inset-0"
                style="background:linear-gradient(to bottom,rgba(10,0,40,0.18) 0%,rgba(10,0,40,0.62) 100%);"></div>
@@ -54,7 +55,7 @@
                 class="bday-strip-av"
                 :style="{ background: bday.getFallbackBg(emp.fallbackIdx) }"
               >
-                <img v-if="emp.photo" :src="emp.photo" class="w-full h-full object-cover"
+                <img v-if="emp.photo" :src="emp.photo" class="w-full h-full object-cover" alt=""
                      @error="(e) => e.target.style.display='none'" />
                 <svg v-else xmlns="http://www.w3.org/2000/svg"
                      style="width:60%;height:60%;fill:rgba(255,255,255,0.8);" viewBox="0 0 24 24">
@@ -79,7 +80,7 @@
                :style="{ background: cardConfig.getBg('training') }"
                @click="cardClick('training', () => ui.openModal('modal-training'))">
             <div class="c-emo">
-              <img src="/images/icon-training.png" style="width:28px;height:28px;object-fit:contain;" />
+              <img src="/images/icon-training.png" alt="" style="width:28px;height:28px;object-fit:contain;" />
             </div>
             <div class="c-lbl">Training</div>
             <div class="c-sub">{{ cardConfig.isEnabled('training') ? 'การฝึกอบรม' : '🔜 เร็วๆ นี้' }}</div>
@@ -254,7 +255,7 @@ const bdaySub  = computed(() => {
 }
 .hv-date {
   font-size: 11px;
-  color: #9B8FBB;
+  color: #7A6F9E;
   margin-top: 3px;
   font-weight: 600;
 }

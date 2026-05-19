@@ -71,7 +71,7 @@
               </div>
               <div class="mh-card-av-wrap">
                 <div class="mh-card-av" :style="c.imgUrl ? {} : { background: avatarGrad(c.name) }">
-                  <img v-if="c.imgUrl" :src="c.imgUrl" class="mh-av-img" />
+                  <img v-if="c.imgUrl" :src="c.imgUrl" class="mh-av-img" alt="" />
                   <span v-else :class="isLemon(c.name) ? 'mh-av-emoji' : ''">{{ isLemon(c.name) ? '🍋' : (c.name || '?').charAt(0) }}</span>
                 </div>
                 <div class="mh-card-online-dot"></div>
@@ -107,7 +107,7 @@
                 :style="{ left: p.left+'%', top: p.top+'%', transform: `rotate(${p.rotate}deg) scale(${p.scale})` }">{{ selected.cardBgEmoji }}</span>
             </div>
             <div class="mh-av mh-av-lg" :style="selected.imgUrl ? {} : { background: avatarGrad(selected.name) }">
-              <img v-if="selected.imgUrl" :src="selected.imgUrl" class="mh-av-img" />
+              <img v-if="selected.imgUrl" :src="selected.imgUrl" class="mh-av-img" alt="" />
               <span v-else :class="isLemon(selected.name) ? 'mh-av-emoji' : ''">{{ isLemon(selected.name) ? '🍋' : (selected.name || '?').charAt(0) }}</span>
             </div>
             <div>

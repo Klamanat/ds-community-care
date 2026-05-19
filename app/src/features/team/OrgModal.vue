@@ -26,7 +26,7 @@
             class="w-11 h-11 rounded-full mx-auto mb-2 overflow-hidden flex items-center justify-center text-[24px]"
             :style="{ background: team.getSgFallback(i) }"
           >
-            <img v-if="m.imgUrl" :src="m.imgUrl" class="w-full h-full object-cover" @error="e => e.target.style.display='none'" />
+            <img v-if="m.imgUrl" :src="m.imgUrl" class="w-full h-full object-cover" alt="" @error="e => e.target.style.display='none'" />
             <span v-else>{{ emojis[i % emojis.length] }}</span>
           </div>
           <div class="star-name">{{ m.name }}</div>

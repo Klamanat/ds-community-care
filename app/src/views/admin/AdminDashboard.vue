@@ -100,7 +100,7 @@
               <!-- Y-axis labels + grid lines -->
               <g v-for="(tick, ti) in dauTicks" :key="ti">
                 <line x1="34" :y1="tick.y" x2="556" :y2="tick.y" stroke="#E2DCFB" stroke-width="1"/>
-                <text x="28" :y="tick.y + 3" text-anchor="end" font-size="7" fill="#9B8FBB" font-weight="600">{{ tick.val }}</text>
+                <text x="28" :y="tick.y + 3" text-anchor="end" font-size="7" fill="#7A6F9E" font-weight="600">{{ tick.val }}</text>
               </g>
 
               <!-- Bars -->
@@ -131,7 +131,7 @@
                   y="101"
                   text-anchor="middle"
                   font-size="7"
-                  :fill="dauIsToday(d.date) ? '#A855F7' : '#9B8FBB'"
+                  :fill="dauIsToday(d.date) ? '#A855F7' : '#7A6F9E'"
                   :font-weight="dauIsToday(d.date) ? '800' : '400'"
                 >{{ dauIsToday(d.date) ? 'วันนี้' : dauDayLabel(d.date) }}</text>
               </g>
@@ -176,7 +176,7 @@
                 :y="65 - barH(cnt)"
                 text-anchor="middle"
                 font-size="7"
-                :fill="i === currentMonth ? '#6366F1' : '#9B8FBB'"
+                :fill="i === currentMonth ? '#6366F1' : '#7A6F9E'"
                 font-weight="700"
               >{{ cnt }}</text>
             </g>
@@ -187,7 +187,7 @@
               y="80"
               text-anchor="middle"
               font-size="7"
-              :fill="i === currentMonth ? '#A855F7' : '#9B8FBB'"
+              :fill="i === currentMonth ? '#A855F7' : '#7A6F9E'"
               :font-weight="i === currentMonth ? '800' : '500'"
             >{{ m }}</text>
           </svg>
@@ -221,7 +221,7 @@
                 style="transform:rotate(-90deg);transform-origin:60px 60px;"
               />
               <text x="60" y="56" text-anchor="middle" font-size="18" font-weight="900" fill="#1A1235">{{ counts.ideasTotal }}</text>
-              <text x="60" y="70" text-anchor="middle" font-size="9" fill="#9B8FBB">รายการ</text>
+              <text x="60" y="70" text-anchor="middle" font-size="9" fill="#7A6F9E">รายการ</text>
             </svg>
             <div class="dash-donut-legend">
               <div v-for="seg in ideaSegments" :key="seg.status" class="dash-donut-leg-row">
@@ -294,7 +294,7 @@
                   style="transform:rotate(-90deg);transform-origin:40px 40px;"
                 />
                 <text x="40" y="37" text-anchor="middle" font-size="13" font-weight="900" fill="#1A1235">{{ counts.inTeam }}</text>
-                <text x="40" y="49" text-anchor="middle" font-size="7" fill="#9B8FBB">ในทีม</text>
+                <text x="40" y="49" text-anchor="middle" font-size="7" fill="#7A6F9E">ในทีม</text>
               </svg>
               <div class="dash-ratio-info">
                 <div class="dash-ratio-row">
@@ -629,7 +629,7 @@ onUnmounted(() => clearInterval(_presenceTimer))
 }
 @keyframes dash-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 .dash-stat-label { font-size: 11px; font-weight: 700; color: #52497A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dash-stat-sub   { font-size: 10px; color: #9B8FBB; margin-top: 2px; }
+.dash-stat-sub   { font-size: 10px; color: #7A6F9E; margin-top: 2px; }
 .dash-stat-arrow { position: absolute; right: 10px; bottom: 10px; font-size: 16px; color: #E2DCFB; }
 
 /* ── Online users ── */
@@ -640,12 +640,12 @@ onUnmounted(() => clearInterval(_presenceTimer))
   border: 1.5px solid #E2DCFB;
   border-radius: 9px;
   width: 30px; height: 30px;
-  cursor: pointer; font-size: 15px; color: #9B8FBB;
+  cursor: pointer; font-size: 15px; color: #7A6F9E;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.15s, border-color 0.15s;
 }
 .dash-online-refresh:hover { background: #F2F0FB; border-color: #6366F1; color: #6366F1; }
-.dash-online-empty { padding: 20px; font-size: 13px; color: #9B8FBB; text-align: center; }
+.dash-online-empty { padding: 20px; font-size: 13px; color: #7A6F9E; text-align: center; }
 .dash-online-list  { display: flex; flex-direction: column; }
 .dash-online-item  {
   display: flex; align-items: center; gap: 10px;
@@ -662,8 +662,8 @@ onUnmounted(() => clearInterval(_presenceTimer))
   flex-shrink: 0;
 }
 .dash-online-name { font-weight: 700; color: #1A1235; flex: 1; }
-.dash-online-dept { font-size: 11px; color: #9B8FBB; }
-.dash-online-time { font-size: 11px; color: #9B8FBB; margin-left: auto; flex-shrink: 0; }
+.dash-online-dept { font-size: 11px; color: #7A6F9E; }
+.dash-online-time { font-size: 11px; color: #7A6F9E; margin-left: auto; flex-shrink: 0; }
 
 /* ── Charts layout ── */
 .dash-charts-row {
@@ -681,13 +681,13 @@ onUnmounted(() => clearInterval(_presenceTimer))
   border-radius: 12px;
   animation: dash-pulse 1.4s ease-in-out infinite;
 }
-.dash-chart-empty { text-align: center; padding: 32px 0; font-size: 12px; color: #9B8FBB; }
+.dash-chart-empty { text-align: center; padding: 32px 0; font-size: 12px; color: #7A6F9E; }
 
 /* ── Bar chart ── */
 .dash-bar-svg { width: 100%; display: block; }
 .dash-chart-legend {
   display: flex; align-items: center; gap: 4px;
-  font-size: 10px; color: #9B8FBB; margin-top: 4px;
+  font-size: 10px; color: #7A6F9E; margin-top: 4px;
 }
 .dash-leg-dot {
   width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; display: inline-block;
@@ -717,7 +717,7 @@ onUnmounted(() => clearInterval(_presenceTimer))
 .dash-earners-more:hover { background: rgba(168,85,247,0.14); }
 .dash-hbar-list { display: flex; flex-direction: column; gap: 8px; }
 .dash-hbar-row  { display: flex; align-items: center; gap: 7px; }
-.dash-hbar-rank { width: 16px; font-size: 11px; font-weight: 800; color: #9B8FBB; flex-shrink: 0; text-align: center; }
+.dash-hbar-rank { width: 16px; font-size: 11px; font-weight: 800; color: #7A6F9E; flex-shrink: 0; text-align: center; }
 .dash-hbar-body { flex: 1; min-width: 0; }
 .dash-hbar-label { font-size: 11px; font-weight: 700; color: #52497A; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dash-hbar-track { height: 6px; background: #F2F0FB; border-radius: 4px; overflow: hidden; }
@@ -737,7 +737,7 @@ onUnmounted(() => clearInterval(_presenceTimer))
 .dau-range-tabs { display: flex; border: 1px solid #E2DCFB; border-radius: 10px; overflow: hidden; }
 .dau-tab {
   padding: 4px 10px; font-size: 11px; font-weight: 700; border: none; cursor: pointer;
-  background: white; color: #9B8FBB; font-family: 'Sarabun', sans-serif;
+  background: white; color: #7A6F9E; font-family: 'Sarabun', sans-serif;
   transition: background 0.15s;
 }
 .dau-tab.active { background: #6366F1; color: white; }
@@ -752,7 +752,7 @@ onUnmounted(() => clearInterval(_presenceTimer))
 .dau-pill--accent { background: rgba(99,102,241,0.09); border-color: rgba(99,102,241,0.22); }
 .dau-pill-val { font-size: 19px; font-weight: 900; color: #1A1235; line-height: 1; }
 .dau-pill--accent .dau-pill-val { color: #6366F1; }
-.dau-pill-label { font-size: 10px; color: #9B8FBB; margin-top: 3px; font-weight: 600; }
+.dau-pill-label { font-size: 10px; color: #7A6F9E; margin-top: 3px; font-weight: 600; }
 .dau-chart-wrap { padding: 0 14px; }
 .dau-svg { width: 100%; height: auto; display: block; }
 .dau-legend { padding: 0 14px 14px; }
@@ -760,7 +760,7 @@ onUnmounted(() => clearInterval(_presenceTimer))
 /* ── Role bars ── */
 .dash-role-list { display: flex; flex-direction: column; gap: 6px; }
 .dash-role-row  { display: flex; align-items: center; gap: 6px; }
-.dash-role-label { font-size: 10px; color: #9B8FBB; width: 72px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.dash-role-label { font-size: 10px; color: #7A6F9E; width: 72px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
 .dash-role-track { flex: 1; height: 5px; background: #F2F0FB; border-radius: 3px; overflow: hidden; }
 .dash-role-fill  { height: 100%; border-radius: 3px; }
 .dash-role-val   { font-size: 10px; font-weight: 700; color: #52497A; flex-shrink: 0; }

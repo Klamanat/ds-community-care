@@ -10,7 +10,7 @@
         <!-- Avatar overlapping cover -->
         <div class="pf-av-wrap">
           <div class="pf-av" @click="triggerUpload">
-            <img v-if="previewImg && !imgError" :src="previewImg" class="pf-av-img" @error="onImgError" />
+            <img v-if="previewImg && !imgError" :src="previewImg" class="pf-av-img" alt="" @error="onImgError" />
             <span v-else class="pf-av-initial">{{ userAuth.userName?.charAt(0) || '😊' }}</span>
             <div class="pf-cam-btn">{{ uploading ? '⏳' : '📷' }}</div>
           </div>

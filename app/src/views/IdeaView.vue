@@ -216,7 +216,7 @@ function fmtDate(d) {
   transition: border-color 0.2s;
   display: block;
 }
-.idea-input::placeholder { color: #9B8FBB; }
+.idea-input::placeholder { color: #7A6F9E; }
 .idea-input:focus { border-color: #6366f1; background: #fff; }
 
 /* Category buttons */
@@ -251,7 +251,7 @@ function fmtDate(d) {
   padding: 4px 12px; border-radius: 16px; border: 1.5px solid #E2DCFB; cursor: pointer;
   font-size: 11px; font-weight: 700; white-space: nowrap;
   background: #fff;
-  color: #9B8FBB;
+  color: #7A6F9E;
   transition: all 0.15s;
   flex-shrink: 0;
 }

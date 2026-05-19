@@ -67,7 +67,7 @@
               @click="openPerson(emp)"
             >
               <div class="photo-circle-wrap-sm">
-                <img v-if="emp.photo" :src="emp.photo" style="width:100%;height:100%;object-fit:cover;" @error="(e) => e.target.style.display='none'" />
+                <img v-if="emp.photo" :src="emp.photo" style="width:100%;height:100%;object-fit:cover;" alt="" @error="(e) => e.target.style.display='none'" />
                 <div
                   v-else
                   class="photo-circle-fallback"
@@ -97,7 +97,7 @@
           <div class="bday-person-banner mb-4">
             <div class="bb-confetti">🎉🎊✨🎈🎁</div>
             <div class="photo-circle-wrap-sm" style="margin:0 auto 8px;border:3px solid rgba(255,255,255,0.6);box-shadow:0 4px 12px rgba(0,0,0,0.2);">
-              <img v-if="selectedPerson.photo" :src="selectedPerson.photo" style="width:100%;height:100%;object-fit:cover;" @error="(e) => e.target.style.display='none'" />
+              <img v-if="selectedPerson.photo" :src="selectedPerson.photo" style="width:100%;height:100%;object-fit:cover;" alt="" @error="(e) => e.target.style.display='none'" />
               <div
                 v-else
                 class="photo-circle-fallback"
@@ -149,7 +149,7 @@
                 </div>
                 <div class="padlet-footer">
                   <div class="padlet-av" :style="w.photo ? 'overflow:hidden' : { background: bday.getSenderAvatar(w.avIdx).bg }">
-                    <img v-if="w.photo" :src="w.photo" style="width:100%;height:100%;object-fit:cover;" @error="e => e.target.style.display='none'" />
+                    <img v-if="w.photo" :src="w.photo" style="width:100%;height:100%;object-fit:cover;" alt="" @error="e => e.target.style.display='none'" />
                     <span v-else style="font-size:12px;">{{ bday.getSenderAvatar(w.avIdx).av }}</span>
                   </div>
                   <div class="padlet-sender">
@@ -187,7 +187,7 @@
                 </div>
                 <div class="padlet-footer">
                   <div class="padlet-av" :style="w.photo ? 'overflow:hidden' : { background: bday.getSenderAvatar(w.avIdx).bg }">
-                    <img v-if="w.photo" :src="w.photo" style="width:100%;height:100%;object-fit:cover;" @error="e => e.target.style.display='none'" />
+                    <img v-if="w.photo" :src="w.photo" style="width:100%;height:100%;object-fit:cover;" alt="" @error="e => e.target.style.display='none'" />
                     <span v-else style="font-size:12px;">{{ bday.getSenderAvatar(w.avIdx).av }}</span>
                   </div>
                   <div class="padlet-sender">
@@ -290,6 +290,7 @@
                 v-if="g.imgUrl"
                 :src="g.imgUrl"
                 style="width:44px;height:44px;border-radius:10px;object-fit:cover;margin-bottom:4px;"
+                alt=""
                 @error="e => e.target.style.display='none'"
               />
               <div v-else class="text-[26px] leading-none mb-1">{{ g.icon || '🎁' }}</div>
@@ -458,6 +459,7 @@
                 v-if="currentPrize.imgUrl"
                 :src="currentPrize.imgUrl"
                 style="width:96px;height:96px;border-radius:18px;object-fit:cover;box-shadow:0 6px 24px rgba(255,150,0,0.45);"
+                alt=""
                 @error="e => e.target.style.display='none'"
               />
               <div v-else style="font-size:72px;filter:drop-shadow(0 6px 20px rgba(255,150,0,0.5));">{{ currentPrize.icon }}</div>

@@ -275,7 +275,7 @@
     align-items: center;
   }
   .bottom-nav .nav-ico { font-size: 22px; width: auto; }
-  .bottom-nav .nav-lbl { font-size: 10px; font-weight: 700; color: #9B8FBB; flex: unset; }
+  .bottom-nav .nav-lbl { font-size: 10px; font-weight: 700; color: #7A6F9E; flex: unset; }
   .bottom-nav .nav-i.active { background: linear-gradient(135deg,#EEF2FF,#E0E7FF); }
   .bottom-nav .nav-i.active .nav-lbl { color: #6366F1; font-weight: 800; }
   .bottom-nav .nav-badge {

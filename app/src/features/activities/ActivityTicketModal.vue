@@ -103,7 +103,7 @@
 
             <!-- Slip preview -->
             <div class="tm-slip-upload-zone" @click="slipFileInput.click()">
-              <img v-if="slipPreview" :src="slipPreview" class="tm-slip-preview" />
+              <img v-if="slipPreview" :src="slipPreview" class="tm-slip-preview" alt="" />
               <div v-else class="tm-slip-placeholder">
                 <div style="font-size:32px;margin-bottom:6px;">📷</div>
                 <div style="font-size:13px;font-weight:600;color:#374151;">แตะเพื่ออัปโหลดสลิป</div>

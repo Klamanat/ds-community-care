@@ -430,7 +430,7 @@
               <template v-if="form.image">
                 <div class="text-[11px] font-extrabold text-app-light uppercase tracking-[1px]">ตัวอย่าง</div>
                 <div class="w-full rounded-[10px] overflow-hidden bg-gray-100">
-                  <img :src="form.image" class="w-full block max-h-[300px] object-contain" />
+                  <img :src="form.image" class="w-full block max-h-[300px] object-contain" alt="" />
                 </div>
                 <button class="al-btn al-btn-delete self-start text-xs" @click="form.image = ''">
                   🗑 ลบรูปภาพ

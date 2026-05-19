@@ -289,7 +289,7 @@
 }
 .al-item-meta {
   font-size: 11px;
-  color: #9B8FBB;
+  color: #7A6F9E;
   margin-top: 6px;
   display: flex;
   align-items: center;
@@ -421,7 +421,7 @@
   border-radius: 9999px;
   border: 1.5px solid #E2DCFB;
   background: white;
-  color: #9B8FBB;
+  color: #7A6F9E;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -496,7 +496,7 @@
 .amg-section-label {
   font-size: 11px;
   font-weight: 800;
-  color: #9B8FBB;
+  color: #7A6F9E;
   text-transform: uppercase;
   letter-spacing: 1px;
   margin: 18px 0 10px;
@@ -542,7 +542,7 @@
   border: 1px solid rgba(99,102,241,0.15);
 }
 .amg-pick-btn:hover { background: rgba(99,102,241,0.18); }
-.amg-upload-status { font-size: 11px; color: #9B8FBB; margin-top: 5px; }
+.amg-upload-status { font-size: 11px; color: #7A6F9E; margin-top: 5px; }
 .amg-upload-ok { color: #10B981 !important; }
 
 /* ── Activity image upload ── */
@@ -575,7 +575,7 @@
 .al-empty {
   text-align: center;
   padding: 52px 20px;
-  color: #9B8FBB;
+  color: #7A6F9E;
   font-size: 14px;
   font-weight: 600;
 }
@@ -636,7 +636,7 @@
 .al-nav-card:hover::before { opacity: 1; }
 .al-nav-icon  { font-size: 30px; margin-bottom: 6px; }
 .al-nav-label { font-size: 14px; font-weight: 800; color: #1A1235; }
-.al-nav-sub   { font-size: 11px; color: #9B8FBB; }
+.al-nav-sub   { font-size: 11px; color: #7A6F9E; }
 .al-nav-arrow { position: absolute; right: 14px; bottom: 14px; font-size: 20px; color: #E2DCFB; }
 
 /* ── Sticky toolbar ── */
@@ -662,7 +662,7 @@
   border-bottom: 2px solid #E2DCFB;
   font-size: 11px;
   font-weight: 800;
-  color: #9B8FBB;
+  color: #7A6F9E;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -717,7 +717,7 @@
 }
 .al-ticket-table th {
   text-align: left;
-  color: #9B8FBB;
+  color: #7A6F9E;
   font-weight: 700;
   padding: 4px 6px;
   border-bottom: 1px solid #E2DCFB;

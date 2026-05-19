@@ -59,7 +59,7 @@
         @click="openProfile(s, idx)"
       >
         <div class="star-av" :style="{ background: team.getGrad(idx), overflow: 'hidden' }">
-          <img v-if="s.imgUrl" :src="s.imgUrl" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" @error="e => e.target.style.display='none'" />
+          <img v-if="s.imgUrl" :src="s.imgUrl" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" @error="e => e.target.style.display='none'" />
           <span v-else>{{ EMOJIS[idx % EMOJIS.length] }}</span>
         </div>
         <div class="star-name">{{ s.name }}</div>
@@ -86,7 +86,7 @@
           <!-- Avatar -->
           <div class="sg-card-av-wrap">
             <div class="sg-card-av" :style="{ background: profileGrad }">
-              <img v-if="profileMember.imgUrl" :src="profileMember.imgUrl"
+              <img v-if="profileMember.imgUrl" :src="profileMember.imgUrl" alt=""
                    style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
                    @error="e => e.target.style.display='none'" />
               <span v-else style="font-size:44px;">{{ EMOJIS[profileIdx % EMOJIS.length] }}</span>

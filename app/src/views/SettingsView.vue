@@ -9,7 +9,7 @@
     >
       <div class="w-14 h-14 rounded-full flex-shrink-0 border-[3px] border-white/50 overflow-hidden"
            :style="!ui.currentUser.img ? 'background:linear-gradient(135deg,#FDE68A,#F59E0B)' : ''">
-        <img v-if="ui.currentUser.img" :src="ui.currentUser.img" class="w-full h-full object-cover" @error="e => e.target.style.display='none'" />
+        <img v-if="ui.currentUser.img" :src="ui.currentUser.img" class="w-full h-full object-cover" alt="" @error="e => e.target.style.display='none'" />
         <span v-else class="w-full h-full flex items-center justify-center text-[28px]">{{ ui.currentUser.emoji || '😊' }}</span>
       </div>
       <div class="flex-1">

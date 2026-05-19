@@ -67,7 +67,7 @@
       <!-- Event cards -->
       <div v-else class="month-events-grid">
         <div v-for="ev in events" :key="ev.id" class="month-ev-card">
-          <img v-if="ev.imgUrl" :src="ev.imgUrl" class="month-ev-img" />
+          <img v-if="ev.imgUrl" :src="ev.imgUrl" class="month-ev-img" alt="" />
           <div v-else class="month-ev-banner" :style="{ background: 'linear-gradient(145deg,#E0E7FF,#6366F1)' }">
             <div class="month-ev-emoji">{{ ev.emoji || '🎉' }}</div>
             <div class="month-ev-name-hero">{{ ev.name }}</div>

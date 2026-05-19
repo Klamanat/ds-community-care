@@ -52,6 +52,7 @@
             v-if="currentPlan.posterUrl"
             :src="currentPlan.posterUrl"
             class="mpl-poster"
+            alt=""
             @error="e => e.target.style.display='none'"
           />
           <div v-else class="mpl-poster-placeholder">🖼️</div>

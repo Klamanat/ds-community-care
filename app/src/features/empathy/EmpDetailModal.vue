@@ -12,6 +12,7 @@
             v-if="post.recImg"
             :src="post.recImg"
             class="w-full block"
+            alt=""
             @error="(e) => e.target.style.display='none'"
           />
           <div
@@ -49,7 +50,7 @@
           <div v-if="!post.comments.length" class="text-center py-5 text-app-light text-[13px]">ยังไม่มีความคิดเห็น 💭</div>
           <div v-for="c in post.comments" :key="c.id" class="cm-item">
             <div class="cm-av bg-[linear-gradient(135deg,#FBCFE8,#EC4899)]">
-              <img v-if="commentImg(c.name)" :src="commentImg(c.name)" class="w-full h-full object-cover rounded-full" @error="(e) => e.target.style.display='none'" />
+              <img v-if="commentImg(c.name)" :src="commentImg(c.name)" class="w-full h-full object-cover rounded-full" alt="" @error="(e) => e.target.style.display='none'" />
               <template v-else>{{ c.name?.[0] }}</template>
             </div>
             <div class="cm-bubble">

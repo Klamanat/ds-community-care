@@ -21,7 +21,7 @@
           </div>
           <div v-for="p in plans" :key="p.id" class="al-item fade-in" @click="handleRippleClick">
             <div class="plan-thumb-wrap">
-              <img v-if="p.posterUrl" :src="p.posterUrl" class="plan-thumb" @error="e => e.target.style.display='none'" />
+              <img v-if="p.posterUrl" :src="p.posterUrl" class="plan-thumb" alt="" @error="e => e.target.style.display='none'" />
               <div v-else class="plan-thumb-placeholder">🖼️</div>
             </div>
             <div class="al-item-body">
@@ -71,7 +71,7 @@
       <div class="al-form-row">
         <label class="al-form-label">รูป Poster</label>
         <div class="plan-upload-area">
-          <img v-if="imgPreview" :src="imgPreview" class="plan-preview-img" @error="e => e.target.style.display='none'" />
+          <img v-if="imgPreview" :src="imgPreview" class="plan-preview-img" alt="" @error="e => e.target.style.display='none'" />
           <div v-else class="plan-upload-placeholder">
             <span class="text-3xl">🖼️</span>
             <span class="text-xs text-app-light mt-1">ยังไม่มีรูป</span>

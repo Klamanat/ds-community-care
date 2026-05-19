@@ -870,7 +870,7 @@
               :class="{ 'rw-reward-card--afford': reward.total >= item.ptsCost }"
             >
               <div class="rw-reward-img-wrap">
-                <img v-if="item.imageUrl" :src="item.imageUrl" class="rw-reward-img" />
+                <img v-if="item.imageUrl" :src="item.imageUrl" class="rw-reward-img" alt="" />
                 <div v-else class="rw-reward-img-placeholder">🎁</div>
                 <div v-if="reward.total >= item.ptsCost" class="rw-reward-afford-badge">⭐</div>
               </div>
@@ -1433,7 +1433,7 @@ function formatTime(raw) {
   position: relative; z-index: 1; margin-bottom: 12px;
 }
 .rw-sc-brand { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.9); }
-.rw-sc-year  { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 600; }
+.rw-sc-year  { font-size: 11px; color: rgba(255,255,255,0.75); font-weight: 600; }
 
 .rw-sc-tree-area {
   display: flex; justify-content: center;
@@ -1476,7 +1476,7 @@ function formatTime(raw) {
 .rw-sc-prog-label { font-size: 10px; color: rgba(255,255,255,0.65); font-weight: 700; }
 .rw-sc-footer {
   position: relative; z-index: 1;
-  font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 600;
+  font-size: 11px; color: rgba(255,255,255,0.75); font-weight: 600;
   padding-top: 12px;
   border-top: 1px solid rgba(255,255,255,0.12);
 }

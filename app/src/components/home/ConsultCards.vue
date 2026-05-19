@@ -5,7 +5,7 @@
          :style="{ background: cardConfig.getBg('mental') }"
          @click="cardClick('mental', () => ui.openModal('modal-mental'))">
       <div class="ci" style="width:48px;height:48px;overflow:hidden;border-radius:14px;background:none;padding:0;flex-shrink:0;">
-        <img src="/images/icon-mental.png" style="width:100%;height:100%;object-fit:cover;" />
+        <img src="/images/icon-mental.png" alt="" style="width:100%;height:100%;object-fit:cover;" />
       </div>
       <div class="ci-info">
         <div class="ci-title">Mental Health Consultation</div>

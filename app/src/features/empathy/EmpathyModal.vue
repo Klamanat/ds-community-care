@@ -28,7 +28,7 @@
           @click="selectPerson(m)"
         >
           <div :style="{ background: m.grad }" class="relative overflow-hidden">
-            <img v-if="m.imgUrl" :src="m.imgUrl" class="w-full block object-cover object-top" @error="e => e.target.style.display='none'" />
+            <img v-if="m.imgUrl" :src="m.imgUrl" class="w-full block object-cover object-top" alt="" @error="e => e.target.style.display='none'" />
             <div v-else class="w-full aspect-[3/4] min-h-[80px] flex items-center justify-center text-[28px] font-black text-white">{{ initials(m.name) }}</div>
             <!-- Edit photo overlay -->
             <button
@@ -67,6 +67,7 @@
             v-if="selectedMember.imgUrl"
             :src="selectedMember.imgUrl"
             class="w-full block"
+            alt=""
             @error="e => e.target.style.display='none'"
           />
           <div
@@ -103,7 +104,7 @@
             <!-- Top-level kudos comment -->
             <div class="cm-item">
               <div class="cm-av bg-[linear-gradient(135deg,#FBCFE8,#EC4899)]">
-                <img v-if="getCommentorImg(cm.name)" :src="getCommentorImg(cm.name)" class="w-full h-full object-cover rounded-full" @error="e => e.target.style.display='none'" />
+                <img v-if="getCommentorImg(cm.name)" :src="getCommentorImg(cm.name)" class="w-full h-full object-cover rounded-full" alt="" @error="e => e.target.style.display='none'" />
                 <span v-else>{{ cm.name?.[0] }}</span>
               </div>
               <div class="flex-1 min-w-0">
@@ -164,7 +165,7 @@
                 <div v-if="cm.replies.length" class="mt-2 ml-4 flex flex-col gap-1.5">
                   <div v-for="r in cm.replies" :key="r.id" class="cm-item">
                     <div class="cm-av !w-6 !h-6 !text-[10px] bg-[linear-gradient(135deg,#DDD6FE,#7C3AED)]">
-                      <img v-if="getCommentorImg(r.name)" :src="getCommentorImg(r.name)" class="w-full h-full object-cover rounded-full" @error="e => e.target.style.display='none'" />
+                      <img v-if="getCommentorImg(r.name)" :src="getCommentorImg(r.name)" class="w-full h-full object-cover rounded-full" alt="" @error="e => e.target.style.display='none'" />
                       <span v-else>{{ r.name?.[0] }}</span>
                     </div>
                     <div class="cm-bubble !bg-[linear-gradient(135deg,#F5F3FF,#EDE9FE)] flex-1">
@@ -266,7 +267,7 @@
             class="w-20 h-20 rounded-full border-[2.5px] border-dashed border-pink/35 overflow-hidden flex items-center justify-center bg-[linear-gradient(135deg,#FFF5FB,#F5F0FF)] transition-opacity"
             :class="addPhotoUploading ? 'opacity-50' : ''"
           >
-            <img v-if="addPhotoUrl" :src="addPhotoUrl" class="w-full h-full object-cover" />
+            <img v-if="addPhotoUrl" :src="addPhotoUrl" class="w-full h-full object-cover" alt="" />
             <div v-else-if="addPhotoUploading" class="text-[22px] animate-spin">⏳</div>
             <div v-else class="flex flex-col items-center gap-0.5">
               <span class="text-[24px]">📷</span>

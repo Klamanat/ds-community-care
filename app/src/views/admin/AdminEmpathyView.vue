@@ -17,7 +17,7 @@
           <div v-else>
             <div class="al-item fade-in" v-for="ch in channels" :key="ch.id" @click="handleRippleClick">
               <div class="al-item-avatar">
-                <img v-if="ch.imgUrl" :src="ch.imgUrl" />
+                <img v-if="ch.imgUrl" :src="ch.imgUrl" alt="" />
                 <span v-else>💌</span>
               </div>
               <div class="al-item-body">

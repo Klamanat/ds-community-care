@@ -7,6 +7,7 @@
     <!-- Background image -->
     <img
       src="/images/bday-header.jpg"
+      alt="พื้นหลังฉลองวันเกิด"
       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 20%;"
     />
     <!-- Overlay -->
@@ -36,6 +37,7 @@
             :key="i"
             class="bbc-photo object-cover"
             :src="p.src || ''"
+            alt=""
             :style="p.src ? '' : `background:${p.bg};`"
             @error="(e) => e.target.style.display='none'"
           />

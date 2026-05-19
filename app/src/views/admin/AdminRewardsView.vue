@@ -21,7 +21,7 @@
 
           <div v-else>
             <div class="al-item fade-in" v-for="r in rewards" :key="r.id" @click="handleRippleClick">
-              <img v-if="r.imageUrl" :src="r.imageUrl" class="al-item-thumb" />
+              <img v-if="r.imageUrl" :src="r.imageUrl" class="al-item-thumb" alt="" />
               <div v-else class="al-item-avatar">🎁</div>
               <div class="al-item-body">
                 <div class="al-item-title">{{ r.name }}</div>
@@ -85,7 +85,7 @@
           :class="{ 'opacity-60 cursor-default': imgUploading }"
           @click="!imgUploading && imgFileInput.click()"
         >
-          <img v-if="imgPreview && !imgUploading" :src="imgPreview" class="act-upload-preview" />
+          <img v-if="imgPreview && !imgUploading" :src="imgPreview" class="act-upload-preview" alt="" />
           <div v-else-if="imgUploading" class="act-upload-placeholder">
             <span class="text-2xl">⏳</span>
             <span class="text-xs text-app-light mt-1">กำลังอัปโหลด...</span>

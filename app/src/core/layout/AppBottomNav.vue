@@ -69,6 +69,6 @@ const cardConfig = useCardConfigStore()
 .notif-bell-lbl {
   font-size: 10px;
   font-weight: 700;
-  color: #9B8FBB;
+  color: #7A6F9E;
 }
 </style>

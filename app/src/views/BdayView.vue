@@ -144,7 +144,7 @@
             @click="selectedPerson = emp"
           >
             <div class="w-[68px] h-[68px] rounded-full mx-auto mb-2 overflow-hidden">
-              <img v-if="emp.photo" :src="emp.photo" class="w-full h-full object-cover" />
+              <img v-if="emp.photo" :src="emp.photo" class="w-full h-full object-cover" alt="" />
               <div
                 v-else
                 class="w-full h-full flex items-center justify-center text-[32px]"

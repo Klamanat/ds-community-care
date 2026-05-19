@@ -45,7 +45,7 @@
           <!-- ══ COLLAPSED ROW ══ -->
           <div v-if="!editForms[r.id]" class="emp-row" @click="startEdit(r)">
             <div class="emp-avatar" :style="!r.imgUrl ? `background:${r.grad||'#EEF2FF'}` : ''">
-              <img v-if="r.imgUrl" :src="r.imgUrl" />
+              <img v-if="r.imgUrl" :src="r.imgUrl" alt="" />
               <span v-else class="text-lg">👤</span>
             </div>
             <div class="emp-info">
@@ -76,7 +76,7 @@
             <div class="emp-edit-top">
               <div class="emp-photo-col">
                 <div class="emp-edit-avatar">
-                  <img v-if="editForms[r.id].imgPreview" :src="editForms[r.id].imgPreview" />
+                  <img v-if="editForms[r.id].imgPreview" :src="editForms[r.id].imgPreview" alt="" />
                   <span v-else class="text-2xl">👤</span>
                 </div>
                 <label class="emp-photo-btn" :for="'img_'+r.id">📷</label>
@@ -231,7 +231,7 @@
 
         <div class="amg-img-upload-row">
           <div class="amg-img-preview">
-            <img v-if="addImgPreview" :src="addImgPreview" />
+            <img v-if="addImgPreview" :src="addImgPreview" alt="" />
             <span v-else class="text-[28px]">👤</span>
           </div>
           <div>

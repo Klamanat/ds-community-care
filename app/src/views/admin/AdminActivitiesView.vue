@@ -38,7 +38,7 @@
         <div v-else>
           <div v-for="r in filtered" :key="r.id">
             <div class="al-item fade-in" @click="handleRippleClick">
-              <img v-if="r.imgUrl" :src="r.imgUrl" class="al-item-thumb" />
+              <img v-if="r.imgUrl" :src="r.imgUrl" class="al-item-thumb" alt="" />
               <div v-else class="al-item-avatar">{{ r.emoji || '📅' }}</div>
               <div class="al-item-body">
                 <div class="al-item-title">{{ r.name }}</div>
@@ -186,7 +186,7 @@
           :class="{ 'opacity-60 cursor-default': imgUploading }"
           @click="!imgUploading && imgFileInput.click()"
         >
-          <img v-if="imgPreview && !imgUploading" :src="imgPreview" class="act-upload-preview" />
+          <img v-if="imgPreview && !imgUploading" :src="imgPreview" class="act-upload-preview" alt="" />
           <div v-else-if="imgUploading" class="act-upload-placeholder">
             <span class="text-2xl">⏳</span>
             <span class="text-xs text-app-light mt-1">กำลังอัปโหลด...</span>

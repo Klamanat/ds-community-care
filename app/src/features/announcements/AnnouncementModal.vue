@@ -730,7 +730,7 @@ onMounted(async () => {
   gap: 6px;
   transform: none !important;
 }
-.ann-opt-indicator { font-size: 13px; flex-shrink: 0; color: rgba(167,139,250,0.55); }
+.ann-opt-indicator { font-size: 13px; flex-shrink: 0; color: rgba(167,139,250,0.8); }
 .ann-opt-selected .ann-opt-indicator { color: #F9A8D4; }
 .ann-opt-text { font-weight: 600; flex: 1; }
 
@@ -750,7 +750,7 @@ onMounted(async () => {
   transition: width 0.7s cubic-bezier(0.34,1.2,0.64,1);
 }
 .ann-result-mine { background: linear-gradient(90deg, #F472B6, #A78BFA); }
-.ann-result-count { font-size: 10px; color: rgba(255,255,255,0.28); }
+.ann-result-count { font-size: 10px; color: rgba(255,255,255,0.55); }
 
 /* Progress dots */
 .ann-quiz-progress {
