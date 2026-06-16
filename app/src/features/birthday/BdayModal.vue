@@ -626,7 +626,7 @@ onMounted(async () => {
 
 watch(selectedMonth, async (m) => {
   const idx = m - 1
-  if (!bday.loadedMonths.has(idx)) loading.value = true
+  if (!bday.loadedMonths[idx]) loading.value = true
   await bday.loadMonth(idx)
   loading.value = false
 })
