@@ -32,3 +32,22 @@ export function formatThaiDatetime(value) {
 
   return `${day} ${month} ${year} · ${hh}:${mm}`
 }
+
+/**
+ * แปลงวันที่ → relative time แบบ Facebook เช่น "5 นาทีที่แล้ว", "3 ชม.ที่แล้ว"
+ * เกิน 7 วัน → fallback เป็น formatThaiDatetime
+ */
+export function formatRelativeTime(value) {
+  if (!value) return ''
+  if (value === 'เมื่อกี้') return 'เมื่อกี้'
+
+  const date = value instanceof Date ? value : new Date(String(value).trim().replace(' ', 'T'))
+  if (isNaN(date)) return String(value)
+
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000)
+  if (diffSec < 60) return 'เมื่อกี้'
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)} นาทีที่แล้ว`
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} ชม.ที่แล้ว`
+  if (diffSec < 604800) return `${Math.floor(diffSec / 86400)} วันที่แล้ว`
+  return formatThaiDatetime(date)
+}

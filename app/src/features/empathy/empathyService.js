@@ -46,25 +46,190 @@ export async function fetchComments(postId, userKey = '') {
   }
 
   return (rows || []).map(r => ({
-    id:        r.id,
-    postId:    r.post_id,
-    parentId:  r.parent_id || '',
-    name:      r.author_name,
-    text:      r.text,
-    time:      r.created_at,
-    likeCount: likeMap[r.id]?.count    || 0,
-    _liked:    likeMap[r.id]?.userLiked || false,
+    id:            r.id,
+    postId:        r.post_id,
+    parentId:      r.parent_id || '',
+    empathyPostId: r.empathy_post_id || '',
+    name:          r.author_name,
+    text:          r.text,
+    time:          r.created_at,
+    likeCount:     likeMap[r.id]?.count    || 0,
+    _liked:        likeMap[r.id]?.userLiked || false,
   }))
 }
 
-export async function addComment(postId, text, authorName, parentId = '') {
-  const { data, error } = await supabase
+// Flat comments/replies attached directly to one real post (empathy_post_id).
+// Used by the Facebook-style single-post detail view.
+export async function fetchPostComments(postId, userKey = '') {
+  const { data: rows, error } = await supabase
     .from('empathy_comments')
-    .insert({ post_id: postId, text, author_name: authorName, parent_id: parentId || null })
+    .select('*')
+    .eq('empathy_post_id', postId)
+    .order('created_at')
+  if (error) throw new Error(error.message)
+
+  const ids = (rows || []).map(r => r.id)
+  let likeMap = {}
+  if (ids.length) {
+    const { data: likes } = await supabase
+      .from('comment_likes')
+      .select('comment_id, user_key')
+      .in('comment_id', ids)
+    ;(likes || []).forEach(l => {
+      likeMap[l.comment_id] = likeMap[l.comment_id] || { count: 0, userLiked: false }
+      likeMap[l.comment_id].count++
+      if (userKey && l.user_key === userKey) likeMap[l.comment_id].userLiked = true
+    })
+  }
+
+  return (rows || []).map(r => ({
+    id:            r.id,
+    parentId:      r.parent_id || '',
+    empathyPostId: r.empathy_post_id,
+    name:          r.author_name,
+    text:          r.text,
+    time:          r.created_at,
+    likeCount:     likeMap[r.id]?.count    || 0,
+    _liked:        likeMap[r.id]?.userLiked || false,
+  }))
+}
+
+// Flat feed of kudos posts across all people, newest first.
+// Posts own their content directly (author_name/text) — new posts get one
+// message each; old (backfilled) posts aggregate a whole channel's history
+// and have no single author_name/text of their own.
+export async function fetchFeed(limit = 15, before = null, userKey = '') {
+  let q = supabase
+    .from('empathy_posts')
+    .select('*')
+  if (before) q = q.lt('created_at', before)
+  const { data: posts, error } = await q
+    .limit(limit)
+    .order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  if (!posts?.length) return []
+
+  const postIds = posts.map(p => p.id)
+
+  const { data: comments } = await supabase
+    .from('empathy_comments')
+    .select('empathy_post_id')
+    .in('empathy_post_id', postIds)
+  const commentCountMap = {}
+  ;(comments || []).forEach(c => {
+    commentCountMap[c.empathy_post_id] = (commentCountMap[c.empathy_post_id] || 0) + 1
+  })
+
+  const { data: likes } = await supabase
+    .from('comment_likes')
+    .select('comment_id, user_key')
+    .in('comment_id', postIds)
+  const likeMap = {}
+  ;(likes || []).forEach(l => {
+    likeMap[l.comment_id] = likeMap[l.comment_id] || { count: 0, userLiked: false }
+    likeMap[l.comment_id].count++
+    if (userKey && l.user_key === userKey) likeMap[l.comment_id].userLiked = true
+  })
+
+  return posts.map(p => ({
+    id:           p.id,
+    postId:       p.channel_id,
+    name:         p.author_name,
+    text:         p.text,
+    time:         p.created_at,
+    likeCount:    likeMap[p.id]?.count || 0,
+    _liked:       likeMap[p.id]?.userLiked || false,
+    commentCount: commentCountMap[p.id] || 0,
+  }))
+}
+
+// Single post, for the detail view — not assumed to already be in the feed
+// cache (e.g. opened via a notification deep-link).
+export async function fetchPostById(postId, userKey = '') {
+  const { data: p, error } = await supabase
+    .from('empathy_posts')
+    .select('*')
+    .eq('id', postId)
+    .single()
+  if (error) throw new Error(error.message)
+
+  const { count: commentCount } = await supabase
+    .from('empathy_comments')
+    .select('id', { count: 'exact', head: true })
+    .eq('empathy_post_id', postId)
+
+  const { data: likes } = await supabase
+    .from('comment_likes')
+    .select('user_key')
+    .eq('comment_id', postId)
+
+  return {
+    id:           p.id,
+    postId:       p.channel_id,
+    name:         p.author_name,
+    text:         p.text,
+    time:         p.created_at,
+    likeCount:    likes?.length || 0,
+    _liked:       userKey ? !!likes?.find(l => l.user_key === userKey) : false,
+    commentCount: commentCount || 0,
+  }
+}
+
+// Create a brand new post (top-level kudos) — the message lives on the post.
+export async function createPost(channelId, authorName, text) {
+  const { data, error } = await supabase
+    .from('empathy_posts')
+    .insert({ channel_id: channelId, author_name: authorName, text })
     .select()
     .single()
   if (error) throw new Error(error.message)
-  return { id: data.id, postId: data.post_id, parentId: data.parent_id || '', name: data.author_name, text: data.text, time: data.created_at }
+  return {
+    id:     data.id,
+    postId: data.channel_id,
+    name:   data.author_name,
+    text:   data.text,
+    time:   data.created_at,
+  }
+}
+
+export async function addComment(channelId, empathyPostId, text, authorName, parentId = '') {
+  const { data, error } = await supabase
+    .from('empathy_comments')
+    .insert({
+      post_id:         channelId,
+      empathy_post_id: empathyPostId || null,
+      text,
+      author_name:     authorName,
+      parent_id:       parentId || null,
+    })
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return {
+    id:            data.id,
+    postId:        data.post_id,
+    parentId:      data.parent_id || '',
+    empathyPostId: data.empathy_post_id || '',
+    name:          data.author_name,
+    text:          data.text,
+    time:          data.created_at,
+  }
+}
+
+export async function updatePost(id, text) {
+  const { error } = await supabase
+    .from('empathy_posts')
+    .update({ text })
+    .eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function deletePost(id) {
+  const { error } = await supabase
+    .from('empathy_posts')
+    .delete()
+    .eq('id', id)
+  if (error) throw new Error(error.message)
 }
 
 export async function updateComment(id, text) {
@@ -161,5 +326,3 @@ export async function setEmpathyPhoto(employeeId, imgUrl) {
 export async function fetchPosts(userKey = '') {
   return []   // EmpathyBoard now uses fetchPeople() + fetchComments() path
 }
-export async function createPost() { return null }
-export async function ensurePost() { return null }

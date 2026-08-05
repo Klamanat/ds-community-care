@@ -52,6 +52,14 @@ export const useEmpathyStore = defineStore('empathy', () => {
 
   const praisedPeople = ref(lsGet('empathy_people') || [])
 
+  // Flat feed of top-level kudos posts (Facebook-style board)
+  const feedPosts    = ref(lsGet('empathy_feed') || [])
+  const feedHasMore  = ref(true)
+  const feedLoading  = ref(false)
+
+  // Single-post lookups (detail view) — not assumed to already be in feedPosts
+  const postsById = reactive({})
+
   // ── Hydrate channel likes from localStorage on init ─────────────
   const _init = _loadStored()
   if (_init.channels) Object.assign(channelLikes, _init.channels)
@@ -129,6 +137,121 @@ export const useEmpathyStore = defineStore('empathy', () => {
     } catch { }
   }
 
+  // ── loadFeed — flat feed for EmpathyBoard (Facebook-style) ─────
+  async function loadFeed(reset = false) {
+    if (feedLoading.value) return
+    feedLoading.value = true
+    try {
+      const before  = reset ? null : (feedPosts.value.at(-1)?.time || null)
+      const userKey = useUserAuthStore().userId || ''
+      const rows = await svc.fetchFeed(15, before, userKey)
+      feedPosts.value = reset ? rows : [...feedPosts.value, ...rows]
+      feedHasMore.value = rows.length === 15
+      rows.forEach(p => { postsById[p.id] = p })
+      if (reset) lsSet('empathy_feed', feedPosts.value, 60 * 1000)
+    } catch {
+      feedHasMore.value = false
+    } finally {
+      feedLoading.value = false
+    }
+  }
+
+  // ── toggleFeedLike — like a top-level post directly from the feed ─
+  async function toggleFeedLike(postId) {
+    const post = feedPosts.value.find(p => p.id === postId)
+    const detail = postsById[postId]
+    if (!post && !detail) return
+
+    const apply = (liked, count) => {
+      if (post)   { post._liked = liked; post.likeCount = count }
+      if (detail) { detail._liked = liked; detail.likeCount = count }
+    }
+
+    const base = post || detail
+    apply(!base._liked, (base.likeCount || 0) + (!base._liked ? 1 : -1))
+    _saveCommentLike(postId, { liked: (post || detail)._liked, count: (post || detail).likeCount })
+
+    try {
+      const result = await svc.toggleCommentLike(postId, useUserAuthStore().userId || 'anonymous')
+      if (result && typeof result.likeCount === 'number') {
+        apply(result.liked, result.likeCount)
+        _saveCommentLike(postId, { liked: result.liked, count: result.likeCount })
+      }
+    } catch { /* keep optimistic */ }
+  }
+
+  // ── loadPost — fetch a single post reliably (detail view) ─────
+  async function loadPost(postId) {
+    if (postsById[postId]) return
+    try {
+      const userKey = useUserAuthStore().userId || ''
+      postsById[postId] = await svc.fetchPostById(postId, userKey)
+    } catch { /* leave unset — caller shows loading/empty state */ }
+  }
+
+  // ── createPost — new top-level kudos, writes directly to empathy_posts ─
+  async function createPost(channelId, authorName, text) {
+    const ui = useUiStore()
+    const temp = { id: 'tmp_post_' + Date.now(), postId: channelId, name: authorName, text, time: 'เมื่อกี้', likeCount: 0, _liked: false, commentCount: 0 }
+    feedPosts.value.unshift(temp)
+    postsById[temp.id] = temp
+    lsDel('empathy_feed')
+    lsDel('empathy_people')
+    lastPeopleFetched.value = null
+
+    const person = praisedPeople.value.find(p =>
+      String(p.id) === String(channelId) || String(p.empCode) === String(channelId)
+    )
+    if (person) person.commentCount = (person.commentCount || 0) + 1
+
+    try {
+      const post = await svc.createPost(channelId, authorName, text)
+      const real = { ...post, likeCount: 0, _liked: false, commentCount: 0 }
+      const idx = feedPosts.value.findIndex(p => p.id === temp.id)
+      if (idx !== -1) feedPosts.value.splice(idx, 1, real)
+      delete postsById[temp.id]
+      postsById[real.id] = real
+      lsDel('empathy_feed')
+      return real
+    } catch {
+      feedPosts.value = feedPosts.value.filter(p => p.id !== temp.id)
+      delete postsById[temp.id]
+      if (person) person.commentCount = Math.max(0, (person.commentCount || 0) - 1)
+      ui.showToast('ส่งคำชื่นชมไม่สำเร็จ')
+      return null
+    }
+  }
+
+  // ── editPost / deletePost — edit or remove a post's own message ────
+  async function editPost(postId, newText) {
+    const post   = feedPosts.value.find(p => p.id === postId)
+    const detail = postsById[postId]
+    const oldText = post?.text ?? detail?.text
+    if (post)   post.text = newText
+    if (detail) detail.text = newText
+    try {
+      await svc.updatePost(postId, newText)
+    } catch {
+      if (post)   post.text = oldText
+      if (detail) detail.text = oldText
+      useUiStore().showToast('แก้ไขไม่สำเร็จ')
+    }
+  }
+
+  async function deletePost(postId) {
+    const idx = feedPosts.value.findIndex(p => p.id === postId)
+    const removed = idx !== -1 ? feedPosts.value.splice(idx, 1)[0] : null
+    const detail  = postsById[postId]
+    delete postsById[postId]
+    try {
+      await svc.deletePost(postId)
+    } catch {
+      if (removed) feedPosts.value.splice(idx, 0, removed)
+      if (detail) postsById[postId] = detail
+      useUiStore().showToast('ลบไม่สำเร็จ')
+    }
+  }
+
   // ── recordPraise — add/update session praise list (local only) ─
   function recordPraise(member, channelId) {
     const uid = channelId || String(member.empCode || member.id || member.name).trim()
@@ -148,7 +271,11 @@ export const useEmpathyStore = defineStore('empathy', () => {
   }
 
   // ── loadComments — fetch with userKey so Supabase returns _liked per comment ─
-  async function loadComments(channelId) {
+  // storeKey is the reactive slot to write into (postComments[storeKey]).
+  // For the channel-thread view storeKey === channelId; for the Facebook-
+  // style single-post view storeKey === the real empathy_posts.id and
+  // { byPost: true } fetches by empathy_post_id instead of channel.
+  async function loadComments(storeKey, { byPost = false } = {}) {
     const userKey = useUserAuthStore().userId || ''
     function sortByTime(arr) {
       return arr.slice().sort((a, b) => {
@@ -158,27 +285,29 @@ export const useEmpathyStore = defineStore('empathy', () => {
       })
     }
     // Hydrate from localStorage immediately (shows comments without waiting for API)
-    if (!postComments[channelId]) {
-      const cached = lsGet('dsc_cm_' + channelId)
+    if (!postComments[storeKey]) {
+      const cached = lsGet('dsc_cm_' + storeKey)
       if (cached?.length) {
-        postComments[channelId] = sortByTime(cached)
-        _applyCommentLikes(postComments[channelId])
+        postComments[storeKey] = sortByTime(cached)
+        _applyCommentLikes(postComments[storeKey])
       }
     }
     // Skip fetch if already loaded in this session
-    if (postComments[channelId]?.length > 0) return
+    if (postComments[storeKey]?.length > 0) return
     try {
-      const arr = await svc.fetchComments(channelId, userKey)
+      const arr = byPost
+        ? await svc.fetchPostComments(storeKey, userKey)
+        : await svc.fetchComments(storeKey, userKey)
       _applyCommentLikes(arr)
       arr.forEach(cm => {
         if (cm._liked !== undefined)
           _saveCommentLike(cm.id, { liked: !!cm._liked, count: cm.likeCount || 0 })
       })
-      postComments[channelId] = sortByTime(arr)
-      lsSet('dsc_cm_' + channelId, arr.map(c => ({ ...c, _liked: undefined })), 2 * 60 * 1000)
+      postComments[storeKey] = sortByTime(arr)
+      lsSet('dsc_cm_' + storeKey, arr.map(c => ({ ...c, _liked: undefined })), 2 * 60 * 1000)
     } catch {
-      if (!postComments[channelId]) postComments[channelId] = []
-      _applyCommentLikes(postComments[channelId])
+      if (!postComments[storeKey]) postComments[storeKey] = []
+      _applyCommentLikes(postComments[storeKey])
     }
   }
 
@@ -194,30 +323,29 @@ export const useEmpathyStore = defineStore('empathy', () => {
     } catch { /* keep localStorage state */ }
   }
 
-  // ── addComment — supports parentId for replies ─────────────────
-  async function addComment(channelId, text, authorName, parentId = '') {
+  // ── addComment — reply/comment attaching to an existing post ────
+  // storeKey: postComments[] slot to update (channelId for the thread view,
+  //   or the real post id for the single-post view).
+  // channelId: recipient, written to empathy_comments.post_id as before.
+  // empathyPostId: which empathy_posts row this belongs to.
+  async function addComment(storeKey, channelId, empathyPostId, text, authorName, parentId = '') {
     const ui = useUiStore()
-    if (!postComments[channelId]) postComments[channelId] = []
+    if (!postComments[storeKey]) postComments[storeKey] = []
 
-    const temp = { id: 'tmp_cm_' + Date.now(), postId: channelId, parentId: parentId || '', name: authorName, text, time: 'เมื่อกี้', likeCount: 0, _liked: false }
-    postComments[channelId].push(temp)
-    lsDel('empathy_people') // commentCount เปลี่ยน
-    lastPeopleFetched.value = null // force re-fetch on next loadPeople
-
-    // Optimistic: increment commentCount immediately in praisedPeople
-    const person = praisedPeople.value.find(p =>
-      String(p.id) === String(channelId) || String(p.empCode) === String(channelId)
-    )
-    if (person) person.commentCount = (person.commentCount || 0) + 1
+    const temp = { id: 'tmp_cm_' + Date.now(), postId: channelId, parentId: parentId || '', empathyPostId, name: authorName, text, time: 'เมื่อกี้', likeCount: 0, _liked: false }
+    postComments[storeKey].push(temp)
 
     try {
-      const cm = await svc.addComment(channelId, text, authorName, parentId)
-      const idx = postComments[channelId].findIndex(c => c.id === temp.id)
-      if (idx !== -1) postComments[channelId].splice(idx, 1, { ...cm, likeCount: 0, _liked: false })
-      lsDel('dsc_cm_' + channelId)
+      const cm = await svc.addComment(channelId, empathyPostId, text, authorName, parentId)
+      const idx = postComments[storeKey].findIndex(c => c.id === temp.id)
+      if (idx !== -1) postComments[storeKey].splice(idx, 1, { ...cm, likeCount: 0, _liked: false })
+      lsDel('dsc_cm_' + storeKey)
+      // Bump the post's commentCount wherever it's currently cached
+      const feedPost = feedPosts.value.find(p => p.id === empathyPostId)
+      if (feedPost) feedPost.commentCount = (feedPost.commentCount || 0) + 1
+      if (postsById[empathyPostId]) postsById[empathyPostId].commentCount = (postsById[empathyPostId].commentCount || 0) + 1
     } catch {
-      postComments[channelId] = postComments[channelId].filter(c => c.id !== temp.id)
-      if (person) person.commentCount = Math.max(0, (person.commentCount || 0) - 1)
+      postComments[storeKey] = postComments[storeKey].filter(c => c.id !== temp.id)
       ui.showToast('ส่งความคิดเห็นไม่สำเร็จ')
     }
   }
@@ -341,10 +469,13 @@ export const useEmpathyStore = defineStore('empathy', () => {
     const oldText = cm.text
     cm.text = newText          // optimistic
     lsDel('dsc_cm_' + channelId)
+    const feedPost = feedPosts.value.find(p => p.id === commentId)
+    if (feedPost) feedPost.text = newText
     try {
       await svc.updateComment(commentId, newText)
     } catch {
       cm.text = oldText        // revert
+      if (feedPost) feedPost.text = oldText
       useUiStore().showToast('แก้ไขไม่สำเร็จ')
     }
   }
@@ -360,18 +491,32 @@ export const useEmpathyStore = defineStore('empathy', () => {
     // decrement commentCount on praisedPeople
     const person = praisedPeople.value.find(p => p.empCode === channelId || p.id === channelId)
     if (person) person.commentCount = Math.max(0, (person.commentCount || 1) - 1)
+
+    // Sync feed: remove top-level post, or decrement parent's commentCount
+    const feedIdx = feedPosts.value.findIndex(p => p.id === commentId)
+    let removedFeedPost = null
+    if (feedIdx !== -1) {
+      removedFeedPost = feedPosts.value.splice(feedIdx, 1)[0]
+    } else if (removed.parentId) {
+      const parentPost = feedPosts.value.find(p => p.id === removed.parentId)
+      if (parentPost) parentPost.commentCount = Math.max(0, (parentPost.commentCount || 1) - 1)
+    }
+
     try {
       await svc.deleteComment(commentId)
     } catch {
       comments.splice(idx, 0, removed)   // revert
       if (person) person.commentCount = (person.commentCount || 0) + 1
+      if (removedFeedPost) feedPosts.value.splice(feedIdx, 0, removedFeedPost)
       useUiStore().showToast('ลบไม่สำเร็จ')
     }
   }
 
   return {
     posts, isLoading, postComments, praisedPeople, channelLikes,
+    feedPosts, feedHasMore, feedLoading, postsById,
     loadPosts, loadPeople, addPost, recordPraise, loadComments, loadChannelLike, addComment,
+    loadFeed, toggleFeedLike, loadPost, createPost, editPost, deletePost,
     toggleLike, toggleCommentLike, toggleChannelLike, togglePostCommentLike, updatePersonImg,
     editComment, removeComment,
   }

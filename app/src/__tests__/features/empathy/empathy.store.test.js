@@ -5,6 +5,7 @@ import { setActivePinia, createPinia } from 'pinia'
 vi.mock('../../../features/empathy/empathyService.js', () => ({
   fetchPeople: vi.fn(),
   fetchComments: vi.fn(),
+  fetchFeed: vi.fn(),
   addComment: vi.fn(),
   updateComment: vi.fn(),
   deleteComment: vi.fn(),
@@ -53,7 +54,51 @@ describe('empathy.store', () => {
       expect(store.praisedPeople).toEqual([])
       expect(store.postComments).toEqual({})
       expect(store.channelLikes).toEqual({})
+      expect(store.feedPosts).toEqual([])
+      expect(store.feedHasMore).toBe(true)
       expect(store.isLoading).toBe(false)
+    })
+  })
+
+  describe('loadFeed', () => {
+    it('fetches and stores feed posts, resetting on reset=true', async () => {
+      svc.fetchFeed.mockResolvedValue([
+        { id: 'c1', postId: 'E1', name: 'Alice', text: 'Hi', time: '2026-01-01', likeCount: 0, _liked: false, commentCount: 0 },
+      ])
+      await store.loadFeed(true)
+      expect(store.feedPosts).toHaveLength(1)
+      expect(store.feedPosts[0].name).toBe('Alice')
+      expect(svc.fetchFeed).toHaveBeenCalledWith(15, null, '42')
+    })
+
+    it('appends on reset=false using last item time as cursor', async () => {
+      store.feedPosts = [{ id: 'c1', name: 'Alice', time: '2026-01-02' }]
+      svc.fetchFeed.mockResolvedValue([{ id: 'c2', name: 'Bob', time: '2026-01-01', likeCount: 0, commentCount: 0 }])
+      await store.loadFeed(false)
+      expect(store.feedPosts).toHaveLength(2)
+      expect(svc.fetchFeed).toHaveBeenCalledWith(15, '2026-01-02', '42')
+    })
+
+    it('sets feedHasMore to false when fewer than a full page returns', async () => {
+      svc.fetchFeed.mockResolvedValue([{ id: 'c1', name: 'Alice', time: '2026-01-01' }])
+      await store.loadFeed(true)
+      expect(store.feedHasMore).toBe(false)
+    })
+
+    it('handles fetch error by clearing feedHasMore', async () => {
+      svc.fetchFeed.mockRejectedValue(new Error('fail'))
+      await store.loadFeed(true)
+      expect(store.feedHasMore).toBe(false)
+    })
+  })
+
+  describe('toggleFeedLike (optimistic)', () => {
+    it('toggles like state on a feed post', async () => {
+      svc.toggleCommentLike.mockResolvedValue({ commentId: 'c1', liked: true, likeCount: 1 })
+      store.feedPosts = [{ id: 'c1', name: 'Alice', likeCount: 0, _liked: false }]
+      await store.toggleFeedLike('c1')
+      expect(store.feedPosts[0]._liked).toBe(true)
+      expect(store.feedPosts[0].likeCount).toBe(1)
     })
   })
 

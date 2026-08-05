@@ -255,6 +255,178 @@
 
     </template>
 
+    <!-- ── POST DETAIL view (Facebook-style single post) ─────────── -->
+    <template v-else-if="view === 'post'">
+      <div class="flex-1 overflow-y-auto bg-[linear-gradient(160deg,#FFF9FD,#F8F5FF)]">
+
+        <div v-if="loadingThread || !focusedPost" class="py-10 text-center text-[#C084C0] text-[13px]">กำลังโหลด... ✨</div>
+
+        <template v-else>
+          <!-- Post card — hidden when it's an old aggregated channel post
+               with no single message of its own (author_name/text empty) -->
+          <div v-if="focusedPost.name" class="px-4 pt-4 pb-3 bg-white border-b border-pink/10">
+            <div class="flex items-start gap-2.5">
+              <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-[14px] font-black text-white overflow-hidden bg-[linear-gradient(135deg,#FBCFE8,#EC4899)]">
+                <img v-if="getCommentorImg(focusedPost.name)" :src="getCommentorImg(focusedPost.name)" class="w-full h-full object-cover" alt="" @error="e => e.target.style.display='none'" />
+                <span v-else>{{ focusedPost.name?.[0] }}</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[13px] leading-snug">
+                  <span class="font-black text-[#7C2D8C]">{{ focusedPost.name }}</span>
+                  <span class="text-[#C084C0] font-semibold"> ชื่นชม </span>
+                  <span class="font-black text-[#BE185D]">{{ selectedMember?.name }}</span>
+                </div>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span v-if="focusedPostParsed.tag" class="text-[10px] font-extrabold text-[#BE185D] bg-pink/10 rounded-full px-2 py-0.5">{{ focusedPostParsed.tag }}</span>
+                  <span class="text-[11px] text-[#C084C0] font-semibold">{{ formatThaiDatetime(focusedPost.time) }}</span>
+                </div>
+              </div>
+              <div class="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-[12px] font-black text-white overflow-hidden"
+                   :style="{ background: selectedMember?.grad || 'linear-gradient(135deg,#DDD6FE,#7C3AED)' }">
+                <img v-if="selectedMember?.imgUrl" :src="selectedMember.imgUrl" class="w-full h-full object-cover" alt="" @error="e => e.target.style.display='none'" />
+                <span v-else>{{ initials(selectedMember?.name) }}</span>
+              </div>
+            </div>
+
+            <div class="text-[13px] text-[#4B1D5C] leading-relaxed whitespace-pre-line mt-2.5">{{ focusedPostParsed.text }}</div>
+
+            <div class="flex items-center gap-3 mt-3">
+              <button
+                class="text-[12px] font-bold flex items-center gap-1 bg-transparent border-none cursor-pointer p-0"
+                :class="focusedPost._liked ? 'text-[#EC4899]' : 'text-[#C084C0]'"
+                @click="empathy.toggleFeedLike(focusedPost.id)"
+              >{{ focusedPost._liked ? '❤️' : '🤍' }} {{ focusedPost.likeCount || 0 }}</button>
+              <span class="text-[12px] font-bold text-[#C084C0]">💬 {{ focusedPostComments.length }} ความคิดเห็น</span>
+              <template v-if="focusedPost.name === userAuth.userName">
+                <button class="cm-action-btn ml-auto" @click="startEdit(focusedPost)">✏️</button>
+                <button class="cm-action-btn cm-action-del" @click="doDelete(focusedPost)">🗑️</button>
+              </template>
+            </div>
+
+            <!-- Edit mode for the post itself -->
+            <template v-if="editingCmId === focusedPost.id">
+              <textarea v-model="editText" rows="2" maxlength="500"
+                style="width:100%;border:1.5px solid #FBCFE8;border-radius:12px;padding:6px 10px;font-size:12px;color:#6B21A8;background:#FFF5FB;resize:none;outline:none;line-height:1.5;margin-top:8px;"
+              ></textarea>
+              <div style="display:flex;gap:8px;margin-top:6px;">
+                <button style="font-size:11px;font-weight:800;background:linear-gradient(135deg,#EC4899,#7C3AED);color:white;border:none;border-radius:8px;padding:4px 14px;cursor:pointer;" @click="saveEdit(focusedPost)">บันทึก</button>
+                <button style="font-size:11px;font-weight:700;color:#9CA3AF;background:transparent;border:1px solid #E5E7EB;border-radius:8px;padding:4px 14px;cursor:pointer;" @click="cancelEdit">ยกเลิก</button>
+              </div>
+            </template>
+          </div>
+
+          <!-- Recipient banner for old aggregated channel posts (no single message) -->
+          <div v-else class="px-4 pt-4 pb-3 bg-white border-b border-pink/10 flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-[13px] font-black text-white overflow-hidden"
+                 :style="{ background: selectedMember?.grad || 'linear-gradient(135deg,#DDD6FE,#7C3AED)' }">
+              <img v-if="selectedMember?.imgUrl" :src="selectedMember.imgUrl" class="w-full h-full object-cover" alt="" @error="e => e.target.style.display='none'" />
+              <span v-else>{{ initials(selectedMember?.name) }}</span>
+            </div>
+            <div class="text-[13px] font-black text-[#7C2D8C]">คำชื่นชมถึง {{ selectedMember?.name }}</div>
+          </div>
+
+          <!-- Comments (for old posts: every historical message + its replies) -->
+          <div v-if="!focusedPostComments.length" class="py-8 text-center">
+            <div class="text-[13px] font-bold text-[#C084C0]">ยังไม่มีความคิดเห็น</div>
+            <div class="text-[11px] text-[#D4A0CC] mt-1">เป็นคนแรกที่แสดงความคิดเห็น</div>
+          </div>
+          <div v-else class="cm-list px-4 py-3">
+            <template v-for="cm in focusedPostComments" :key="cm.id">
+              <div class="cm-item">
+                <div class="cm-av bg-[linear-gradient(135deg,#FBCFE8,#EC4899)]">
+                  <img v-if="getCommentorImg(cm.name)" :src="getCommentorImg(cm.name)" class="w-full h-full object-cover rounded-full" alt="" @error="e => e.target.style.display='none'" />
+                  <span v-else>{{ cm.name?.[0] }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="cm-bubble">
+                    <div class="cm-name">{{ cm.name }}</div>
+                    <template v-if="editingCmId === cm.id">
+                      <textarea v-model="editText" rows="2" maxlength="500"
+                        style="width:100%;border:1.5px solid #FBCFE8;border-radius:12px;padding:6px 10px;font-size:12px;color:#6B21A8;background:#FFF5FB;resize:none;outline:none;line-height:1.5;margin-top:4px;"
+                      ></textarea>
+                      <div style="display:flex;gap:8px;margin-top:6px;">
+                        <button style="font-size:11px;font-weight:800;background:linear-gradient(135deg,#EC4899,#7C3AED);color:white;border:none;border-radius:8px;padding:4px 14px;cursor:pointer;" @click="saveEdit(cm)">บันทึก</button>
+                        <button style="font-size:11px;font-weight:700;color:#9CA3AF;background:transparent;border:1px solid #E5E7EB;border-radius:8px;padding:4px 14px;cursor:pointer;" @click="cancelEdit">ยกเลิก</button>
+                      </div>
+                    </template>
+                    <template v-else>
+                      <div class="cm-text">{{ cm.text }}</div>
+                      <div class="flex items-center gap-3 mt-1.5">
+                        <span class="cm-time">{{ formatThaiDatetime(cm.time) }}</span>
+                        <button
+                          class="text-[11px] font-bold bg-transparent border-none cursor-pointer p-0 transition-colors"
+                          :class="cm._liked ? 'text-[#EC4899]' : 'text-[#C084C0]'"
+                          @click="empathy.toggleCommentLike(activeRealPostId, cm.id)"
+                        >{{ cm._liked ? '❤️' : '🤍' }} {{ cm.likeCount || '' }}</button>
+                        <template v-if="cm.name === userAuth.userName">
+                          <button class="cm-action-btn" @click="startEdit(cm)">✏️</button>
+                          <button class="cm-action-btn cm-action-del" @click="doDelete(cm)">🗑️</button>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+
+                  <!-- Nested replies (only relevant for old aggregated posts) -->
+                  <div v-if="cm.replies.length" class="mt-2 ml-4 flex flex-col gap-1.5">
+                    <div v-for="r in cm.replies" :key="r.id" class="cm-item">
+                      <div class="cm-av !w-6 !h-6 !text-[10px] bg-[linear-gradient(135deg,#DDD6FE,#7C3AED)]">
+                        <img v-if="getCommentorImg(r.name)" :src="getCommentorImg(r.name)" class="w-full h-full object-cover rounded-full" alt="" @error="e => e.target.style.display='none'" />
+                        <span v-else>{{ r.name?.[0] }}</span>
+                      </div>
+                      <div class="cm-bubble !bg-[linear-gradient(135deg,#F5F3FF,#EDE9FE)] flex-1">
+                        <div class="cm-name">{{ r.name }}</div>
+                        <template v-if="editingCmId === r.id">
+                          <textarea v-model="editText" rows="2" maxlength="500"
+                            style="width:100%;border:1.5px solid #DDD6FE;border-radius:12px;padding:6px 10px;font-size:12px;color:#6B21A8;background:white;resize:none;outline:none;line-height:1.5;margin-top:4px;"
+                          ></textarea>
+                          <div style="display:flex;gap:8px;margin-top:6px;">
+                            <button style="font-size:11px;font-weight:800;background:linear-gradient(135deg,#EC4899,#7C3AED);color:white;border:none;border-radius:8px;padding:4px 14px;cursor:pointer;" @click="saveEdit(r)">บันทึก</button>
+                            <button style="font-size:11px;font-weight:700;color:#9CA3AF;background:transparent;border:1px solid #E5E7EB;border-radius:8px;padding:4px 14px;cursor:pointer;" @click="cancelEdit">ยกเลิก</button>
+                          </div>
+                        </template>
+                        <template v-else>
+                          <div class="cm-text">{{ r.text }}</div>
+                          <div class="flex items-center gap-3 mt-1">
+                            <span class="cm-time">{{ formatThaiDatetime(r.time) }}</span>
+                            <button
+                              class="text-[11px] font-bold bg-transparent border-none cursor-pointer p-0 transition-colors"
+                              :class="r._liked ? 'text-[#EC4899]' : 'text-[#C084C0]'"
+                              @click="empathy.toggleCommentLike(activeRealPostId, r.id)"
+                            >{{ r._liked ? '❤️' : '🤍' }} {{ r.likeCount || '' }}</button>
+                            <template v-if="r.name === userAuth.userName">
+                              <button class="cm-action-btn" @click="startEdit(r)">✏️</button>
+                              <button class="cm-action-btn cm-action-del" @click="doDelete(r)">🗑️</button>
+                            </template>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+
+      <!-- Reply compose bar -->
+      <div class="flex-shrink-0 border-t border-pink/10 bg-white px-4 pt-3 pb-6 flex gap-2 items-end">
+        <textarea
+          v-model="postReplyText"
+          ref="postReplyEl"
+          rows="1"
+          maxlength="500"
+          placeholder="แสดงความคิดเห็น..."
+          class="flex-1 border-[1.5px] border-pink/25 rounded-xl px-3 py-2.5 text-[13px] text-[#6B21A8] bg-[#FFF5FB] resize-none outline-none leading-relaxed"
+        ></textarea>
+        <button
+          @click="submitPostReply"
+          :disabled="!postReplyText.trim()"
+          class="bg-[linear-gradient(135deg,#EC4899,#7C3AED)] text-white border-none rounded-xl px-4 py-2.5 text-[13px] font-extrabold cursor-pointer flex-shrink-0 disabled:opacity-40"
+        >ส่ง</button>
+      </div>
+    </template>
+
     <!-- ── ADD PERSON view ────────────────────────────────────────── -->
     <template v-else-if="view === 'add'">
       <div class="flex-1 overflow-y-auto px-5 pt-5 pb-6 flex flex-col gap-3.5">
@@ -308,7 +480,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import BaseModal from '../../shared/components/BaseModal.vue'
 import { getCached } from '../../core/services/imageService.js'
 import { useEmpathyStore }   from './empathy.store.js'
@@ -324,9 +496,12 @@ const ui       = useUiStore()
 const userAuth = useUserAuthStore()
 
 // ── View ──────────────────────────────────────────────────────────
-const view           = ref('grid')
-const searchQ        = ref('')
-const selectedMember = ref(null)
+const view            = ref('grid')
+const searchQ         = ref('')
+const selectedMember  = ref(null)
+const activeRealPostId = ref(null)
+const postReplyText   = ref('')
+const postReplyEl     = ref(null)
 
 // Thread
 const loadingThread = ref(false)
@@ -364,7 +539,15 @@ onMounted(async () => {
   const preselect = ui._empPreselect
   ui._empPreselect = null
 
-  if (preselect?.name) {
+  if (preselect?.realPostId) {
+    // From EmpathyBoard feed card — jump straight into single-post detail
+    await empathy.loadPeople()
+    const person = empathy.praisedPeople.find(
+      p => (p.empCode || p.id) === preselect.postId
+    ) || { id: preselect.postId, empCode: preselect.postId, name: preselect.postId, role: '' }
+    await nextTick()
+    await openPost(person, preselect.realPostId)
+  } else if (preselect?.name) {
     // Full person object (from EmpathyBoard) — select immediately, no wait
     empathy.loadPeople()
     await nextTick()
@@ -390,6 +573,7 @@ const channelLikeCount = computed(() => empathy.channelLikes[activePostId.value]
 const headerTitle = computed(() => {
   if (view.value === 'grid') return 'ส่งคำชื่นชม 💝'
   if (view.value === 'add')  return 'เพิ่มคนใหม่'
+  if (view.value === 'post') return 'คำชื่นชม'
   return selectedMember.value?.name || 'คำชื่นชม'
 })
 
@@ -456,6 +640,8 @@ function goBack() {
   view.value = 'grid'
   selectedMember.value = null
   activePostId.value   = null
+  activeRealPostId.value = null
+  postReplyText.value  = ''
   composeText.value    = ''
   selectedTag.value    = null
   showTags.value       = false
@@ -486,7 +672,64 @@ async function selectPerson(m) {
   nextTick(() => composeEl.value?.focus())
 }
 
+// ── Open a single post (Facebook-style detail, from EmpathyBoard feed) ──
+async function openPost(m, postId) {
+  selectedMember.value = m
+  view.value           = 'post'
+  activeRealPostId.value = postId
+
+  const channelId = String(m.empCode || m.id || m.name).trim()
+  activePostId.value = channelId
+
+  loadingThread.value = !empathy.postsById[postId]
+  await empathy.loadPost(postId)
+
+  const hasCommentsCache = !!(empathy.postComments[postId]?.length)
+  if (!hasCommentsCache) loadingThread.value = true
+  await empathy.loadComments(postId, { byPost: true })
+  loadingThread.value = false
+  nextTick(() => postReplyEl.value?.focus())
+}
+
+// The post being viewed in 'post' mode — its own content
+const focusedPost = computed(() => empathy.postsById[activeRealPostId.value])
+const focusedPostParsed = computed(() => focusedPost.value ? parseComment(focusedPost.value) : { tag: '', text: '' })
+
+// Its comments, nested by parent_id (old aggregated posts have multiple
+// top-level "root" comments here — each with its own replies, same shape
+// the channel-thread view used to show)
+const focusedPostComments = computed(() => {
+  if (!activeRealPostId.value) return []
+  const flat = [...(empathy.postComments[activeRealPostId.value] || [])].sort(byCmTime)
+  const top  = flat.filter(c => !c.parentId)
+  return top.map(cm => ({
+    ...cm,
+    replies: flat.filter(r => r.parentId === cm.id).sort(byCmTime)
+  }))
+})
+
+// If the focused post gets deleted while viewing it, close the modal
+watch(focusedPost, (post) => {
+  if (view.value === 'post' && !loadingThread.value && !post) ui.closeModal()
+})
+
+async function submitPostReply() {
+  const text = postReplyText.value.trim()
+  if (!text || !activeRealPostId.value) return
+  postReplyText.value = ''
+  await empathy.addComment(
+    activeRealPostId.value, activePostId.value, activeRealPostId.value,
+    text, userAuth.userName || 'ทีม', ''
+  )
+}
+
 // ── Edit / Delete ───────────────────────────────────────────────────
+// A `cm` matching the focused post itself means "edit/delete the post";
+// otherwise it's a reply/comment under it.
+function isFocusedPostItself(cm) {
+  return view.value === 'post' && cm.id === focusedPost.value?.id
+}
+
 function startEdit(cm) {
   editingCmId.value = cm.id
   editText.value    = cm.text
@@ -497,13 +740,23 @@ function cancelEdit() { editingCmId.value = null; editText.value = '' }
 async function saveEdit(cm) {
   const text = editText.value.trim()
   if (!text || text === cm.text) { cancelEdit(); return }
-  await empathy.editComment(activePostId.value, cm.id, text)
+  if (isFocusedPostItself(cm)) {
+    await empathy.editPost(cm.id, text)
+  } else {
+    const storeKey = view.value === 'post' ? activeRealPostId.value : activePostId.value
+    await empathy.editComment(storeKey, cm.id, text)
+  }
   cancelEdit()
 }
 
 async function doDelete(cm) {
   if (!confirm(`ลบ comment นี้?`)) return
-  await empathy.removeComment(activePostId.value, cm.id)
+  if (isFocusedPostItself(cm)) {
+    await empathy.deletePost(cm.id)
+  } else {
+    const storeKey = view.value === 'post' ? activeRealPostId.value : activePostId.value
+    await empathy.removeComment(storeKey, cm.id)
+  }
 }
 
 // ── Reply ──────────────────────────────────────────────────────────
@@ -523,11 +776,16 @@ async function submitReply(parentId) {
   if (!text || !activePostId.value) return
   replyingTo.value = null
   replyText.value  = ''
-  await empathy.addComment(activePostId.value, text, userAuth.userName || 'ทีม', parentId)
+  // All comments in this (old) channel share one aggregate post — reuse it
+  const empathyPostId = empathy.postComments[activePostId.value]?.[0]?.empathyPostId || ''
+  await empathy.addComment(
+    activePostId.value, activePostId.value, empathyPostId,
+    text, userAuth.userName || 'ทีม', parentId
+  )
   scrollBottom()
 }
 
-// ── Compose (top-level kudos) ──────────────────────────────────────
+// ── Compose (top-level kudos — writes directly to empathy_posts) ───
 async function submitCompose() {
   const text = composeText.value.trim()
   if (!text || !activePostId.value || sending.value) return
@@ -538,11 +796,12 @@ async function submitCompose() {
   showTags.value    = false
   sending.value     = true
   try {
-    await empathy.addComment(activePostId.value, fullText, userAuth.userName || 'ทีม', '')
-    empathy.recordPraise(selectedMember.value, activePostId.value)
-    ui.showToast('ส่งคำชื่นชมสำเร็จ! 💝')
-    ui.closeModal()
-    scrollBottom()
+    const post = await empathy.createPost(activePostId.value, userAuth.userName || 'ทีม', fullText)
+    if (post) {
+      empathy.recordPraise(selectedMember.value, activePostId.value)
+      ui.showToast('ส่งคำชื่นชมสำเร็จ! 💝')
+      ui.closeModal()
+    }
   } finally {
     sending.value = false
   }
