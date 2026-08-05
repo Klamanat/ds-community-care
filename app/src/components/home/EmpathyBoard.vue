@@ -14,7 +14,7 @@
 <div v-if="loading" class="grid grid-cols-3 md:grid-cols-4 gap-3">
       <SkeletonCard v-for="i in 6" :key="i" height="220px" radius="16px" />
     </div>
-    <div v-else-if="!empathy.praisedPeople.length" class="text-center py-6 text-app-light text-[13px]">
+    <div v-else-if="!empathy.postCards.length" class="text-center py-6 text-app-light text-[13px]">
       ยังไม่มีคำชื่นชม 💌<br>
       <span class="text-[11px]">กดปุ่มด้านบนเพื่อส่งคำชื่นชมคนแรก</span>
     </div>
@@ -23,7 +23,7 @@
         v-for="post in visiblePosts"
         :key="post.id"
         :post="post"
-        @click="openThread(empathy.praisedPeople.find(p => p.id === post.id))"
+        @click="openPost(post)"
       />
     </div>
 
@@ -57,8 +57,8 @@ const empPages   = ref(1)
 onMounted(() => {
   window.addEventListener('resize', _onResize)
   // ถ้ามี cache อยู่แล้ว → ไม่ต้อง spinner รอ API
-  loading.value = !empathy.praisedPeople.length
-  empathy.loadPeople().finally(() => { loading.value = false })
+  loading.value = !empathy.postCards.length
+  empathy.loadPostCards().finally(() => { loading.value = false })
 })
 onUnmounted(() => window.removeEventListener('resize', _onResize))
 
@@ -70,29 +70,28 @@ const GRADS = [
   'linear-gradient(135deg,#FDE68A,#F59E0B)',
 ]
 
-// Map praisedPeople → shape EmpathyCard expects
+// Map postCards → shape EmpathyCard expects — one card per post, so the
+// same person can appear more than once if praised multiple times
 const posts = computed(() =>
-  empathy.praisedPeople.map((person, idx) => {
-    const cl = empathy.channelLikes[person.empCode || person.id]
-    return {
-      id:        person.id,
-      recImg:    person.imgUrl || '',
-      recName:   person.name,
-      recRole:   person.role,
-      react:     '💝',
-      comments:  { length: person.commentCount || 0 },
-      likeCount: cl?.count ?? 0,
-      _liked:    cl?.liked ?? false,
-      grad:      GRADS[idx % GRADS.length],
-    }
-  })
+  empathy.postCards.map((card, idx) => ({
+    id:        card.id,
+    channelId: card.channelId,
+    recImg:    card.imgUrl || '',
+    recName:   card.recName,
+    recRole:   card.recRole,
+    react:     '💝',
+    comments:  { length: card.commentCount || 0 },
+    likeCount: card.likeCount ?? 0,
+    _liked:    card._liked ?? false,
+    grad:      GRADS[idx % GRADS.length],
+  }))
 )
 
 const visiblePosts = computed(() => posts.value.slice(0, empPages.value * pageSize.value))
 
-// Click card → open EmpathyModal thread for that person
-function openThread(person) {
-  ui._empPreselect = person
+// Click card → open that specific post's detail
+function openPost(post) {
+  ui._empPreselect = { postId: post.channelId, realPostId: post.id }
   ui.openModal('modal-emp')
 }
 </script>

@@ -4,19 +4,23 @@ import { setActivePinia, createPinia } from 'pinia'
 
 vi.mock('../../../features/empathy/empathyService.js', () => ({
   fetchPeople: vi.fn(),
+  fetchPostCards: vi.fn(),
   fetchComments: vi.fn(),
+  fetchPostComments: vi.fn(),
   fetchFeed: vi.fn(),
+  fetchPostById: vi.fn(),
   addComment: vi.fn(),
+  createPost: vi.fn(),
   updateComment: vi.fn(),
   deleteComment: vi.fn(),
+  updatePost: vi.fn(),
+  deletePost: vi.fn(),
   toggleLike: vi.fn(),
   toggleCommentLike: vi.fn(),
   toggleChannelLike: vi.fn(),
   fetchChannelLike: vi.fn(),
   fetchChannelLikeCounts: vi.fn(),
   fetchPosts: vi.fn(() => []),
-  createPost: vi.fn(() => null),
-  ensurePost: vi.fn(() => null),
 }))
 vi.mock('../../../core/services/imageService.js', () => ({
   fetchImages: vi.fn(() => Promise.resolve({})),
@@ -89,6 +93,119 @@ describe('empathy.store', () => {
       svc.fetchFeed.mockRejectedValue(new Error('fail'))
       await store.loadFeed(true)
       expect(store.feedHasMore).toBe(false)
+    })
+  })
+
+  describe('loadPostCards', () => {
+    it('fetches and stores one card per post', async () => {
+      svc.fetchPostCards.mockResolvedValue([
+        { id: 'post1', channelId: 'E1', empCode: 'E1', recName: 'Alice', recRole: 'Dev', imgUrl: '', imgId: '', authorName: 'Bob', text: 'Hi', time: '2026-01-01', likeCount: 0, _liked: false, commentCount: 0 },
+      ])
+      await store.loadPostCards()
+      expect(store.postCards).toHaveLength(1)
+      expect(store.postCards[0].recName).toBe('Alice')
+    })
+
+    it('does not refetch within the cache TTL unless forced', async () => {
+      svc.fetchPostCards.mockResolvedValue([{ id: 'post1', channelId: 'E1' }])
+      await store.loadPostCards()
+      svc.fetchPostCards.mockClear()
+      await store.loadPostCards()
+      expect(svc.fetchPostCards).not.toHaveBeenCalled()
+      await store.loadPostCards(true)
+      expect(svc.fetchPostCards).toHaveBeenCalled()
+    })
+  })
+
+  describe('createPost', () => {
+    it('adds the new post to feedPosts and postsById', async () => {
+      svc.createPost.mockResolvedValue({ id: 'post1', postId: 'E1', name: 'Alice', text: 'Great job!', time: '2026-01-01' })
+      const result = await store.createPost('E1', 'Alice', 'Great job!')
+      expect(result.id).toBe('post1')
+      expect(store.feedPosts.find(p => p.id === 'post1')).toBeTruthy()
+      expect(store.postsById['post1']).toBeTruthy()
+    })
+
+    it('does NOT touch praisedPeople.commentCount (avoids double-counting with recordPraise)', async () => {
+      store.praisedPeople = [{ id: 'E1', empCode: 'E1', name: 'Alice', commentCount: 1 }]
+      svc.createPost.mockResolvedValue({ id: 'post1', postId: 'E1', name: 'Alice', text: 'Hi', time: '2026-01-01' })
+      await store.createPost('E1', 'Alice', 'Hi')
+      expect(store.praisedPeople[0].commentCount).toBe(1)
+    })
+
+    it('rolls back the optimistic feed entry on failure', async () => {
+      svc.createPost.mockRejectedValue(new Error('fail'))
+      const before = store.feedPosts.length
+      const result = await store.createPost('E1', 'Alice', 'Hi')
+      expect(result).toBeNull()
+      expect(store.feedPosts.length).toBe(before)
+    })
+
+    it('appends directly into an already-loaded channel wall (postComments) for instant reflection', async () => {
+      store.postComments['E1'] = [{ id: 'old1', postId: 'E1', parentId: '', name: 'Bob', text: 'เก่า' }]
+      svc.createPost.mockResolvedValue({ id: 'post1', postId: 'E1', name: 'Alice', text: 'ใหม่', time: '2026-01-02' })
+      await store.createPost('E1', 'Alice', 'ใหม่')
+      expect(store.postComments['E1']).toHaveLength(2)
+      const added = store.postComments['E1'].find(c => c.id === 'post1')
+      expect(added.isPost).toBe(true)
+      expect(added.parentId).toBe('')
+      expect(added.name).toBe('Alice')
+    })
+
+    it('prepends a matching card to postCards using the recipient info passed in', async () => {
+      svc.createPost.mockResolvedValue({ id: 'post1', postId: 'E1', name: 'Alice', text: 'Great!', time: '2026-01-02' })
+      const recipient = { empCode: 'E1', name: 'Somchai', role: 'Dev', imgUrl: 'x.jpg', imgId: 'img1' }
+      await store.createPost('E1', 'Alice', 'Great!', recipient)
+      const card = store.postCards.find(p => p.id === 'post1')
+      expect(card).toBeTruthy()
+      expect(card.recName).toBe('Somchai')
+      expect(card.authorName).toBe('Alice')
+      expect(card.text).toBe('Great!')
+    })
+
+    it('falls back to channelId as recName when no recipient is passed', async () => {
+      svc.createPost.mockResolvedValue({ id: 'post1', postId: 'E1', name: 'Alice', text: 'Hi', time: '2026-01-01' })
+      await store.createPost('E1', 'Alice', 'Hi')
+      const card = store.postCards.find(p => p.id === 'post1')
+      expect(card.recName).toBe('E1')
+    })
+
+    it('does not touch postComments for a channel wall that was never loaded', async () => {
+      svc.createPost.mockResolvedValue({ id: 'post1', postId: 'E2', name: 'Alice', text: 'Hi', time: '2026-01-01' })
+      await store.createPost('E2', 'Alice', 'Hi')
+      expect(store.postComments['E2']).toBeUndefined()
+    })
+  })
+
+  describe('editPost / deletePost', () => {
+    it('editPost updates text optimistically and via service', async () => {
+      store.feedPosts = [{ id: 'post1', text: 'Old' }]
+      svc.updatePost.mockResolvedValue()
+      await store.editPost('post1', 'New')
+      expect(store.feedPosts[0].text).toBe('New')
+      expect(svc.updatePost).toHaveBeenCalledWith('post1', 'New')
+    })
+
+    it('editPost reverts on failure', async () => {
+      store.feedPosts = [{ id: 'post1', text: 'Old' }]
+      svc.updatePost.mockRejectedValue(new Error('fail'))
+      await store.editPost('post1', 'New')
+      expect(store.feedPosts[0].text).toBe('Old')
+    })
+
+    it('deletePost removes from feedPosts and calls service', async () => {
+      store.feedPosts = [{ id: 'post1', text: 'Hi' }]
+      svc.deletePost.mockResolvedValue()
+      await store.deletePost('post1')
+      expect(store.feedPosts).toHaveLength(0)
+      expect(svc.deletePost).toHaveBeenCalledWith('post1')
+    })
+
+    it('deletePost reverts on failure', async () => {
+      store.feedPosts = [{ id: 'post1', text: 'Hi' }]
+      svc.deletePost.mockRejectedValue(new Error('fail'))
+      await store.deletePost('post1')
+      expect(store.feedPosts).toHaveLength(1)
     })
   })
 

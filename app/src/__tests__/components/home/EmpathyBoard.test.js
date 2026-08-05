@@ -20,9 +20,8 @@ describe('EmpathyBoard', () => {
       _empPreselect: null,
     }
     mockEmpathy = {
-      praisedPeople: [],
-      channelLikes: {},
-      loadPeople: vi.fn(() => Promise.resolve()),
+      postCards: [],
+      loadPostCards: vi.fn(() => Promise.resolve()),
     }
 
     useEmpathyStore.mockReturnValue(mockEmpathy)
@@ -47,9 +46,9 @@ describe('EmpathyBoard', () => {
     })
   }
 
-  it('calls loadPeople on mount', () => {
+  it('calls loadPostCards on mount', () => {
     createWrapper()
-    expect(mockEmpathy.loadPeople).toHaveBeenCalled()
+    expect(mockEmpathy.loadPostCards).toHaveBeenCalled()
   })
 
   it('renders the section header with emoji', () => {
@@ -64,38 +63,33 @@ describe('EmpathyBoard', () => {
     expect(wrapper.text()).toContain('10 DS pts')
   })
 
-  it('shows skeleton cards when loading and praisedPeople is empty', () => {
-    mockEmpathy.praisedPeople = []
-    // Manually set loading state by triggering loadPeople to set loading
-    // Since loading is a local ref, we need to set it via the component
+  it('shows empty state when postCards is empty and not loading', async () => {
     const wrapper = createWrapper()
-    // Initially praisedPeople is empty and loadPeople is called,
-    // but loading starts as false in the component.
-    // The component sets loading = !empathy.praisedPeople.length before calling loadPeople
-    // Since praisedPeople.length is 0, loading becomes true
-    // After loadPeople resolves, loading becomes false
-    // We need to test the loading state synchronously
-  })
-
-  it('shows empty state when praisedPeople is empty and not loading', async () => {
-    const wrapper = createWrapper()
-    // Wait for the async loadPeople to settle
-    await mockEmpathy.loadPeople()
+    await mockEmpathy.loadPostCards()
     await wrapper.vm.$nextTick()
 
     expect(wrapper.text()).toContain('ยังไม่มีคำชื่นชม')
     expect(wrapper.text()).toContain('กดปุ่มด้านบน')
   })
 
-  it('renders EmpathyCard components when praisedPeople has data', async () => {
-    mockEmpathy.praisedPeople = [
-      { id: '1', empCode: 'EMP01', name: 'Alice', role: 'Dev', imgUrl: '', commentCount: 2 },
-      { id: '2', empCode: 'EMP02', name: 'Bob', role: 'QA', imgUrl: '', commentCount: 1 },
+  it('renders EmpathyCard components when postCards has data', async () => {
+    mockEmpathy.postCards = [
+      { id: 'post1', channelId: 'EMP01', recName: 'Alice', recRole: 'Dev', imgUrl: '', commentCount: 2, likeCount: 5, _liked: true },
+      { id: 'post2', channelId: 'EMP02', recName: 'Bob', recRole: 'QA', imgUrl: '', commentCount: 1, likeCount: 3, _liked: false },
     ]
-    mockEmpathy.channelLikes = {
-      EMP01: { count: 5, liked: true },
-      EMP02: { count: 3, liked: false },
-    }
+
+    const wrapper = createWrapper()
+    await wrapper.vm.$nextTick()
+
+    const cards = wrapper.findAllComponents({ name: 'EmpathyCard' })
+    expect(cards.length).toBe(2)
+  })
+
+  it('renders duplicate cards when the same person was praised via multiple posts', async () => {
+    mockEmpathy.postCards = [
+      { id: 'post1', channelId: 'EMP01', recName: 'Alice', recRole: 'Dev', imgUrl: '', commentCount: 0, likeCount: 0 },
+      { id: 'post2', channelId: 'EMP01', recName: 'Alice', recRole: 'Dev', imgUrl: '', commentCount: 0, likeCount: 0 },
+    ]
 
     const wrapper = createWrapper()
     await wrapper.vm.$nextTick()
@@ -105,10 +99,9 @@ describe('EmpathyBoard', () => {
   })
 
   it('passes correct props to EmpathyCard components', async () => {
-    mockEmpathy.praisedPeople = [
-      { id: '1', empCode: 'EMP01', name: 'Alice', role: 'Dev', imgUrl: '', commentCount: 2 },
+    mockEmpathy.postCards = [
+      { id: 'post1', channelId: 'EMP01', recName: 'Alice', recRole: 'Dev', imgUrl: '', commentCount: 2, likeCount: 5, _liked: true },
     ]
-    mockEmpathy.channelLikes = { EMP01: { count: 5, liked: true } }
 
     const wrapper = createWrapper()
     await wrapper.vm.$nextTick()
@@ -120,35 +113,35 @@ describe('EmpathyBoard', () => {
     expect(card.props('post').likeCount).toBe(5)
   })
 
-  it('shows load more button when there are more people than visible', async () => {
-    // Create enough people to exceed the default page size (8 for desktop)
-    const people = Array.from({ length: 12 }, (_, i) => ({
-      id: String(i + 1),
-      empCode: `EMP${String(i + 1).padStart(3, '0')}`,
-      name: `Person ${i + 1}`,
-      role: 'Member',
+  it('shows load more button when there are more posts than visible', async () => {
+    // Create enough posts to exceed the default page size (8 for desktop)
+    const cards = Array.from({ length: 12 }, (_, i) => ({
+      id: `post${i + 1}`,
+      channelId: `EMP${String(i + 1).padStart(3, '0')}`,
+      recName: `Person ${i + 1}`,
+      recRole: 'Member',
       imgUrl: '',
     }))
-    mockEmpathy.praisedPeople = people
+    mockEmpathy.postCards = cards
 
     const wrapper = createWrapper()
     await wrapper.vm.$nextTick()
 
     const loadMore = wrapper.find('.emp-load-more')
     expect(loadMore.exists()).toBe(true)
-    // 12 people, pageSize=8 (desktop), empPages=1 → 8 visible, 4 remaining
+    // 12 posts, pageSize=8 (desktop), empPages=1 → 8 visible, 4 remaining
     expect(loadMore.text()).toContain('ดูเพิ่มเติม')
   })
 
-  it('hides load more button when all people are visible', async () => {
-    const people = Array.from({ length: 5 }, (_, i) => ({
-      id: String(i + 1),
-      empCode: `EMP${String(i + 1).padStart(3, '0')}`,
-      name: `Person ${i + 1}`,
-      role: 'Member',
+  it('hides load more button when all posts are visible', async () => {
+    const cards = Array.from({ length: 5 }, (_, i) => ({
+      id: `post${i + 1}`,
+      channelId: `EMP${String(i + 1).padStart(3, '0')}`,
+      recName: `Person ${i + 1}`,
+      recRole: 'Member',
       imgUrl: '',
     }))
-    mockEmpathy.praisedPeople = people
+    mockEmpathy.postCards = cards
 
     const wrapper = createWrapper()
     await wrapper.vm.$nextTick()
@@ -156,11 +149,10 @@ describe('EmpathyBoard', () => {
     expect(wrapper.find('.emp-load-more').exists()).toBe(false)
   })
 
-  it('opens empathy modal on card click', async () => {
-    mockEmpathy.praisedPeople = [
-      { id: '1', empCode: 'EMP01', name: 'Alice', role: 'Dev', imgUrl: '', commentCount: 2 },
+  it('opens the specific post detail on card click', async () => {
+    mockEmpathy.postCards = [
+      { id: 'post1', channelId: 'EMP01', recName: 'Alice', recRole: 'Dev', imgUrl: '', commentCount: 2, likeCount: 5 },
     ]
-    mockEmpathy.channelLikes = { EMP01: { count: 5, liked: true } }
 
     const wrapper = createWrapper()
     await wrapper.vm.$nextTick()
@@ -168,9 +160,7 @@ describe('EmpathyBoard', () => {
     const card = wrapper.findComponent({ name: 'EmpathyCard' })
     await card.trigger('click')
 
-    expect(mockUi._empPreselect).toEqual(
-      expect.objectContaining({ id: '1', empCode: 'EMP01', name: 'Alice' })
-    )
+    expect(mockUi._empPreselect).toEqual({ postId: 'EMP01', realPostId: 'post1' })
     expect(mockUi.openModal).toHaveBeenCalledWith('modal-emp')
   })
 })

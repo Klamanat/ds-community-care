@@ -25,7 +25,7 @@
           v-for="m in filteredTeam"
           :key="m.id || m.name"
           class="rounded-2xl overflow-hidden cursor-pointer border-[2.5px] border-pink/15 transition-all duration-200 bg-white"
-          @click="selectPerson(m)"
+          @click="selectPersonToCompose(m)"
         >
           <div :style="{ background: m.grad }" class="relative overflow-hidden">
             <img v-if="m.imgUrl" :src="m.imgUrl" class="w-full block object-cover object-top" alt="" @error="e => e.target.style.display='none'" />
@@ -51,6 +51,71 @@
         </div>
       </div>
     </div>
+
+    <!-- ── COMPOSE view (pick person → type → send, no wall) ────────── -->
+    <template v-else-if="view === 'compose' && selectedMember">
+      <div class="flex-1 overflow-y-auto bg-[linear-gradient(160deg,#FFF9FD,#F8F5FF)] px-5 pt-5 flex flex-col gap-4">
+        <!-- Recipient -->
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-20 h-20 rounded-full flex-shrink-0 flex items-center justify-center text-[28px] font-black text-white overflow-hidden"
+               :style="{ background: selectedMember.grad || 'linear-gradient(135deg,#FBCFE8,#EC4899)' }">
+            <img v-if="selectedMember.imgUrl" :src="selectedMember.imgUrl" class="w-full h-full object-cover" alt="" @error="e => e.target.style.display='none'" />
+            <span v-else>{{ initials(selectedMember.name) }}</span>
+          </div>
+          <div class="text-center">
+            <div class="text-[15px] font-black text-[#7C2D8C]">{{ selectedMember.name }}</div>
+            <div class="text-[11px] text-[#C084C0] font-semibold">{{ selectedMember.role }}</div>
+          </div>
+        </div>
+
+        <!-- Tag chips -->
+        <div v-if="showTags" class="flex gap-2 flex-wrap justify-center">
+          <button
+            v-for="tag in tags"
+            :key="tag"
+            class="wish-chip"
+            :class="{ selected: selectedTag === tag }"
+            @click="selectedTag = selectedTag === tag ? null : tag"
+          >{{ tag }}</button>
+        </div>
+
+        <div class="flex gap-2 items-end">
+          <button
+            @click="showTags = !showTags"
+            :title="selectedTag || 'เพิ่มแท็ก'"
+            class="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center border-[1.5px] transition-colors duration-150 text-[16px]"
+            :class="selectedTag ? 'bg-[linear-gradient(135deg,#EC4899,#7C3AED)] border-transparent text-white' : 'border-pink/25 bg-[#FFF5FB]'"
+          >🏷️</button>
+
+          <textarea
+            v-model="composeText"
+            ref="composeEl"
+            rows="4"
+            maxlength="500"
+            placeholder="พิมพ์คำชื่นชม... 💕"
+            class="flex-1 border-[1.5px] border-pink/25 rounded-xl px-3 py-2.5 text-[13px] text-[#6B21A8] bg-[#FFF5FB] resize-none outline-none leading-relaxed"
+          ></textarea>
+        </div>
+
+        <div class="flex items-center gap-1.5 bg-[linear-gradient(135deg,#FFFBEB,#FEF3C7)] border border-[#FCD34D] rounded-xl px-3 py-2">
+          <span class="text-[14px]">🌟</span>
+          <div class="text-[11px] font-bold text-[#92400E]">ส่ง Empathy = <strong>+10 DS pts</strong></div>
+        </div>
+      </div>
+
+      <!-- Send -->
+      <div class="flex-shrink-0 border-t border-pink/10 bg-white px-4 pt-3 pb-6 flex gap-2">
+        <button
+          @click="goBack"
+          class="flex-1 bg-pink/[0.08] border border-pink/25 rounded-xl py-[11px] text-[13px] font-bold text-[#BE185D] cursor-pointer"
+        >ย้อนกลับ</button>
+        <button
+          @click="submitCompose"
+          :disabled="!composeText.trim() || sending"
+          class="flex-[2] bg-[linear-gradient(135deg,#EC4899,#7C3AED)] text-white border-none rounded-xl py-[11px] text-[13px] font-black cursor-pointer disabled:opacity-40"
+        >{{ sending ? 'กำลังส่ง...' : 'ส่ง 💝' }}</button>
+      </div>
+    </template>
 
     <!-- ── THREAD view ────────────────────────────────────────────── -->
     <template v-else-if="view === 'thread' && selectedMember">
@@ -262,6 +327,28 @@
         <div v-if="loadingThread || !focusedPost" class="py-10 text-center text-[#C084C0] text-[13px]">กำลังโหลด... ✨</div>
 
         <template v-else>
+          <!-- Recipient photo banner (same as the channel wall view) -->
+          <div
+            class="relative"
+            :style="{ background: selectedMember?.grad || 'linear-gradient(135deg,#FBCFE8,#EC4899)' }"
+          >
+            <img
+              v-if="selectedMember?.imgUrl"
+              :src="selectedMember.imgUrl"
+              class="w-full block"
+              alt=""
+              @error="e => e.target.style.display='none'"
+            />
+            <div
+              v-else
+              class="w-full h-[200px] flex items-center justify-center text-[56px]"
+            >{{ initials(selectedMember?.name) }}</div>
+            <div class="absolute bottom-0 left-0 right-0" style="background:linear-gradient(transparent,rgba(30,0,40,0.78));padding:32px 16px 10px;">
+              <div class="text-[14px] font-black text-white" style="text-shadow:0 1px 8px rgba(0,0,0,0.6);">{{ selectedMember?.name }}</div>
+              <div class="text-[10px] text-white/85 mt-0.5">{{ selectedMember?.role }}</div>
+            </div>
+          </div>
+
           <!-- Post card — hidden when it's an old aggregated channel post
                with no single message of its own (author_name/text empty) -->
           <div v-if="focusedPost.name" class="px-4 pt-4 pb-3 bg-white border-b border-pink/10">
@@ -571,9 +658,10 @@ const channelLikeCount = computed(() => empathy.channelLikes[activePostId.value]
 
 // ── Derived ────────────────────────────────────────────────────────
 const headerTitle = computed(() => {
-  if (view.value === 'grid') return 'ส่งคำชื่นชม 💝'
-  if (view.value === 'add')  return 'เพิ่มคนใหม่'
-  if (view.value === 'post') return 'คำชื่นชม'
+  if (view.value === 'grid')    return 'ส่งคำชื่นชม 💝'
+  if (view.value === 'add')     return 'เพิ่มคนใหม่'
+  if (view.value === 'post')    return 'คำชื่นชม'
+  if (view.value === 'compose') return `ชื่นชม ${selectedMember.value?.name || ''}`
   return selectedMember.value?.name || 'คำชื่นชม'
 })
 
@@ -672,6 +760,15 @@ async function selectPerson(m) {
   nextTick(() => composeEl.value?.focus())
 }
 
+// ── Select person to compose a brand new kudos — no wall shown ─────
+function selectPersonToCompose(m) {
+  selectedMember.value = m
+  searchQ.value        = ''
+  view.value           = 'compose'
+  activePostId.value   = String(m.empCode || m.id || m.name).trim()
+  nextTick(() => composeEl.value?.focus())
+}
+
 // ── Open a single post (Facebook-style detail, from EmpathyBoard feed) ──
 async function openPost(m, postId) {
   selectedMember.value = m
@@ -726,8 +823,11 @@ async function submitPostReply() {
 // ── Edit / Delete ───────────────────────────────────────────────────
 // A `cm` matching the focused post itself means "edit/delete the post";
 // otherwise it's a reply/comment under it.
+// True for both the single-post detail view's own post, and any pseudo
+// "new post" entry merged into the channel thread view (isPost: true,
+// set by empathyService.fetchComments)
 function isFocusedPostItself(cm) {
-  return view.value === 'post' && cm.id === focusedPost.value?.id
+  return cm.isPost || (view.value === 'post' && cm.id === focusedPost.value?.id)
 }
 
 function startEdit(cm) {
@@ -753,6 +853,13 @@ async function doDelete(cm) {
   if (!confirm(`ลบ comment นี้?`)) return
   if (isFocusedPostItself(cm)) {
     await empathy.deletePost(cm.id)
+    if (view.value === 'thread' && activePostId.value) {
+      const list = empathy.postComments[activePostId.value]
+      if (list) {
+        const idx = list.findIndex(c => c.id === cm.id)
+        if (idx !== -1) list.splice(idx, 1)
+      }
+    }
   } else {
     const storeKey = view.value === 'post' ? activeRealPostId.value : activePostId.value
     await empathy.removeComment(storeKey, cm.id)
@@ -776,8 +883,10 @@ async function submitReply(parentId) {
   if (!text || !activePostId.value) return
   replyingTo.value = null
   replyText.value  = ''
-  // All comments in this (old) channel share one aggregate post — reuse it
-  const empathyPostId = empathy.postComments[activePostId.value]?.[0]?.empathyPostId || ''
+  // The channel wall now mixes the old aggregate post with any new
+  // individual posts — look up which post this specific comment belongs to
+  const parent = empathy.postComments[activePostId.value]?.find(c => c.id === parentId)
+  const empathyPostId = parent?.empathyPostId || ''
   await empathy.addComment(
     activePostId.value, activePostId.value, empathyPostId,
     text, userAuth.userName || 'ทีม', parentId
@@ -796,7 +905,7 @@ async function submitCompose() {
   showTags.value    = false
   sending.value     = true
   try {
-    const post = await empathy.createPost(activePostId.value, userAuth.userName || 'ทีม', fullText)
+    const post = await empathy.createPost(activePostId.value, userAuth.userName || 'ทีม', fullText, selectedMember.value)
     if (post) {
       empathy.recordPraise(selectedMember.value, activePostId.value)
       ui.showToast('ส่งคำชื่นชมสำเร็จ! 💝')
@@ -893,6 +1002,6 @@ async function addAndPraise() {
   dirSearch.value  = ''
   pickedDir.value  = null
   addPhotoUrl.value = ''
-  await selectPerson({ ...m, grad: team.getGrad(team.empTeam.length - 1) })
+  selectPersonToCompose({ ...m, grad: team.getGrad(team.empTeam.length - 1) })
 }
 </script>

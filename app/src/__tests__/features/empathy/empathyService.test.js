@@ -8,6 +8,7 @@ vi.mock('../../../core/services/supabase.js', () => {
   chain.update = vi.fn(() => chain)
   chain.delete = vi.fn(() => chain)
   chain.eq = vi.fn(() => chain)
+  chain.not = vi.fn(() => chain)
   chain.order = vi.fn(() => chain)
   chain.limit = vi.fn(() => chain)
   chain.lt = vi.fn(() => chain)
@@ -26,7 +27,7 @@ vi.mock('../../../core/services/edgeFunctions.js', () => ({
 
 import { supabase } from '../../../core/services/supabase.js'
 import {
-  fetchPeople, fetchComments, fetchPostComments, fetchFeed, fetchPostById,
+  fetchPeople, fetchPostCards, fetchComments, fetchPostComments, fetchFeed, fetchPostById,
   addComment, createPost, updateComment, deleteComment, updatePost, deletePost,
   toggleLike, toggleCommentLike, toggleChannelLike, fetchChannelLike, fetchChannelLikeCounts,
   uploadEmpathyPhoto, setEmpathyPhoto,
@@ -65,24 +66,94 @@ describe('empathyService', () => {
     })
   })
 
+  describe('fetchPostCards', () => {
+    it('maps one row per post with recipient info and like/comment counts', async () => {
+      mockRpc({
+        data: [{ id: 'post1', channel_id: 'E1', emp_code: 'E1', rec_name: 'Alice', rec_role: 'Dev', img_url: '', img_id: '', author_name: 'Bob', text: 'Great job!', created_at: '2026-01-01' }],
+        error: null,
+      })
+      supabase.in
+        .mockResolvedValueOnce({ data: [{ empathy_post_id: 'post1' }, { empathy_post_id: 'post1' }] })
+        .mockResolvedValueOnce({ data: [{ comment_id: 'post1', user_key: 'u1' }] })
+
+      const result = await fetchPostCards('u1')
+      expect(result).toHaveLength(1)
+      expect(result[0]).toMatchObject({
+        id: 'post1', channelId: 'E1', empCode: 'E1', recName: 'Alice', recRole: 'Dev',
+        authorName: 'Bob', text: 'Great job!', commentCount: 2, likeCount: 1, _liked: true,
+      })
+    })
+
+    it('handles drive: img_url prefix', async () => {
+      mockRpc({ data: [{ id: 'post1', channel_id: 'E1', emp_code: 'E1', rec_name: 'Bob', rec_role: '', img_url: 'drive:abc123', img_id: '', author_name: null, text: null, created_at: '2026-01-01' }], error: null })
+      supabase.in.mockResolvedValue({ data: [] })
+      const result = await fetchPostCards()
+      expect(result[0].imgId).toBe('abc123')
+      expect(result[0].imgUrl).toBe('')
+    })
+
+    it('returns empty array on null data', async () => {
+      mockRpc({ data: null, error: null })
+      expect(await fetchPostCards()).toEqual([])
+    })
+
+    it('throws on RPC error', async () => {
+      mockRpc({ data: null, error: { message: 'RPC error' } })
+      await expect(fetchPostCards()).rejects.toThrow('RPC error')
+    })
+  })
+
   describe('fetchComments', () => {
-    it('fetches comments with like counts', async () => {
-      // Chain: .from('empathy_comments').select('*').eq('post_id', postId).order('created_at')
-      // Terminal: .order()
-      supabase.order.mockResolvedValue({ data: [{ id: 10, post_id: 'p1', author_name: 'Alice', text: 'Great!', created_at: '2026-01-01' }], error: null })
-      // Chain: .from('comment_likes').select('comment_id, user_key').in('comment_id', ids)
-      // Terminal: .in()
-      supabase.in.mockResolvedValue({ data: [{ comment_id: 10, user_key: 'u1' }], error: null })
+    it('merges old empathy_comments with new empathy_posts and their replies', async () => {
+      // Terminal for the empathy_comments (old wall) query is .order()
+      supabase.order.mockResolvedValue({
+        data: [{ id: 'c1', post_id: 'p1', parent_id: null, empathy_post_id: 'aggpost', author_name: 'Alice', text: 'เก่ามาก', created_at: '2026-01-01' }],
+        error: null,
+      })
+      // Terminal for the empathy_posts (new kudos) query is .not()
+      supabase.not.mockResolvedValue({
+        data: [{ id: 'post1', channel_id: 'p1', author_name: 'Bob', text: 'ใหม่มาก', created_at: '2026-01-02' }],
+        error: null,
+      })
+      // .in() is called twice: replies to the new post, then likes
+      supabase.in
+        .mockResolvedValueOnce({ data: [{ id: 'r1', post_id: 'p1', parent_id: null, empathy_post_id: 'post1', author_name: 'Carl', text: 'reply to new', created_at: '2026-01-03' }] })
+        .mockResolvedValueOnce({ data: [{ comment_id: 'post1', user_key: 'u1' }] })
+
+      const result = await fetchComments('p1', 'u1')
+      expect(result).toHaveLength(3)
+
+      const oldComment = result.find(r => r.id === 'c1')
+      expect(oldComment.name).toBe('Alice')
+      expect(oldComment.isPost).toBeUndefined()
+
+      const newPost = result.find(r => r.id === 'post1')
+      expect(newPost.name).toBe('Bob')
+      expect(newPost.isPost).toBe(true)
+      expect(newPost.parentId).toBe('')
+      expect(newPost.likeCount).toBe(1)
+      expect(newPost._liked).toBe(true)
+
+      const newReply = result.find(r => r.id === 'r1')
+      expect(newReply.parentId).toBe('post1') // nests under the pseudo post entry
+    })
+
+    it('returns just the old wall when there are no new posts for this channel', async () => {
+      supabase.order.mockResolvedValue({
+        data: [{ id: 'c1', post_id: 'p1', parent_id: null, author_name: 'Alice', text: 'Hi', created_at: '2026-01-01' }],
+        error: null,
+      })
+      supabase.not.mockResolvedValue({ data: [], error: null })
+      supabase.in.mockResolvedValue({ data: [] })
 
       const result = await fetchComments('p1', 'u1')
       expect(result).toHaveLength(1)
-      expect(result[0].name).toBe('Alice')
-      expect(result[0].likeCount).toBe(1)
-      expect(result[0]._liked).toBe(true)
+      expect(result[0].id).toBe('c1')
     })
 
-    it('returns empty array on null rows', async () => {
+    it('returns empty array when both sources are empty', async () => {
       supabase.order.mockResolvedValue({ data: null, error: null })
+      supabase.not.mockResolvedValue({ data: null, error: null })
       expect(await fetchComments('p1')).toEqual([])
     })
   })

@@ -60,6 +60,12 @@ export const useEmpathyStore = defineStore('empathy', () => {
   // Single-post lookups (detail view) — not assumed to already be in feedPosts
   const postsById = reactive({})
 
+  // One card per post — for the Home page grid (a person can appear
+  // multiple times if praised more than once)
+  const postCards       = ref(lsGet('empathy_post_cards') || [])
+  const postCardsLoading = ref(false)
+  const lastPostCardsFetched = ref(null)
+
   // ── Hydrate channel likes from localStorage on init ─────────────
   const _init = _loadStored()
   if (_init.channels) Object.assign(channelLikes, _init.channels)
@@ -137,6 +143,32 @@ export const useEmpathyStore = defineStore('empathy', () => {
     } catch { }
   }
 
+  // ── loadPostCards — one card per post, for the Home page grid ──
+  async function loadPostCards(force = false) {
+    if (!force && lastPostCardsFetched.value && (Date.now() - lastPostCardsFetched.value) < 60000) return
+    if (postCardsLoading.value) return
+    postCardsLoading.value = true
+    try {
+      const userKey = useUserAuthStore().userId || ''
+      const data = await svc.fetchPostCards(userKey)
+      postCards.value = data.map(p => ({ ...p, imgUrl: p.imgUrl || getCached(p.imgId) || '' }))
+      lastPostCardsFetched.value = Date.now()
+      lsSet('empathy_post_cards', stripBase64(postCards.value, 'imgUrl'), 60 * 1000)
+
+      // Lazy-fetch Drive images after page renders
+      const ids = [...new Set(data.map(p => p.imgId).filter(Boolean))]
+      if (ids.length) fetchImages(ids).then(map => {
+        postCards.value = postCards.value.map(p => {
+          if (!p.imgId || !map[p.imgId]) return p
+          if (p.imgUrl) return p
+          return { ...p, imgUrl: map[p.imgId] }
+        })
+      }).catch(() => {})
+    } catch { } finally {
+      postCardsLoading.value = false
+    }
+  }
+
   // ── loadFeed — flat feed for EmpathyBoard (Facebook-style) ─────
   async function loadFeed(reset = false) {
     if (feedLoading.value) return
@@ -190,7 +222,9 @@ export const useEmpathyStore = defineStore('empathy', () => {
   }
 
   // ── createPost — new top-level kudos, writes directly to empathy_posts ─
-  async function createPost(channelId, authorName, text) {
+  // Note: does NOT touch praisedPeople.commentCount — call recordPraise()
+  // separately for that (avoids double-counting).
+  async function createPost(channelId, authorName, text, recipient = null) {
     const ui = useUiStore()
     const temp = { id: 'tmp_post_' + Date.now(), postId: channelId, name: authorName, text, time: 'เมื่อกี้', likeCount: 0, _liked: false, commentCount: 0 }
     feedPosts.value.unshift(temp)
@@ -198,11 +232,6 @@ export const useEmpathyStore = defineStore('empathy', () => {
     lsDel('empathy_feed')
     lsDel('empathy_people')
     lastPeopleFetched.value = null
-
-    const person = praisedPeople.value.find(p =>
-      String(p.id) === String(channelId) || String(p.empCode) === String(channelId)
-    )
-    if (person) person.commentCount = (person.commentCount || 0) + 1
 
     try {
       const post = await svc.createPost(channelId, authorName, text)
@@ -212,11 +241,43 @@ export const useEmpathyStore = defineStore('empathy', () => {
       delete postsById[temp.id]
       postsById[real.id] = real
       lsDel('empathy_feed')
+
+      // The channel wall (postComments[channelId]) merges old comments with
+      // new posts — if it's already cached (e.g. viewed earlier this
+      // session), the cached array won't know about this brand-new post.
+      // Drop the cache so the next view re-fetches; also insert it directly
+      // if the array happens to already be loaded, for instant reflection.
+      if (postComments[channelId]) {
+        postComments[channelId].push({
+          id: real.id, postId: channelId, parentId: '', empathyPostId: real.id,
+          isPost: true, name: real.name, text: real.text, time: real.time,
+          likeCount: 0, _liked: false,
+        })
+      }
+      lsDel('dsc_cm_' + channelId)
+
+      // Prepend a matching card to the Home page grid too
+      postCards.value.unshift({
+        id:           real.id,
+        channelId,
+        empCode:      recipient?.empCode || channelId,
+        recName:      recipient?.name || channelId,
+        recRole:      recipient?.role || '',
+        imgUrl:       recipient?.imgUrl || '',
+        imgId:        recipient?.imgId || '',
+        authorName:   real.name,
+        text:         real.text,
+        time:         real.time,
+        likeCount:    0,
+        _liked:       false,
+        commentCount: 0,
+      })
+      lsDel('empathy_post_cards')
+
       return real
     } catch {
       feedPosts.value = feedPosts.value.filter(p => p.id !== temp.id)
       delete postsById[temp.id]
-      if (person) person.commentCount = Math.max(0, (person.commentCount || 0) - 1)
       ui.showToast('ส่งคำชื่นชมไม่สำเร็จ')
       return null
     }
@@ -226,14 +287,17 @@ export const useEmpathyStore = defineStore('empathy', () => {
   async function editPost(postId, newText) {
     const post   = feedPosts.value.find(p => p.id === postId)
     const detail = postsById[postId]
-    const oldText = post?.text ?? detail?.text
+    const card   = postCards.value.find(p => p.id === postId)
+    const oldText = post?.text ?? detail?.text ?? card?.text
     if (post)   post.text = newText
     if (detail) detail.text = newText
+    if (card)   card.text = newText
     try {
       await svc.updatePost(postId, newText)
     } catch {
       if (post)   post.text = oldText
       if (detail) detail.text = oldText
+      if (card)   card.text = oldText
       useUiStore().showToast('แก้ไขไม่สำเร็จ')
     }
   }
@@ -243,11 +307,14 @@ export const useEmpathyStore = defineStore('empathy', () => {
     const removed = idx !== -1 ? feedPosts.value.splice(idx, 1)[0] : null
     const detail  = postsById[postId]
     delete postsById[postId]
+    const cardIdx = postCards.value.findIndex(p => p.id === postId)
+    const removedCard = cardIdx !== -1 ? postCards.value.splice(cardIdx, 1)[0] : null
     try {
       await svc.deletePost(postId)
     } catch {
       if (removed) feedPosts.value.splice(idx, 0, removed)
       if (detail) postsById[postId] = detail
+      if (removedCard) postCards.value.splice(cardIdx, 0, removedCard)
       useUiStore().showToast('ลบไม่สำเร็จ')
     }
   }
@@ -515,6 +582,7 @@ export const useEmpathyStore = defineStore('empathy', () => {
   return {
     posts, isLoading, postComments, praisedPeople, channelLikes,
     feedPosts, feedHasMore, feedLoading, postsById,
+    postCards, postCardsLoading, loadPostCards,
     loadPosts, loadPeople, addPost, recordPraise, loadComments, loadChannelLike, addComment,
     loadFeed, toggleFeedLike, loadPost, createPost, editPost, deletePost,
     toggleLike, toggleCommentLike, toggleChannelLike, togglePostCommentLike, updatePersonImg,
