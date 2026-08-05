@@ -169,7 +169,7 @@
     <!-- Section 4: Empathy Board -->
     <div class="sec">
       <div class="sec-hdr">
-        <span class="sec-title">💝 Empathy Board</span>
+        <span class="sec-title">💝 Recognition Moment</span>
         <span class="sec-more" @click="cardClick('empathy', () => ui.openModal('modal-emp'))">ส่งคำชื่นชม</span>
       </div>
       <EmpathyBoard />

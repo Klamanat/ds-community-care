@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS activity_tickets (
     employee_id text NOT NULL,
     employee_name text NOT NULL,
     ticket_no text NOT NULL,
-    qr_token text UNIQUE NOT NULL DEFAULT encode (gen_random_bytes (16), 'hex'),
+    qr_token text UNIQUE NOT NULL DEFAULT encode (extensions.gen_random_bytes (16), 'hex'),
     status text NOT NULL DEFAULT 'booked',
     price integer NOT NULL DEFAULT 0,
     created_at timestamptz DEFAULT now (),
@@ -40,6 +40,6 @@ FOR UPDATE
 
 CREATE POLICY "tickets_delete" ON activity_tickets FOR DELETE USING (
     (
-        auth.jwt () - > 'user_metadata' - >> 'role'
+        auth.jwt () -> 'user_metadata' ->> 'role'
     ) = 'admin'
 );

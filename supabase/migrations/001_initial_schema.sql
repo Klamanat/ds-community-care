@@ -108,7 +108,7 @@ create table if not exists activities (
   date          text,
   date_end      text,
   loc           text,
-  desc          text,
+  "desc"        text,
   steps         text,
   join_url      text,
   join_open     boolean default true,
@@ -245,7 +245,7 @@ create table if not exists points (
   type          text,
   subtype       text,
   amount        integer,
-  desc          text,
+  "desc"        text,
   created_at    timestamptz default now()
 );
 create index if not exists idx_points_employee_name on points(employee_name);
@@ -256,7 +256,7 @@ create table if not exists point_rules (
   subtype text,
   icon    text,
   name    text,
-  desc    text,
+  "desc"  text,
   pts     integer,
   color   text,
   active  boolean default true

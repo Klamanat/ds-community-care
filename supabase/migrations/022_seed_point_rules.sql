@@ -1,7 +1,7 @@
 -- 022_seed_point_rules.sql
 -- Seed default point rules (insert if not already exists by type+subtype)
 
-insert into point_rules (id, type, subtype, icon, name, desc, pts, color, active)
+insert into point_rules (id, type, subtype, icon, name, "desc", pts, color, active)
 values
   ('rule_daily_checkin',       'daily_checkin',    '',          '📅', 'Check-in รายวัน',           'เช็คอินทุกวันเพื่อสะสมคะแนน',          5,   '#06C755', true),
   ('rule_send_empathy',        'send_empathy',      '',          '💌', 'ส่ง Empathy ให้เพื่อน',     'ส่งคำชื่นชมให้เพื่อนร่วมงาน',           10,  '#EC4899', true),

@@ -221,7 +221,7 @@ create trigger trg_activity_checkin_points
   for each row execute function trg_award_activity_checkin();
 
 -- ── 10. Seed point_rules if empty ────────────────────────────
-insert into point_rules (id, type, subtype, icon, name, desc, pts, color, active)
+insert into point_rules (id, type, subtype, icon, name, "desc", pts, color, active)
 values
   ('rule_daily_checkin',    'daily_checkin',   '',          '📅', 'Check-in รายวัน',          'เช็คอินทุกวันเพื่อสะสมคะแนน',        5,   '#06C755', true),
   ('rule_send_empathy',     'send_empathy',    '',          '💌', 'ส่ง Empathy ให้เพื่อน',    'ส่งคำชื่นชมให้เพื่อนร่วมงาน',        10,  '#EC4899', true),

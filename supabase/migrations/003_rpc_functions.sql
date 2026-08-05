@@ -138,7 +138,7 @@ begin
 
   if v_pts is null or v_pts <= 0 then return 0; end if;
 
-  insert into points(employee_name, type, subtype, amount, desc)
+  insert into points(employee_name, type, subtype, amount, "desc")
   values (p_emp_name, p_type, p_subtype, v_pts, p_desc);
 
   return v_pts;
