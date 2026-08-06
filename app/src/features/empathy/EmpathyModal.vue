@@ -17,7 +17,7 @@
       <input
         v-model="searchQ"
         placeholder="🔍 ค้นหาชื่อหรือตำแหน่ง..."
-        class="w-full border-[1.5px] border-pink/20 rounded-xl px-3.5 py-[9px] text-[13px] text-[#6B21A8] bg-[#FFF5FB] outline-none"
+        class="w-full border-[1.5px] border-pink/20 rounded-xl px-3.5 py-[9px] text-[16px] text-[#6B21A8] bg-[#FFF5FB] outline-none"
       />
       <div class="text-[11px] font-extrabold text-[#C084C0] tracking-[1px] uppercase">👥 เลือกคนที่จะชื่นชม</div>
       <div class="grid grid-cols-3 gap-2.5">
@@ -516,7 +516,7 @@
 
     <!-- ── ADD PERSON view ────────────────────────────────────────── -->
     <template v-else-if="view === 'add'">
-      <div class="flex-1 overflow-y-auto px-5 pt-5 pb-6 flex flex-col gap-3.5">
+      <div class="flex-1 overflow-y-auto px-5 pt-5 pb-6 flex flex-col gap-3.5" style="overscroll-behavior: contain;">
 
         <!-- Photo upload area -->
         <input ref="addFileInput" type="file" accept="image/*" class="hidden" @change="onAddPhotoChange" />
@@ -540,9 +540,9 @@
           v-model="dirSearch"
           @input="filterDir"
           placeholder="พิมพ์รหัสพนักงาน (empCode) หรือชื่อ..."
-          class="w-full border-[1.5px] border-pink/25 rounded-xl px-3.5 py-2.5 text-[13px] text-[#6B21A8] bg-[#FFF5FB] outline-none"
+          class="w-full border-[1.5px] border-pink/25 rounded-xl px-3.5 py-2.5 text-[16px] text-[#6B21A8] bg-[#FFF5FB] outline-none"
         />
-        <div v-if="dirResults.length" class="border-[1.5px] border-pink/20 rounded-xl overflow-hidden bg-white">
+        <div v-if="dirResults.length" class="border-[1.5px] border-pink/20 rounded-xl overflow-y-auto bg-white max-h-[280px]">
           <div
             v-for="e in dirResults"
             :key="e.id"

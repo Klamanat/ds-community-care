@@ -355,6 +355,12 @@
     border-radius: 24px 24px 0 0;
     max-height: calc(100dvh - 16px);
   }
+  /* iOS WebKit (incl. in-app browsers like LINE) won't enable touch-scroll
+     on an overflow:auto container nested inside a position:fixed ancestor
+     without this — otherwise overflowing modal content is simply clipped. */
+  .modal-sheet * {
+    -webkit-overflow-scrolling: touch;
+  }
   @media (min-width: 640px) {
     .modal-sheet {
       max-width: 480px;
