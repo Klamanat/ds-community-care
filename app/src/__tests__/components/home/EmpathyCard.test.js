@@ -57,9 +57,9 @@ describe('EmpathyCard', () => {
     const wrapper = mount(EmpathyCard, {
       props: { post: basePost },
     })
-    // No img element, fallback SVG should be present
+    // No img element, initials fallback should be present instead
     expect(wrapper.find('img').exists()).toBe(false)
-    expect(wrapper.find('svg').exists()).toBe(true)
+    expect(wrapper.text()).toContain('JD')
   })
 
   it('shows initials when no recImg', () => {
@@ -80,7 +80,7 @@ describe('EmpathyCard', () => {
     const wrapper = mount(EmpathyCard, {
       props: { post: basePost },
     })
-    await wrapper.find('[class*="rounded-2xl"]').trigger('click')
+    await wrapper.find('.cursor-pointer').trigger('click')
     expect(wrapper.emitted('click')).toBeTruthy()
     expect(wrapper.emitted('click')[0]).toEqual([basePost])
   })

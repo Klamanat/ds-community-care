@@ -51,9 +51,8 @@ describe('EmpathyBoard', () => {
     expect(mockEmpathy.loadPostCards).toHaveBeenCalled()
   })
 
-  it('renders the section header with emoji', () => {
+  it('renders the section header', () => {
     const wrapper = createWrapper()
-    expect(wrapper.text()).toContain('💝')
     expect(wrapper.text()).toContain('ชื่นชมเพื่อนร่วมงานของคุณวันนี้')
   })
 

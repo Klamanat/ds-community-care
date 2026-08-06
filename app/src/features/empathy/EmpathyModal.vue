@@ -22,6 +22,13 @@
       <div class="text-[11px] font-extrabold text-[#C084C0] tracking-[1px] uppercase">👥 เลือกคนที่จะชื่นชม</div>
       <div class="grid grid-cols-3 gap-2.5">
         <div
+          class="rounded-2xl cursor-pointer border-2 border-dashed border-pink/30 bg-[linear-gradient(135deg,#FFF5FB,#F5F0FF)] flex flex-col items-center justify-center min-h-[110px] gap-1"
+          @click="view = 'add'"
+        >
+          <div class="w-9 h-9 rounded-full bg-[linear-gradient(135deg,#EC4899,#7C3AED)] flex items-center justify-center text-[20px] text-white">+</div>
+          <div class="text-[10px] font-extrabold text-[#BE185D] text-center px-1.5">เพิ่มคนใหม่</div>
+        </div>
+        <div
           v-for="m in filteredTeam"
           :key="m.id || m.name"
           class="rounded-2xl overflow-hidden cursor-pointer border-[2.5px] border-pink/15 transition-all duration-200 bg-white"
@@ -41,13 +48,6 @@
             <div class="text-[11px] font-black text-[#7C2D8C] overflow-hidden text-ellipsis whitespace-nowrap">{{ m.name }}</div>
             <div class="text-[9px] text-[#C084C0] font-semibold mt-px overflow-hidden text-ellipsis whitespace-nowrap">{{ m.role }}</div>
           </div>
-        </div>
-        <div
-          class="rounded-2xl cursor-pointer border-2 border-dashed border-pink/30 bg-[linear-gradient(135deg,#FFF5FB,#F5F0FF)] flex flex-col items-center justify-center min-h-[110px] gap-1"
-          @click="view = 'add'"
-        >
-          <div class="w-9 h-9 rounded-full bg-[linear-gradient(135deg,#EC4899,#7C3AED)] flex items-center justify-center text-[20px] text-white">+</div>
-          <div class="text-[10px] font-extrabold text-[#BE185D] text-center px-1.5">เพิ่มคนใหม่</div>
         </div>
       </div>
     </div>

@@ -10,11 +10,16 @@ export const useUiStore = defineStore('ui', () => {
   const toast = ref({ msg: '', visible: false })
   const modalKeys = reactive({})
   let _toastTimer = null
+  let _scrollY = 0
 
   function openModal(id) {
     modalKeys[id] = (modalKeys[id] || 0) + 1
+    if (!activeModal.value) {
+      _scrollY = window.scrollY
+      document.body.style.top = `-${_scrollY}px`
+      document.body.classList.add('modal-open')
+    }
     activeModal.value = id
-    document.body.classList.add('modal-open')
   }
 
   function openMonthModal(idx) {
@@ -25,6 +30,8 @@ export const useUiStore = defineStore('ui', () => {
   function closeModal() {
     activeModal.value = null
     document.body.classList.remove('modal-open')
+    document.body.style.top = ''
+    window.scrollTo(0, _scrollY)
   }
 
   function showToast(msg, duration = 2500) {

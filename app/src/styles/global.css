@@ -334,6 +334,11 @@
   .c-sub { @apply text-[9px] text-white/80 font-semibold; }
 
   /* === Modal base === */
+  body.modal-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
   .modal-overlay {
     @apply fixed inset-0 bg-black/40 flex items-end justify-center;
     z-index: 300;
