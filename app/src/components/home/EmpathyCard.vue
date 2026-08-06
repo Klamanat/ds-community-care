@@ -30,13 +30,14 @@
     <div class="absolute bottom-0 left-0 right-0 px-2 pt-8 pb-2 emp-card-scrim">
       <div class="text-[11px] font-bold text-white truncate emp-card-shadow">{{ post.recName }}</div>
       <div class="text-[9px] text-white/85 truncate emp-card-shadow">{{ post.recRole }}</div>
-      <div v-if="displayText" class="text-[11px] font-semibold text-white mt-1 emp-card-text emp-card-shadow">{{ displayText }}</div>
+      <div v-if="displayText" class="text-[11px] font-semibold text-white mt-1 emp-card-text emp-card-shadow" v-html="renderMentionsHtml(displayText)"></div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { renderMentionsHtml } from '../../features/empathy/mentions.js'
 
 const props = defineProps({
   post: { type: Object, required: true }

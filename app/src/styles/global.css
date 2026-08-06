@@ -369,6 +369,13 @@
     }
   }
   .modal-sheet.open { @apply opacity-100 scale-100; }
+  /* @mention highlight inside post/comment text — inherits surrounding
+     color so it reads fine on both light bubbles and dark photo scrims */
+  .mention {
+    font-weight: 800;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
   .modal-x-btn {
     position: absolute; top: 10px; right: 12px; z-index: 60;
     width: 30px; height: 30px; border-radius: 50%;

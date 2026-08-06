@@ -190,7 +190,7 @@
 
                   <!-- Normal view -->
                   <template v-else>
-                    <div class="cm-text">{{ cm.text }}</div>
+                    <div class="cm-text" v-html="renderMentionsHtml(cm.text)"></div>
                     <div class="flex items-center gap-3 mt-1.5">
                       <span class="cm-time">{{ formatThaiDatetime(cm.time) }}</span>
                       <button
@@ -212,14 +212,28 @@
 
                 <!-- Inline reply box -->
                 <div v-if="replyingTo === cm.id" class="mt-2 flex gap-2 items-end pl-1">
-                  <textarea
-                    v-model="replyText"
-                    rows="2"
-                    maxlength="500"
-                    :placeholder="`ตอบกลับ ${cm.name}...`"
-                    class="flex-1 border-[1.5px] border-pink/25 rounded-xl px-3 py-2 text-[12px] text-[#6B21A8] bg-[#FFF5FB] resize-none outline-none leading-relaxed"
-                    :ref="el => { if (el) replyRefs[cm.id] = el }"
-                  ></textarea>
+                  <div class="relative flex-1">
+                    <textarea
+                      v-model="replyText"
+                      rows="2"
+                      maxlength="500"
+                      :placeholder="`ตอบกลับ ${cm.name}... (@ เพื่อแท็กคน)`"
+                      class="w-full border-[1.5px] border-pink/25 rounded-xl px-3 py-2 text-[12px] text-[#6B21A8] bg-[#FFF5FB] resize-none outline-none leading-relaxed"
+                      :ref="el => { if (el) replyRefs[cm.id] = el }"
+                      @input="replyMention.onMentionInput"
+                    ></textarea>
+                    <div
+                      v-if="replyMention.mentionQuery !== null && replyMention.mentionMatches.length"
+                      class="absolute bottom-full left-0 right-0 mb-1 bg-white border border-pink/20 rounded-xl shadow-lg overflow-y-auto max-h-[160px] z-20"
+                    >
+                      <div
+                        v-for="p in replyMention.mentionMatches"
+                        :key="p.id || p.name"
+                        @click="replyMention.pickMention(p, replyRefs[cm.id])"
+                        class="px-3 py-2 text-[12px] font-bold text-[#7C2D8C] cursor-pointer hover:bg-pink/5 border-b border-pink/5 last:border-0"
+                      >{{ p.name }} <span class="text-[10px] text-[#C084C0] font-semibold">{{ p.role }}</span></div>
+                    </div>
+                  </div>
                   <button
                     @click="submitReply(cm.id)"
                     class="bg-[linear-gradient(135deg,#EC4899,#7C3AED)] text-white border-none rounded-xl px-3 py-2 text-[12px] font-extrabold cursor-pointer flex-shrink-0"
@@ -249,7 +263,7 @@
 
                       <!-- Normal view -->
                       <template v-else>
-                        <div class="cm-text">{{ r.text }}</div>
+                        <div class="cm-text" v-html="renderMentionsHtml(r.text)"></div>
                         <div class="flex items-center gap-3 mt-1">
                           <span class="cm-time">{{ formatThaiDatetime(r.time) }}</span>
                           <button
@@ -296,14 +310,28 @@
             :class="selectedTag ? 'bg-[linear-gradient(135deg,#EC4899,#7C3AED)] border-transparent text-white' : 'border-pink/25 bg-[#FFF5FB]'"
           >🏷️</button>
 
-          <textarea
-            v-model="composeText"
-            ref="composeEl"
-            rows="2"
-            maxlength="500"
-            placeholder="พิมพ์คำชื่นชม... 💕"
-            class="flex-1 border-[1.5px] border-pink/25 rounded-xl px-3 py-2.5 text-[13px] text-[#6B21A8] bg-[#FFF5FB] resize-none outline-none leading-relaxed"
-          ></textarea>
+          <div class="relative flex-1">
+            <textarea
+              v-model="composeText"
+              ref="composeEl"
+              rows="2"
+              maxlength="500"
+              placeholder="พิมพ์คำชื่นชม... 💕 (พิมพ์ @ เพื่อแท็กคน)"
+              class="w-full border-[1.5px] border-pink/25 rounded-xl px-3 py-2.5 text-[13px] text-[#6B21A8] bg-[#FFF5FB] resize-none outline-none leading-relaxed"
+              @input="composeMention.onMentionInput"
+            ></textarea>
+            <div
+              v-if="composeMention.mentionQuery !== null && composeMention.mentionMatches.length"
+              class="absolute bottom-full left-0 right-0 mb-1 bg-white border border-pink/20 rounded-xl shadow-lg overflow-y-auto max-h-[160px] z-20"
+            >
+              <div
+                v-for="p in composeMention.mentionMatches"
+                :key="p.id || p.name"
+                @click="composeMention.pickMention(p, composeEl)"
+                class="px-3 py-2 text-[12px] font-bold text-[#7C2D8C] cursor-pointer hover:bg-pink/5 border-b border-pink/5 last:border-0"
+              >{{ p.name }} <span class="text-[10px] text-[#C084C0] font-semibold">{{ p.role }}</span></div>
+            </div>
+          </div>
 
           <button
             @click="submitCompose"
@@ -375,7 +403,7 @@
               </div>
             </div>
 
-            <div class="text-[13px] text-[#4B1D5C] leading-relaxed whitespace-pre-line mt-2.5">{{ focusedPostParsed.text }}</div>
+            <div class="text-[13px] text-[#4B1D5C] leading-relaxed whitespace-pre-line mt-2.5" v-html="renderMentionsHtml(focusedPostParsed.text)"></div>
 
             <div class="flex items-center gap-3 mt-3">
               <button
@@ -437,7 +465,7 @@
                       </div>
                     </template>
                     <template v-else>
-                      <div class="cm-text">{{ cm.text }}</div>
+                      <div class="cm-text" v-html="renderMentionsHtml(cm.text)"></div>
                       <div class="flex items-center gap-3 mt-1.5">
                         <span class="cm-time">{{ formatThaiDatetime(cm.time) }}</span>
                         <button
@@ -445,12 +473,46 @@
                           :class="cm._liked ? 'text-[#EC4899]' : 'text-[#C084C0]'"
                           @click="empathy.toggleCommentLike(activeRealPostId, cm.id)"
                         >{{ cm._liked ? '❤️' : '🤍' }} {{ cm.likeCount || '' }}</button>
+                        <button
+                          class="text-[11px] font-bold text-[#BE185D] bg-transparent border-none cursor-pointer p-0"
+                          @click="toggleReply(cm.id)"
+                        >💬 ตอบกลับ</button>
                         <template v-if="cm.name === userAuth.userName">
                           <button class="cm-action-btn" @click="startEdit(cm)">✏️</button>
                           <button class="cm-action-btn cm-action-del" @click="doDelete(cm)">🗑️</button>
                         </template>
                       </div>
                     </template>
+                  </div>
+
+                  <!-- Inline reply box -->
+                  <div v-if="replyingTo === cm.id" class="mt-2 flex gap-2 items-end pl-1">
+                    <div class="relative flex-1">
+                      <textarea
+                        v-model="replyText"
+                        rows="2"
+                        maxlength="500"
+                        :placeholder="`ตอบกลับ ${cm.name}... (@ เพื่อแท็กคน)`"
+                        class="w-full border-[1.5px] border-pink/25 rounded-xl px-3 py-2 text-[12px] text-[#6B21A8] bg-[#FFF5FB] resize-none outline-none leading-relaxed"
+                        :ref="el => { if (el) replyRefs[cm.id] = el }"
+                        @input="replyMention.onMentionInput"
+                      ></textarea>
+                      <div
+                        v-if="replyMention.mentionQuery !== null && replyMention.mentionMatches.length"
+                        class="absolute bottom-full left-0 right-0 mb-1 bg-white border border-pink/20 rounded-xl shadow-lg overflow-y-auto max-h-[160px] z-20"
+                      >
+                        <div
+                          v-for="p in replyMention.mentionMatches"
+                          :key="p.id || p.name"
+                          @click="replyMention.pickMention(p, replyRefs[cm.id])"
+                          class="px-3 py-2 text-[12px] font-bold text-[#7C2D8C] cursor-pointer hover:bg-pink/5 border-b border-pink/5 last:border-0"
+                        >{{ p.name }} <span class="text-[10px] text-[#C084C0] font-semibold">{{ p.role }}</span></div>
+                      </div>
+                    </div>
+                    <button
+                      @click="submitReply(cm.id)"
+                      class="bg-[linear-gradient(135deg,#EC4899,#7C3AED)] text-white border-none rounded-xl px-3 py-2 text-[12px] font-extrabold cursor-pointer flex-shrink-0"
+                    >ส่ง</button>
                   </div>
 
                   <!-- Nested replies (only relevant for old aggregated posts) -->
@@ -472,7 +534,7 @@
                           </div>
                         </template>
                         <template v-else>
-                          <div class="cm-text">{{ r.text }}</div>
+                          <div class="cm-text" v-html="renderMentionsHtml(r.text)"></div>
                           <div class="flex items-center gap-3 mt-1">
                             <span class="cm-time">{{ formatThaiDatetime(r.time) }}</span>
                             <button
@@ -498,14 +560,28 @@
 
       <!-- Reply compose bar -->
       <div class="flex-shrink-0 border-t border-pink/10 bg-white px-4 pt-3 pb-6 flex gap-2 items-end">
-        <textarea
-          v-model="postReplyText"
-          ref="postReplyEl"
-          rows="1"
-          maxlength="500"
-          placeholder="แสดงความคิดเห็น..."
-          class="flex-1 border-[1.5px] border-pink/25 rounded-xl px-3 py-2.5 text-[13px] text-[#6B21A8] bg-[#FFF5FB] resize-none outline-none leading-relaxed"
-        ></textarea>
+        <div class="relative flex-1">
+          <textarea
+            v-model="postReplyText"
+            ref="postReplyEl"
+            rows="1"
+            maxlength="500"
+            placeholder="แสดงความคิดเห็น... (@ เพื่อแท็กคน)"
+            class="w-full border-[1.5px] border-pink/25 rounded-xl px-3 py-2.5 text-[13px] text-[#6B21A8] bg-[#FFF5FB] resize-none outline-none leading-relaxed"
+            @input="postReplyMention.onMentionInput"
+          ></textarea>
+          <div
+            v-if="postReplyMention.mentionQuery !== null && postReplyMention.mentionMatches.length"
+            class="absolute bottom-full left-0 right-0 mb-1 bg-white border border-pink/20 rounded-xl shadow-lg overflow-y-auto max-h-[160px] z-20"
+          >
+            <div
+              v-for="p in postReplyMention.mentionMatches"
+              :key="p.id || p.name"
+              @click="postReplyMention.pickMention(p, postReplyEl)"
+              class="px-3 py-2 text-[12px] font-bold text-[#7C2D8C] cursor-pointer hover:bg-pink/5 border-b border-pink/5 last:border-0"
+            >{{ p.name }} <span class="text-[10px] text-[#C084C0] font-semibold">{{ p.role }}</span></div>
+          </div>
+        </div>
         <button
           @click="submitPostReply"
           :disabled="!postReplyText.trim()"
@@ -576,6 +652,7 @@ import { useUiStore }        from '../../core/stores/ui.js'
 import { useUserAuthStore }  from '../../core/stores/userAuth.js'
 import { formatThaiDatetime } from '../../core/utils/date.js'
 import { uploadEmpathyPhoto, setEmpathyPhoto } from './empathyService.js'
+import { useMentionPicker, renderMentionsHtml } from './mentions.js'
 
 const empathy  = useEmpathyStore()
 const team     = useTeamStore()
@@ -604,6 +681,12 @@ const editingCmId   = ref(null)
 const editText      = ref('')
 const threadScrollEl = ref(null)
 const composeEl      = ref(null)
+
+// @mention autocomplete — one picker per compose/reply textarea
+const empDirRef        = computed(() => team.empDirectory)
+const composeMention   = useMentionPicker(composeText, empDirRef)
+const replyMention     = useMentionPicker(replyText, empDirRef)
+const postReplyMention = useMentionPicker(postReplyText, empDirRef)
 
 // Add-person
 const dirSearch  = ref('')
@@ -880,15 +963,19 @@ function toggleReply(cmId) {
 
 async function submitReply(parentId) {
   const text = replyText.value.trim()
-  if (!text || !activePostId.value) return
+  const isPost   = view.value === 'post'
+  const storeKey = isPost ? activeRealPostId.value : activePostId.value
+  if (!text || !storeKey) return
   replyingTo.value = null
   replyText.value  = ''
-  // The channel wall now mixes the old aggregate post with any new
-  // individual posts — look up which post this specific comment belongs to
-  const parent = empathy.postComments[activePostId.value]?.find(c => c.id === parentId)
-  const empathyPostId = parent?.empathyPostId || ''
+  // In the single-post detail view every comment belongs to the one focused
+  // post; in the channel wall, the wall mixes the old aggregate post with
+  // any new individual posts, so look up which post this comment belongs to
+  const empathyPostId = isPost
+    ? activeRealPostId.value
+    : (empathy.postComments[storeKey]?.find(c => c.id === parentId)?.empathyPostId || '')
   await empathy.addComment(
-    activePostId.value, activePostId.value, empathyPostId,
+    storeKey, activePostId.value, empathyPostId,
     text, userAuth.userName || 'ทีม', parentId
   )
   scrollBottom()
